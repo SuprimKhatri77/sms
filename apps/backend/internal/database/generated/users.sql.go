@@ -53,6 +53,43 @@ func (q *Queries) DeleteUser(ctx context.Context, id pgtype.UUID) error {
 	return err
 }
 
+const getPaginatedUsers = `-- name: GetPaginatedUsers :many
+SELECT id, name, email, password_hash, image_url, role, created_at FROM users LIMIT $1 OFFSET $2
+`
+
+type GetPaginatedUsersParams struct {
+	Limit  int32
+	Offset int32
+}
+
+func (q *Queries) GetPaginatedUsers(ctx context.Context, arg GetPaginatedUsersParams) ([]User, error) {
+	rows, err := q.db.Query(ctx, getPaginatedUsers, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Email,
+			&i.PasswordHash,
+			&i.ImageUrl,
+			&i.Role,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getUserByEmail = `-- name: GetUserByEmail :one
 SELECT id, name, email, password_hash, image_url, role, created_at FROM users WHERE email = $1
 `
@@ -89,6 +126,17 @@ func (q *Queries) GetUserByID(ctx context.Context, id pgtype.UUID) (User, error)
 		&i.CreatedAt,
 	)
 	return i, err
+}
+
+const getUsersCount = `-- name: GetUsersCount :one
+SELECT COUNT(*) FROM users
+`
+
+func (q *Queries) GetUsersCount(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, getUsersCount)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
 
 const listusers = `-- name: Listusers :many

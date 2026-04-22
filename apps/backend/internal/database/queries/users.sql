@@ -21,3 +21,11 @@ WHERE id = $1 RETURNING *;
 DELETE FROM users WHERE id = $1;
 
 
+-- name: GetPaginatedUsers :many
+SELECT * FROM users LIMIT $1 OFFSET $2;
+
+
+-- name: GetUsersCount :one
+SELECT COUNT(*) FROM users;
+
+

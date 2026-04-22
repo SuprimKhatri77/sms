@@ -5,6 +5,7 @@ const (
 	InternalServerError = "INTERNAL_SERVER_ERROR"
 	ValidationFailed    = "VALIDATION_FAILED"
 	Unauthorized        = "UNAUTHORIZED"
+	InvalidPageParam    = "INVALID_PAGE_PARAMETER"
 
 	// auth
 	InvalidCredentials  = "INVALID_CREDENTIALS"
@@ -14,6 +15,7 @@ const (
 	RefreshTokenExpired = "REFRESH_TOKEN_EXPIRED"
 	InvalidToken        = "INVALID_TOKEN"
 	Forbidden           = "FORBIDDEN"
-	MissingAuthToken    = "MISSING_AUTH_TOKEN"
-	InvalidAuthHeader   = "INVALID_AUTH_HEADER"
+	MissingAccessToken  = "MISSING_ACCESS_TOKEN"
+	InvalidAccessToken  = "INVALID_ACCESS_TOKEN"
+	UserNotFound        = "USER_NOT_FOUND"
 )

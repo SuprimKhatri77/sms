@@ -3,6 +3,7 @@ package auth
 import (
 	"crypto/sha256"
 	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -18,25 +19,37 @@ func Logout(queries repository.AuthRepository, cfg *config.Config) gin.HandlerFu
 		ctx := c.Request.Context()
 
 		refreshTokenFromCookie, err := c.Cookie("refresh_token")
-
 		if err != nil {
+			slog.Warn("missing refresh token on logout",
+				"path", c.FullPath(),
+				"ip", c.ClientIP(),
+			)
+
 			c.JSON(http.StatusUnauthorized, types.APIResponse{
 				Success: false,
 				Message: "Missing refresh token",
-				Code:    constants.InternalServerError,
+				Code:    constants.MissingRefreshToken,
 			})
 			return
 		}
 
 		token, err := jwt.Parse(refreshTokenFromCookie, func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-
+				slog.Error("unexpected signing method during logout",
+					"alg", token.Header["alg"],
+				)
+				return nil, fmt.Errorf("unexpected signing method")
 			}
 			return []byte(cfg.JWTRefreshSecret), nil
 		})
 
 		if err != nil || !token.Valid {
+			slog.Warn("invalid refresh token on logout",
+				"error", err,
+				"path", c.FullPath(),
+				"ip", c.ClientIP(),
+			)
+
 			c.JSON(http.StatusUnauthorized, types.APIResponse{
 				Success: false,
 				Message: "Invalid refresh token",
@@ -50,6 +63,12 @@ func Logout(queries repository.AuthRepository, cfg *config.Config) gin.HandlerFu
 
 		err = queries.RevokeRefreshToken(ctx, tokenHash)
 		if err != nil {
+			slog.Error("failed to revoke refresh token on logout",
+				"error", err,
+				"path", c.FullPath(),
+				"ip", c.ClientIP(),
+			)
+
 			c.JSON(http.StatusInternalServerError, types.APIResponse{
 				Success: false,
 				Message: "Failed to logout",
@@ -59,11 +78,16 @@ func Logout(queries repository.AuthRepository, cfg *config.Config) gin.HandlerFu
 		}
 
 		c.SetCookie("access_token", "", -1, "/", "", true, true)
-		c.SetCookie("refresh_token", "", -1, "/auth", "", true, true)
+		c.SetCookie("refresh_token", "", -1, "/", "", true, true)
+
+		slog.Info("user logged out",
+			"path", c.FullPath(),
+			"ip", c.ClientIP(),
+		)
+
 		c.JSON(http.StatusOK, types.APIResponse{
 			Success: true,
 			Message: "Logged out successfully",
 		})
-
 	}
 }

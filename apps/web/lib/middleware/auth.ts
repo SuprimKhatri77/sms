@@ -1,0 +1,96 @@
+import { NextRequest, NextResponse } from "next/server";
+import { SessionUser } from "./types";
+
+export async function getSession(token: string): Promise<SessionUser | null> {
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/me`,
+      {
+        headers: { Cookie: `access_token=${token}` },
+      },
+    );
+    console.log("api url in getsession:", process.env.NEXT_PUBLIC_API_URL);
+    console.log("response: ", res);
+    if (!res.ok) return null;
+    const body = await res.json();
+    return body.data;
+  } catch {
+    return null;
+  }
+}
+
+export async function attemptRefresh(
+  refreshToken: string,
+  req: NextRequest,
+  requiredRoles: string[],
+) {
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/refresh`,
+      {
+        method: "POST",
+        headers: { Cookie: `refresh_token=${refreshToken}` },
+      },
+    );
+
+    if (!res.ok) {
+      return NextResponse.redirect(new URL("/auth", req.url));
+    }
+
+    // get ALL cookies from refresh response
+    const cookies = res.headers.getSetCookie();
+
+    // still need the access token value to check role
+    const newAccessToken = extractTokenFromCookie(cookies.join("; "));
+
+    if (!newAccessToken) {
+      return NextResponse.redirect(new URL("/auth", req.url));
+    }
+
+    const user = await getSession(newAccessToken);
+
+    if (!user) {
+      return NextResponse.redirect(new URL("/auth", req.url));
+    }
+
+    if (!requiredRoles.includes(user.role)) {
+      return NextResponse.redirect(new URL("/", req.url));
+    }
+
+    const newRefreshToken = extractRefreshTokenFromCookie(cookies.join("; "));
+
+    const response = NextResponse.next({
+      request: {
+        headers: new Headers({
+          ...Object.fromEntries(req.headers),
+          cookie: `access_token=${newAccessToken}; refresh_token=${newRefreshToken}`,
+        }),
+      },
+    });
+
+    cookies.forEach((cookie) => {
+      response.headers.append("set-cookie", cookie);
+    });
+
+    return response;
+  } catch {
+    return NextResponse.redirect(new URL("/auth", req.url));
+  }
+}
+
+// parses access_token value out of the set-cookie header string
+export function extractTokenFromCookie(
+  setCookie: string | null,
+): string | null {
+  if (!setCookie) return null;
+  const match = setCookie.match(/access_token=([^;]+)/);
+  return match?.[1] ?? null;
+}
+
+export function extractRefreshTokenFromCookie(
+  setCookie: string | null,
+): string | null {
+  if (!setCookie) return null;
+  const match = setCookie.match(/refresh_token=([^;]+)/);
+  return match?.[1] ?? null;
+}

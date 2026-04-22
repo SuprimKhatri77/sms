@@ -15,8 +15,10 @@ import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useState } from "react";
 import { Spinner } from "@/components/ui/spinner";
-import { ApiError, apiFetch, mapFieldErrors } from "@/utils/api";
+import { ApiError, mapFieldErrors } from "@/utils/api";
 import { useRouter } from "next/navigation";
+import api from "@/lib/axios";
+import axios from "axios";
 
 type FieldErrors = Partial<Record<keyof LoginInput, string>>;
 export function LoginForm({
@@ -24,41 +26,44 @@ export function LoginForm({
   ...props
 }: React.ComponentProps<"form">) {
   const [errors, setErrors] = useState<FieldErrors>();
-  const router = useRouter()
+  const router = useRouter();
   const { mutate, isPending, reset } = useMutation({
     mutationFn: async (data: LoginInput) => {
-      return apiFetch("/auth/login", {
-        method: "POST",
-        body: JSON.stringify(data),
-      });
+      const res = await api.post<LoginResponse>("/auth/login", data);
+      return res.data;
     },
     onSuccess: (result: LoginResponse) => {
       toast.success(result.message);
-      router.replace("/admin")
+      router.replace("/admin");
+      formReset();
       reset();
     },
-    onError: (error: ApiError) => {
+    onError: (error) => {
+      if (axios.isAxiosError(error)) {
+        const data = error.response?.data as ApiError;
 
-      if (error.errors) {
-        setErrors(mapFieldErrors(error));
+        if (data?.errors) {
+          setErrors(mapFieldErrors(data));
+        }
+
+        toast.error(data?.message ?? "An unexpected error occurred.");
       }
-
-      toast.error(
-        error.message || "An unexpected error occurred. Please try again.",
-      );
-
       reset();
     },
   });
 
-  const { Field: FormField, handleSubmit } = useForm({
+  const {
+    Field: FormField,
+    handleSubmit,
+    reset: formReset,
+  } = useForm({
     defaultValues: {
       email: "",
       password: "",
     },
-    // validators: {
-    //   onSubmit: loginInputSchema,
-    // },
+    validators: {
+      onSubmit: loginInputSchema,
+    },
 
     onSubmit: ({ value }) => mutate(value),
   });
@@ -80,7 +85,8 @@ export function LoginForm({
         </div>
         <FormField name="email">
           {(field) => {
-            const error = field.state.meta.errors[0]??"";
+            const error = field.state.meta.errors[0]?.message;
+            const mergedError = error ?? errors?.email;
             return (
               <Field>
                 <FieldLabel htmlFor="email">Email</FieldLabel>
@@ -93,17 +99,15 @@ export function LoginForm({
                   required
                 />
 
-                {error ||
-                  (errors && (
-                    <FieldError>{errors ? errors.email : error}</FieldError>
-                  ))}
+                {mergedError && <FieldError>{mergedError}</FieldError>}
               </Field>
             );
           }}
         </FormField>
         <FormField name="password">
           {(field) => {
-            const error = field.state.meta.errors[0] ?? "";
+            const error = field.state.meta.errors[0]?.message;
+            const mergedError = error ?? errors?.password;
             return (
               <Field>
                 <div className="flex items-center">
@@ -117,16 +121,13 @@ export function LoginForm({
                   required
                 />
 
-                {error ||
-                  (errors && (
-                    <FieldError>{errors ? errors.password : error}</FieldError>
-                  ))}
+                {mergedError && <FieldError>{mergedError}</FieldError>}
               </Field>
             );
           }}
         </FormField>
         <Field>
-          <Button disabled={isPending} type="submit">
+          <Button disabled={isPending} type="submit" className="rounded-none">
             {isPending ? <Spinner /> : "Login"}
           </Button>
         </Field>

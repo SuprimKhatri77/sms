@@ -7,9 +7,10 @@ import (
 )
 
 func ConvertToUUID(id string) (pgtype.UUID, error) {
-	var uuid pgtype.UUID
-	if err := uuid.Scan(id); err != nil {
-		return uuid, fmt.Errorf("Invalid uuid string")
+	var ID pgtype.UUID
+	if err := ID.Scan(id); err != nil {
+		return ID, fmt.Errorf("invalid uuid: %w", err)
 	}
-	return uuid, nil
+
+	return ID, nil
 }

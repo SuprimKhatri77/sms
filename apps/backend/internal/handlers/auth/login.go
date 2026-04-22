@@ -89,6 +89,7 @@ func Login(
 		accessClaims := jwt.MapClaims{
 			"user_id": user.ID,
 			"role":    user.Role,
+			"email":   user.Email,
 			"exp":     time.Now().Add(15 * time.Minute).Unix(),
 		}
 
@@ -161,7 +162,7 @@ func Login(
 		slog.Info("tokens issued", "user_id", user.ID)
 
 		c.SetCookie("access_token", accessTokenString, 15*60, "/", "", true, true)
-		c.SetCookie("refresh_token", refreshTokenString, 30*24*60*60, "/auth", "", true, true)
+		c.SetCookie("refresh_token", refreshTokenString, 30*24*60*60, "/", "", true, true)
 
 		slog.Info("login successful", "user_id", user.ID)
 

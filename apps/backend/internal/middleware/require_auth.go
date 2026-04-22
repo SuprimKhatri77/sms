@@ -1,0 +1,139 @@
+package middleware
+
+import (
+	"fmt"
+	"log/slog"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/suprimkhatri77/sms/backend/internal/config"
+	"github.com/suprimkhatri77/sms/backend/internal/constants"
+	"github.com/suprimkhatri77/sms/backend/internal/types"
+)
+
+func RequireAuth(cfg *config.Config) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		accessToken, err := c.Cookie("access_token")
+		if err != nil {
+			slog.Warn("missing access token",
+				"path", c.FullPath(),
+				"ip", c.ClientIP(),
+			)
+
+			c.JSON(http.StatusUnauthorized, types.APIResponse{
+				Success: false,
+				Message: "Missing access token",
+				Code:    constants.MissingAccessToken,
+			})
+			c.Abort()
+			return
+		}
+
+		token, err := jwt.Parse(accessToken, func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				slog.Error("unexpected signing method",
+					"alg", token.Header["alg"],
+				)
+				return nil, fmt.Errorf("unexpected signing method")
+			}
+			return []byte(cfg.JWTAccessSecret), nil
+		})
+
+		if err != nil || !token.Valid {
+			slog.Warn("invalid access token",
+				"error", err,
+				"path", c.FullPath(),
+				"ip", c.ClientIP(),
+			)
+
+			c.JSON(http.StatusUnauthorized, types.APIResponse{
+				Success: false,
+				Message: "Invalid access token",
+				Code:    constants.InvalidAccessToken,
+			})
+			c.Abort()
+			return
+		}
+
+		claims, ok := token.Claims.(jwt.MapClaims)
+		if !ok {
+			slog.Warn("invalid token claims structure",
+				"path", c.FullPath(),
+				"ip", c.ClientIP(),
+			)
+
+			c.JSON(http.StatusUnauthorized, types.APIResponse{
+				Success: false,
+				Message: "Invalid token claims",
+				Code:    constants.Unauthorized,
+			})
+			c.Abort()
+			return
+		}
+
+		userID, ok := claims["user_id"].(string)
+		if !ok {
+			slog.Warn("missing user_id in claims",
+				"path", c.FullPath(),
+				"ip", c.ClientIP(),
+			)
+
+			c.JSON(http.StatusUnauthorized, types.APIResponse{
+				Success: false,
+				Message: "Invalid token claims",
+				Code:    constants.Unauthorized,
+			})
+			c.Abort()
+			return
+		}
+
+		role, ok := claims["role"].(string)
+		if !ok || (role != "admin" && role != "superadmin" && role != "user") {
+			slog.Warn("invalid role in claims",
+				"user_id", userID,
+				"role", role,
+				"path", c.FullPath(),
+				"ip", c.ClientIP(),
+			)
+
+			c.JSON(http.StatusUnauthorized, types.APIResponse{
+				Success: false,
+				Message: "Invalid token claims",
+				Code:    constants.Unauthorized,
+			})
+			c.Abort()
+			return
+		}
+
+		email, ok := claims["email"].(string)
+		if !ok {
+			slog.Warn("missing email in claims",
+				"user_id", userID,
+				"path", c.FullPath(),
+				"ip", c.ClientIP(),
+			)
+
+			c.JSON(http.StatusUnauthorized, types.APIResponse{
+				Success: false,
+				Message: "Invalid token claims",
+				Code:    constants.Unauthorized,
+			})
+			c.Abort()
+			return
+		}
+
+		slog.Info("authenticated request",
+			"user_id", userID,
+			"role", role,
+			"path", c.FullPath(),
+			"ip", c.ClientIP(),
+		)
+
+		c.Set("userID", userID)
+		c.Set("role", role)
+		c.Set("email", email)
+
+		c.Next()
+	}
+}
