@@ -17,6 +17,7 @@ import (
 	dbgen "github.com/suprimkhatri77/sms/backend/internal/database/generated"
 	"github.com/suprimkhatri77/sms/backend/internal/middleware"
 	"github.com/suprimkhatri77/sms/backend/internal/pkg/cloudinary"
+	"github.com/suprimkhatri77/sms/backend/internal/repository"
 	"github.com/suprimkhatri77/sms/backend/internal/routes"
 	"github.com/suprimkhatri77/sms/backend/internal/validator"
 )
@@ -49,7 +50,6 @@ func main() {
 		log.Fatalf("database: %v", err)
 	}
 	defer db.Close()
-
 	queries := dbgen.New(db.Pool)
 
 	validator.Init()
@@ -72,9 +72,11 @@ func main() {
 	r.Use(middleware.CORS())
 
 	routes.Setup(r, routes.Config{
-		Config:    cfg,
-		Queries:   queries,
-		CldClient: cldClient,
+		Config:      cfg,
+		Queries:     queries,
+		CldClient:   cldClient,
+		StudentRepo: repository.NewAdmissionRepository(queries),
+		PgxPool:     db.Pool,
 	})
 
 	srv := &http.Server{
