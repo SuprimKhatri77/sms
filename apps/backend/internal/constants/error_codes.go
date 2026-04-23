@@ -6,6 +6,7 @@ const (
 	ValidationFailed    = "VALIDATION_FAILED"
 	Unauthorized        = "UNAUTHORIZED"
 	InvalidPageParam    = "INVALID_PAGE_PARAMETER"
+	InvalidIDFormat     = "INVALID_ID_FORMAT"
 
 	// auth
 	InvalidCredentials  = "INVALID_CREDENTIALS"
@@ -18,4 +19,10 @@ const (
 	MissingAccessToken  = "MISSING_ACCESS_TOKEN"
 	InvalidAccessToken  = "INVALID_ACCESS_TOKEN"
 	UserNotFound        = "USER_NOT_FOUND"
+
+	// student
+	StudentAlreadyExists = "STUDENT_ALREADY_EXISTS"
+
+	// course
+	CourseNotFound = "COURSE_NOT_FOUND"
 )

@@ -9,6 +9,31 @@ import (
 	"context"
 )
 
+const getAdmissionSettings = `-- name: GetAdmissionSettings :many
+SELECT key, value FROM settings
+WHERE key IN ('ref_prefix', 'fiscal_year')
+`
+
+func (q *Queries) GetAdmissionSettings(ctx context.Context) ([]Setting, error) {
+	rows, err := q.db.Query(ctx, getAdmissionSettings)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Setting
+	for rows.Next() {
+		var i Setting
+		if err := rows.Scan(&i.Key, &i.Value); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getSetting = `-- name: GetSetting :one
 SELECT value FROM settings WHERE key = $1
 `

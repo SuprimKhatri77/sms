@@ -15,3 +15,10 @@ export {
   type CreateUserInput,
   type UpdateUserInput,
 } from "./user";
+
+export {
+  createStudentAdmissionRequest,
+  inquiryFormSchema,
+  type CreateStudentAdmission,
+  type InquiryForm,
+} from "./student";

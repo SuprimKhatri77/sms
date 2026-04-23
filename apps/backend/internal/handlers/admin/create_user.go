@@ -24,12 +24,9 @@ func CreateUser(
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
 
-		actorID, _ := c.Get("userID") // may be nil for public signup
-
 		var req types.CreateUserRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
 			slog.Warn("invalid request payload",
-				"actor_id", actorID,
 				"path", c.FullPath(),
 				"ip", c.ClientIP(),
 				"error", err,
@@ -49,7 +46,6 @@ func CreateUser(
 		_, err := queries.GetUserByEmail(ctx, req.Email)
 		if err == nil {
 			slog.Warn("user already exists (pre-check)",
-				"actor_id", actorID,
 				"email", req.Email,
 				"path", c.FullPath(),
 				"ip", c.ClientIP(),
@@ -65,7 +61,6 @@ func CreateUser(
 
 		if !errors.Is(err, pgx.ErrNoRows) {
 			slog.Error("failed checking user existence",
-				"actor_id", actorID,
 				"email", req.Email,
 				"error", err,
 				"path", c.FullPath(),
@@ -86,7 +81,6 @@ func CreateUser(
 		)
 		if err != nil {
 			slog.Error("password hashing failed",
-				"actor_id", actorID,
 				"error", err,
 				"path", c.FullPath(),
 				"ip", c.ClientIP(),
@@ -111,7 +105,6 @@ func CreateUser(
 			var pgErr *pgconn.PgError
 			if errors.As(err, &pgErr) && pgErr.Code == "23505" {
 				slog.Warn("duplicate user on insert",
-					"actor_id", actorID,
 					"email", req.Email,
 					"path", c.FullPath(),
 					"ip", c.ClientIP(),
@@ -126,7 +119,6 @@ func CreateUser(
 			}
 
 			slog.Error("failed to create user",
-				"actor_id", actorID,
 				"email", req.Email,
 				"error", err,
 				"path", c.FullPath(),
@@ -142,7 +134,6 @@ func CreateUser(
 		}
 
 		slog.Info("user created successfully",
-			"actor_id", actorID,
 			"email", req.Email,
 			"role", "user",
 			"path", c.FullPath(),
