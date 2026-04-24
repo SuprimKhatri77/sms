@@ -50,8 +50,8 @@ UPDATE settings SET value = $2 WHERE key = $1 RETURNING key, value
 `
 
 type UpdateSettingParams struct {
-	Key   string
-	Value string
+	Key   string `json:"key"`
+	Value string `json:"value"`
 }
 
 func (q *Queries) UpdateSetting(ctx context.Context, arg UpdateSettingParams) (Setting, error) {

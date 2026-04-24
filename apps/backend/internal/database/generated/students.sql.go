@@ -24,20 +24,20 @@ INSERT INTO students (
 `
 
 type CreateStudentParams struct {
-	ReferenceNo   string
-	FiscalYear    string
-	SerialNo      int32
-	FullName      string
-	Dob           pgtype.Date
-	Gender        string
-	Phone         string
-	Email         pgtype.Text
-	Address       string
-	GuardianName  string
-	GuardianPhone string
-	PhotoUrl      pgtype.Text
-	Source        string
-	ClaimedAmount int32
+	ReferenceNo   string      `json:"referenceNo"`
+	FiscalYear    string      `json:"fiscalYear"`
+	SerialNo      int32       `json:"serialNo"`
+	FullName      string      `json:"fullName"`
+	Dob           pgtype.Date `json:"dob"`
+	Gender        string      `json:"gender"`
+	Phone         string      `json:"phone"`
+	Email         pgtype.Text `json:"email"`
+	Address       string      `json:"address"`
+	GuardianName  string      `json:"guardianName"`
+	GuardianPhone string      `json:"guardianPhone"`
+	PhotoUrl      pgtype.Text `json:"photoUrl"`
+	Source        string      `json:"source"`
+	ClaimedAmount int32       `json:"claimedAmount"`
 }
 
 func (q *Queries) CreateStudent(ctx context.Context, arg CreateStudentParams) (Student, error) {
@@ -83,7 +83,7 @@ func (q *Queries) CreateStudent(ctx context.Context, arg CreateStudentParams) (S
 
 const getNextSerialNo = `-- name: GetNextSerialNo :one
 SELECT COALESCE(MAX(serial_no), 0) + 1 AS next_serial
-FROM students
+FROM students 
 WHERE fiscal_year = $1
 `
 
@@ -138,8 +138,8 @@ WHERE sc.student_id = $1
 `
 
 type GetStudentFeeSummaryRow struct {
-	TotalFee  int32
-	TotalPaid int32
+	TotalFee  int32 `json:"totalFee"`
+	TotalPaid int32 `json:"totalPaid"`
 }
 
 func (q *Queries) GetStudentFeeSummary(ctx context.Context, studentID pgtype.UUID) (GetStudentFeeSummaryRow, error) {
@@ -149,15 +149,92 @@ func (q *Queries) GetStudentFeeSummary(ctx context.Context, studentID pgtype.UUI
 	return i, err
 }
 
+const getStudentsCount = `-- name: GetStudentsCount :one
+SELECT COUNT(*) FROM students
+`
+
+func (q *Queries) GetStudentsCount(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, getStudentsCount)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const listStudents = `-- name: ListStudents :many
+SELECT 
+    s.id,
+    s.reference_no,
+    s.full_name,
+    s.phone,
+    s.status,
+    s.claimed_amount,
+    s.created_at,
+  COALESCE(
+    STRING_AGG(c.name, ',' ORDER BY c.name),
+    ''
+) AS courses
+FROM students s
+LEFT JOIN student_courses sc ON sc.student_id = s.id
+LEFT JOIN courses c ON c.id = sc.course_id
+GROUP BY s.id
+ORDER BY s.created_at DESC
+LIMIT $1 OFFSET $2
+`
+
+type ListStudentsParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+type ListStudentsRow struct {
+	ID            pgtype.UUID        `json:"id"`
+	ReferenceNo   string             `json:"referenceNo"`
+	FullName      string             `json:"fullName"`
+	Phone         string             `json:"phone"`
+	Status        string             `json:"status"`
+	ClaimedAmount int32              `json:"claimedAmount"`
+	CreatedAt     pgtype.Timestamptz `json:"createdAt"`
+	Courses       interface{}        `json:"courses"`
+}
+
+func (q *Queries) ListStudents(ctx context.Context, arg ListStudentsParams) ([]ListStudentsRow, error) {
+	rows, err := q.db.Query(ctx, listStudents, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListStudentsRow
+	for rows.Next() {
+		var i ListStudentsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ReferenceNo,
+			&i.FullName,
+			&i.Phone,
+			&i.Status,
+			&i.ClaimedAmount,
+			&i.CreatedAt,
+			&i.Courses,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateStudentStatus = `-- name: UpdateStudentStatus :one
 UPDATE students SET status = $2, notes = $3
 WHERE id = $1 RETURNING id, reference_no, fiscal_year, serial_no, full_name, dob, gender, phone, email, address, guardian_name, guardian_phone, photo_url, source, claimed_amount, status, notes, created_at
 `
 
 type UpdateStudentStatusParams struct {
-	ID     pgtype.UUID
-	Status string
-	Notes  pgtype.Text
+	ID     pgtype.UUID `json:"id"`
+	Status string      `json:"status"`
+	Notes  pgtype.Text `json:"notes"`
 }
 
 func (q *Queries) UpdateStudentStatus(ctx context.Context, arg UpdateStudentStatusParams) (Student, error) {

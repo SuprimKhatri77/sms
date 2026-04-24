@@ -29,11 +29,11 @@ RETURNING id, full_name, phone, email, message, source, is_read, created_at
 `
 
 type CreateInquiryParams struct {
-	FullName string
-	Phone    string
-	Email    pgtype.Text
-	Message  string
-	Source   string
+	FullName string      `json:"fullName"`
+	Phone    string      `json:"phone"`
+	Email    pgtype.Text `json:"email"`
+	Message  string      `json:"message"`
+	Source   string      `json:"source"`
 }
 
 func (q *Queries) CreateInquiry(ctx context.Context, arg CreateInquiryParams) (Inquiry, error) {

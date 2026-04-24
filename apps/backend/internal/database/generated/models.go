@@ -9,87 +9,87 @@ import (
 )
 
 type Certificate struct {
-	ID        int32
-	StudentID pgtype.UUID
-	IssuedBy  pgtype.UUID
-	IssuedAt  pgtype.Timestamptz
-	Remarks   pgtype.Text
+	ID        int32              `json:"id"`
+	StudentID pgtype.UUID        `json:"studentId"`
+	IssuedBy  pgtype.UUID        `json:"issuedBy"`
+	IssuedAt  pgtype.Timestamptz `json:"issuedAt"`
+	Remarks   pgtype.Text        `json:"remarks"`
 }
 
 type Course struct {
-	ID        pgtype.UUID
-	Name      string
-	Fee       int32
-	IsActive  bool
-	CreatedAt pgtype.Timestamptz
+	ID        pgtype.UUID        `json:"id"`
+	Name      string             `json:"name"`
+	Fee       int32              `json:"fee"`
+	IsActive  bool               `json:"isActive"`
+	CreatedAt pgtype.Timestamptz `json:"createdAt"`
 }
 
 type Inquiry struct {
-	ID        pgtype.UUID
-	FullName  string
-	Phone     string
-	Email     pgtype.Text
-	Message   string
-	Source    string
-	IsRead    bool
-	CreatedAt pgtype.Timestamptz
+	ID        pgtype.UUID        `json:"id"`
+	FullName  string             `json:"fullName"`
+	Phone     string             `json:"phone"`
+	Email     pgtype.Text        `json:"email"`
+	Message   string             `json:"message"`
+	Source    string             `json:"source"`
+	IsRead    bool               `json:"isRead"`
+	CreatedAt pgtype.Timestamptz `json:"createdAt"`
 }
 
 type Payment struct {
-	ID        pgtype.UUID
-	StudentID pgtype.UUID
-	Amount    pgtype.UUID
-	AddedBy   pgtype.UUID
-	AddedAt   pgtype.Timestamptz
-	Remarks   pgtype.Text
+	ID        pgtype.UUID        `json:"id"`
+	StudentID pgtype.UUID        `json:"studentId"`
+	Amount    int32              `json:"amount"`
+	AddedBy   pgtype.UUID        `json:"addedBy"`
+	AddedAt   pgtype.Timestamptz `json:"addedAt"`
+	Remarks   pgtype.Text        `json:"remarks"`
 }
 
 type RefreshToken struct {
-	ID        pgtype.UUID
-	UserID    pgtype.UUID
-	TokenHash string
-	ExpiresAt pgtype.Timestamptz
-	CreatedAt pgtype.Timestamptz
-	RevokedAt pgtype.Timestamptz
+	ID        pgtype.UUID        `json:"id"`
+	UserID    pgtype.UUID        `json:"userId"`
+	TokenHash string             `json:"tokenHash"`
+	ExpiresAt pgtype.Timestamptz `json:"expiresAt"`
+	CreatedAt pgtype.Timestamptz `json:"createdAt"`
+	RevokedAt pgtype.Timestamptz `json:"revokedAt"`
 }
 
 type Setting struct {
-	Key   string
-	Value string
+	Key   string `json:"key"`
+	Value string `json:"value"`
 }
 
 type Student struct {
-	ID            pgtype.UUID
-	ReferenceNo   string
-	FiscalYear    string
-	SerialNo      int32
-	FullName      string
-	Dob           pgtype.Date
-	Gender        string
-	Phone         string
-	Email         pgtype.Text
-	Address       string
-	GuardianName  string
-	GuardianPhone string
-	PhotoUrl      pgtype.Text
-	Source        string
-	ClaimedAmount int32
-	Status        string
-	Notes         pgtype.Text
-	CreatedAt     pgtype.Timestamptz
+	ID            pgtype.UUID        `json:"id"`
+	ReferenceNo   string             `json:"referenceNo"`
+	FiscalYear    string             `json:"fiscalYear"`
+	SerialNo      int32              `json:"serialNo"`
+	FullName      string             `json:"fullName"`
+	Dob           pgtype.Date        `json:"dob"`
+	Gender        string             `json:"gender"`
+	Phone         string             `json:"phone"`
+	Email         pgtype.Text        `json:"email"`
+	Address       string             `json:"address"`
+	GuardianName  string             `json:"guardianName"`
+	GuardianPhone string             `json:"guardianPhone"`
+	PhotoUrl      pgtype.Text        `json:"photoUrl"`
+	Source        string             `json:"source"`
+	ClaimedAmount int32              `json:"claimedAmount"`
+	Status        string             `json:"status"`
+	Notes         pgtype.Text        `json:"notes"`
+	CreatedAt     pgtype.Timestamptz `json:"createdAt"`
 }
 
 type StudentCourse struct {
-	StudentID pgtype.UUID
-	CourseID  pgtype.UUID
+	StudentID pgtype.UUID `json:"studentId"`
+	CourseID  pgtype.UUID `json:"courseId"`
 }
 
 type User struct {
-	ID           pgtype.UUID
-	Name         string
-	Email        string
-	PasswordHash string
-	ImageUrl     pgtype.Text
-	Role         string
-	CreatedAt    pgtype.Timestamptz
+	ID           pgtype.UUID        `json:"id"`
+	Name         string             `json:"name"`
+	Email        string             `json:"email"`
+	PasswordHash string             `json:"-"`
+	ImageUrl     pgtype.Text        `json:"imageUrl"`
+	Role         string             `json:"role"`
+	CreatedAt    pgtype.Timestamptz `json:"createdAt"`
 }

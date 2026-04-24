@@ -13,7 +13,7 @@ WHERE sc.student_id = $1;
 
 -- name: GetNextSerialNo :one
 SELECT COALESCE(MAX(serial_no), 0) + 1 AS next_serial
-FROM students
+FROM students 
 WHERE fiscal_year = $1;
 
 -- name: CreateStudent :one
@@ -33,3 +33,28 @@ SELECT * FROM students WHERE id = $1;
 -- name: UpdateStudentStatus :one
 UPDATE students SET status = $2, notes = $3
 WHERE id = $1 RETURNING *;
+
+
+-- name: ListStudents :many
+SELECT 
+    s.id,
+    s.reference_no,
+    s.full_name,
+    s.phone,
+    s.status,
+    s.claimed_amount,
+    s.created_at,
+  COALESCE(
+    STRING_AGG(c.name, ',' ORDER BY c.name),
+    ''
+) AS courses
+FROM students s
+LEFT JOIN student_courses sc ON sc.student_id = s.id
+LEFT JOIN courses c ON c.id = sc.course_id
+GROUP BY s.id
+ORDER BY s.created_at DESC
+LIMIT $1 OFFSET $2;
+
+
+-- name: GetStudentsCount :one
+SELECT COUNT(*) FROM students;

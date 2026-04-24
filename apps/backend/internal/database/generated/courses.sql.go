@@ -18,8 +18,8 @@ RETURNING id, name, fee, is_active, created_at
 `
 
 type CreateCourseParams struct {
-	Name string
-	Fee  int32
+	Name string `json:"name"`
+	Fee  int32  `json:"fee"`
 }
 
 func (q *Queries) CreateCourse(ctx context.Context, arg CreateCourseParams) (Course, error) {
@@ -50,8 +50,8 @@ VALUES ($1, $2)
 `
 
 type EnrollStudentInCourseParams struct {
-	StudentID pgtype.UUID
-	CourseID  pgtype.UUID
+	StudentID pgtype.UUID `json:"studentId"`
+	CourseID  pgtype.UUID `json:"courseId"`
 }
 
 func (q *Queries) EnrollStudentInCourse(ctx context.Context, arg EnrollStudentInCourseParams) error {
@@ -174,8 +174,8 @@ WHERE student_id = $1 AND course_id = $2
 `
 
 type RemoveStudentFromCourseParams struct {
-	StudentID pgtype.UUID
-	CourseID  pgtype.UUID
+	StudentID pgtype.UUID `json:"studentId"`
+	CourseID  pgtype.UUID `json:"courseId"`
 }
 
 func (q *Queries) RemoveStudentFromCourse(ctx context.Context, arg RemoveStudentFromCourseParams) error {
@@ -189,8 +189,8 @@ WHERE id = $1 RETURNING id, name, fee, is_active, created_at
 `
 
 type ToggleCourseActiveParams struct {
-	ID       pgtype.UUID
-	IsActive bool
+	ID       pgtype.UUID `json:"id"`
+	IsActive bool        `json:"isActive"`
 }
 
 func (q *Queries) ToggleCourseActive(ctx context.Context, arg ToggleCourseActiveParams) (Course, error) {
@@ -212,9 +212,9 @@ WHERE id = $1 RETURNING id, name, fee, is_active, created_at
 `
 
 type UpdateCourseParams struct {
-	ID   pgtype.UUID
-	Name string
-	Fee  int32
+	ID   pgtype.UUID `json:"id"`
+	Name string      `json:"name"`
+	Fee  int32       `json:"fee"`
 }
 
 func (q *Queries) UpdateCourse(ctx context.Context, arg UpdateCourseParams) (Course, error) {

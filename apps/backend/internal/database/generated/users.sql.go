@@ -18,10 +18,10 @@ RETURNING id, name, email, password_hash, image_url, role, created_at
 `
 
 type CreateUserParams struct {
-	Name         string
-	Email        string
-	PasswordHash string
-	Role         string
+	Name         string `json:"name"`
+	Email        string `json:"email"`
+	PasswordHash string `json:"-"`
+	Role         string `json:"role"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
@@ -58,8 +58,8 @@ SELECT id, name, email, password_hash, image_url, role, created_at FROM users LI
 `
 
 type GetPaginatedUsersParams struct {
-	Limit  int32
-	Offset int32
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
 }
 
 func (q *Queries) GetPaginatedUsers(ctx context.Context, arg GetPaginatedUsersParams) ([]User, error) {
@@ -145,11 +145,11 @@ ORDER BY created_at DESC
 `
 
 type ListusersRow struct {
-	ID        pgtype.UUID
-	Name      string
-	Email     string
-	Role      string
-	CreatedAt pgtype.Timestamptz
+	ID        pgtype.UUID        `json:"id"`
+	Name      string             `json:"name"`
+	Email     string             `json:"email"`
+	Role      string             `json:"role"`
+	CreatedAt pgtype.Timestamptz `json:"createdAt"`
 }
 
 func (q *Queries) Listusers(ctx context.Context) ([]ListusersRow, error) {
@@ -184,10 +184,10 @@ WHERE id = $1 RETURNING id, name, email, password_hash, image_url, role, created
 `
 
 type UpdateUserParams struct {
-	ID    pgtype.UUID
-	Name  string
-	Email string
-	Role  string
+	ID    pgtype.UUID `json:"id"`
+	Name  string      `json:"name"`
+	Email string      `json:"email"`
+	Role  string      `json:"role"`
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {

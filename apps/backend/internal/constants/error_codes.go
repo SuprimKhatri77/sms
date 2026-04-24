@@ -22,7 +22,14 @@ const (
 
 	// student
 	StudentAlreadyExists = "STUDENT_ALREADY_EXISTS"
+	MissingStudentID     = "MISSING_STUDENT_ID"
+	StudentNotFound      = "STUDENT_NOT_FOUND"
 
 	// course
 	CourseNotFound = "COURSE_NOT_FOUND"
+
+	// image upload
+	ImageIsRequired    = "IMAGE_IS_REQUIRED"
+	InvalidImageFormat = "INVALID_IMAGE_FORMAT"
+	InvalidImageSize   = "INVALID_IMAGE_SIZE"
 )
