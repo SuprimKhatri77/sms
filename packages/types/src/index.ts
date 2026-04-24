@@ -22,3 +22,13 @@ export {
   type CreateStudentAdmission,
   type InquiryForm,
 } from "./student";
+
+export { type ImageUploadResponse } from "./upload";
+
+export { type CoursesList } from "./courses";
+export {
+  type ListStudent,
+  type StudentDetail,
+  type StudentEnrolledCourses,
+  type StudentPaymentDetials,
+} from "./admin";

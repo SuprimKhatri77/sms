@@ -10,6 +10,9 @@ const nextConfig: NextConfig = {
     browserToTerminal: true,
     serverFunctions: true,
   },
+  images: {
+    remotePatterns: [{ hostname: "randomuser.me", protocol: "https" }],
+  },
 };
 
 export default nextConfig;

@@ -9,7 +9,7 @@ export function MultiTileGroup({
   required,
 }: {
   label: string;
-  options: readonly { value: string; label: string }[];
+  options: { value: string; label: string }[];
   value: string[];
   onChange: (v: string[]) => void;
   error?: string;
@@ -41,7 +41,7 @@ export function MultiTileGroup({
               key={o.value}
               type="button"
               onClick={() => toggle(o.value)}
-              className={`inline-flex items-center gap-1.5 rounded-xl border px-4 py-2.5 text-[0.88rem] font-medium transition-all duration-150 ${
+              className={`inline-flex items-center gap-1.5 rounded-xl border px-4 py-2.5 text-[0.88rem] font-medium transition-all duration-150 capitalize ${
                 selected
                   ? "border-[#e8552a] bg-[#e8552a] text-white shadow-[0_2px_12px_rgba(232,85,42,0.3)]"
                   : "border-[#2d4a3e]/15 bg-white text-[#2d4a3e]/70 hover:border-[#e8552a]/40 hover:text-[#2d4a3e]"
@@ -54,7 +54,7 @@ export function MultiTileGroup({
                   strokeWidth={2.5}
                 />
               )}
-              {o.value}
+              {o.label}
             </button>
           );
         })}

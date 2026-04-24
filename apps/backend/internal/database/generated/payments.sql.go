@@ -18,10 +18,10 @@ RETURNING id, student_id, amount, added_by, added_at, remarks
 `
 
 type AddPaymentParams struct {
-	StudentID pgtype.UUID
-	Amount    pgtype.UUID
-	AddedBy   pgtype.UUID
-	Remarks   pgtype.Text
+	StudentID pgtype.UUID `json:"studentId"`
+	Amount    int32       `json:"amount"`
+	AddedBy   pgtype.UUID `json:"addedBy"`
+	Remarks   pgtype.Text `json:"remarks"`
 }
 
 func (q *Queries) AddPayment(ctx context.Context, arg AddPaymentParams) (Payment, error) {
@@ -61,13 +61,13 @@ ORDER BY p.added_at ASC
 `
 
 type GetPaymentsByStudentRow struct {
-	ID          pgtype.UUID
-	StudentID   pgtype.UUID
-	Amount      pgtype.UUID
-	AddedBy     pgtype.UUID
-	AddedAt     pgtype.Timestamptz
-	Remarks     pgtype.Text
-	AddedByName string
+	ID          pgtype.UUID        `json:"id"`
+	StudentID   pgtype.UUID        `json:"studentId"`
+	Amount      int32              `json:"amount"`
+	AddedBy     pgtype.UUID        `json:"addedBy"`
+	AddedAt     pgtype.Timestamptz `json:"addedAt"`
+	Remarks     pgtype.Text        `json:"remarks"`
+	AddedByName string             `json:"addedByName"`
 }
 
 func (q *Queries) GetPaymentsByStudent(ctx context.Context, studentID pgtype.UUID) ([]GetPaymentsByStudentRow, error) {

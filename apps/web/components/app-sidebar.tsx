@@ -12,10 +12,9 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import { RowsIcon } from "@phosphor-icons/react";
-import { User } from "lucide-react";
+import { RowsIcon, StudentIcon } from "@phosphor-icons/react";
+import { Book, Settings, TrendingUp, User } from "lucide-react";
 
-// This is sample data.
 const data = {
   teams: [
     {
@@ -26,9 +25,29 @@ const data = {
   ],
   navMain: [
     {
+      title: "Analytics",
+      url: "/analytics",
+      icon: <TrendingUp />,
+    },
+    {
+      title: "Settings",
+      url: "/settings",
+      icon: <Settings />,
+    },
+    {
+      title: "Courses",
+      url: "/courses",
+      icon: <Book />,
+    },
+    {
       title: "Users",
       url: "/users",
       icon: <User />,
+    },
+    {
+      title: "Students",
+      url: "/students",
+      icon: <StudentIcon />,
     },
   ],
 };

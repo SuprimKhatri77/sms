@@ -2,6 +2,8 @@ package cloudinary
 
 import (
 	"context"
+	"fmt"
+	"log/slog"
 
 	"github.com/cloudinary/cloudinary-go/v2"
 	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
@@ -12,6 +14,10 @@ type Client struct {
 }
 
 func New(cloudName, apiKey, apiSecret string) (*Client, error) {
+	if cloudName == "" || apiKey == "" || apiSecret == "" {
+		return nil, fmt.Errorf("cloudinary: missing required credentials")
+	}
+
 	cld, err := cloudinary.NewFromParams(cloudName, apiKey, apiSecret)
 	if err != nil {
 		return nil, err
@@ -19,15 +25,17 @@ func New(cloudName, apiKey, apiSecret string) (*Client, error) {
 	return &Client{cld: cld}, nil
 }
 
-func (c *Client) UploadImage(ctx context.Context, file interface{}, folder string) (string, error) {
+func (c *Client) UploadImage(ctx context.Context, file interface{}, folder string) (string, string, error) {
 	resp, err := c.cld.Upload.Upload(ctx, file, uploader.UploadParams{
 		Folder:       folder,
 		ResourceType: "image",
 	})
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
-	return resp.SecureURL, nil
+	slog.Info("cloudinary response", "full", fmt.Sprintf("%+v", resp))
+
+	return resp.SecureURL, resp.PublicID, nil
 }
 
 func (c *Client) DeleteImage(ctx context.Context, publicID string) error {

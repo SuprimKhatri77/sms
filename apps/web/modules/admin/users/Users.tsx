@@ -35,8 +35,8 @@ export function UsersPageClient() {
   if (isError || error) return <UsersErrorState />;
 
   const users = data?.data;
-  const totalUsers = data?.total ?? 0; // total record count from API
-  const totalPages = data?.totalPages ?? 1; // total pages from API
+  const totalUsers = data?.total ?? 0;
+  const totalPages = data?.totalPages ?? 1;
 
   const start = (page - 1) * PAGE_SIZE + 1;
   const end = Math.min(page * PAGE_SIZE, totalUsers);

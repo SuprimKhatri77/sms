@@ -10,8 +10,7 @@ export default function NavFooterWrapper({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const pathsToExcludeNavAndFooter = ["/admin", "/auth"];
-  return !pathsToExcludeNavAndFooter.includes(pathname) ? (
+  return !pathname.startsWith("/admin") && !pathname.startsWith("/auth") ? (
     <>
       <Navbar />
       {children}

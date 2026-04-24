@@ -16,6 +16,7 @@ import {
   CheckCircle2,
   Upload,
   ArrowLeft,
+  Loader2,
 } from "lucide-react";
 import { StepTitle } from "./StepTile";
 import { InputField } from "./InputField";
@@ -23,32 +24,57 @@ import { TileGroup } from "./TileGroup";
 import { MultiTileGroup } from "./MultiTileGroup";
 import { ReviewSection } from "./ReviewSection";
 import { ReviewRow } from "./ReviewRow";
-
-interface FormData {
-  full_name: string;
-  dob: string;
-  gender: string;
-  phone: string;
-  email: string;
-  address: string;
-  guardian_name: string;
-  guardian_phone: string;
-  course: string[];
-  source: string;
-  claimed_amount: string;
-  photo: File | null;
-}
+import { useForm } from "@tanstack/react-form-nextjs";
+import {
+  APIResponse,
+  CoursesList,
+  CreateStudentAdmission,
+  createStudentAdmissionRequest,
+  ImageUploadResponse,
+} from "@repo/types";
+import { useMutation } from "@tanstack/react-query";
+import api from "@/lib/axios";
+import { toast } from "sonner";
+import axios from "axios";
+import { mapFieldErrors } from "@/utils/api";
+import { cn } from "@/lib/utils";
 
 interface FieldError {
-  [key: string]: string;
+  fullName?: string;
+  dob?: string;
+  gender?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  guardianName?: string;
+  guardianPhone?: string;
+  courses?: string;
+  source?: string;
+  claimedAmount?: string;
+  photoUrl?: string;
 }
 
-const COURSES = ["Barista", "Bakery", "Bartending", "Sushi"] as const;
+const FIELD_STEP_MAP: Record<keyof FieldError, number> = {
+  fullName: 0,
+  dob: 0,
+  gender: 0,
+  phone: 0,
+  email: 0,
+  address: 0,
+  photoUrl: 0,
+
+  guardianName: 1,
+  guardianPhone: 1,
+
+  courses: 2,
+  source: 2,
+  claimedAmount: 2,
+};
 
 const SOURCES = [
-  { value: "fb", label: "Facebook" },
+  { value: "facebook", label: "Facebook" },
   { value: "tiktok", label: "TikTok" },
-  { value: "insta", label: "Instagram" },
+  { value: "instagram", label: "Instagram" },
   { value: "referral", label: "Referral" },
   { value: "inperson", label: "In Person" },
 ] as const;
@@ -61,26 +87,15 @@ const GENDERS = [
 
 const STEPS = ["Personal", "Guardian", "Course", "Review"] as const;
 
-const INITIAL_FORM: FormData = {
-  full_name: "",
-  dob: "",
-  gender: "",
-  phone: "",
-  email: "",
-  address: "",
-  guardian_name: "",
-  guardian_phone: "",
-  course: [],
-  source: "",
-  claimed_amount: "",
-  photo: null,
-};
+type ValidateStepData = Omit<CreateStudentAdmission, "dob"> & { dob: string };
 
-function validateStep(step: number, data: FormData): FieldError {
+function validateStep(step: number, data: ValidateStepData): FieldError {
   const errors: FieldError = {};
 
+  console.log("photo url in validate step: ", data.photoUrl);
+
   if (step === 0) {
-    if (!data.full_name.trim()) errors.full_name = "Full name is required";
+    if (!data.fullName.trim()) errors.fullName = "Full name is required";
     if (!data.dob) errors.dob = "Date of birth is required";
     if (!data.gender) errors.gender = "Please select a gender";
     if (!data.phone.trim()) errors.phone = "Phone number is required";
@@ -89,60 +104,192 @@ function validateStep(step: number, data: FormData): FieldError {
     if (data.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email))
       errors.email = "Enter a valid email address";
     if (!data.address.trim()) errors.address = "Address is required";
+    if (!data.photoUrl.trim()) errors.photoUrl = "Photo is required";
   }
 
   if (step === 1) {
-    if (!data.guardian_name.trim())
-      errors.guardian_name = "Guardian name is required";
-    if (!data.guardian_phone.trim())
-      errors.guardian_phone = "Guardian phone is required";
-    else if (!/^\+?[\d\s\-()]{7,15}$/.test(data.guardian_phone))
-      errors.guardian_phone = "Enter a valid phone number";
+    if (!data.guardianName.trim())
+      errors.guardianName = "Guardian name is required";
+    if (!data.guardianPhone.trim())
+      errors.guardianPhone = "Guardian phone is required";
+    else if (!/^\+?[\d\s\-()]{7,15}$/.test(data.guardianPhone))
+      errors.guardianPhone = "Enter a valid phone number";
   }
 
   if (step === 2) {
-    if (!data.course.length)
-      errors.course = "Please select at least one course";
+    if (!data.courses.length)
+      errors.courses = "Please select at least one course";
     if (!data.source) errors.source = "Please select how you heard about us";
-    if (!data.claimed_amount.trim())
-      errors.claimed_amount = "Please enter an amount";
+    if (!String(data.claimedAmount).trim())
+      errors.claimedAmount = "Please enter an amount";
     else if (
-      isNaN(Number(data.claimed_amount)) ||
-      Number(data.claimed_amount) < 0
+      isNaN(Number(data.claimedAmount)) ||
+      Number(data.claimedAmount) < 0
     )
-      errors.claimed_amount = "Enter a valid amount";
+      errors.claimedAmount = "Enter a valid amount";
   }
 
   return errors;
 }
 
-export default function AdmissionPage() {
+type Props = {
+  courses: NonNullable<CoursesList["data"]>;
+};
+export default function AdmissionPage({ courses }: Props) {
   const [currentStep, setCurrentStep] = useState(0);
-  const [form, setForm] = useState<FormData>(INITIAL_FORM);
-  const [errors, setErrors] = useState<FieldError>({});
-  const [submitting, setSubmitting] = useState(false);
-  const [referenceNo, setReferenceNo] = useState<string | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Partial<FieldError>>({});
+  const [photo, setPhoto] = useState<{
+    url: string;
+    publicID: string;
+    fileName: string;
+  }>();
 
-  const set = (field: keyof FormData, value: string) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
-    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: "" }));
-  };
+  const { mutate, isPending, reset } = useMutation({
+    mutationFn: async (data: CreateStudentAdmission) => {
+      const res = await api.post<APIResponse>("/students/admission", data);
+      return res.data;
+    },
+    onSuccess: (result: APIResponse) => {
+      toast.success(result.message);
+      setPhoto({ url: "", publicID: "", fileName: "" });
+      setCurrentStep(0);
+
+      resetForm();
+      reset();
+    },
+    onError: (error) => {
+      if (axios.isAxiosError(error)) {
+        const data = error.response?.data as APIResponse;
+        if (data.errors) {
+          const mapped = mapFieldErrors(data);
+          setErrors(mapped);
+
+          // find first field with error
+          const firstField = Object.keys(mapped)[0] as keyof FieldError;
+
+          if (firstField && FIELD_STEP_MAP[firstField] !== undefined) {
+            setCurrentStep(FIELD_STEP_MAP[firstField]);
+          }
+
+          toast.error("Please fix the highlighted fields");
+          return;
+        }
+      }
+      toast.error(error.message || "something went wrong");
+    },
+  });
+
+  const {
+    Field: FormField,
+    reset: resetForm,
+    handleSubmit,
+    getFieldValue,
+    setFieldValue,
+    setFieldMeta,
+  } = useForm({
+    defaultValues: {
+      fullName: "",
+      phone: "",
+      source: "" as CreateStudentAdmission["source"],
+      email: "",
+      dob: "",
+      gender: "" as CreateStudentAdmission["gender"],
+      guardianName: "",
+      guardianPhone: "",
+      courses: [] as string[],
+      address: "",
+      claimedAmount: 0,
+      photoUrl: "",
+    },
+    validators: {
+      onSubmit: createStudentAdmissionRequest,
+    },
+    onSubmit: ({ value }) => {
+      mutate({
+        ...value,
+        dob: value.dob,
+      });
+    },
+    onSubmitInvalid: ({ formApi }) => {
+      const errors = formApi.state.errors;
+
+      if (!errors?.length) return;
+
+      const firstErrorObj = errors[0];
+
+      if (!firstErrorObj) return;
+      const firstField = Object.keys(firstErrorObj)[0] as keyof FieldError;
+
+      if (firstField && FIELD_STEP_MAP[firstField] !== undefined) {
+        setCurrentStep(FIELD_STEP_MAP[firstField]);
+      }
+      setFieldMeta(firstField, (prev) => ({
+        ...prev,
+        isTouched: true,
+      }));
+
+      toast.error("Please fix the highlighted fields");
+    },
+  });
+
+  const { mutate: uploadImage, isPending: isUploadingImage } = useMutation({
+    mutationFn: async (data: FormData) => {
+      const res = await api.post<ImageUploadResponse>("/uploads", data, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      return res.data;
+    },
+    onSuccess: (result) => {
+      toast.success(result.message);
+      setPhoto((prev) => ({
+        url: result.data.imageUrl,
+        publicID: result.data.imagePublicID,
+        fileName: prev?.fileName || "",
+      }));
+      setFieldValue("photoUrl", result.data.imageUrl);
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] ?? null;
-    setForm((prev) => ({ ...prev, photo: file }));
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (ev) => setPhotoPreview(ev.target?.result as string);
-      reader.readAsDataURL(file);
-    } else {
-      setPhotoPreview(null);
-    }
+    if (!file) return;
+
+    // show local preview instantly
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setPhoto({
+        url: ev.target?.result as string,
+        publicID: "",
+        fileName: file.name,
+      });
+    };
+    reader.readAsDataURL(file);
+
+    // fire upload simultaneously
+    const formData = new FormData();
+    formData.append("image", file);
+    uploadImage(formData);
   };
 
   const goNext = () => {
-    const stepErrors = validateStep(currentStep, form);
+    const stepErrors = validateStep(currentStep, {
+      fullName: getFieldValue("fullName"),
+      dob: getFieldValue("dob"),
+      gender: getFieldValue("gender"),
+      phone: getFieldValue("phone"),
+      email: getFieldValue("email"),
+      address: getFieldValue("address"),
+      guardianName: getFieldValue("guardianName"),
+      guardianPhone: getFieldValue("guardianPhone"),
+      courses: getFieldValue("courses"),
+      source: getFieldValue("source"),
+      claimedAmount: getFieldValue("claimedAmount"),
+      photoUrl: photo?.url ?? "",
+    });
+
     if (Object.keys(stepErrors).length > 0) {
       setErrors(stepErrors);
       return;
@@ -156,96 +303,12 @@ export default function AdmissionPage() {
     setCurrentStep((s) => s - 1);
   };
 
-  const handleSubmit = async () => {
-    setSubmitting(true);
-    try {
-      const body = new FormData();
-      Object.entries(form).forEach(([k, v]) => {
-        if (k === "photo" && v instanceof File) body.append("photo", v);
-        else if (v !== null) body.append(k, String(v));
-      });
-
-      const res = await fetch("/api/admission", {
-        method: "POST",
-        body,
-      });
-
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.message ?? "Submission failed");
-      setReferenceNo(json.reference_no);
-    } catch (err) {
-      alert(
-        err instanceof Error
-          ? err.message
-          : "Something went wrong. Please try again.",
-      );
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
   const sourceLabel =
-    SOURCES.find((s) => s.value === form.source)?.label ?? form.source;
+    SOURCES.find((s) => s.value === getFieldValue("source"))?.label ??
+    getFieldValue("source");
   const genderLabel =
-    GENDERS.find((g) => g.value === form.gender)?.label ?? form.gender;
-
-  if (referenceNo) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-[#f4f1ec] px-6 py-24">
-        <div className="w-full max-w-lg text-center">
-          <div className="mb-6 flex justify-center">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#2d4a3e]/10">
-              <CheckCircle2
-                className="h-10 w-10 text-[#2d4a3e]"
-                strokeWidth={1.5}
-              />
-            </div>
-          </div>
-          <h1
-            className="mb-3 text-[clamp(1.8rem,4vw,2.4rem)] font-bold text-[#2d4a3e]"
-            style={{ fontFamily: "var(--font-playfair)" }}
-          >
-            Application Submitted!
-          </h1>
-          <p
-            className="mb-8 text-[1rem] leading-[1.7] text-[#666]"
-            style={{ fontFamily: "var(--font-dm-sans)" }}
-          >
-            Thank you, <strong>{form.full_name}</strong>. Our team will review
-            your application and get in touch within 24–48 hours.
-          </p>
-          <div className="mb-8 rounded-2xl border border-[#2d4a3e]/10 bg-white px-8 py-6">
-            <p
-              className="mb-1 text-[0.78rem] font-semibold uppercase tracking-widest text-[#2d4a3e]/50"
-              style={{ fontFamily: "var(--font-dm-sans)" }}
-            >
-              Your Reference Number
-            </p>
-            <p
-              className="text-[2rem] font-bold tracking-widest text-[#e8552a]"
-              style={{ fontFamily: "var(--font-playfair)" }}
-            >
-              {referenceNo}
-            </p>
-            <p
-              className="mt-1 text-[0.8rem] text-[#999]"
-              style={{ fontFamily: "var(--font-dm-sans)" }}
-            >
-              Save this number — you&apos;ll need it to track your status.
-            </p>
-          </div>
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 text-[0.92rem] font-medium text-[#2d4a3e]/60 transition-colors hover:text-[#2d4a3e]"
-            style={{ fontFamily: "var(--font-dm-sans)" }}
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Home
-          </Link>
-        </div>
-      </main>
-    );
-  }
+    GENDERS.find((g) => g.value === getFieldValue("gender"))?.label ??
+    getFieldValue("gender");
 
   // ── Form ──
   return (
@@ -335,278 +398,433 @@ export default function AdmissionPage() {
         </div>
 
         {/* Card */}
-        <div className="rounded-2xl border border-black/6 bg-white p-6 shadow-[0_4px_32px_rgba(0,0,0,0.05)] sm:p-10">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSubmit();
+          }}
+          className="rounded-2xl border border-black/6 bg-white p-6 shadow-[0_4px_32px_rgba(0,0,0,0.05)] sm:p-10"
+        >
           {/* Step 0 — Personal */}
-          {currentStep === 0 && (
-            <div className="flex flex-col gap-5">
-              <StepTitle icon={User} title="Personal Information" />
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div className="sm:col-span-2">
-                  <InputField
-                    label="Full Name"
-                    icon={User}
-                    required
-                    placeholder="e.g. Aarav Sharma"
-                    value={form.full_name}
-                    onChange={(e) => set("full_name", e.target.value)}
-                    error={errors.full_name}
-                  />
-                </div>
-                <InputField
-                  label="Date of Birth"
-                  icon={Calendar}
-                  required
-                  type="date"
-                  value={form.dob}
-                  onChange={(e) => set("dob", e.target.value)}
-                  error={errors.dob}
-                />
-                <TileGroup
-                  label="Gender"
-                  options={GENDERS}
-                  value={form.gender}
-                  onChange={(v) => set("gender", v)}
-                  error={errors.gender}
-                  required
-                />
-                <InputField
-                  label="Phone"
-                  icon={Phone}
-                  required
-                  type="tel"
-                  placeholder="+977 98XXXXXXXX"
-                  value={form.phone}
-                  onChange={(e) => set("phone", e.target.value)}
-                  error={errors.phone}
-                />
-                <InputField
-                  label="Email"
-                  icon={Mail}
-                  type="email"
-                  placeholder="optional"
-                  value={form.email}
-                  onChange={(e) => set("email", e.target.value)}
-                  error={errors.email}
-                />
-                <div className="sm:col-span-2">
-                  <div className="flex flex-col gap-1.5">
-                    <label
-                      className="text-[0.8rem] font-semibold uppercase tracking-[0.07em] text-[#2d4a3e]"
-                      style={{ fontFamily: "var(--font-dm-sans)" }}
-                    >
-                      Address <span className="text-[#e8552a]">*</span>
-                    </label>
-                    <div className="relative">
-                      <span className="pointer-events-none absolute left-3.5 top-3.5 text-[#2d4a3e]/40">
-                        <MapPin className="h-4 w-4" strokeWidth={1.75} />
-                      </span>
-                      <textarea
-                        rows={3}
-                        placeholder="Street, City, District"
-                        value={form.address}
-                        onChange={(e) => set("address", e.target.value)}
-                        className={`w-full resize-none rounded-xl border bg-white py-3 pl-10 pr-4 text-[0.92rem] text-[#2d4a3e] outline-none transition-all duration-200 placeholder:text-[#2d4a3e]/30 focus:border-[#e8552a] focus:ring-2 focus:ring-[#e8552a]/15 ${
-                          errors.address
-                            ? "border-red-400 ring-2 ring-red-100"
-                            : "border-[#2d4a3e]/15"
-                        }`}
-                        style={{ fontFamily: "var(--font-dm-sans)" }}
+          <div
+            className={cn(
+              "flex flex-col gap-5",
+              currentStep === 0 ? "" : "hidden",
+            )}
+          >
+            <StepTitle icon={User} title="Personal Information" />
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <FormField name="fullName">
+                {(field) => {
+                  const fieldError = field.state.meta.errors[0]?.message;
+                  const mergedError = fieldError ?? errors.fullName;
+                  return (
+                    <div className="sm:col-span-2">
+                      <InputField
+                        label="Full Name"
+                        icon={User}
+                        required
+                        placeholder="e.g. Aarav Sharma"
+                        value={field.state.value}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        error={mergedError}
                       />
                     </div>
-                    {errors.address && (
-                      <p
-                        className="text-[0.78rem] text-red-500"
-                        style={{ fontFamily: "var(--font-dm-sans)" }}
-                      >
-                        {errors.address}
-                      </p>
-                    )}
-                  </div>
-                </div>
+                  );
+                }}
+              </FormField>
 
-                {/* Photo upload */}
-                <div className="sm:col-span-2">
-                  <label
-                    className="mb-1.5 block text-[0.8rem] font-semibold uppercase tracking-[0.07em] text-[#2d4a3e]"
-                    style={{ fontFamily: "var(--font-dm-sans)" }}
-                  >
-                    Photo{" "}
-                    <span className="font-normal normal-case text-[#2d4a3e]/40">
-                      (optional)
-                    </span>
-                  </label>
-                  <label className="flex cursor-pointer items-center gap-4 rounded-xl border border-dashed border-[#2d4a3e]/20 bg-[#f4f1ec]/60 p-4 transition-colors hover:border-[#e8552a]/40 hover:bg-[#e8552a]/5">
-                    {photoPreview ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={photoPreview}
-                        alt="Preview"
-                        className="h-14 w-14 rounded-xl object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-[#2d4a3e]/08">
-                        <Upload
-                          className="h-5 w-5 text-[#2d4a3e]/40"
-                          strokeWidth={1.75}
-                        />
-                      </div>
-                    )}
-                    <div>
-                      <p
-                        className="text-[0.88rem] font-medium text-[#2d4a3e]"
-                        style={{ fontFamily: "var(--font-dm-sans)" }}
-                      >
-                        {form.photo
-                          ? form.photo.name
-                          : "Upload a passport photo"}
-                      </p>
-                      <p
-                        className="text-[0.78rem] text-[#2d4a3e]/40"
-                        style={{ fontFamily: "var(--font-dm-sans)" }}
-                      >
-                        JPG, PNG — max 5MB
-                      </p>
-                    </div>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handlePhotoChange}
+              <FormField name="dob">
+                {(field) => {
+                  const fieldError = field.state.meta.errors[0]?.message;
+                  const mergedError = fieldError ?? errors.dob;
+
+                  return (
+                    <InputField
+                      label="Date of Birth"
+                      icon={Calendar}
+                      required
+                      type="date"
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      error={mergedError}
                     />
-                  </label>
-                </div>
-              </div>
+                  );
+                }}
+              </FormField>
+
+              <FormField name="gender">
+                {(field) => {
+                  const fieldError = field.state.meta.errors[0]?.message;
+                  const mergedError = fieldError ?? errors.gender;
+                  return (
+                    <TileGroup
+                      label="Gender"
+                      options={GENDERS}
+                      value={field.state.value}
+                      onChange={(v) =>
+                        field.handleChange(
+                          v as CreateStudentAdmission["gender"],
+                        )
+                      }
+                      error={mergedError}
+                      required
+                    />
+                  );
+                }}
+              </FormField>
+              <FormField name="phone">
+                {(field) => {
+                  const fieldError = field.state.meta.errors[0]?.message;
+                  const mergedError = fieldError ?? errors.phone;
+                  return (
+                    <InputField
+                      label="Phone"
+                      icon={Phone}
+                      required
+                      type="tel"
+                      placeholder="98XXXXXXXX"
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      error={mergedError}
+                    />
+                  );
+                }}
+              </FormField>
+
+              <FormField name="email">
+                {(field) => {
+                  const fieldError = field.state.meta.errors[0]?.message;
+                  const mergedError = fieldError ?? errors.email;
+                  return (
+                    <InputField
+                      label="Email"
+                      icon={Mail}
+                      type="email"
+                      placeholder="optional"
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      error={mergedError}
+                    />
+                  );
+                }}
+              </FormField>
+              <FormField name="address">
+                {(field) => {
+                  const fieldError = field.state.meta.errors[0]?.message;
+                  const mergedError = fieldError ?? errors.address;
+                  return (
+                    <div className="sm:col-span-2">
+                      <div className="flex flex-col gap-1.5">
+                        <label
+                          className="text-[0.8rem] font-semibold uppercase tracking-[0.07em] text-[#2d4a3e]"
+                          style={{ fontFamily: "var(--font-dm-sans)" }}
+                        >
+                          Address <span className="text-[#e8552a]">*</span>
+                        </label>
+                        <div className="relative">
+                          <span className="pointer-events-none absolute left-3.5 top-3.5 text-[#2d4a3e]/40">
+                            <MapPin className="h-4 w-4" strokeWidth={1.75} />
+                          </span>
+                          <textarea
+                            rows={3}
+                            placeholder="Street, City, District"
+                            value={field.state.value}
+                            onChange={(e) => field.handleChange(e.target.value)}
+                            className={`w-full resize-none rounded-xl border bg-white py-3 pl-10 pr-4 text-[0.92rem] text-[#2d4a3e] outline-none transition-all duration-200 placeholder:text-[#2d4a3e]/30 focus:border-[#e8552a] focus:ring-2 focus:ring-[#e8552a]/15 ${
+                              mergedError
+                                ? "border-red-400 ring-2 ring-red-100"
+                                : "border-[#2d4a3e]/15"
+                            }`}
+                            style={{ fontFamily: "var(--font-dm-sans)" }}
+                          />
+                        </div>
+                        {mergedError && (
+                          <p
+                            className="text-[0.78rem] text-red-500"
+                            style={{ fontFamily: "var(--font-dm-sans)" }}
+                          >
+                            {mergedError}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                }}
+              </FormField>
+
+              {/* Photo upload */}
+              <FormField name="photoUrl">
+                {(field) => {
+                  const fieldError = field.state.meta.errors[0]?.message;
+                  const mergedError = fieldError ?? errors.photoUrl;
+                  return (
+                    <div className="sm:col-span-2">
+                      <label
+                        className="mb-1.5 block text-[0.8rem] font-semibold uppercase tracking-[0.07em] text-[#2d4a3e]"
+                        style={{ fontFamily: "var(--font-dm-sans)" }}
+                      >
+                        Photo <span className="text-[#e8552a]">*</span>
+                        {/* <span className="font-normal normal-case text-[#2d4a3e]/40">
+                          (optional)
+                        </span> */}
+                      </label>
+                      <label className="flex cursor-pointer items-center gap-4 rounded-xl border border-dashed border-[#2d4a3e]/20 bg-[#f4f1ec]/60 p-4 transition-colors hover:border-[#e8552a]/40 hover:bg-[#e8552a]/5">
+                        {isUploadingImage ? (
+                          <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-[#2d4a3e]/08">
+                            <Loader2 className="h-5 w-5 animate-spin text-[#2d4a3e]/40" />
+                          </div>
+                        ) : photo?.url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={photo?.url}
+                            alt="Preview"
+                            className="h-14 w-14 rounded-xl object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-[#2d4a3e]/08">
+                            <Upload
+                              className="h-5 w-5 text-[#2d4a3e]/40"
+                              strokeWidth={1.75}
+                            />
+                          </div>
+                        )}
+
+                        <div>
+                          <p className="text-[0.88rem] font-medium text-[#2d4a3e]">
+                            {isUploadingImage
+                              ? "Uploading..."
+                              : photo?.url
+                                ? photo.fileName
+                                : "Upload a passport photo"}
+                          </p>
+                          <p className="text-[0.78rem] text-[#2d4a3e]/40">
+                            JPG, PNG — max 5MB
+                          </p>
+                        </div>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handlePhotoChange}
+                          disabled={isUploadingImage}
+                        />
+                      </label>
+                      {mergedError && (
+                        <p
+                          className="text-[0.78rem] text-red-500"
+                          style={{ fontFamily: "var(--font-dm-sans)" }}
+                        >
+                          {mergedError}
+                        </p>
+                      )}
+                    </div>
+                  );
+                }}
+              </FormField>
             </div>
-          )}
+          </div>
 
           {/* Step 1 — Guardian */}
-          {currentStep === 1 && (
-            <div className="flex flex-col gap-5">
-              <StepTitle icon={Users} title="Guardian Information" />
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div className="sm:col-span-2">
-                  <InputField
-                    label="Guardian Full Name"
-                    icon={User}
-                    required
-                    placeholder="e.g. Ramesh Sharma"
-                    value={form.guardian_name}
-                    onChange={(e) => set("guardian_name", e.target.value)}
-                    error={errors.guardian_name}
-                  />
-                </div>
-                <div className="sm:col-span-2">
-                  <InputField
-                    label="Guardian Phone"
-                    icon={Phone}
-                    required
-                    type="tel"
-                    placeholder="+977 98XXXXXXXX"
-                    value={form.guardian_phone}
-                    onChange={(e) => set("guardian_phone", e.target.value)}
-                    error={errors.guardian_phone}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Step 2 — Course */}
-          {currentStep === 2 && (
-            <div className="flex flex-col gap-6">
-              <StepTitle icon={BookOpen} title="Course & Details" />
-              <MultiTileGroup
-                label="Select Course(s)"
-                options={COURSES.map((c) => ({ value: c, label: c }))}
-                value={form.course}
-                onChange={(v) => {
-                  setForm((prev) => ({ ...prev, course: v }));
-                  if (errors.course)
-                    setErrors((prev) => ({ ...prev, course: "" }));
-                }}
-                error={errors.course}
-                required
-              />
-              <TileGroup
-                label="How did you hear about us?"
-                options={[...SOURCES]}
-                value={form.source}
-                onChange={(v) => set("source", v)}
-                error={errors.source}
-                required
-              />
-              <InputField
-                label="Claimed Amount (NPR)"
-                icon={DollarSign}
-                required
-                type="number"
-                min="0"
-                placeholder="e.g. 15000"
-                value={form.claimed_amount}
-                onChange={(e) => set("claimed_amount", e.target.value)}
-                error={errors.claimed_amount}
-              />
-            </div>
-          )}
-
-          {/* Step 3 — Review */}
-          {currentStep === 3 && (
-            <div className="flex flex-col gap-6">
-              <StepTitle icon={CheckCircle2} title="Review & Submit" />
-              <div className="space-y-4">
-                <ReviewSection title="Personal">
-                  <ReviewRow label="Full Name" value={form.full_name} />
-                  <ReviewRow label="Date of Birth" value={form.dob} />
-                  <ReviewRow label="Gender" value={genderLabel} />
-                  <ReviewRow label="Phone" value={form.phone} />
-                  <ReviewRow label="Email" value={form.email} />
-                  <ReviewRow label="Address" value={form.address} />
-                  {photoPreview && (
-                    <div className="flex items-center justify-between py-3">
-                      <span
-                        className="text-[0.8rem] font-semibold uppercase tracking-[0.07em] text-[#2d4a3e]/50"
-                        style={{ fontFamily: "var(--font-dm-sans)" }}
-                      >
-                        Photo
-                      </span>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={photoPreview}
-                        alt="Preview"
-                        className="h-10 w-10 rounded-lg object-cover"
+          <div
+            className={cn(
+              "flex flex-col gap-5",
+              currentStep === 1 ? "" : "hidden",
+            )}
+          >
+            <StepTitle icon={Users} title="Guardian Information" />
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <FormField name="guardianName">
+                {(field) => {
+                  const fieldError = field.state.meta.errors[0]?.message;
+                  const mergedError = fieldError ?? errors.guardianName;
+                  return (
+                    <div className="sm:col-span-2">
+                      <InputField
+                        label="Guardian Full Name"
+                        icon={User}
+                        required
+                        placeholder="e.g. Ramesh Sharma"
+                        value={field.state.value}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        error={mergedError}
                       />
                     </div>
-                  )}
-                </ReviewSection>
-                <ReviewSection title="Guardian">
-                  <ReviewRow label="Name" value={form.guardian_name} />
-                  <ReviewRow label="Phone" value={form.guardian_phone} />
-                </ReviewSection>
-                <ReviewSection title="Course & Details">
-                  <ReviewRow
-                    label="Course(s)"
-                    value={form.course.length ? form.course.join(", ") : ""}
-                  />
-                  <ReviewRow label="Source" value={sourceLabel} />
-                  <ReviewRow
-                    label="Claimed Amount"
-                    value={
-                      form.claimed_amount
-                        ? `NPR ${Number(form.claimed_amount).toLocaleString()}`
-                        : ""
-                    }
-                  />
-                </ReviewSection>
-              </div>
-              <p
-                className="rounded-xl bg-[#2d4a3e]/05 px-4 py-3 text-[0.82rem] leading-[1.6] text-[#2d4a3e]/60"
-                style={{ fontFamily: "var(--font-dm-sans)" }}
-              >
-                By submitting, you confirm that all information provided is
-                accurate. Our team will contact you within 24–48 hours.
-              </p>
+                  );
+                }}
+              </FormField>
+              <FormField name="guardianPhone">
+                {(field) => {
+                  const fieldError = field.state.meta.errors[0]?.message;
+                  const mergedError = (fieldError ??
+                    errors.guardianPhone) as string;
+                  return (
+                    <div className="sm:col-span-2">
+                      <InputField
+                        label="Guardian Phone"
+                        icon={Phone}
+                        required
+                        type="tel"
+                        placeholder="+977 98XXXXXXXX"
+                        value={field.state.value}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        error={mergedError}
+                      />
+                    </div>
+                  );
+                }}
+              </FormField>
             </div>
-          )}
+          </div>
+
+          {/* Step 2 — Course */}
+          <div
+            className={cn(
+              "flex flex-col gap-6",
+              currentStep === 2 ? "" : "hidden",
+            )}
+          >
+            <StepTitle icon={BookOpen} title="Course & Details" />
+            <FormField name="courses">
+              {(field) => {
+                const fieldError = field.state.meta.errors[0]?.message;
+                const mergedError = fieldError ?? errors.courses;
+                return (
+                  <MultiTileGroup
+                    label="Select Course(s)"
+                    options={courses.map((c) => ({
+                      value: c.id,
+                      label: c.name,
+                    }))}
+                    value={field.state.value}
+                    onChange={(v) => {
+                      field.handleChange(v);
+                      if (mergedError)
+                        setErrors((prev) => ({ ...prev, course: "" }));
+                    }}
+                    error={mergedError}
+                    required
+                  />
+                );
+              }}
+            </FormField>
+            <FormField name="source">
+              {(field) => {
+                const fieldError = field.state.meta.errors[0]?.message;
+                const mergedError = fieldError ?? errors.source;
+                return (
+                  <TileGroup
+                    label="How did you hear about us?"
+                    options={[...SOURCES]}
+                    value={field.state.value}
+                    onChange={(v) =>
+                      field.handleChange(v as CreateStudentAdmission["source"])
+                    }
+                    error={mergedError}
+                    required
+                  />
+                );
+              }}
+            </FormField>
+
+            <FormField name="claimedAmount">
+              {(field) => {
+                const fieldError = field.state.meta.errors[0]?.message;
+                const mergedError = (fieldError ??
+                  errors.claimedAmount) as string;
+                return (
+                  <InputField
+                    label="Claimed Amount (NPR)"
+                    icon={DollarSign}
+                    required
+                    type="number"
+                    min="0"
+                    placeholder="e.g. 15000"
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(Number(e.target.value))}
+                    error={mergedError}
+                  />
+                );
+              }}
+            </FormField>
+          </div>
+
+          {/* Step 3 — Review */}
+          <div
+            className={cn(
+              "flex flex-col gap-6",
+              currentStep === 3 ? "" : "hidden",
+            )}
+          >
+            <StepTitle icon={CheckCircle2} title="Review & Submit" />
+            <div className="space-y-4">
+              <ReviewSection title="Personal">
+                <ReviewRow
+                  label="Full Name"
+                  value={getFieldValue("fullName")}
+                />
+                <ReviewRow label="Date of Birth" value={getFieldValue("dob")} />
+                <ReviewRow label="Gender" value={genderLabel} />
+                <ReviewRow label="Phone" value={getFieldValue("phone")} />
+                <ReviewRow label="Email" value={getFieldValue("email")} />
+                <ReviewRow label="Address" value={getFieldValue("address")} />
+                {photo?.url && (
+                  <div className="flex items-center justify-between py-3">
+                    <span
+                      className="text-[0.8rem] font-semibold uppercase tracking-[0.07em] text-[#2d4a3e]/50"
+                      style={{ fontFamily: "var(--font-dm-sans)" }}
+                    >
+                      Photo
+                    </span>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={photo.url}
+                      alt="Preview"
+                      className="h-10 w-10 rounded-lg object-cover"
+                    />
+                  </div>
+                )}
+              </ReviewSection>
+              <ReviewSection title="Guardian">
+                <ReviewRow label="Name" value={getFieldValue("guardianName")} />
+                <ReviewRow
+                  label="Phone"
+                  value={getFieldValue("guardianPhone")}
+                />
+              </ReviewSection>
+              <ReviewSection title="Course & Details">
+                <ReviewRow
+                  label="Course(s)"
+                  value={
+                    getFieldValue("courses").length
+                      ? getFieldValue("courses")
+                          .map(
+                            (id) =>
+                              courses.find((c) => c.id === id)?.name ?? id,
+                          )
+                          .join(" ,")
+                      : ""
+                  }
+                />
+                <ReviewRow label="Source" value={sourceLabel} />
+                <ReviewRow
+                  label="Claimed Amount"
+                  value={
+                    getFieldValue("claimedAmount")
+                      ? `NPR ${getFieldValue("claimedAmount").toLocaleString()}`
+                      : ""
+                  }
+                />
+              </ReviewSection>
+            </div>
+            <p
+              className="rounded-xl bg-[#2d4a3e]/05 px-4 py-3 text-[0.82rem] leading-[1.6] text-[#2d4a3e]/60"
+              style={{ fontFamily: "var(--font-dm-sans)" }}
+            >
+              By isPending, you confirm that all information provided is
+              accurate. Our team will contact you within 24-48 hours.
+            </p>
+          </div>
 
           {/* Navigation */}
           <div
@@ -635,18 +853,17 @@ export default function AdmissionPage() {
               </button>
             ) : (
               <button
-                type="button"
-                onClick={handleSubmit}
-                disabled={submitting}
+                type="submit"
+                disabled={isPending || isUploadingImage}
                 className="inline-flex items-center gap-2 rounded-xl bg-[#2d4a3e] px-6 py-3 text-[0.9rem] font-semibold text-white shadow-[0_4px_16px_rgba(45,74,62,0.25)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(45,74,62,0.35)] disabled:cursor-not-allowed disabled:opacity-60"
                 style={{ fontFamily: "var(--font-dm-sans)" }}
               >
-                {submitting ? "Submitting…" : "Submit Application"}
-                {!submitting && <CheckCircle2 className="h-4 w-4" />}
+                {isPending ? "Submitting…" : "Submit Application"}
+                {!isPending && <CheckCircle2 className="h-4 w-4" />}
               </button>
             )}
           </div>
-        </div>
+        </form>
       </div>
     </main>
   );

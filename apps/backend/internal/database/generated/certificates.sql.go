@@ -28,12 +28,12 @@ WHERE ce.student_id = $1
 `
 
 type GetCertificateByStudentIDRow struct {
-	ID           int32
-	StudentID    pgtype.UUID
-	IssuedBy     pgtype.UUID
-	IssuedAt     pgtype.Timestamptz
-	Remarks      pgtype.Text
-	IssuedByName string
+	ID           int32              `json:"id"`
+	StudentID    pgtype.UUID        `json:"studentId"`
+	IssuedBy     pgtype.UUID        `json:"issuedBy"`
+	IssuedAt     pgtype.Timestamptz `json:"issuedAt"`
+	Remarks      pgtype.Text        `json:"remarks"`
+	IssuedByName string             `json:"issuedByName"`
 }
 
 func (q *Queries) GetCertificateByStudentID(ctx context.Context, studentID pgtype.UUID) (GetCertificateByStudentIDRow, error) {
@@ -57,9 +57,9 @@ RETURNING id, student_id, issued_by, issued_at, remarks
 `
 
 type IssueCertificateParams struct {
-	StudentID pgtype.UUID
-	IssuedBy  pgtype.UUID
-	Remarks   pgtype.Text
+	StudentID pgtype.UUID `json:"studentId"`
+	IssuedBy  pgtype.UUID `json:"issuedBy"`
+	Remarks   pgtype.Text `json:"remarks"`
 }
 
 func (q *Queries) IssueCertificate(ctx context.Context, arg IssueCertificateParams) (Certificate, error) {
@@ -84,14 +84,14 @@ ORDER BY ce.issued_at DESC
 `
 
 type ListCertificatesRow struct {
-	ID           int32
-	StudentID    pgtype.UUID
-	IssuedBy     pgtype.UUID
-	IssuedAt     pgtype.Timestamptz
-	Remarks      pgtype.Text
-	FullName     string
-	ReferenceNo  string
-	IssuedByName string
+	ID           int32              `json:"id"`
+	StudentID    pgtype.UUID        `json:"studentId"`
+	IssuedBy     pgtype.UUID        `json:"issuedBy"`
+	IssuedAt     pgtype.Timestamptz `json:"issuedAt"`
+	Remarks      pgtype.Text        `json:"remarks"`
+	FullName     string             `json:"fullName"`
+	ReferenceNo  string             `json:"referenceNo"`
+	IssuedByName string             `json:"issuedByName"`
 }
 
 func (q *Queries) ListCertificates(ctx context.Context) ([]ListCertificatesRow, error) {
