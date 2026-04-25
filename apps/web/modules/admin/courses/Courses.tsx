@@ -6,48 +6,34 @@ import {
   Plus,
   Pencil,
   Trash2,
-  X,
-  Save,
   ChevronRight,
   Search,
-  AlertTriangle,
 } from "lucide-react";
+import {
+  APIResponse,
+  CoursesListResponse,
+  CreateCourseResponse,
+  DeleteCourse,
+  ToggleCourse,
+  UpdateCourse,
+  UpdateCourseResponse,
+} from "@repo/types";
+import { Toggle } from "./Toggle";
+import { CourseFormModal } from "./CourseFormModal";
+import { DeleteConfirmModal } from "./DeleteFormModal";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { CreateCourse } from "@repo/types";
+import api from "@/lib/axios";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { CoursesLoading } from "./CoursesLoadingSkeleton";
+import { CoursesError } from "./CoursesError";
+import { CoursesUnavailable } from "./CoursesUnavailable";
 
-interface Course {
-  id: string;
-  name: string;
-  fee: number;
-  is_active: boolean;
-  created_at: string;
-}
-
-function genId(): string {
-  return crypto.randomUUID();
-}
-
-const INITIAL_COURSES: Course[] = [
-  {
-    id: genId(),
-    name: "Bachelor of Computer Science",
-    fee: 45000,
-    is_active: true,
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: genId(),
-    name: "Diploma in Business Administration",
-    fee: 28000,
-    is_active: true,
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: genId(),
-    name: "Certificate in Digital Marketing",
-    fee: 12000,
-    is_active: false,
-    created_at: new Date().toISOString(),
-  },
-];
+export type Course = Extract<
+  CoursesListResponse,
+  { success: true }
+>["data"][number];
 
 function formatCurrency(amount: number): string {
   return `Rs. ${amount.toLocaleString("en-NP")}`;
@@ -61,289 +47,266 @@ function formatDate(iso: string): string {
   });
 }
 
-// ─── Toggle ─────────────────────────────────────────────────────────────────
-
-interface ToggleProps {
-  checked: boolean;
-  onChange: (v: boolean) => void;
-  disabled?: boolean;
-}
-
-function Toggle({ checked, onChange, disabled }: ToggleProps) {
-  return (
-    <button
-      role="switch"
-      aria-checked={checked}
-      disabled={disabled}
-      onClick={() => onChange(!checked)}
-      className={`relative w-10 h-[22px] rounded-full border-0 cursor-pointer transition-colors duration-200 flex-shrink-0 p-0 disabled:opacity-50 disabled:cursor-not-allowed ${
-        checked ? "bg-blue-600" : "bg-gray-300"
-      }`}
-    >
-      {/* Tailwind can't handle dynamic `left` values for the thumb, so inline style is necessary here */}
-      <span
-        className="absolute top-[2px] w-[18px] h-[18px] bg-white rounded-full transition-all duration-200 shadow-sm"
-        style={{ left: checked ? "20px" : "2px" }}
-      />
-    </button>
-  );
-}
-
-// ─── Course Form Modal ───────────────────────────────────────────────────────
-
-interface CourseFormProps {
-  initial?: Course;
-  onSave: (data: Omit<Course, "id" | "created_at">) => void;
-  onClose: () => void;
-}
-
-function CourseFormModal({ initial, onSave, onClose }: CourseFormProps) {
-  const [name, setName] = useState(initial?.name ?? "");
-  const [fee, setFee] = useState(initial?.fee.toString() ?? "");
-  const [isActive, setIsActive] = useState(initial?.is_active ?? true);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-
-  const validate = (): boolean => {
-    const errs: Record<string, string> = {};
-    if (!name.trim()) errs.name = "Course name is required.";
-    if (!fee.trim() || isNaN(Number(fee)) || Number(fee) < 0)
-      errs.fee = "Enter a valid fee amount.";
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
-  };
-
-  const handleSubmit = () => {
-    if (!validate()) return;
-    onSave({ name: name.trim(), fee: Number(fee), is_active: isActive });
-    onClose();
-  };
-
-  return (
-    <div
-      className="fixed inset-0 z-50 bg-black/35 grid place-items-center p-4 animate-fade-in"
-      onClick={onClose}
-    >
-      <div
-        className="bg-white rounded-xl shadow-2xl w-full max-w-[440px] animate-slide-up"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="flex items-center gap-2 justify-between px-5 py-[1.1rem] border-b border-gray-200">
-          <h2 className="text-base font-bold flex-1">
-            {initial ? "Edit Course" : "Add Course"}
-          </h2>
-          <button
-            className="w-[30px] h-[30px] rounded-md border border-gray-200 grid place-items-center cursor-pointer text-gray-500 hover:bg-gray-100 transition-colors"
-            onClick={onClose}
-          >
-            <X size={16} />
-          </button>
-        </div>
-
-        {/* Body */}
-        <div className="px-5 py-5 flex flex-col gap-4">
-          <label className="flex flex-col gap-[0.35rem] text-[0.8rem] font-semibold text-gray-500">
-            Course Name
-            <input
-              className={`border-[1.5px] rounded-lg px-3 py-2 text-sm outline-none bg-white text-gray-900 transition-all focus:border-blue-600 focus:ring-2 focus:ring-blue-600/10 ${
-                errors.name ? "border-red-500" : "border-gray-200"
-              }`}
-              placeholder="e.g. Bachelor of Science"
-              value={name}
-              onChange={(e) => {
-                setName(e.target.value);
-                setErrors((p) => ({ ...p, name: "" }));
-              }}
-            />
-            {errors.name && (
-              <span className="text-[0.75rem] text-red-600">{errors.name}</span>
-            )}
-          </label>
-
-          <label className="flex flex-col gap-[0.35rem] text-[0.8rem] font-semibold text-gray-500">
-            Fee (NPR)
-            <input
-              className={`border-[1.5px] rounded-lg px-3 py-2 text-sm outline-none bg-white text-gray-900 transition-all focus:border-blue-600 focus:ring-2 focus:ring-blue-600/10 ${
-                errors.fee ? "border-red-500" : "border-gray-200"
-              }`}
-              placeholder="e.g. 45000"
-              type="number"
-              min={0}
-              value={fee}
-              onChange={(e) => {
-                setFee(e.target.value);
-                setErrors((p) => ({ ...p, fee: "" }));
-              }}
-              onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-            />
-            {errors.fee && (
-              <span className="text-[0.75rem] text-red-600">{errors.fee}</span>
-            )}
-          </label>
-
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-sm font-semibold">Active</p>
-              <p className="text-[0.75rem] text-gray-400 mt-[0.15rem]">
-                Inactive courses won&apos;t appear for enrollment
-              </p>
-            </div>
-            <Toggle checked={isActive} onChange={setIsActive} />
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="px-5 py-4 border-t border-gray-200 flex justify-end gap-2">
-          <button
-            className="inline-flex items-center gap-[0.4rem] bg-white text-gray-900 border border-gray-200 rounded-lg px-4 py-2 text-[0.8125rem] font-medium cursor-pointer hover:bg-gray-50 transition-colors"
-            onClick={onClose}
-          >
-            Cancel
-          </button>
-          <button
-            className="inline-flex items-center gap-[0.4rem] bg-blue-600 text-white border-0 rounded-lg px-4 py-2 text-[0.8125rem] font-semibold cursor-pointer hover:bg-blue-700 transition-colors"
-            onClick={handleSubmit}
-          >
-            <Save size={15} />
-            {initial ? "Update" : "Add Course"}
-          </button>
-        </div>
-      </div>
-
-      {/* Animations — Tailwind's animate-* don't cover custom keyframes, so these stay as a style tag */}
-      <style>{`
-        @keyframes fade-in { from { opacity: 0 } to { opacity: 1 } }
-        @keyframes slide-up { from { transform: translateY(12px); opacity: 0 } to { transform: none; opacity: 1 } }
-        .animate-fade-in { animation: fade-in .15s ease; }
-        .animate-slide-up { animation: slide-up .18s ease; }
-      `}</style>
-    </div>
-  );
-}
-
-// ─── Delete Confirm ──────────────────────────────────────────────────────────
-
-interface DeleteConfirmProps {
-  courseName: string;
-  onConfirm: () => void;
-  onClose: () => void;
-}
-
-function DeleteConfirmModal({
-  courseName,
-  onConfirm,
-  onClose,
-}: DeleteConfirmProps) {
-  return (
-    <div
-      className="fixed inset-0 z-50 bg-black/35 grid place-items-center p-4 animate-fade-in"
-      onClick={onClose}
-    >
-      <div
-        className="bg-white rounded-xl shadow-2xl w-full max-w-[380px] animate-slide-up"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center gap-2 justify-between px-5 py-[1.1rem] border-b border-gray-200">
-          <div className="text-red-600">
-            <AlertTriangle size={18} />
-          </div>
-          <h2 className="text-base font-bold flex-1">Delete Course</h2>
-          <button
-            className="w-[30px] h-[30px] rounded-md border border-gray-200 grid place-items-center cursor-pointer text-gray-500 hover:bg-gray-100 transition-colors"
-            onClick={onClose}
-          >
-            <X size={16} />
-          </button>
-        </div>
-
-        <div className="px-5 py-5">
-          <p className="text-sm leading-relaxed text-gray-500">
-            Are you sure you want to delete{" "}
-            <strong className="text-gray-900">{courseName}</strong>? This action
-            cannot be undone.
-          </p>
-        </div>
-
-        <div className="px-5 py-4 border-t border-gray-200 flex justify-end gap-2">
-          <button
-            className="inline-flex items-center gap-[0.4rem] bg-white text-gray-900 border border-gray-200 rounded-lg px-4 py-2 text-[0.8125rem] font-medium cursor-pointer hover:bg-gray-50 transition-colors"
-            onClick={onClose}
-          >
-            Cancel
-          </button>
-          <button
-            className="inline-flex items-center gap-[0.4rem] bg-red-600 text-white border-0 rounded-lg px-4 py-2 text-[0.8125rem] font-semibold cursor-pointer hover:bg-red-700 transition-colors"
-            onClick={() => {
-              onConfirm();
-              onClose();
-            }}
-          >
-            <Trash2 size={15} /> Delete
-          </button>
-        </div>
-      </div>
-
-      <style>{`
-        @keyframes fade-in { from { opacity: 0 } to { opacity: 1 } }
-        @keyframes slide-up { from { transform: translateY(12px); opacity: 0 } to { transform: none; opacity: 1 } }
-        .animate-fade-in { animation: fade-in .15s ease; }
-        .animate-slide-up { animation: slide-up .18s ease; }
-      `}</style>
-    </div>
-  );
-}
-
-// ─── Main Page ───────────────────────────────────────────────────────────────
-
 type Modal =
   | { type: "add" }
-  | { type: "edit"; course: Course }
-  | { type: "delete"; course: Course }
+  | {
+      type: "edit";
+      course: Course;
+    }
+  | {
+      type: "delete";
+      course: Course;
+    }
   | null;
 
 export default function CoursesPage() {
-  const [courses, setCourses] = useState<Course[]>(INITIAL_COURSES);
   const [modal, setModal] = useState<Modal>(null);
   const [search, setSearch] = useState("");
   const [filterActive, setFilterActive] = useState<
     "all" | "active" | "inactive"
   >("all");
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const router = useRouter();
+  const queryClient = useQueryClient();
+
+  const { data, isPending, isError, refetch } = useQuery({
+    queryKey: ["admin-courses"],
+    queryFn: async () => {
+      const res = await api.get<CoursesListResponse>("/admin/courses");
+      return res.data;
+    },
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000,
+  });
+
+  const { mutate: addCourse } = useMutation({
+    mutationFn: async (data: CreateCourse) => {
+      const res = await api.post<CreateCourseResponse>("/admin/courses", data);
+      if (!res.data.success) {
+        throw new Error(res.data.message);
+      }
+
+      return res.data;
+    },
+    onMutate: async (data: CreateCourse) => {
+      await queryClient.cancelQueries({ queryKey: ["admin-courses"] });
+
+      const previousCourses = queryClient.getQueryData<CoursesListResponse>([
+        "admin-courses",
+      ]);
+
+      const optimisticCourse: Course = {
+        id: crypto.randomUUID(),
+        name: data.name,
+        fee: data.fee,
+        isActive: data.isActive,
+        createdAt: new Date(),
+      };
+
+      queryClient.setQueryData<CoursesListResponse>(
+        ["admin-courses"],
+        (old) => {
+          if (!old || !old.success) return old;
+
+          return {
+            ...old,
+            data: [...old.data, optimisticCourse],
+          };
+        },
+      );
+
+      return { previousCourses, optimisticCourse };
+    },
+    onSuccess: (result, _, context) => {
+      toast.success(result.message);
+
+      queryClient.setQueryData<CoursesListResponse>(
+        ["admin-courses"],
+        (old) => {
+          if (!old || !old.success) return old;
+
+          return {
+            ...old,
+            data: old.data.map((c) =>
+              c.id === context.optimisticCourse.id ? result.data : c,
+            ),
+          };
+        },
+      );
+    },
+    onError: (error, _, context) => {
+      toast.error(error.message);
+
+      if (context?.previousCourses) {
+        queryClient.setQueryData(["admin-courses"], context.previousCourses);
+      }
+    },
+
+    onSettled: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["admin-courses"],
+      });
+    },
+  });
+  const { mutate: updateCourse } = useMutation({
+    mutationFn: async ({ fee, isActive, name, id }: UpdateCourse) => {
+      const res = await api.put<UpdateCourseResponse>(`/admin/courses/${id}`, {
+        fee,
+        isActive,
+        name,
+      });
+      if (!res.data.success) throw new Error(res.data.message);
+      return res.data;
+    },
+    onMutate: async (data) => {
+      await queryClient.cancelQueries({ queryKey: ["admin-courses"] });
+      const previousCourses = queryClient.getQueryData(["admin-courses"]);
+
+      const optimisticCourse: Course = {
+        id: data.id,
+        name: data.name,
+        isActive: data.isActive,
+        fee: data.fee * 100,
+        createdAt: selectedCourse!.createdAt,
+      };
+      queryClient.setQueryData<CoursesListResponse>(
+        ["admin-courses"],
+        (old) => {
+          if (!old || !old.success) return old;
+          return {
+            ...old,
+            data: old.data.map((c) =>
+              c.id === selectedCourse?.id ? optimisticCourse : c,
+            ),
+          };
+        },
+      );
+
+      return { previousCourses, optimisticCourse };
+    },
+    onSuccess: (result) => {
+      toast.success(result.message);
+    },
+    onError: (error, _, context) => {
+      toast.error(error.message);
+      if (context?.previousCourses) {
+        queryClient.setQueryData(["admin-courses"], context.previousCourses);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-courses"] });
+    },
+  });
+  const { mutate: deleteCourse } = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await api.delete<DeleteCourse>(`/admin/courses/${id}`);
+      if (!res.data.success) throw new Error(res.data.message);
+      return res.data;
+    },
+    onMutate: async (id: string) => {
+      await queryClient.cancelQueries({ queryKey: ["admin-courses"] });
+      const previousCourses = queryClient.getQueryData(["admin-courses"]);
+
+      queryClient.setQueryData<CoursesListResponse>(
+        ["admin-courses"],
+        (old) => {
+          if (!old || !old.success) return old;
+
+          return {
+            ...old,
+            data: old.data.filter((c) => c.id != id),
+          };
+        },
+      );
+      return { previousCourses };
+    },
+    onSuccess: (result) => {
+      setSelectedCourse(null);
+      toast.success(result.message);
+      router.refresh();
+    },
+    onError: (error, _, context) => {
+      if (context?.previousCourses) {
+        queryClient.setQueryData(["admin-courses"], context.previousCourses);
+      }
+      toast.error(error.message);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-courses"] });
+    },
+  });
+
+  const { mutate: toggleCourseStatus } = useMutation({
+    mutationFn: async ({ status, id }: ToggleCourse) => {
+      const res = await api.patch<APIResponse>(`/admin/courses/${id}`, {
+        isActive: status,
+      });
+      return res.data;
+    },
+    onMutate: async ({ id, status }) => {
+      await queryClient.cancelQueries({ queryKey: ["admin-courses"] });
+
+      const previousCourses = queryClient.getQueryData<CoursesListResponse>([
+        "admin-courses",
+      ]);
+
+      queryClient.setQueryData<CoursesListResponse>(
+        ["admin-courses"],
+        (old) => {
+          if (!old || !old.success) return old;
+
+          return {
+            ...old,
+            data: old.data.map((c) =>
+              c.id === id ? { ...c, isActive: status } : c,
+            ),
+          };
+        },
+      );
+      return { previousCourses };
+    },
+    onSuccess: (result) => {
+      toast.success(result.message);
+    },
+    onError: (error, _, context) => {
+      console.error("error: ", error);
+      if (context?.previousCourses) {
+        queryClient.setQueryData(["admin-courses"], context.previousCourses);
+      }
+
+      toast.error(error.message);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-courses"] });
+    },
+  });
+
+  if (isPending) {
+    return <CoursesLoading />;
+  }
+
+  if (isError) {
+    return <CoursesError onRetry={refetch} />;
+  }
+
+  if (!data || !data.success) {
+    return <CoursesUnavailable message={data.message} onRetry={refetch} />;
+  }
+
+  const courses = data.data;
 
   const filtered = courses.filter((c) => {
     const matchSearch = c.name.toLowerCase().includes(search.toLowerCase());
     const matchFilter =
       filterActive === "all" ||
-      (filterActive === "active" && c.is_active) ||
-      (filterActive === "inactive" && !c.is_active);
+      (filterActive === "active" && c.isActive) ||
+      (filterActive === "inactive" && !c.isActive);
     return matchSearch && matchFilter;
   });
 
-  const handleAdd = (data: Omit<Course, "id" | "created_at">) => {
-    setCourses((prev) => [
-      { ...data, id: genId(), created_at: new Date().toISOString() },
-      ...prev,
-    ]);
-  };
-
-  const handleEdit = (id: string, data: Omit<Course, "id" | "created_at">) => {
-    setCourses((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, ...data } : c)),
-    );
-  };
-
-  const handleDelete = (id: string) => {
-    setCourses((prev) => prev.filter((c) => c.id !== id));
-  };
-
-  const handleToggleActive = (id: string, value: boolean) => {
-    setCourses((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, is_active: value } : c)),
-    );
-  };
-
   return (
     <div className="min-h-screen bg-[#f5f4f2] p-8 px-4 font-sans">
-      <div className="max-w-[960px] mx-auto">
+      <div className="max-w-240 mx-auto">
         {/* Breadcrumb */}
         <div className="flex items-center gap-1 text-xs text-gray-400 mb-6">
           <span className="text-gray-500">Admin</span>
@@ -379,11 +342,11 @@ export default function CoursesPage() {
           {[
             { value: courses.length, label: "Total" },
             {
-              value: courses.filter((c) => c.is_active).length,
+              value: courses.filter((c) => c.isActive).length,
               label: "Active",
             },
             {
-              value: courses.filter((c) => !c.is_active).length,
+              value: courses.filter((c) => !c.isActive).length,
               label: "Inactive",
             },
           ].map(({ value, label }) => (
@@ -477,30 +440,38 @@ export default function CoursesPage() {
                         {course.name}
                       </td>
                       <td className="px-4 py-[0.875rem] text-[0.8125rem] text-gray-500 font-mono">
-                        {formatCurrency(course.fee)}
+                        {formatCurrency(course.fee / 100)}
                       </td>
                       <td className="px-4 py-[0.875rem]">
                         <Toggle
-                          checked={course.is_active}
-                          onChange={(v) => handleToggleActive(course.id, v)}
+                          checked={course.isActive}
+                          onChange={(v) =>
+                            toggleCourseStatus({ status: v, id: course.id })
+                          }
                         />
                       </td>
-                      <td className="px-4 py-[0.875rem] text-[0.78rem] text-gray-400 whitespace-nowrap max-sm:hidden">
-                        {formatDate(course.created_at)}
+                      <td className="px-4 py-3.5 text-[0.78rem] text-gray-400 whitespace-nowrap max-sm:hidden">
+                        {formatDate(String(course.createdAt))}
                       </td>
-                      <td className="px-4 py-[0.875rem]">
+                      <td className="px-4 py-3.5">
                         <div className="flex items-center gap-[0.4rem]">
                           <button
-                            className="w-[30px] h-[30px] rounded-md border border-gray-200 grid place-items-center cursor-pointer transition-all bg-white text-gray-500 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-600"
+                            className="w-7.5 h-7.5 rounded-md border border-gray-200 grid place-items-center cursor-pointer transition-all bg-white text-gray-500 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-600"
                             title="Edit course"
-                            onClick={() => setModal({ type: "edit", course })}
+                            onClick={() => {
+                              setSelectedCourse(course);
+                              setModal({ type: "edit", course });
+                            }}
                           >
                             <Pencil size={14} />
                           </button>
                           <button
                             className="w-[30px] h-[30px] rounded-md border border-gray-200 grid place-items-center cursor-pointer transition-all bg-white text-gray-400 hover:bg-red-50 hover:text-red-600 hover:border-red-600"
                             title="Delete course"
-                            onClick={() => setModal({ type: "delete", course })}
+                            onClick={() => {
+                              setSelectedCourse(course);
+                              setModal({ type: "delete", course });
+                            }}
                           >
                             <Trash2 size={14} />
                           </button>
@@ -516,13 +487,13 @@ export default function CoursesPage() {
       </div>
 
       {modal?.type === "add" && (
-        <CourseFormModal onSave={handleAdd} onClose={() => setModal(null)} />
+        <CourseFormModal onSave={addCourse} onClose={() => setModal(null)} />
       )}
 
       {modal?.type === "edit" && (
         <CourseFormModal
           initial={modal.course}
-          onSave={(data) => handleEdit(modal.course.id, data)}
+          onSave={(data) => updateCourse({ ...data, id: modal.course.id })}
           onClose={() => setModal(null)}
         />
       )}
@@ -530,7 +501,7 @@ export default function CoursesPage() {
       {modal?.type === "delete" && (
         <DeleteConfirmModal
           courseName={modal.course.name}
-          onConfirm={() => handleDelete(modal.course.id)}
+          onConfirm={() => deleteCourse(modal.course.id)}
           onClose={() => setModal(null)}
         />
       )}

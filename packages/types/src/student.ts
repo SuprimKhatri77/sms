@@ -85,7 +85,8 @@ export const createStudentAdmissionRequest = z.object({
 
   claimedAmount: z
     .number({ error: "Amount must be a number" })
-    .min(0, "Amount cannot be negative"),
+    .min(0, "Amount cannot be negative")
+    .nullable(),
 
   photoUrl: z.url("Invalid photo URL").min(1, "Photo is required"),
 });

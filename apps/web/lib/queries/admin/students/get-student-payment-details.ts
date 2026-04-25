@@ -1,6 +1,6 @@
 import { env } from "@/utils/env";
 import { getAllCookies } from "@/utils/get-all-cookies";
-import { StudentPaymentDetials } from "@repo/types";
+import { StudentPaymentDetails } from "@repo/types";
 
 export async function getStudentPaymentDetails(studentID: string) {
   const res = await fetch(
@@ -13,7 +13,7 @@ export async function getStudentPaymentDetails(studentID: string) {
     },
   );
 
-  const data = (await res.json()) as StudentPaymentDetials;
+  const data = (await res.json()) as StudentPaymentDetails;
   if (!res.ok || !data || !data.success) {
     throw new Error(`${!data.success ? data.message : "Something went wrong"}`);
   }

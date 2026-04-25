@@ -13,14 +13,14 @@ SELECT * FROM courses ORDER BY created_at DESC;
 SELECT * FROM courses WHERE is_active = TRUE ORDER BY name ASC;
 
 -- name: UpdateCourse :one
-UPDATE courses SET name = $2, fee = $3
+UPDATE courses SET name = $2, fee = $3, is_active = $4
 WHERE id = $1 RETURNING *;
 
 -- name: ToggleCourseActive :one
 UPDATE courses SET is_active = $2
 WHERE id = $1 RETURNING *;
 
--- name: DeleteCourse :exec
+-- name: DeleteCourse :execresult
 DELETE FROM courses WHERE id = $1;
 
 -- name: GetCoursesByStudentID :many
