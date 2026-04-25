@@ -214,6 +214,8 @@ func CreateStudent(queries repository.StudentRepository, pool *pgxpool.Pool) gin
 			})
 
 			if err != nil {
+
+				// fk violation check
 				var pgErr *pgconn.PgError
 				if errors.As(err, &pgErr) && pgErr.Code == "23503" {
 					slog.Warn("course not found",

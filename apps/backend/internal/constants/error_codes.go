@@ -20,13 +20,19 @@ const (
 	InvalidAccessToken  = "INVALID_ACCESS_TOKEN"
 	UserNotFound        = "USER_NOT_FOUND"
 
+	// setting
+	MissingSettingKey = "MISSING_SETTING_KEY"
+	SettingNotFound   = "SETTING_NOT_FOUND"
+
 	// student
 	StudentAlreadyExists = "STUDENT_ALREADY_EXISTS"
 	MissingStudentID     = "MISSING_STUDENT_ID"
 	StudentNotFound      = "STUDENT_NOT_FOUND"
 
 	// course
-	CourseNotFound = "COURSE_NOT_FOUND"
+	CourseNotFound      = "COURSE_NOT_FOUND"
+	MissingCourseID     = "MISSING_COURSE_ID"
+	CourseAlreadyExists = "COURSE_ALREADY_EXISTS"
 
 	// image upload
 	ImageIsRequired    = "IMAGE_IS_REQUIRED"

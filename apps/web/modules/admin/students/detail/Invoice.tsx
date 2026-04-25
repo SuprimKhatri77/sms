@@ -1,14 +1,14 @@
 import {
   StudentDetail,
   StudentEnrolledCourses,
-  StudentPaymentDetials,
+  StudentPaymentDetails,
 } from "@repo/types";
 import { STATUS_META } from "./StudentDetail";
 
 type Props = {
   student: Extract<StudentDetail, { success: true }>["data"];
   courses: Extract<StudentEnrolledCourses, { success: true }>["data"];
-  payments: Extract<StudentPaymentDetials, { success: true }>["data"];
+  payments: Extract<StudentPaymentDetails, { success: true }>["data"];
 };
 export function Invoice({ student, payments, courses }: Props) {
   const totalPaid = payments.reduce((s, p) => s + p.amount, 0) / 100;

@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 	db "github.com/suprimkhatri77/sms/backend/internal/database/generated"
 )
@@ -16,4 +17,9 @@ type AdminRepository interface {
 	AddPayment(ctx context.Context, params db.AddPaymentParams) (db.Payment, error)
 	UpdateStudentStatus(ctx context.Context, params db.UpdateStudentStatusParams) (db.Student, error)
 	CreateCourse(ctx context.Context, params db.CreateCourseParams) (db.Course, error)
+	UpdateCourse(ctx context.Context, params db.UpdateCourseParams) (db.Course, error)
+	ToggleCourseActive(ctx context.Context, params db.ToggleCourseActiveParams) (db.Course, error)
+	DeleteCourse(ctx context.Context, id pgtype.UUID) (pgconn.CommandTag, error)
+	UpdateSetting(ctx context.Context, params db.UpdateSettingParams) (db.Setting, error)
+	GetAdmissionSettings(ctx context.Context) ([]db.Setting, error)
 }

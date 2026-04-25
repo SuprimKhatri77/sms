@@ -1,5 +1,9 @@
 import z from "zod";
-import { baseAPIResponseSchema } from "./base";
+import {
+  baseAPIResponseSchema,
+  fieldErrorSchema,
+  type APIResponse,
+} from "./base";
 
 export const listStudentResponseSchema = z.discriminatedUnion("success", [
   z.object({
@@ -146,3 +150,140 @@ export type AddPayment = z.infer<typeof addPaymentSchema>;
 
 export const addPaymentResponseSchema = baseAPIResponseSchema;
 export type AddPaymentResponse = z.infer<typeof addPaymentResponseSchema>;
+
+export const createCourseSchema = z.object({
+  name: z.string().min(2).max(50),
+  isActive: z.boolean(),
+  fee: z.number().gt(0),
+});
+
+export const createCourseResponseSchema = z.discriminatedUnion("success", [
+  z.object({
+    success: z.literal(true),
+    message: z.string(),
+    data: z.object({
+      id: z.uuid(),
+      name: z.string(),
+      fee: z.number(),
+      isActive: z.boolean(),
+      createdAt: z.date(),
+    }),
+  }),
+
+  z.object({
+    success: z.literal(false),
+    message: z.string(),
+    code: z.string(),
+  }),
+]);
+export type CreateCourse = z.infer<typeof createCourseSchema>;
+export type CreateCourseResponse = z.infer<typeof createCourseResponseSchema>;
+
+export const updateCourseSchema = z.object({
+  name: z.string().min(2).max(50),
+  isActive: z.boolean(),
+  fee: z.number().gt(0),
+  id: z.uuid(),
+});
+
+export const updateCourseResponseSchema = z.discriminatedUnion("success", [
+  z.object({
+    success: z.literal(true),
+    message: z.string(),
+  }),
+
+  z.object({
+    success: z.literal(false),
+    message: z.string(),
+    code: z.string(),
+  }),
+]);
+export type UpdateCourse = z.infer<typeof updateCourseSchema>;
+export type UpdateCourseResponse = z.infer<typeof updateCourseResponseSchema>;
+
+export const deleteCourseResponseSchema = z.discriminatedUnion("success", [
+  z.object({
+    success: z.literal(true),
+    message: z.string(),
+  }),
+
+  z.object({
+    success: z.literal(false),
+    message: z.string(),
+    code: z.string(),
+  }),
+]);
+
+export type DeleteCourse = z.infer<typeof deleteCourseResponseSchema>;
+
+export const coursesListResponseSchema = z.discriminatedUnion("success", [
+  z.object({
+    success: z.literal(true),
+    data: z.array(
+      z.object({
+        id: z.uuid(),
+        name: z.string(),
+        fee: z.number(),
+        isActive: z.boolean(),
+        createdAt: z.date(),
+      }),
+    ),
+  }),
+
+  z.object({
+    success: z.literal(false),
+    message: z.string(),
+    code: z.string(),
+  }),
+]);
+
+export type CoursesListResponse = z.infer<typeof coursesListResponseSchema>;
+
+export const toggleCourseSchema = z.object({
+  status: z.boolean(),
+  id: z.uuid(),
+});
+
+export type ToggleCourse = z.infer<typeof toggleCourseSchema>;
+
+export const updateSetting = z.object({
+  value: z.string().min(1).max(30),
+  key: z.string(),
+});
+
+export type UpdateSetting = z.infer<typeof updateSetting>;
+
+export const updateSettingResponseSchema = z.discriminatedUnion("success", [
+  z.object({
+    success: z.literal(true),
+    message: z.string(),
+  }),
+
+  z.object({
+    success: z.literal(false),
+    message: z.string(),
+    code: z.string(),
+  }),
+]);
+
+export type UpdateSettingResponse = z.infer<typeof updateSettingResponseSchema>;
+
+export const settingsListResponseSchema = z.discriminatedUnion("success", [
+  z.object({
+    success: z.literal(true),
+    data: z.array(
+      z.object({
+        key: z.string(),
+        value: z.string(),
+      }),
+    ),
+  }),
+
+  z.object({
+    success: z.literal(false),
+    message: z.string(),
+    code: z.string(),
+  }),
+]);
+
+export type SettingsListResponse = z.infer<typeof settingsListResponseSchema>;

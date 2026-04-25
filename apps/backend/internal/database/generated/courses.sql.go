@@ -8,6 +8,7 @@ package db
 import (
 	"context"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -36,13 +37,12 @@ func (q *Queries) CreateCourse(ctx context.Context, arg CreateCourseParams) (Cou
 	return i, err
 }
 
-const deleteCourse = `-- name: DeleteCourse :exec
+const deleteCourse = `-- name: DeleteCourse :execresult
 DELETE FROM courses WHERE id = $1
 `
 
-func (q *Queries) DeleteCourse(ctx context.Context, id pgtype.UUID) error {
-	_, err := q.db.Exec(ctx, deleteCourse, id)
-	return err
+func (q *Queries) DeleteCourse(ctx context.Context, id pgtype.UUID) (pgconn.CommandTag, error) {
+	return q.db.Exec(ctx, deleteCourse, id)
 }
 
 const enrollStudentInCourse = `-- name: EnrollStudentInCourse :exec
@@ -208,18 +208,24 @@ func (q *Queries) ToggleCourseActive(ctx context.Context, arg ToggleCourseActive
 }
 
 const updateCourse = `-- name: UpdateCourse :one
-UPDATE courses SET name = $2, fee = $3
+UPDATE courses SET name = $2, fee = $3, is_active = $4
 WHERE id = $1 RETURNING id, name, fee, is_active, created_at
 `
 
 type UpdateCourseParams struct {
-	ID   pgtype.UUID `json:"id"`
-	Name string      `json:"name"`
-	Fee  int32       `json:"fee"`
+	ID       pgtype.UUID `json:"id"`
+	Name     string      `json:"name"`
+	Fee      int32       `json:"fee"`
+	IsActive bool        `json:"isActive"`
 }
 
 func (q *Queries) UpdateCourse(ctx context.Context, arg UpdateCourseParams) (Course, error) {
-	row := q.db.QueryRow(ctx, updateCourse, arg.ID, arg.Name, arg.Fee)
+	row := q.db.QueryRow(ctx, updateCourse,
+		arg.ID,
+		arg.Name,
+		arg.Fee,
+		arg.IsActive,
+	)
 	var i Course
 	err := row.Scan(
 		&i.ID,

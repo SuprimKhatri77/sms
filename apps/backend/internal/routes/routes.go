@@ -7,6 +7,7 @@ import (
 	db "github.com/suprimkhatri77/sms/backend/internal/database/generated"
 	adminCourses "github.com/suprimkhatri77/sms/backend/internal/handlers/admin/courses"
 	adminPayments "github.com/suprimkhatri77/sms/backend/internal/handlers/admin/payments"
+	adminSettings "github.com/suprimkhatri77/sms/backend/internal/handlers/admin/settings"
 	adminStudents "github.com/suprimkhatri77/sms/backend/internal/handlers/admin/students"
 	adminUsers "github.com/suprimkhatri77/sms/backend/internal/handlers/admin/users"
 	"github.com/suprimkhatri77/sms/backend/internal/handlers/auth"
@@ -59,6 +60,14 @@ func Setup(r *gin.Engine, cfg Config) {
 
 	// admin/courses
 	adminRouter.GET("/courses", adminCourses.ListAllCourses(cfg.Queries))
+	adminRouter.PATCH("/courses/:courseID", adminCourses.ToggleCourse(cfg.Queries))
+	adminRouter.POST("/courses", adminCourses.CreateCourse(cfg.Queries))
+	adminRouter.DELETE("/courses/:courseID", adminCourses.DeleteCourse(cfg.Queries))
+	adminRouter.PUT("/courses/:courseID", adminCourses.UpdateCourse(cfg.Queries))
+
+	// admin/settings
+	adminRouter.GET("/settings", adminSettings.GetSettings(cfg.Queries))
+	adminRouter.PUT("/settings/:key", adminSettings.UpdateSetting(cfg.Queries))
 
 	// public student routes
 	studentRouter := router.Group("/students")

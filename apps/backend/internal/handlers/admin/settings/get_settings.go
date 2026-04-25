@@ -1,41 +1,40 @@
-package courses
+package settings
 
 import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/suprimkhatri77/sms/backend/internal/constants"
+	db "github.com/suprimkhatri77/sms/backend/internal/database/generated"
 	"github.com/suprimkhatri77/sms/backend/internal/repository"
 	"github.com/suprimkhatri77/sms/backend/internal/types"
 )
 
-func ListAllCourses(queries repository.CoursesRepository) gin.HandlerFunc {
+func GetSettings(queries repository.AdminRepository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
 
-		courses, err := queries.ListCourses(ctx)
-
+		settings, err := queries.GetAdmissionSettings(ctx)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, types.APIResponse{
 				Success: false,
-				Message: "Failed to process request",
+				Message: "Failed to fetch settings",
 				Code:    constants.InternalServerError,
 			})
 			return
 		}
 
-		if len(courses) == 0 {
+		if len(settings) == 0 {
 			c.JSON(http.StatusOK, types.APIResponse{
 				Success: true,
-				Message: "No courses found",
-				Data:    []types.Courses{},
+				Data:    []db.Setting{},
 			})
 			return
 		}
 
 		c.JSON(http.StatusOK, types.APIResponse{
 			Success: true,
-			Data:    courses,
+			Data:    settings,
 		})
 	}
 }

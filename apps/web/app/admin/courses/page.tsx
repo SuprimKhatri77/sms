@@ -1,5 +1,5 @@
 import CoursesPage from "@/modules/admin/courses/Courses";
 
-export default function Page() {
+export default async function Page() {
   return <CoursesPage />;
 }

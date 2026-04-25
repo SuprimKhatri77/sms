@@ -198,7 +198,7 @@ export default function AdmissionPage({ courses }: Props) {
       guardianPhone: "",
       courses: [] as string[],
       address: "",
-      claimedAmount: 0,
+      claimedAmount: null as number | null,
       photoUrl: "",
     },
     validators: {
@@ -208,6 +208,7 @@ export default function AdmissionPage({ courses }: Props) {
       mutate({
         ...value,
         dob: value.dob,
+        claimedAmount: value.claimedAmount ?? 0,
       });
     },
     onSubmitInvalid: ({ formApi }) => {
@@ -309,6 +310,8 @@ export default function AdmissionPage({ courses }: Props) {
   const genderLabel =
     GENDERS.find((g) => g.value === getFieldValue("gender"))?.label ??
     getFieldValue("gender");
+
+  const amount = getFieldValue("claimedAmount");
 
   // ── Form ──
   return (
@@ -730,8 +733,7 @@ export default function AdmissionPage({ courses }: Props) {
             <FormField name="claimedAmount">
               {(field) => {
                 const fieldError = field.state.meta.errors[0]?.message;
-                const mergedError = (fieldError ??
-                  errors.claimedAmount) as string;
+                const mergedError = fieldError ?? errors.claimedAmount;
                 return (
                   <InputField
                     label="Claimed Amount (NPR)"
@@ -740,8 +742,11 @@ export default function AdmissionPage({ courses }: Props) {
                     type="number"
                     min="0"
                     placeholder="e.g. 15000"
-                    value={field.state.value}
-                    onChange={(e) => field.handleChange(Number(e.target.value))}
+                    value={field.state.value ?? ""}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      field.handleChange(v === "" ? null : Number(v));
+                    }}
                     error={mergedError}
                   />
                 );
@@ -810,9 +815,7 @@ export default function AdmissionPage({ courses }: Props) {
                 <ReviewRow
                   label="Claimed Amount"
                   value={
-                    getFieldValue("claimedAmount")
-                      ? `NPR ${getFieldValue("claimedAmount").toLocaleString()}`
-                      : ""
+                    amount != null ? `NPR ${amount.toLocaleString()}` : "0"
                   }
                 />
               </ReviewSection>
