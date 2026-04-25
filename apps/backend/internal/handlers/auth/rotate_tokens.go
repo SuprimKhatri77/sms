@@ -189,9 +189,14 @@ func RotateTokens(queries repository.AuthRepository, cfg *config.Config) gin.Han
 			})
 			return
 		}
+		secure := cfg.GinMode == "release"
+		domain := ""
+		if secure {
+			domain = ".sms.suprimkhatri.com.np"
+		}
 
-		c.SetCookie("access_token", accessTokenString, 15*60, "/", "", true, true)
-		c.SetCookie("refresh_token", newRefreshTokenString, 30*24*60*60, "/", "", true, true)
+		c.SetCookie("access_token", accessTokenString, 15*60, "/", domain, secure, true)
+		c.SetCookie("refresh_token", refreshTokenString, 30*24*60*60, "/", domain, secure, true)
 
 		slog.Info("tokens rotated successfully",
 			"user_id", user.ID,
