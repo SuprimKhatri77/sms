@@ -133,7 +133,7 @@ function validateStep(step: number, data: ValidateStepData): FieldError {
 }
 
 type Props = {
-  courses: NonNullable<CoursesList["data"]>;
+  courses: Extract<CoursesList, { success: true }>["data"];
 };
 export default function AdmissionPage({ courses }: Props) {
   const [currentStep, setCurrentStep] = useState(0);
