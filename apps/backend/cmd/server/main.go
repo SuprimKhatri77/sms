@@ -69,7 +69,7 @@ func main() {
 	r := gin.New()
 	r.Use(middleware.Recovery())
 	r.Use(gin.Logger())
-	r.Use(middleware.CORS())
+	r.Use(middleware.CORS(cfg))
 
 	routes.Setup(r, routes.Config{
 		Config:      cfg,

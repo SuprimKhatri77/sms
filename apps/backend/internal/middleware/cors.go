@@ -3,14 +3,18 @@ package middleware
 import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/suprimkhatri77/sms/backend/internal/config"
 )
 
-func CORS() gin.HandlerFunc {
+func CORS(cfg *config.Config) gin.HandlerFunc {
 	config := cors.DefaultConfig()
 
-	config.AllowOrigins = []string{
-		"http://localhost:3000",
+	allowOrigins := []string{"http://localhost:3000"}
+	if cfg.FrontendUrl != "" {
+		allowOrigins = append(allowOrigins, cfg.FrontendUrl)
 	}
+
+	config.AllowOrigins = allowOrigins
 
 	config.AllowCredentials = true
 

@@ -17,6 +17,7 @@ type Config struct {
 	CloudinaryAPIKey    string
 	CloudinaryAPISecret string
 	BootstrapSecret     string
+	FrontendUrl         string
 }
 
 func Load() (*Config, error) {
@@ -41,6 +42,7 @@ func Load() (*Config, error) {
 	cloudinaryAPIKey := os.Getenv("CLOUDINARY_API_KEY")
 	cloudinaryAPISecret := os.Getenv("CLOUDINARY_API_SECRET")
 	bootstrapSecret := os.Getenv("BOOTSTRAP_SECRET")
+	frontendUrl := os.Getenv("FRONTEND_URL")
 
 	return &Config{
 		Port:                port,
@@ -52,5 +54,6 @@ func Load() (*Config, error) {
 		CloudinaryAPIKey:    cloudinaryAPIKey,
 		CloudinaryAPISecret: cloudinaryAPISecret,
 		BootstrapSecret:     bootstrapSecret,
+		FrontendUrl:         frontendUrl,
 	}, nil
 }
