@@ -53,3 +53,7 @@ type ListStudent struct {
 	Status        string      `json:"status"`
 	Courses       []string    `json:"courses"`
 }
+
+type UpdateStudentStatusRequest struct {
+	Status string `json:"status" binding:"required,oneof=pending active completed rejected"`
+}

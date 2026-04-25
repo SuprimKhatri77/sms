@@ -227,18 +227,17 @@ func (q *Queries) ListStudents(ctx context.Context, arg ListStudentsParams) ([]L
 }
 
 const updateStudentStatus = `-- name: UpdateStudentStatus :one
-UPDATE students SET status = $2, notes = $3
+UPDATE students SET status = $2
 WHERE id = $1 RETURNING id, reference_no, fiscal_year, serial_no, full_name, dob, gender, phone, email, address, guardian_name, guardian_phone, photo_url, source, claimed_amount, status, notes, created_at
 `
 
 type UpdateStudentStatusParams struct {
 	ID     pgtype.UUID `json:"id"`
 	Status string      `json:"status"`
-	Notes  pgtype.Text `json:"notes"`
 }
 
 func (q *Queries) UpdateStudentStatus(ctx context.Context, arg UpdateStudentStatusParams) (Student, error) {
-	row := q.db.QueryRow(ctx, updateStudentStatus, arg.ID, arg.Status, arg.Notes)
+	row := q.db.QueryRow(ctx, updateStudentStatus, arg.ID, arg.Status)
 	var i Student
 	err := row.Scan(
 		&i.ID,

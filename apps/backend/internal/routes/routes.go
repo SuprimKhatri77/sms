@@ -40,8 +40,7 @@ func Setup(r *gin.Engine, cfg Config) {
 	authRouter.POST("/bootstrap", auth.Bootstrap(cfg.Queries, cfg.Config))
 	authRouter.GET("/me", middleware.RequireAuth(cfg.Config), middleware.RequireRole("admin", "superadmin"), auth.Me(cfg.Queries))
 
-	adminRouter := router.Group("/admin")
-	// middleware.RequireAuth(cfg.Config), middleware.RequireRole("admin", "superadmin")
+	adminRouter := router.Group("/admin", middleware.RequireAuth(cfg.Config), middleware.RequireRole("admin", "superadmin"))
 
 	// admin/users
 	adminRouter.POST("/users", adminUsers.CreateUser(cfg.Queries))
@@ -55,6 +54,7 @@ func Setup(r *gin.Engine, cfg Config) {
 	adminRouter.GET("/students/:studentID/detail", adminStudents.StudentDetail(cfg.Queries))
 	adminRouter.GET("/students/:studentID/courses", adminStudents.StudentEnrolledCourses(cfg.Queries))
 	adminRouter.GET("/students/:studentID/payments", adminStudents.StudentPaymentDetails(cfg.Queries))
+	adminRouter.PUT("/students/:studentID/status", adminStudents.UpdateStatus(cfg.Queries))
 	adminRouter.POST("/students/:studentID/payments", adminPayments.AddPayment(cfg.Queries))
 
 	// admin/courses

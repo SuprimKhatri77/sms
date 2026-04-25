@@ -31,7 +31,7 @@ INSERT INTO students (
 SELECT * FROM students WHERE id = $1;
 
 -- name: UpdateStudentStatus :one
-UPDATE students SET status = $2, notes = $3
+UPDATE students SET status = $2
 WHERE id = $1 RETURNING *;
 
 

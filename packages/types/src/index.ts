@@ -30,5 +30,10 @@ export {
   type ListStudent,
   type StudentDetail,
   type StudentEnrolledCourses,
-  type StudentPaymentDetials,
+  type StudentPaymentDetails,
+  type UpdateStudentStatus,
+  type UpdateStudentStatusResponse,
+  type AddPayment,
+  type AddPaymentResponse,
+  addPaymentSchema,
 } from "./admin";

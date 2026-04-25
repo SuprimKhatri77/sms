@@ -1,6 +1,6 @@
 -- name: CreateCourse :one
-INSERT INTO courses (name, fee)
-VALUES ($1, $2)
+INSERT INTO courses (name, fee, is_active)
+VALUES ($1, $2, $3)
 RETURNING *;
 
 -- name: GetCourseByID :one
