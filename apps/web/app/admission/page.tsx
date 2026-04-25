@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { getActiveCourses } from "@/lib/queries/courses/get-active-courses";
 import AdmissionPage from "@/modules/admission/Admission";
 
