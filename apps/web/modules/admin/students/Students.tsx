@@ -1,4 +1,3 @@
-// app/admin/students/page.tsx
 "use client";
 
 import { useState, useMemo } from "react";
@@ -8,7 +7,6 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronDown,
-  Users,
   Filter,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -114,17 +112,7 @@ export default function StudentsPage() {
         variant="list"
       />
     );
-  console.log({
-    page,
-    raw: data.data.length,
-    filtered: filtered.length,
-    statusFilter,
-    courseFilter,
-    search,
-  });
-  // const students = data.data;
-  // console.log("total std: ", data.total, " total pages: ", data.totalPages);
-  // console.log("data: ", students);
+
   const totalStudents = data.total;
   const totalPages = data.totalPages;
   const paginated = filtered;

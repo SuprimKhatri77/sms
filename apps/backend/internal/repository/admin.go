@@ -14,4 +14,6 @@ type AdminRepository interface {
 	GetCoursesByStudentID(ctx context.Context, studentID pgtype.UUID) ([]db.Course, error)
 	GetPaymentsByStudent(ctx context.Context, studentID pgtype.UUID) ([]db.GetPaymentsByStudentRow, error)
 	AddPayment(ctx context.Context, params db.AddPaymentParams) (db.Payment, error)
+	UpdateStudentStatus(ctx context.Context, params db.UpdateStudentStatusParams) (db.Student, error)
+	CreateCourse(ctx context.Context, params db.CreateCourseParams) (db.Course, error)
 }

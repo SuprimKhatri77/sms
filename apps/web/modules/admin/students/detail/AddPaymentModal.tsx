@@ -2,25 +2,45 @@
 
 import { AlertCircle, CreditCard, X } from "lucide-react";
 import { useState } from "react";
+import z from "zod";
 
+const modalSchema = z.object({
+  amount: z.number().gt(0),
+  remarks: z.string().min(3).max(100).optional(),
+});
+type AddPaymentModal = z.infer<typeof modalSchema>;
+
+type AddPaymentModalErrors = {
+  amount?: string;
+  remarks?: string;
+};
 export function AddPaymentModal({
   onClose,
   onAdd,
 }: {
   onClose: () => void;
-  onAdd: (amount: number, remarks: string) => void;
+  onAdd: (data: AddPaymentModal) => void;
 }) {
   const [amount, setAmount] = useState("");
   const [remarks, setRemarks] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState<AddPaymentModalErrors>({});
 
   const handleSubmit = () => {
-    const n = Number(amount);
-    if (!amount || isNaN(n) || n <= 0) {
-      setError("Enter a valid amount greater than 0");
+    const result = modalSchema.safeParse({
+      amount: Number(amount),
+      remarks,
+    });
+
+    if (!result.success) {
+      const tree = z.treeifyError(result.error).properties;
+      setError({
+        amount: tree?.amount?.errors[0],
+        remarks: tree?.remarks?.errors[0],
+      });
       return;
     }
-    onAdd(n, remarks);
+
+    onAdd(result.data);
     onClose();
   };
 
@@ -61,18 +81,18 @@ export function AddPaymentModal({
                 value={amount}
                 onChange={(e) => {
                   setAmount(e.target.value);
-                  setError("");
+                  setError({});
                 }}
                 className={`w-full rounded-xl border bg-white py-3 pl-10 pr-4 text-[0.92rem] text-[#2d4a3e] outline-none transition-all placeholder:text-[#2d4a3e]/30 focus:border-[#e8552a] focus:ring-2 focus:ring-[#e8552a]/15 ${error ? "border-red-400 ring-2 ring-red-100" : "border-[#2d4a3e]/15"}`}
                 style={{ fontFamily: "var(--font-dm-sans)" }}
               />
             </div>
-            {error && (
+            {error && error.amount && (
               <p
                 className="flex items-center gap-1.5 text-[0.78rem] text-red-500"
                 style={{ fontFamily: "var(--font-dm-sans)" }}
               >
-                <AlertCircle className="h-3.5 w-3.5" /> {error}
+                <AlertCircle className="h-3.5 w-3.5" /> {error.amount}
               </p>
             )}
           </div>
@@ -95,6 +115,14 @@ export function AddPaymentModal({
               className="w-full rounded-xl border border-[#2d4a3e]/15 bg-white py-3 px-4 text-[0.92rem] text-[#2d4a3e] outline-none transition-all placeholder:text-[#2d4a3e]/30 focus:border-[#e8552a] focus:ring-2 focus:ring-[#e8552a]/15"
               style={{ fontFamily: "var(--font-dm-sans)" }}
             />
+            {error && error.remarks && (
+              <p
+                className="flex items-center gap-1.5 text-[0.78rem] text-red-500"
+                style={{ fontFamily: "var(--font-dm-sans)" }}
+              >
+                <AlertCircle className="h-3.5 w-3.5" /> {error.remarks}
+              </p>
+            )}
           </div>
         </div>
 

@@ -1,4 +1,5 @@
 import z from "zod";
+import { baseAPIResponseSchema } from "./base";
 
 export const listStudentResponseSchema = z.discriminatedUnion("success", [
   z.object({
@@ -119,6 +120,29 @@ export const studentPaymentDetailsResponseSchema = z.discriminatedUnion(
   ],
 );
 
-export type StudentPaymentDetials = z.infer<
+export type StudentPaymentDetails = z.infer<
   typeof studentPaymentDetailsResponseSchema
 >;
+
+export const updateStudentStatusSchema = z.object({
+  status: z.enum(["pending", "active", "completed", "rejected"]),
+});
+
+export type UpdateStudentStatus = z.infer<typeof updateStudentStatusSchema>;
+
+export const updateStudentStatusResponseSchema = baseAPIResponseSchema;
+
+export type UpdateStudentStatusResponse = z.infer<
+  typeof updateStudentStatusResponseSchema
+>;
+
+export const addPaymentSchema = z.object({
+  amount: z.number().gt(0),
+  addedBy: z.uuid(),
+  remarks: z.string().min(3).max(100).optional(),
+});
+
+export type AddPayment = z.infer<typeof addPaymentSchema>;
+
+export const addPaymentResponseSchema = baseAPIResponseSchema;
+export type AddPaymentResponse = z.infer<typeof addPaymentResponseSchema>;

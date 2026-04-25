@@ -12,18 +12,19 @@ import (
 )
 
 const createCourse = `-- name: CreateCourse :one
-INSERT INTO courses (name, fee)
-VALUES ($1, $2)
+INSERT INTO courses (name, fee, is_active)
+VALUES ($1, $2, $3)
 RETURNING id, name, fee, is_active, created_at
 `
 
 type CreateCourseParams struct {
-	Name string `json:"name"`
-	Fee  int32  `json:"fee"`
+	Name     string `json:"name"`
+	Fee      int32  `json:"fee"`
+	IsActive bool   `json:"isActive"`
 }
 
 func (q *Queries) CreateCourse(ctx context.Context, arg CreateCourseParams) (Course, error) {
-	row := q.db.QueryRow(ctx, createCourse, arg.Name, arg.Fee)
+	row := q.db.QueryRow(ctx, createCourse, arg.Name, arg.Fee, arg.IsActive)
 	var i Course
 	err := row.Scan(
 		&i.ID,

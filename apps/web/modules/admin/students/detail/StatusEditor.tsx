@@ -107,7 +107,7 @@ export function StatusEditor({
       <div
         className={`
           overflow-hidden transition-all duration-200
-          ${isDirty ? "max-w-[140px] opacity-100" : "max-w-0 opacity-0"}
+          ${isDirty ? "max-w-35 opacity-100" : "max-w-0 opacity-0"}
         `}
       >
         <button

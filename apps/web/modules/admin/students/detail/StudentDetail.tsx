@@ -19,9 +19,13 @@ import {
   AlertCircle,
 } from "lucide-react";
 import {
+  AddPayment,
+  AddPaymentResponse,
   StudentDetail,
   StudentEnrolledCourses,
-  StudentPaymentDetials,
+  StudentPaymentDetails,
+  UpdateStudentStatus,
+  UpdateStudentStatusResponse,
 } from "@repo/types";
 import { StudentAvatar } from "./StudentAvatar";
 import { AddPaymentModal } from "./AddPaymentModal";
@@ -29,11 +33,16 @@ import { StatusEditor } from "./StatusEditor";
 import { Invoice } from "./Invoice";
 import { SectionCard } from "./SectionCard";
 import { InfoRow } from "./InfoRow";
+import { useMutation } from "@tanstack/react-query";
+import api from "@/lib/axios";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/store/auth";
 
 type Props = {
   student: Extract<StudentDetail, { success: true }>["data"];
   courses: Extract<StudentEnrolledCourses, { success: true }>["data"];
-  payments: Extract<StudentPaymentDetials, { success: true }>["data"];
+  payments: Extract<StudentPaymentDetails, { success: true }>["data"];
 };
 
 export type Status = "pending" | "active" | "completed" | "rejected";
@@ -76,17 +85,51 @@ export default function StudentDetailPage({
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showInvoice, setShowInvoice] = useState(false);
   const [currentStatus, setCurrentStatus] = useState<Status>(student.status);
+  const router = useRouter();
+  const { user } = useAuthStore();
 
   const totalPaid = payments.reduce((s, p) => s + p.amount, 0) / 100;
   const totalFee = courses.reduce((s, c) => s + c.fee, 0) / 100;
   const balance = totalFee - totalPaid;
   const claimedAmount = student.claimedAmount / 100;
 
-  const handleAddPayment = () => {};
+  const { mutate: updateStatus } = useMutation({
+    mutationFn: async (data: UpdateStudentStatus) => {
+      const res = await api.put<UpdateStudentStatusResponse>(
+        `/admin/students/${student.id}/status`,
+        data,
+      );
+      return res.data;
+    },
+    onMutate: ({ status }) => {
+      setCurrentStatus(status);
+    },
+    onSuccess: (result) => {
+      toast.success(result.message);
+      router.refresh();
+    },
+    onError: (error) => {
+      setCurrentStatus(student.status);
+      toast.error(error.message);
+    },
+  });
 
-  const handleStatusUpdate = async (next: Status) => {
-    setCurrentStatus(next);
-  };
+  const { mutate: addPayment } = useMutation({
+    mutationFn: async (data: AddPayment) => {
+      const res = await api.post<AddPaymentResponse>(
+        `/admin/students/${student.id}/payments`,
+        data,
+      );
+      return res.data;
+    },
+    onSuccess: (result) => {
+      toast.success(result.message);
+      router.refresh();
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
 
   const handlePrint = () => {
     const totalPaidRaw = payments.reduce((s, p) => s + p.amount, 0);
@@ -182,7 +225,7 @@ export default function StudentDetailPage({
       {showPaymentModal && (
         <AddPaymentModal
           onClose={() => setShowPaymentModal(false)}
-          onAdd={handleAddPayment}
+          onAdd={(data) => addPayment({ ...data, addedBy: user!.id })}
         />
       )}
 
@@ -209,7 +252,7 @@ export default function StudentDetailPage({
             <div>
               <h1
                 className="text-[1.4rem] font-bold leading-tight text-[#2d4a3e]"
-                style={{ fontFamily: "var(--font-playfair)" }}
+                style={{ fontFamily: "var(--font-lora)" }}
               >
                 {student.fullName}
               </h1>
@@ -254,7 +297,7 @@ export default function StudentDetailPage({
             </span>
             <StatusEditor
               current={currentStatus}
-              onUpdate={handleStatusUpdate}
+              onUpdate={(next) => updateStatus({ status: next })}
             />
           </div>
         </div>
@@ -412,7 +455,6 @@ export default function StudentDetailPage({
                   Add
                 </button>
               </div>
-
               {payments.length === 0 ? (
                 <p
                   className="py-6 text-center text-[0.85rem] text-[#2d4a3e]/35"
@@ -421,7 +463,8 @@ export default function StudentDetailPage({
                   No payments recorded yet.
                 </p>
               ) : (
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2 max-h-88 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-[#2d4a3e]/20 scrollbar-track-transparent">
+                  {" "}
                   {[...payments].reverse().map((p) => (
                     <div
                       key={p.id}

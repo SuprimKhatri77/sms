@@ -199,3 +199,15 @@ button {
   background: var(--brand-orange);
   color: #fff;
 }
+
+/* payments scrollbar */
+.payments-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.payments-scroll::-webkit-scrollbar-thumb {
+  background: rgba(45, 74, 62, 0.2);
+  border-radius: 9999px;
+}
+.payments-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
