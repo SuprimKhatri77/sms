@@ -10,6 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/suprimkhatri77/sms/backend/internal/config"
@@ -106,9 +107,12 @@ func Login(
 			return
 		}
 
+		sessionID := uuid.New()
+
 		refreshClaims := jwt.MapClaims{
-			"user_id": user.ID,
-			"exp":     time.Now().Add(30 * 24 * time.Hour).Unix(),
+			"user_id":    user.ID,
+			"session_id": sessionID,
+			"exp":        time.Now().Add(30 * 24 * time.Hour).Unix(),
 		}
 
 		refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims)
@@ -129,17 +133,6 @@ func Login(
 			Valid: true,
 		}
 
-		err = queries.RevokeAllUserRefreshTokens(ctx, user.ID)
-		if err != nil {
-			slog.Error("failed to revoke refresh tokens", "userID", user.ID, "error", err)
-			c.JSON(http.StatusInternalServerError, types.APIResponse{
-				Success: false,
-				Message: "Something went wrong",
-				Code:    constants.InternalServerError,
-			})
-			return
-		}
-
 		refreshTokenHash := sha256.Sum256([]byte(refreshTokenString))
 		refreshTokenHashString := fmt.Sprintf("%x", refreshTokenHash)
 
@@ -147,6 +140,7 @@ func Login(
 			UserID:    user.ID,
 			ExpiresAt: expiresAt,
 			TokenHash: refreshTokenHashString,
+			SessionID: pgtype.UUID{Bytes: sessionID, Valid: true},
 		})
 		if err != nil {
 			slog.Error("failed to store refresh token", "error", err, "user_id", user.ID)

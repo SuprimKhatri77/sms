@@ -48,6 +48,7 @@ type RefreshToken struct {
 	ID        pgtype.UUID        `json:"id"`
 	UserID    pgtype.UUID        `json:"userId"`
 	TokenHash string             `json:"tokenHash"`
+	SessionID pgtype.UUID        `json:"sessionId"`
 	ExpiresAt pgtype.Timestamptz `json:"expiresAt"`
 	CreatedAt pgtype.Timestamptz `json:"createdAt"`
 	RevokedAt pgtype.Timestamptz `json:"revokedAt"`

@@ -10,6 +10,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/suprimkhatri77/sms/backend/internal/config"
 	"github.com/suprimkhatri77/sms/backend/internal/constants"
+	db "github.com/suprimkhatri77/sms/backend/internal/database/generated"
 	"github.com/suprimkhatri77/sms/backend/internal/repository"
 	"github.com/suprimkhatri77/sms/backend/internal/types"
 	"github.com/suprimkhatri77/sms/backend/internal/utils"
@@ -58,11 +59,47 @@ func Logout(queries repository.AuthRepository, cfg *config.Config) gin.HandlerFu
 			})
 			return
 		}
+		claims, ok := token.Claims.(jwt.MapClaims)
+		if !ok {
+			slog.Warn("invalid token claims",
+				"ip", c.ClientIP(),
+			)
+
+			c.JSON(http.StatusUnauthorized, types.APIResponse{
+				Success: false,
+				Message: "Invalid token",
+				Code:    constants.InvalidToken,
+			})
+			return
+		}
+
+		sessionIDFromClaims, ok := claims["session_id"].(string)
+		if !ok {
+			c.JSON(http.StatusUnauthorized, types.APIResponse{
+				Success: false,
+				Message: "Invalid token claims",
+				Code:    constants.InvalidToken,
+			})
+			return
+		}
+
+		sessionID, err := utils.ConvertToUUID(sessionIDFromClaims)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, types.APIResponse{
+				Success: false,
+				Message: "Invalid token claims",
+				Code:    constants.InvalidToken,
+			})
+			return
+		}
 
 		hash := sha256.Sum256([]byte(refreshTokenFromCookie))
 		tokenHash := fmt.Sprintf("%x", hash)
 
-		err = queries.RevokeRefreshToken(ctx, tokenHash)
+		err = queries.RevokeRefreshToken(ctx, db.RevokeRefreshTokenParams{
+			TokenHash: tokenHash,
+			SessionID: sessionID,
+		})
 		if err != nil {
 			slog.Error("failed to revoke refresh token on logout",
 				"error", err,

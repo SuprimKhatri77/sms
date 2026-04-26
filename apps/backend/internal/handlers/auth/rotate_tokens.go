@@ -61,7 +61,7 @@ func RotateTokens(queries repository.AuthRepository, cfg *config.Config) gin.Han
 			return
 		}
 
-		_, ok := token.Claims.(jwt.MapClaims)
+		claims, ok := token.Claims.(jwt.MapClaims)
 		if !ok {
 			slog.Warn("invalid token claims",
 				"ip", c.ClientIP(),
@@ -75,10 +75,33 @@ func RotateTokens(queries repository.AuthRepository, cfg *config.Config) gin.Han
 			return
 		}
 
+		sessionIDFromClaims, ok := claims["session_id"].(string)
+		if !ok {
+			c.JSON(http.StatusUnauthorized, types.APIResponse{
+				Success: false,
+				Message: "Invalid token claims",
+				Code:    constants.InvalidToken,
+			})
+			return
+		}
+
+		sessionID, err := utils.ConvertToUUID(sessionIDFromClaims)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, types.APIResponse{
+				Success: false,
+				Message: "Invalid token claims",
+				Code:    constants.InvalidToken,
+			})
+			return
+		}
+
 		refreshTokenHash := sha256.Sum256([]byte(refreshTokenString))
 		refreshTokenHashString := fmt.Sprintf("%x", refreshTokenHash)
 
-		refreshToken, err := queries.GetRefreshToken(ctx, refreshTokenHashString)
+		refreshToken, err := queries.GetRefreshToken(ctx, db.GetRefreshTokenParams{
+			SessionID: sessionID,
+			TokenHash: refreshTokenHashString,
+		})
 		if err != nil {
 			slog.Warn("refresh token not found in DB",
 				"ip", c.ClientIP(),
@@ -92,7 +115,10 @@ func RotateTokens(queries repository.AuthRepository, cfg *config.Config) gin.Han
 			return
 		}
 
-		err = queries.RevokeRefreshToken(ctx, refreshTokenHashString)
+		err = queries.RevokeRefreshToken(ctx, db.RevokeRefreshTokenParams{
+			SessionID: sessionID,
+			TokenHash: refreshTokenHashString,
+		})
 		if err != nil {
 			slog.Error("failed to revoke refresh token",
 				"error", err,
@@ -146,8 +172,9 @@ func RotateTokens(queries repository.AuthRepository, cfg *config.Config) gin.Han
 		}
 
 		refreshClaims := jwt.MapClaims{
-			"user_id": user.ID,
-			"exp":     time.Now().Add(30 * 24 * time.Hour).Unix(),
+			"user_id":    user.ID,
+			"session_id": sessionID,
+			"exp":        time.Now().Add(30 * 24 * time.Hour).Unix(),
 		}
 
 		newRefreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims)
@@ -176,6 +203,7 @@ func RotateTokens(queries repository.AuthRepository, cfg *config.Config) gin.Han
 				Time:  time.Now().Add(30 * 24 * time.Hour),
 				Valid: true,
 			},
+			SessionID: sessionID,
 		})
 		if err != nil {
 			slog.Error("failed to persist new refresh token",
