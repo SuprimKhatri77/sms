@@ -38,8 +38,20 @@ export async function attemptRefresh(
     if (!res.ok) {
       console.log("in !res.ok block clearing cookies.....");
       const redirect = NextResponse.redirect(new URL("/auth", req.url));
-      redirect.cookies.delete("access_token");
-      redirect.cookies.delete("refresh_token");
+      redirect.cookies.set("access_token", "", {
+        maxAge: 0,
+        path: "/",
+        domain: ".sms.suprimkhatri.com.np",
+        secure: true,
+        httpOnly: true,
+      });
+      redirect.cookies.set("refresh_token", "", {
+        maxAge: 0,
+        path: "/",
+        domain: ".sms.suprimkhatri.com.np",
+        secure: true,
+        httpOnly: true,
+      });
       return redirect;
     }
 
