@@ -34,6 +34,10 @@ const (
 	MissingCourseID     = "MISSING_COURSE_ID"
 	CourseAlreadyExists = "COURSE_ALREADY_EXISTS"
 
+	// inquiries
+	InquiryNotFound  = "INQUIRY_NOT_FOUND"
+	MissingInquiryID = "MISSING_INQUIRY_ID"
+
 	// image upload
 	ImageIsRequired    = "IMAGE_IS_REQUIRED"
 	InvalidImageFormat = "INVALID_IMAGE_FORMAT"

@@ -1,10 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useMemo } from "react";
 import {
   Search,
-  RefreshCw,
-  Download,
   Eye,
   Trash2,
   CheckCircle2,
@@ -19,21 +17,22 @@ import {
   SortDesc,
 } from "lucide-react";
 import InquiryError from "./InquiryError";
-import InquiryFormEmpty from "./InquiryFormEmpty";
 import InquirySkeleton from "./InquirySkeleton";
 import InquiryEmpty from "./InquiryEmpty";
 import InquiryDetailModal from "./InquiryDetailModal";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import api from "@/lib/axios";
+import {
+  DeleteInquiryResponse,
+  InquiriesList,
+  MarkInquiryReadResponse,
+} from "@repo/types";
+import { toast } from "sonner";
 
-export interface Inquiry {
-  id: string;
-  full_name: string;
-  phone: string;
-  email: string | null;
-  message: string;
-  source: string;
-  is_read: boolean;
-  created_at: string; // ISO 8601
-}
+export type Inquiry = Extract<
+  InquiriesList,
+  { success: true }
+>["data"]["inquiries"][number];
 
 export interface ApiErrorResponse {
   success: false;
@@ -45,7 +44,7 @@ export type ReadFilter = "all" | "unread" | "read";
 export type SortDirection = "asc" | "desc";
 export type SortableField = keyof Pick<
   Inquiry,
-  "full_name" | "phone" | "email" | "source" | "is_read" | "created_at"
+  "fullName" | "phone" | "email" | "source" | "isRead" | "createdAt"
 >;
 
 export interface SourceColorConfig {
@@ -56,8 +55,6 @@ export interface SourceColorConfig {
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-const ITEMS_PER_PAGE = 5;
-
 const SOURCE_COLORS: Record<string, SourceColorConfig> = {
   website: { bg: "#2d4a3e11", text: "#2d4a3e", border: "#2d4a3e22" },
   facebook: { bg: "#6b9e6b11", text: "#4a7a60", border: "#6b9e6b33" },
@@ -65,76 +62,6 @@ const SOURCE_COLORS: Record<string, SourceColorConfig> = {
   referral: { bg: "#e8552a11", text: "#e8552a", border: "#e8552a33" },
   other: { bg: "#d6cbb833", text: "#7d6b8a", border: "#d6cbb8" },
 };
-
-// ─── Mock data (replace with real API call) ───────────────────────────────────
-
-const MOCK_INQUIRIES: Inquiry[] = [
-  {
-    id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-    full_name: "Sita Sharma",
-    phone: "+977-9841234567",
-    email: "sita@example.com",
-    message:
-      "Hello, I am interested in your services. Could you please send me more details about the packages available?",
-    source: "website",
-    is_read: false,
-    created_at: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-  },
-  {
-    id: "b2c3d4e5-f6a7-8901-bcde-f12345678901",
-    full_name: "Ram Bahadur Thapa",
-    phone: "+977-9857654321",
-    email: null,
-    message:
-      "I would like to know more about your agricultural consulting services. We have a farm of 5 bigha.",
-    source: "facebook",
-    is_read: true,
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
-  },
-  {
-    id: "c3d4e5f6-a7b8-9012-cdef-123456789012",
-    full_name: "Puja Gurung",
-    phone: "+977-9823456789",
-    email: "puja.gurung@gmail.com",
-    message:
-      "Namaste! I came across your page through a friend. I need guidance on organic farming techniques suitable for hilly terrain.",
-    source: "referral",
-    is_read: false,
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 7).toISOString(),
-  },
-  {
-    id: "d4e5f6a7-b8c9-0123-defa-234567890123",
-    full_name: "Bikash Adhikari",
-    phone: "+977-9812345678",
-    email: "bikash@company.np",
-    message:
-      "We are looking for bulk supply partnerships. Our organization procures agricultural goods for distribution across Lumbini Province.",
-    source: "instagram",
-    is_read: true,
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-  },
-  {
-    id: "e5f6a7b8-c9d0-1234-efab-345678901234",
-    full_name: "Anita Rai",
-    phone: "+977-9867891234",
-    email: "anita.rai@mail.com",
-    message:
-      "Hi! I saw your service listing. I have a question about pricing for small-scale farmers.",
-    source: "website",
-    is_read: false,
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
-  },
-  {
-    id: "f6a7b8c9-d0e1-2345-fabc-456789012345",
-    full_name: "Deepak Magar",
-    phone: "+977-9851234567",
-    email: null,
-    message: "Please contact me regarding mushroom cultivation training.",
-    source: "other",
-    is_read: true,
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 72).toISOString(),
-  },
-];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -176,49 +103,124 @@ interface StatCard {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function AdminInquiryPage() {
-  const [inquiries, setInquiries] = useState<Inquiry[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<ApiErrorResponse | null>(null);
   const [search, setSearch] = useState<string>("");
   const [filter, setFilter] = useState<ReadFilter>("all");
   const [sourceFilter, setSourceFilter] = useState<string>("all");
-  const [sortField, setSortField] = useState<SortableField>("created_at");
+  const [sortField, setSortField] = useState<SortableField>("createdAt");
   const [sortDir, setSortDir] = useState<SortDirection>("desc");
   const [page, setPage] = useState<number>(1);
   const [selected, setSelected] = useState<Inquiry | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deletingId, setDeletingID] = useState<string>("");
+  const queryClient = useQueryClient();
 
-  // ── Fetch ─────────────────────────────────────────────────────────────────
-  const fetchInquiries = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      await new Promise<void>((resolve) => setTimeout(resolve, 1200));
-      // Replace with: const res = await fetch("/api/admin/inquiries"); const data = await res.json(); ...
-      setInquiries(MOCK_INQUIRIES);
-    } catch {
-      setError({
-        success: false,
-        message: "Failed to load inquiries.",
-        code: "INTERNAL",
+  const { data, isPending, isError, refetch } = useQuery({
+    queryKey: ["admin-inquiries", page],
+    queryFn: async () => {
+      const res = await api.get<InquiriesList>(`/admin/inquiries?page=${page}`);
+      return res.data;
+    },
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000,
+  });
+
+  const { mutate: markInquiryRead } = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await api.patch<MarkInquiryReadResponse>(
+        `/admin/inquiries/${id}`,
+      );
+      if (!res.data || !res.data.success) throw new Error(res.data.message);
+      return res.data;
+    },
+
+    onMutate: async (id: string) => {
+      await queryClient.cancelQueries({ queryKey: ["admin-inquiries"] });
+
+      const previousInquiries = queryClient.getQueryData(["admin-inquiries"]);
+
+      queryClient.setQueryData<InquiriesList>(["admin-inquiries"], (old) => {
+        if (!old || !old.success) return old;
+        return {
+          ...old,
+          data: {
+            ...old.data,
+            inquiries: old.data.inquiries.map((i) =>
+              i.id === id ? { ...i, isRead: true } : i,
+            ),
+          },
+        };
       });
-    } finally {
-      setLoading(false);
-    }
-  }, []);
 
-  useEffect(() => {
-    setTimeout(() => {
-      fetchInquiries();
-    }, 0);
-  }, [fetchInquiries]);
+      return { previousInquiries };
+    },
+    onSuccess: (result) => {
+      toast.success(result.message);
+    },
+    onError: (error, _, context) => {
+      if (context?.previousInquiries) {
+        queryClient.setQueryData(
+          ["admin-inquiries"],
+          context.previousInquiries,
+        );
+      }
+      toast.error(error.message);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-inquiries"] });
+    },
+  });
+  const { mutate: deleteInquiry } = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await api.delete<DeleteInquiryResponse>(
+        `/admin/inquiries/${id}`,
+      );
+      if (!res.data || !res.data.success) throw new Error(res.data.message);
+      return res.data;
+    },
 
-  // ── Derived data ──────────────────────────────────────────────────────────
+    onMutate: async (id: string) => {
+      await queryClient.cancelQueries({ queryKey: ["admin-inquiries"] });
+      setDeletingID(id);
+
+      const previousInquiries = queryClient.getQueryData(["admin-inquiries"]);
+
+      queryClient.setQueryData<InquiriesList>(["admin-inquiries"], (old) => {
+        if (!old || !old.success) return old;
+        return {
+          ...old,
+          data: {
+            ...old.data,
+            inquiries: old.data.inquiries.filter((i) => i.id !== id),
+          },
+        };
+      });
+
+      return { previousInquiries };
+    },
+    onSuccess: (result) => {
+      toast.success(result.message);
+    },
+    onError: (error, _, context) => {
+      setDeletingID("");
+      if (context?.previousInquiries) {
+        queryClient.setQueryData(
+          ["admin-inquiries"],
+          context.previousInquiries,
+        );
+      }
+      toast.error(error.message);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-inquiries"] });
+    },
+  });
+
   const filtered = useMemo<Inquiry[]>(() => {
+    if (!data || !data.success) return [];
+    const { inquiries } = data.data;
     let list = [...inquiries];
 
-    if (filter === "unread") list = list.filter((i) => !i.is_read);
-    if (filter === "read") list = list.filter((i) => i.is_read);
+    if (filter === "unread") list = list.filter((i) => !i.isRead);
+    if (filter === "read") list = list.filter((i) => i.isRead);
     if (sourceFilter !== "all")
       list = list.filter((i) => i.source === sourceFilter);
 
@@ -226,7 +228,7 @@ export default function AdminInquiryPage() {
       const q = search.toLowerCase();
       list = list.filter(
         (i) =>
-          i.full_name.toLowerCase().includes(q) ||
+          i.fullName.toLowerCase().includes(q) ||
           i.phone.includes(q) ||
           i.email?.toLowerCase().includes(q) ||
           i.message.toLowerCase().includes(q) ||
@@ -243,33 +245,70 @@ export default function AdminInquiryPage() {
     });
 
     return list;
-  }, [inquiries, filter, sourceFilter, search, sortField, sortDir]);
+  }, [filter, sourceFilter, search, sortField, sortDir, data]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
-  const paged = filtered.slice(
-    (page - 1) * ITEMS_PER_PAGE,
-    page * ITEMS_PER_PAGE,
-  );
+  if (isPending)
+    return (
+      <div
+        className="min-h-screen p-6 md:p-10"
+        style={{ backgroundColor: "#faf9f7" }}
+      >
+        <InquirySkeleton />
+      </div>
+    );
+
+  if (isError)
+    return (
+      <div
+        className="min-h-screen p-6 md:p-10 flex items-center justify-center"
+        style={{ backgroundColor: "#faf9f7" }}
+      >
+        <InquiryError
+          success={false}
+          message={"Unable to reach the server"}
+          onRetry={refetch}
+        />
+      </div>
+    );
+
+  if (!data.success)
+    return (
+      <div
+        className="min-h-screen p-6 md:p-10 flex items-center justify-center"
+        style={{ backgroundColor: "#faf9f7" }}
+      >
+        <InquiryError
+          success={false}
+          message={data.message}
+          code={data.code}
+          onRetry={refetch}
+        />
+      </div>
+    );
+
+  const { inquiries, unreadCount, readCount } = data.data;
+  const { limit, total, totalPages } = data.meta;
+  const paged = filtered;
   const allSources = [...new Set(inquiries.map((i) => i.source))];
 
   const statCards: StatCard[] = [
     {
       label: "Total",
-      value: inquiries.length,
+      value: total,
       icon: Users,
       color: "#2d4a3e",
       bg: "#2d4a3e0d",
     },
     {
       label: "Unread",
-      value: inquiries.filter((i) => !i.is_read).length,
+      value: unreadCount,
       icon: Mail,
       color: "#e8552a",
       bg: "#e8552a0d",
     },
     {
       label: "Read",
-      value: inquiries.filter((i) => i.is_read).length,
+      value: readCount,
       icon: MailOpen,
       color: "#6b9e6b",
       bg: "#6b9e6b0d",
@@ -292,24 +331,6 @@ export default function AdminInquiryPage() {
     }
   };
 
-  const handleMarkRead = (id: string) => {
-    setInquiries((prev) =>
-      prev.map((i) => (i.id === id ? { ...i, is_read: true } : i)),
-    );
-    setSelected((prev) =>
-      prev?.id === id ? { ...prev, is_read: true } : prev,
-    );
-  };
-
-  const handleDelete = (id: string) => {
-    setDeletingId(id);
-    setTimeout(() => {
-      setInquiries((prev) => prev.filter((i) => i.id !== id));
-      setDeletingId(null);
-      if (selected?.id === id) setSelected(null);
-    }, 400);
-  };
-
   const clearAllFilters = () => {
     setFilter("all");
     setSourceFilter("all");
@@ -317,55 +338,19 @@ export default function AdminInquiryPage() {
     setPage(1);
   };
 
-  // ── Render states ─────────────────────────────────────────────────────────
-  if (loading)
-    return (
-      <div
-        className="min-h-screen p-6 md:p-10"
-        style={{ backgroundColor: "#faf9f7" }}
-      >
-        <InquirySkeleton />
-      </div>
-    );
-
-  if (error)
-    return (
-      <div
-        className="min-h-screen p-6 md:p-10 flex items-center justify-center"
-        style={{ backgroundColor: "#faf9f7" }}
-      >
-        <InquiryError
-          success={false}
-          message={error.message}
-          code={error.code}
-          onRetry={fetchInquiries}
-        />
-      </div>
-    );
-
-  if (inquiries.length === 0)
-    return (
-      <div
-        className="min-h-screen p-6 md:p-10 flex items-center justify-center"
-        style={{ backgroundColor: "#faf9f7" }}
-      >
-        <InquiryFormEmpty onRefresh={fetchInquiries} />
-      </div>
-    );
-
   // ── Table column definitions ───────────────────────────────────────────────
   const tableColumns: Array<{
     label: string;
     field: SortableField | null;
     width: string;
   }> = [
-    { label: "Name", field: "full_name", width: "w-[22%]" },
+    { label: "Name", field: "fullName", width: "w-[22%]" },
     { label: "Phone", field: "phone", width: "w-[14%]" },
     { label: "Email", field: "email", width: "w-[16%]" },
     { label: "Source", field: "source", width: "w-[10%]" },
     { label: "Message", field: null, width: "w-[18%]" },
-    { label: "Status", field: "is_read", width: "w-[8%]" },
-    { label: "Received", field: "created_at", width: "w-[8%]" },
+    { label: "Status", field: "isRead", width: "w-[8%]" },
+    { label: "Received", field: "createdAt", width: "w-[8%]" },
     { label: "", field: null, width: "w-[4%]" },
   ];
 
@@ -433,10 +418,7 @@ export default function AdminInquiryPage() {
                 >
                   {s.label}
                 </p>
-                <p
-                  className="text-3xl font-bold"
-                  style={{ color: s.color, fontFamily: "Georgia, serif" }}
-                >
+                <p className="text-3xl font-bold" style={{ color: s.color }}>
                   {s.value}
                 </p>
               </div>
@@ -478,8 +460,8 @@ export default function AdminInquiryPage() {
                 {f === "all"
                   ? "All"
                   : f === "unread"
-                    ? `Unread (${inquiries.filter((i) => !i.is_read).length})`
-                    : `Read (${inquiries.filter((i) => i.is_read).length})`}
+                    ? `Unread (${inquiries.filter((i) => !i.isRead).length})`
+                    : `Read (${inquiries.filter((i) => i.isRead).length})`}
               </button>
             ))}
           </div>
@@ -564,7 +546,7 @@ export default function AdminInquiryPage() {
                     : undefined
               }
               onClearFilter={clearAllFilters}
-              onRetry={fetchInquiries}
+              onRetry={refetch}
             />
           </div>
         ) : (
@@ -616,7 +598,7 @@ export default function AdminInquiryPage() {
                           borderColor: "#d6cbb8",
                           backgroundColor: isDeleting
                             ? "#e8552a08"
-                            : !inq.is_read
+                            : !inq.isRead
                               ? "#2d4a3e04"
                               : idx % 2 === 0
                                 ? "transparent"
@@ -636,13 +618,13 @@ export default function AdminInquiryPage() {
                                 color: "#fff",
                               }}
                             >
-                              {inq.full_name[0].toUpperCase()}
+                              {inq.fullName[0].toUpperCase()}
                             </div>
                             <span
                               className="font-semibold truncate max-w-[120px]"
                               style={{ color: "#2d4a3e" }}
                             >
-                              {inq.full_name}
+                              {inq.fullName}
                             </span>
                           </div>
                         </td>
@@ -690,7 +672,7 @@ export default function AdminInquiryPage() {
                         </td>
                         {/* Status */}
                         <td className="px-4 py-4">
-                          {inq.is_read ? (
+                          {inq.isRead ? (
                             <span
                               className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full"
                               style={{
@@ -718,7 +700,7 @@ export default function AdminInquiryPage() {
                             className="text-xs"
                             style={{ color: "#7d6b8a" }}
                           >
-                            {timeAgo(inq.created_at)}
+                            {timeAgo(String(inq.createdAt))}
                           </span>
                         </td>
                         {/* Actions */}
@@ -738,10 +720,10 @@ export default function AdminInquiryPage() {
                                 style={{ color: "#2d4a3e" }}
                               />
                             </button>
-                            {!inq.is_read && (
+                            {!inq.isRead && (
                               <button
                                 title="Mark as read"
-                                onClick={() => handleMarkRead(inq.id)}
+                                onClick={() => markInquiryRead(inq.id)}
                                 className="w-8 h-8 rounded-lg flex items-center justify-center hover:opacity-70 transition-opacity"
                                 style={{ backgroundColor: "#6b9e6b11" }}
                               >
@@ -753,7 +735,7 @@ export default function AdminInquiryPage() {
                             )}
                             <button
                               title="Delete"
-                              onClick={() => handleDelete(inq.id)}
+                              onClick={() => deleteInquiry(inq.id)}
                               className="w-8 h-8 rounded-lg flex items-center justify-center hover:opacity-70 transition-opacity"
                               style={{ backgroundColor: "#e8552a11" }}
                             >
@@ -782,9 +764,9 @@ export default function AdminInquiryPage() {
                     className="rounded-2xl border p-4 cursor-pointer active:scale-[0.99] transition-all duration-150"
                     style={{
                       backgroundColor: "#fff",
-                      borderColor: !inq.is_read ? "#e8552a44" : "#d6cbb8",
-                      borderLeftWidth: !inq.is_read ? "3px" : "1px",
-                      borderLeftColor: !inq.is_read ? "#e8552a" : "#d6cbb8",
+                      borderColor: !inq.isRead ? "#e8552a44" : "#d6cbb8",
+                      borderLeftWidth: !inq.isRead ? "3px" : "1px",
+                      borderLeftColor: !inq.isRead ? "#e8552a" : "#d6cbb8",
                     }}
                     onClick={() => setSelected(inq)}
                   >
@@ -794,14 +776,14 @@ export default function AdminInquiryPage() {
                           className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
                           style={{ backgroundColor: "#2d4a3e", color: "#fff" }}
                         >
-                          {inq.full_name[0].toUpperCase()}
+                          {inq.fullName[0].toUpperCase()}
                         </div>
                         <div>
                           <p
                             className="font-semibold text-sm"
                             style={{ color: "#2d4a3e" }}
                           >
-                            {inq.full_name}
+                            {inq.fullName}
                           </p>
                           <p className="text-xs" style={{ color: "#7d6b8a" }}>
                             {inq.phone}
@@ -819,7 +801,7 @@ export default function AdminInquiryPage() {
                         >
                           {inq.source}
                         </span>
-                        {!inq.is_read && (
+                        {!inq.isRead && (
                           <span
                             className="w-2 h-2 rounded-full"
                             style={{ backgroundColor: "#e8552a" }}
@@ -837,7 +819,7 @@ export default function AdminInquiryPage() {
 
                     <div className="flex items-center justify-between">
                       <span className="text-xs" style={{ color: "#7d6b8a" }}>
-                        {timeAgo(inq.created_at)}
+                        {timeAgo(String(inq.createdAt))}
                       </span>
                       <div
                         className="flex gap-1.5"
@@ -853,9 +835,9 @@ export default function AdminInquiryPage() {
                             style={{ color: "#2d4a3e" }}
                           />
                         </button>
-                        {!inq.is_read && (
+                        {!inq.isRead && (
                           <button
-                            onClick={() => handleMarkRead(inq.id)}
+                            onClick={() => markInquiryRead(inq.id)}
                             className="w-8 h-8 rounded-lg flex items-center justify-center"
                             style={{ backgroundColor: "#6b9e6b11" }}
                           >
@@ -866,7 +848,7 @@ export default function AdminInquiryPage() {
                           </button>
                         )}
                         <button
-                          onClick={() => handleDelete(inq.id)}
+                          onClick={() => deleteInquiry(inq.id)}
                           className="w-8 h-8 rounded-lg flex items-center justify-center"
                           style={{ backgroundColor: "#e8552a11" }}
                         >
@@ -888,9 +870,8 @@ export default function AdminInquiryPage() {
         {totalPages > 1 && (
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-6">
             <p className="text-sm" style={{ color: "#7d6b8a" }}>
-              Showing {(page - 1) * ITEMS_PER_PAGE + 1}–
-              {Math.min(page * ITEMS_PER_PAGE, filtered.length)} of{" "}
-              {filtered.length} results
+              Showing {(page - 1) * limit + 1}–
+              {Math.min(page * limit, filtered.length)} of {total} results
             </p>
             <div className="flex items-center gap-1.5">
               <button
@@ -950,7 +931,7 @@ export default function AdminInquiryPage() {
       <InquiryDetailModal
         inquiry={selected}
         onClose={() => setSelected(null)}
-        onMarkRead={handleMarkRead}
+        onMarkRead={markInquiryRead}
       />
     </div>
   );

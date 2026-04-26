@@ -27,6 +27,10 @@ export { type ImageUploadResponse } from "./upload";
 
 export { type CoursesList } from "./courses";
 export {
+  addPaymentSchema,
+  createCourseSchema,
+  updateCourseSchema,
+  updateSetting,
   type ListStudent,
   type StudentDetail,
   type StudentEnrolledCourses,
@@ -44,8 +48,7 @@ export {
   type DeleteCourse,
   type SettingsListResponse,
   type UpdateSettingResponse,
-  addPaymentSchema,
-  createCourseSchema,
-  updateCourseSchema,
-  updateSetting,
+  type InquiriesList,
+  type MarkInquiryReadResponse,
+  type DeleteInquiryResponse,
 } from "./admin";

@@ -8,8 +8,20 @@ package db
 import (
 	"context"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 )
+
+const countReadInquiries = `-- name: CountReadInquiries :one
+SELECT COUNT(*)::INTEGER AS count FROM inquiries WHERE is_read = TRUE
+`
+
+func (q *Queries) CountReadInquiries(ctx context.Context) (int32, error) {
+	row := q.db.QueryRow(ctx, countReadInquiries)
+	var count int32
+	err := row.Scan(&count)
+	return count, err
+}
 
 const countUnreadInquiries = `-- name: CountUnreadInquiries :one
 SELECT COUNT(*)::INTEGER AS count FROM inquiries WHERE is_read = FALSE
@@ -58,13 +70,23 @@ func (q *Queries) CreateInquiry(ctx context.Context, arg CreateInquiryParams) (I
 	return i, err
 }
 
-const deleteInquiry = `-- name: DeleteInquiry :exec
+const deleteInquiry = `-- name: DeleteInquiry :execresult
 DELETE FROM inquiries WHERE id = $1
 `
 
-func (q *Queries) DeleteInquiry(ctx context.Context, id pgtype.UUID) error {
-	_, err := q.db.Exec(ctx, deleteInquiry, id)
-	return err
+func (q *Queries) DeleteInquiry(ctx context.Context, id pgtype.UUID) (pgconn.CommandTag, error) {
+	return q.db.Exec(ctx, deleteInquiry, id)
+}
+
+const getInquiriesCount = `-- name: GetInquiriesCount :one
+SELECT COUNT(*)::INTEGER AS count FROM inquiries
+`
+
+func (q *Queries) GetInquiriesCount(ctx context.Context) (int32, error) {
+	row := q.db.QueryRow(ctx, getInquiriesCount)
+	var count int32
+	err := row.Scan(&count)
+	return count, err
 }
 
 const getInquiryByID = `-- name: GetInquiryByID :one
@@ -88,11 +110,16 @@ func (q *Queries) GetInquiryByID(ctx context.Context, id pgtype.UUID) (Inquiry, 
 }
 
 const listInquiries = `-- name: ListInquiries :many
-SELECT id, full_name, phone, email, message, source, is_read, created_at FROM inquiries ORDER BY created_at DESC
+SELECT id, full_name, phone, email, message, source, is_read, created_at FROM inquiries ORDER BY created_at DESC LIMIT $1 OFFSET $2
 `
 
-func (q *Queries) ListInquiries(ctx context.Context) ([]Inquiry, error) {
-	rows, err := q.db.Query(ctx, listInquiries)
+type ListInquiriesParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+func (q *Queries) ListInquiries(ctx context.Context, arg ListInquiriesParams) ([]Inquiry, error) {
+	rows, err := q.db.Query(ctx, listInquiries, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -120,11 +147,10 @@ func (q *Queries) ListInquiries(ctx context.Context) ([]Inquiry, error) {
 	return items, nil
 }
 
-const markInquiryRead = `-- name: MarkInquiryRead :exec
+const markInquiryRead = `-- name: MarkInquiryRead :execresult
 UPDATE inquiries SET is_read = TRUE WHERE id = $1
 `
 
-func (q *Queries) MarkInquiryRead(ctx context.Context, id pgtype.UUID) error {
-	_, err := q.db.Exec(ctx, markInquiryRead, id)
-	return err
+func (q *Queries) MarkInquiryRead(ctx context.Context, id pgtype.UUID) (pgconn.CommandTag, error) {
+	return q.db.Exec(ctx, markInquiryRead, id)
 }

@@ -2,6 +2,7 @@ package auth
 
 import (
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/suprimkhatri77/sms/backend/internal/config"
 	"github.com/suprimkhatri77/sms/backend/internal/constants"
@@ -76,6 +78,7 @@ func RotateTokens(queries repository.AuthRepository, cfg *config.Config) gin.Han
 		}
 
 		sessionIDFromClaims, ok := claims["session_id"].(string)
+		slog.Info("session from claims", "", sessionIDFromClaims)
 		if !ok {
 			c.JSON(http.StatusUnauthorized, types.APIResponse{
 				Success: false,
@@ -103,14 +106,24 @@ func RotateTokens(queries repository.AuthRepository, cfg *config.Config) gin.Han
 			TokenHash: refreshTokenHashString,
 		})
 		if err != nil {
-			slog.Warn("refresh token not found in DB",
-				"ip", c.ClientIP(),
-			)
+			if errors.Is(err, pgx.ErrNoRows) {
+				utils.SetAuthCookie(c, "access_token", "", -1, cfg)
+				utils.SetAuthCookie(c, "refresh_token", "", -1, cfg)
 
-			c.JSON(http.StatusUnauthorized, types.APIResponse{
+				c.JSON(http.StatusUnauthorized, types.APIResponse{
+					Success: false,
+					Message: "Invalid refresh token",
+					Code:    constants.InvalidRefreshToken,
+				})
+				return
+			}
+
+			slog.Error("failed to fetch refresh token", "error", err, "ip", c.ClientIP())
+
+			c.JSON(http.StatusInternalServerError, types.APIResponse{
 				Success: false,
-				Message: "Invalid refresh token",
-				Code:    constants.InvalidRefreshToken,
+				Message: "Something went wrong",
+				Code:    constants.InternalServerError,
 			})
 			return
 		}
@@ -220,7 +233,7 @@ func RotateTokens(queries repository.AuthRepository, cfg *config.Config) gin.Han
 		}
 
 		utils.SetAuthCookie(c, "access_token", accessTokenString, 15*60, cfg)
-		utils.SetAuthCookie(c, "refresh_token", refreshTokenString, 30*24*60*60, cfg)
+		utils.SetAuthCookie(c, "refresh_token", newRefreshTokenString, 30*24*60*60, cfg)
 
 		slog.Info("tokens rotated successfully",
 			"user_id", user.ID,

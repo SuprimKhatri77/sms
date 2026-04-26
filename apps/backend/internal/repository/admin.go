@@ -22,4 +22,10 @@ type AdminRepository interface {
 	DeleteCourse(ctx context.Context, id pgtype.UUID) (pgconn.CommandTag, error)
 	UpdateSetting(ctx context.Context, params db.UpdateSettingParams) (db.Setting, error)
 	GetAdmissionSettings(ctx context.Context) ([]db.Setting, error)
+	ListInquiries(ctx context.Context, params db.ListInquiriesParams) ([]db.Inquiry, error)
+	GetInquiriesCount(ctx context.Context) (int32, error)
+	MarkInquiryRead(ctx context.Context, id pgtype.UUID) (pgconn.CommandTag, error)
+	DeleteInquiry(ctx context.Context, id pgtype.UUID) (pgconn.CommandTag, error)
+	CountUnreadInquiries(ctx context.Context) (int32, error)
+	CountReadInquiries(ctx context.Context) (int32, error)
 }

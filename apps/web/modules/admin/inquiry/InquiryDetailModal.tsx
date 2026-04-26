@@ -97,17 +97,17 @@ export default function InquiryDetailModal({
               className="w-10 h-10 rounded-full flex items-center justify-center text-base font-bold"
               style={{ backgroundColor: "#2d4a3e", color: "#fff" }}
             >
-              {inquiry.full_name[0]?.toUpperCase() ?? "?"}
+              {inquiry.fullName[0]?.toUpperCase() ?? "?"}
             </div>
             <div>
               <h2
                 className="text-base font-bold leading-tight"
                 style={{ color: "#2d4a3e", fontFamily: "Georgia, serif" }}
               >
-                {inquiry.full_name}
+                {inquiry.fullName}
               </h2>
               <div className="flex items-center gap-1.5 mt-0.5">
-                {inquiry.is_read ? (
+                {inquiry.isRead ? (
                   <span
                     className="flex items-center gap-1 text-xs"
                     style={{ color: "#6b9e6b" }}
@@ -249,7 +249,7 @@ export default function InquiryDetailModal({
           <div className="flex items-center gap-2 pt-1">
             <Calendar className="w-3.5 h-3.5" style={{ color: "#7d6b8a" }} />
             <p className="text-xs" style={{ color: "#7d6b8a" }}>
-              Received: {formatDate(inquiry.created_at)}
+              Received: {formatDate(String(inquiry.createdAt))}
             </p>
           </div>
 
@@ -269,9 +269,11 @@ export default function InquiryDetailModal({
           className="px-6 py-4 border-t flex gap-3"
           style={{ borderColor: "#d6cbb8", backgroundColor: "#fff" }}
         >
-          {!inquiry.is_read && (
+          {!inquiry.isRead && (
             <button
-              onClick={() => onMarkRead(inquiry.id)}
+              onClick={() => {
+                onMarkRead(inquiry.id);
+              }}
               className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 hover:opacity-90 active:scale-95"
               style={{ backgroundColor: "#2d4a3e", color: "#fff" }}
             >
