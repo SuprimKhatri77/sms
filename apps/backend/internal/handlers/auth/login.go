@@ -161,14 +161,8 @@ func Login(
 
 		slog.Info("tokens issued", "user_id", user.ID)
 
-		secure := cfg.GinMode == "release"
-		domain := ""
-		if secure {
-			domain = ".sms.suprimkhatri.com.np"
-		}
-
-		c.SetCookie("access_token", accessTokenString, 15*60, "/", domain, secure, true)
-		c.SetCookie("refresh_token", refreshTokenString, 30*24*60*60, "/", domain, secure, true)
+		utils.SetAuthCookie(c, "access_token", accessTokenString, 15*60, cfg)
+		utils.SetAuthCookie(c, "refresh_token", refreshTokenString, 30*24*60*60, cfg)
 
 		slog.Info("login successful", "user_id", user.ID)
 

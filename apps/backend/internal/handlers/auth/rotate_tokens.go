@@ -15,6 +15,7 @@ import (
 	db "github.com/suprimkhatri77/sms/backend/internal/database/generated"
 	"github.com/suprimkhatri77/sms/backend/internal/repository"
 	"github.com/suprimkhatri77/sms/backend/internal/types"
+	"github.com/suprimkhatri77/sms/backend/internal/utils"
 )
 
 func RotateTokens(queries repository.AuthRepository, cfg *config.Config) gin.HandlerFunc {
@@ -189,14 +190,9 @@ func RotateTokens(queries repository.AuthRepository, cfg *config.Config) gin.Han
 			})
 			return
 		}
-		secure := cfg.GinMode == "release"
-		domain := ""
-		if secure {
-			domain = ".sms.suprimkhatri.com.np"
-		}
 
-		c.SetCookie("access_token", accessTokenString, 15*60, "/", domain, secure, true)
-		c.SetCookie("refresh_token", refreshTokenString, 30*24*60*60, "/", domain, secure, true)
+		utils.SetAuthCookie(c, "access_token", accessTokenString, 15*60, cfg)
+		utils.SetAuthCookie(c, "refresh_token", refreshTokenString, 30*24*60*60, cfg)
 
 		slog.Info("tokens rotated successfully",
 			"user_id", user.ID,

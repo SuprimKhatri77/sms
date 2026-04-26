@@ -12,6 +12,7 @@ import (
 	"github.com/suprimkhatri77/sms/backend/internal/constants"
 	"github.com/suprimkhatri77/sms/backend/internal/repository"
 	"github.com/suprimkhatri77/sms/backend/internal/types"
+	"github.com/suprimkhatri77/sms/backend/internal/utils"
 )
 
 func Logout(queries repository.AuthRepository, cfg *config.Config) gin.HandlerFunc {
@@ -77,8 +78,8 @@ func Logout(queries repository.AuthRepository, cfg *config.Config) gin.HandlerFu
 			return
 		}
 
-		c.SetCookie("access_token", "", -1, "/", "", true, true)
-		c.SetCookie("refresh_token", "", -1, "/", "", true, true)
+		utils.SetAuthCookie(c, "access_token", "", -1, cfg)
+		utils.SetAuthCookie(c, "refresh_token", "", -1, cfg)
 
 		slog.Info("user logged out",
 			"path", c.FullPath(),

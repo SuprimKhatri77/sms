@@ -12,7 +12,7 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import { RowsIcon, StudentIcon } from "@phosphor-icons/react";
+import { QuestionIcon, RowsIcon, StudentIcon } from "@phosphor-icons/react";
 import { Book, Settings, TrendingUp, User } from "lucide-react";
 
 const data = {
@@ -35,19 +35,24 @@ const data = {
       icon: <Settings />,
     },
     {
-      title: "Courses",
-      url: "/courses",
-      icon: <Book />,
-    },
-    {
       title: "Users",
       url: "/users",
       icon: <User />,
     },
     {
+      title: "Courses",
+      url: "/courses",
+      icon: <Book />,
+    },
+    {
       title: "Students",
       url: "/students",
       icon: <StudentIcon />,
+    },
+    {
+      title: "Inquiries",
+      url: "/inquiries",
+      icon: <QuestionIcon />,
     },
   ],
 };
