@@ -33,7 +33,10 @@ export async function attemptRefresh(
       },
     );
 
+    console.log("refresh response status:", res.status);
+
     if (!res.ok) {
+      console.log("in !res.ok block clearing cookies.....");
       const redirect = NextResponse.redirect(new URL("/auth", req.url));
       redirect.cookies.delete("access_token");
       redirect.cookies.delete("refresh_token");

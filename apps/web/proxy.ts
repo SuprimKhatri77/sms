@@ -3,55 +3,60 @@ import { attemptRefresh, getSession } from "@/lib/middleware/auth";
 import { PUBLIC_ROUTES, ROLE_RULES } from "./lib/middleware/config";
 
 export async function proxy(req: NextRequest) {
-  console.log("got triggered");
-
   const { pathname } = req.nextUrl;
+  console.log("middleware triggered:", pathname);
 
   const isPublicRoute = PUBLIC_ROUTES.some((p) => pathname.startsWith(p));
-  console.log("is public route: ", isPublicRoute);
   const requiredRoles = Object.entries(ROLE_RULES).find(([path]) =>
     pathname.startsWith(path),
   )?.[1];
 
-  // handle public routes — redirect away if already logged in
   if (isPublicRoute) {
     const refreshToken = req.cookies.get("refresh_token")?.value;
+    console.log("public route, has refresh token:", !!refreshToken);
 
     if (refreshToken) {
-      // has refresh token — assume logged in, send to admin
+      console.log("redirecting to /admin from public route");
       return NextResponse.redirect(new URL("/admin", req.url));
     }
 
     return NextResponse.next();
   }
 
-  // not a protected route → pass through
-  if (!requiredRoles) return NextResponse.next();
+  if (!requiredRoles) {
+    console.log("no role rules for path, passing through");
+    return NextResponse.next();
+  }
 
   const accessToken = req.cookies.get("access_token")?.value;
   const refreshToken = req.cookies.get("refresh_token")?.value;
 
-  // no refresh token at all → definitely not logged in
+  console.log(
+    "has access token:",
+    !!accessToken,
+    "has refresh token:",
+    !!refreshToken,
+  );
+
   if (!refreshToken) {
+    console.log("no refresh token, redirecting to /auth");
     return NextResponse.redirect(new URL("/auth", req.url));
   }
 
-  // try to get session from access token
   if (accessToken) {
     const user = await getSession(accessToken);
+    console.log("session user:", user?.role ?? "null");
 
     if (user) {
-      console.log("role: ", user.role);
-      // logged in but wrong role
       if (!requiredRoles.includes(user.role)) {
+        console.log("wrong role, redirecting to /");
         return NextResponse.redirect(new URL("/", req.url));
       }
-      // all good
       return NextResponse.next();
     }
   }
 
-  // access token missing or expired → attempt refresh
+  console.log("attempting refresh...");
   return attemptRefresh(refreshToken, req, requiredRoles);
 }
 
