@@ -49,15 +49,19 @@ func GetPaginatedUsers(queries repository.UserRepository) gin.HandlerFunc {
 			c.JSON(http.StatusOK, types.APIResponse{
 				Success: true,
 				Message: "Users fetched",
-				Total:   0,
 				Data:    []db.User{},
+				Meta: &types.PaginationMeta{
+					Total:      0,
+					TotalPages: 0,
+					Limit:      int(PAGE_LIMIT),
+				},
 			})
 			return
 		}
 
-		pageSize := (total + PAGE_LIMIT - 1) / PAGE_LIMIT
+		totalPages := (total + PAGE_LIMIT - 1) / PAGE_LIMIT
 
-		if pageFromParams > int(pageSize) {
+		if pageFromParams > int(totalPages) {
 			c.JSON(http.StatusBadRequest, types.APIResponse{
 				Success: false,
 				Message: "Invalid page parameter",
@@ -96,10 +100,14 @@ func GetPaginatedUsers(queries repository.UserRepository) gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, types.APIResponse{
-			Success:    true,
-			Total:      int(total),
-			TotalPages: int(pageSize),
-			Data:       usersList,
+			Success: true,
+
+			Data: usersList,
+			Meta: &types.PaginationMeta{
+				Limit:      int(PAGE_LIMIT),
+				Total:      int(total),
+				TotalPages: int(totalPages),
+			},
 		})
 	}
 }

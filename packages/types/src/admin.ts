@@ -287,3 +287,60 @@ export const settingsListResponseSchema = z.discriminatedUnion("success", [
 ]);
 
 export type SettingsListResponse = z.infer<typeof settingsListResponseSchema>;
+
+export const inquiriesListResponseSchema = z.discriminatedUnion("success", [
+  z.object({
+    success: z.literal(true),
+    data: z.object({
+      inquiries: z.array(
+        z.object({
+          id: z.uuid(),
+          fullName: z.string(),
+          phone: z.string(),
+          email: z.email().optional(),
+          message: z.string(),
+          source: z.enum([
+            "facebook",
+            "tiktok",
+            "instagram",
+            "referral",
+            "inperson",
+          ]),
+          isRead: z.boolean(),
+          createdAt: z.date(),
+        }),
+      ),
+      unreadCount: z.number(),
+      readCount: z.number(),
+    }),
+    meta: z.object({
+      total: z.number(),
+      totalPages: z.number(),
+      limit: z.number(),
+    }),
+  }),
+
+  z.object({
+    success: z.literal(false),
+    message: z.string(),
+    code: z.string(),
+  }),
+]);
+
+export type InquiriesList = z.infer<typeof inquiriesListResponseSchema>;
+
+export const markInquiryReadResponseSchema = z.object({
+  success: z.boolean(),
+  message: z.string(),
+});
+
+export type MarkInquiryReadResponse = z.infer<
+  typeof markInquiryReadResponseSchema
+>;
+
+export const deleteInquiryResponseSchema = z.object({
+  success: z.boolean(),
+  message: z.string(),
+});
+
+export type DeleteInquiryResponse = z.infer<typeof deleteInquiryResponseSchema>;

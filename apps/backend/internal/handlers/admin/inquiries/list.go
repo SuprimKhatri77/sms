@@ -1,10 +1,8 @@
-package students
+package inquiries
 
 import (
-	"log/slog"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/suprimkhatri77/sms/backend/internal/constants"
@@ -15,12 +13,11 @@ import (
 
 const PAGE_LIMIT = 20
 
-func ListStudents(queries repository.AdminRepository) gin.HandlerFunc {
+func ListInquiries(queries repository.AdminRepository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
 
 		pageFromParams, err := strconv.Atoi(c.DefaultQuery("page", "1"))
-
 		if err != nil {
 			c.JSON(http.StatusBadRequest, types.APIResponse{
 				Success: false,
@@ -31,35 +28,52 @@ func ListStudents(queries repository.AdminRepository) gin.HandlerFunc {
 		}
 
 		if pageFromParams <= 0 {
-			pageFromParams = 1
+			c.JSON(http.StatusBadRequest, types.APIResponse{
+				Success: false,
+				Message: "Invalid page parameter",
+				Code:    constants.InvalidPageParam,
+			})
+			return
 		}
 
-		total, err := queries.GetStudentsCount(ctx)
+		total, err := queries.GetInquiriesCount(ctx)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, types.APIResponse{
 				Success: false,
 				Message: "Failed to process request",
 				Code:    constants.InternalServerError,
 			})
+
 			return
 		}
 
 		if total == 0 {
 			c.JSON(http.StatusOK, types.APIResponse{
 				Success: true,
-				Data:    []db.ListStudentsRow{},
+				Data:    []db.Inquiry{},
+				Meta: &types.PaginationMeta{
+					Total:      0,
+					TotalPages: 0,
+					Limit:      PAGE_LIMIT,
+				},
 			})
 			return
 		}
 
 		totalPages := (total + PAGE_LIMIT - 1) / PAGE_LIMIT
+
 		if pageFromParams > int(totalPages) {
-			pageFromParams = int(totalPages)
+			c.JSON(http.StatusBadRequest, types.APIResponse{
+				Success: false,
+				Message: "Invalid page parameter",
+				Code:    constants.InvalidPageParam,
+			})
+			return
 		}
 
 		offset := PAGE_LIMIT * (pageFromParams - 1)
 
-		students, err := queries.ListStudents(ctx, db.ListStudentsParams{
+		inquiries, err := queries.ListInquiries(ctx, db.ListInquiriesParams{
 			Limit:  PAGE_LIMIT,
 			Offset: int32(offset),
 		})
@@ -73,30 +87,35 @@ func ListStudents(queries repository.AdminRepository) gin.HandlerFunc {
 			return
 		}
 
-		slog.Debug("length of students: ", "len", len(students))
+		unreadInquiriesCount, err := queries.CountUnreadInquiries(ctx)
 
-		var studentList []types.ListStudent
-		for _, v := range students {
-			var courses []string
-			if coursesRaw, ok := v.Courses.(string); ok && coursesRaw != "" {
-				courses = strings.Split(coursesRaw, ",")
-			} else {
-				courses = []string{}
-			}
-			studentList = append(studentList, types.ListStudent{
-				ID:            v.ID,
-				FullName:      v.FullName,
-				Status:        v.Status,
-				ReferenceNo:   v.ReferenceNo,
-				ClaimedAmount: int(v.ClaimedAmount),
-				Courses:       courses,
-				Phone:         v.Phone,
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, types.APIResponse{
+				Success: false,
+				Message: "Failed to process request",
+				Code:    constants.InternalServerError,
 			})
+			return
+		}
+
+		readInquiriesCount, err := queries.CountReadInquiries(ctx)
+
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, types.APIResponse{
+				Success: false,
+				Message: "Failed to process request",
+				Code:    constants.InternalServerError,
+			})
+			return
 		}
 
 		c.JSON(http.StatusOK, types.APIResponse{
 			Success: true,
-			Data:    studentList,
+			Data: types.InquiriesResponse{
+				Inquiries:   inquiries,
+				UnreadCount: int(unreadInquiriesCount),
+				ReadCount:   int(readInquiriesCount),
+			},
 			Meta: &types.PaginationMeta{
 				Limit:      PAGE_LIMIT,
 				Total:      int(total),
