@@ -28,6 +28,7 @@ const (
 	StudentAlreadyExists = "STUDENT_ALREADY_EXISTS"
 	MissingStudentID     = "MISSING_STUDENT_ID"
 	StudentNotFound      = "STUDENT_NOT_FOUND"
+	InvalidStudentStatus = "INVALID_STUDENT_STATUS"
 
 	// course
 	CourseNotFound      = "COURSE_NOT_FOUND"

@@ -34,7 +34,10 @@ export async function attemptRefresh(
     );
 
     if (!res.ok) {
-      return NextResponse.redirect(new URL("/auth", req.url));
+      const redirect = NextResponse.redirect(new URL("/auth", req.url));
+      redirect.cookies.delete("access_token");
+      redirect.cookies.delete("refresh_token");
+      return redirect;
     }
 
     // get ALL cookies from refresh response

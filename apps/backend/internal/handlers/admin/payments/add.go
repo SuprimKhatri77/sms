@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/suprimkhatri77/sms/backend/internal/constants"
@@ -76,6 +77,34 @@ func AddPayment(queries repository.AdminRepository) gin.HandlerFunc {
 				Success: false,
 				Message: "Invalid ID format",
 				Code:    constants.InvalidIDFormat,
+			})
+			return
+		}
+
+		student, err := queries.GetStudentByID(ctx, studentID)
+
+		if err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				c.JSON(http.StatusNotFound, types.APIResponse{
+					Success: false,
+					Message: "Student not found",
+					Code:    constants.StudentNotFound,
+				})
+				return
+			}
+			c.JSON(http.StatusInternalServerError, types.APIResponse{
+				Success: false,
+				Message: "Failed to process request",
+				Code:    constants.InternalServerError,
+			})
+			return
+		}
+
+		if student.Status != "accepted" && student.Status != "completed" {
+			c.JSON(http.StatusBadRequest, types.APIResponse{
+				Success: false,
+				Message: "Cannot add payment for a student with pending or rejected status",
+				Code:    constants.InvalidStudentStatus,
 			})
 			return
 		}

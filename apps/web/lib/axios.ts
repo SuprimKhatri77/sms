@@ -31,6 +31,7 @@ api.interceptors.response.use(
     const originalRequest: InternalAxiosRequestConfig & { _retry?: boolean } =
       error.config;
 
+    // we did this to send our actual error message from backend instead of the axios error message
     if (error.response?.data?.message) {
       error.message = error.response.data.message;
     }
