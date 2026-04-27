@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  Tooltip,
-} from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import type { StatusBreakdownData } from "../types";
 import { STATUS_COLORS } from "../types";
 
@@ -21,11 +15,15 @@ interface StatusSlice {
 }
 
 export function StatusBreakdown({ data }: StatusBreakdownProps) {
-  const total = data.approved + data.completed + data.pending + data.rejected;
+  const total = data.active + data.completed + data.pending + data.rejected;
 
   const slices: StatusSlice[] = [
-    { name: "Approved", value: data.approved, color: STATUS_COLORS.approved },
-    { name: "Completed", value: data.completed, color: STATUS_COLORS.completed },
+    { name: "Active", value: data.active, color: STATUS_COLORS.active },
+    {
+      name: "Completed",
+      value: data.completed,
+      color: STATUS_COLORS.completed,
+    },
     { name: "Pending", value: data.pending, color: STATUS_COLORS.pending },
     { name: "Rejected", value: data.rejected, color: STATUS_COLORS.rejected },
   ];

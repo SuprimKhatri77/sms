@@ -51,4 +51,5 @@ export {
   type InquiriesList,
   type MarkInquiryReadResponse,
   type DeleteInquiryResponse,
+  type AnalyticsResponse,
 } from "./admin";

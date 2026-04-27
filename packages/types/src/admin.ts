@@ -19,8 +19,11 @@ export const listStudentResponseSchema = z.discriminatedUnion("success", [
         claimedAmount: z.number(),
       }),
     ),
-    total: z.number(),
-    totalPages: z.number(),
+    meta: z.object({
+      total: z.number(),
+      totalPages: z.number(),
+      limit: z.number(),
+    }),
   }),
   z.object({
     success: z.literal(false),
@@ -344,3 +347,70 @@ export const deleteInquiryResponseSchema = z.object({
 });
 
 export type DeleteInquiryResponse = z.infer<typeof deleteInquiryResponseSchema>;
+
+export const analyticsResponseSchema = z.discriminatedUnion("success", [
+  z.object({
+    success: z.literal(true),
+    data: z.object({
+      overview: z.object({
+        totalStudents: z.number(),
+        pendingApprovals: z.number(),
+        totalRevenue: z.number(),
+        studentsWithBalance: z.number(),
+      }),
+      monthlyRevenue: z.array(
+        z.object({ month: z.string(), amount: z.number() }),
+      ),
+      monthlyAdmissions: z.array(
+        z.object({ month: z.string(), count: z.number() }),
+      ),
+      sourceBreakdown: z.array(
+        z.object({
+          source: z.enum([
+            "inperson",
+            "referral",
+            "instagram",
+            "facebook",
+            "tiktok",
+          ]),
+          count: z.number(),
+        }),
+      ),
+
+      inquiryStats: z.object({
+        total: z.number(),
+        unread: z.number(),
+      }),
+
+      monthlyInquiries: z.array(
+        z.object({
+          month: z.string(),
+          count: z.number(),
+        }),
+      ),
+
+      revenueStats: z.object({
+        thisMonth: z.number(),
+        lastMonth: z.number(),
+        outstanding: z.number(),
+      }),
+
+      coursePopularity: z.array(
+        z.object({ course: z.string(), count: z.number() }),
+      ),
+      statusBreakdown: z.object({
+        pending: z.number(),
+        active: z.number(),
+        rejected: z.number(),
+        completed: z.number(),
+      }),
+    }),
+  }),
+  z.object({
+    success: z.literal(false),
+    message: z.string(),
+    code: z.string(),
+  }),
+]);
+
+export type AnalyticsResponse = z.infer<typeof analyticsResponseSchema>;

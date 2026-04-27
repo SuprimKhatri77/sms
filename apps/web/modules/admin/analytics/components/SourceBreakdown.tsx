@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  Tooltip,
-} from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import type { SourceEntry } from "../types";
 import { SOURCE_COLORS, formatSourceLabel } from "../types";
 
@@ -14,7 +8,14 @@ interface SourceBreakdownProps {
   data: SourceEntry[];
 }
 
-const FALLBACK_COLORS = ["#2563eb", "#0f172a", "#22c55e", "#f59e0b", "#8b5cf6"];
+const FALLBACK_COLORS = [
+  "#2563eb",
+  "#FF007F",
+  "#0f172a",
+  "#22c55e",
+  "#f59e0b",
+  "#8b5cf6",
+];
 
 export function SourceBreakdown({ data }: SourceBreakdownProps) {
   const total = data.reduce((sum, item) => sum + item.count, 0);

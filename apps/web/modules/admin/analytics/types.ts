@@ -24,7 +24,7 @@ export interface SourceEntry {
 
 export interface StatusBreakdownData {
   pending: number;
-  approved: number;
+  active: number;
   completed: number;
   rejected: number;
 }
@@ -80,13 +80,14 @@ export const CHART_COLORS = {
 
 export const SOURCE_COLORS: Record<string, string> = {
   facebook: "#2563eb",
+  instagram: "#D21F3C",
   tiktok: "#0f172a",
   referral: "#22c55e",
-  in_person: "#f59e0b",
+  inperson: "#f59e0b",
 } as const;
 
 export const STATUS_COLORS: Record<string, string> = {
-  approved: "#22c55e",
+  active: "#22c55e",
   completed: "#2563eb",
   pending: "#f59e0b",
   rejected: "#ef4444",
