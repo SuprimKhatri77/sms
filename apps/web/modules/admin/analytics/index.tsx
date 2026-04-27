@@ -49,9 +49,21 @@ export default function AnalyticsPage() {
     return <AnalyticsSkeleton />;
   }
 
-  if (isError || !data) {
+  if (isError || !data || !data.success) {
     return <AnalyticsError onRetry={() => refetch()} />;
   }
+
+  const {
+    overview,
+    revenueStats,
+    monthlyAdmissions,
+    monthlyRevenue,
+    monthlyInquiries,
+    coursePopularity,
+    inquiryStats,
+    sourceBreakdown,
+    statusBreakdown,
+  } = data.data;
 
   return (
     <div className="min-h-screen bg-slate-50 px-4 py-8 sm:px-6 lg:px-8">
@@ -73,31 +85,31 @@ export default function AnalyticsPage() {
 
         {/* Overview cards */}
         <div className="mb-6">
-          <OverviewCards
-            overview={data.overview}
-            revenueStats={data.revenueStats}
-          />
+          <OverviewCards overview={overview} revenueStats={revenueStats} />
         </div>
 
         {/* Charts row 1: Revenue + Admissions */}
         <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <RevenueChart
-            data={data.monthlyRevenue}
-            revenueStats={data.revenueStats}
-          />
-          <AdmissionsChart data={data.monthlyAdmissions} />
+          <RevenueChart data={monthlyRevenue} revenueStats={revenueStats} />
+          <AdmissionsChart data={monthlyAdmissions} />
         </div>
 
         {/* Charts row 2: Sources + Status */}
         <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <SourceBreakdown data={data.sourceBreakdown} />
-          <StatusBreakdown data={data.statusBreakdown} />
+          <SourceBreakdown data={sourceBreakdown} />
+          <StatusBreakdown data={statusBreakdown} />
         </div>
 
         {/* Charts row 3: Courses + Inquiries */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <CoursePopularity data={data.coursePopularity} />
-          <InquiryStats data={data.inquiries} />
+          <CoursePopularity data={coursePopularity} />
+          <InquiryStats
+            data={{
+              total: inquiryStats.total,
+              unread: inquiryStats.unread,
+              monthlyInquiries,
+            }}
+          />
         </div>
       </div>
     </div>

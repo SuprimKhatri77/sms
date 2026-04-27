@@ -281,20 +281,27 @@ func (q *Queries) GetSourceBreakdown(ctx context.Context) ([]GetSourceBreakdownR
 const getStatusBreakdown = `-- name: GetStatusBreakdown :one
 SELECT
     COUNT(*) FILTER (WHERE status = 'pending')::INTEGER AS pending,
-    COUNT(*) FILTER (WHERE status = 'approved')::INTEGER AS approved,
-    COUNT(*) FILTER (WHERE status = 'rejected')::INTEGER AS rejected
+    COUNT(*) FILTER (WHERE status = 'active')::INTEGER AS active,
+    COUNT(*) FILTER (WHERE status = 'rejected')::INTEGER AS rejected,
+    COUNT(*) FILTER (WHERE status = 'completed')::INTEGER AS completed
 FROM students
 `
 
 type GetStatusBreakdownRow struct {
-	Pending  int32 `json:"pending"`
-	Approved int32 `json:"approved"`
-	Rejected int32 `json:"rejected"`
+	Pending   int32 `json:"pending"`
+	Active    int32 `json:"active"`
+	Rejected  int32 `json:"rejected"`
+	Completed int32 `json:"completed"`
 }
 
 func (q *Queries) GetStatusBreakdown(ctx context.Context) (GetStatusBreakdownRow, error) {
 	row := q.db.QueryRow(ctx, getStatusBreakdown)
 	var i GetStatusBreakdownRow
-	err := row.Scan(&i.Pending, &i.Approved, &i.Rejected)
+	err := row.Scan(
+		&i.Pending,
+		&i.Active,
+		&i.Rejected,
+		&i.Completed,
+	)
 	return i, err
 }

@@ -46,8 +46,9 @@ ORDER BY count DESC;
 -- name: GetStatusBreakdown :one
 SELECT
     COUNT(*) FILTER (WHERE status = 'pending')::INTEGER AS pending,
-    COUNT(*) FILTER (WHERE status = 'approved')::INTEGER AS approved,
-    COUNT(*) FILTER (WHERE status = 'rejected')::INTEGER AS rejected
+    COUNT(*) FILTER (WHERE status = 'active')::INTEGER AS active,
+    COUNT(*) FILTER (WHERE status = 'rejected')::INTEGER AS rejected,
+    COUNT(*) FILTER (WHERE status = 'completed')::INTEGER AS completed
 FROM students;
 
 -- name: GetCoursePopularity :many

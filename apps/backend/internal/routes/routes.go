@@ -5,6 +5,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/suprimkhatri77/sms/backend/internal/config"
 	db "github.com/suprimkhatri77/sms/backend/internal/database/generated"
+	adminAnalytics "github.com/suprimkhatri77/sms/backend/internal/handlers/admin/analytics"
 	adminCourses "github.com/suprimkhatri77/sms/backend/internal/handlers/admin/courses"
 	adminInquiries "github.com/suprimkhatri77/sms/backend/internal/handlers/admin/inquiries"
 	adminPayments "github.com/suprimkhatri77/sms/backend/internal/handlers/admin/payments"
@@ -74,6 +75,9 @@ func Setup(r *gin.Engine, cfg Config) {
 	adminRouter.GET("/inquiries", adminInquiries.ListInquiries(cfg.Queries))
 	adminRouter.PATCH("/inquiries/:inquiryID", adminInquiries.MarkInquiryRead(cfg.Queries))
 	adminRouter.DELETE("/inquiries/:inquiryID", adminInquiries.DeleteInquiry(cfg.Queries))
+
+	// admin/analytics
+	adminRouter.GET("/analytics", adminAnalytics.GetAnalytics(cfg.Queries))
 
 	// public student routes
 	studentRouter := router.Group("/students")

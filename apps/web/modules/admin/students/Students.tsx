@@ -15,6 +15,7 @@ import { ListStudent } from "@repo/types";
 import { StudentsPageSkeleton } from "./StudentSkeleton";
 import { StudentsError } from "./StudentError";
 import { StudentIcon } from "@phosphor-icons/react";
+import { cn } from "@/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -46,7 +47,10 @@ function StatusBadge({ status }: { status: Status }) {
   const meta = STATUS_META[status];
   return (
     <span
-      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[0.72rem] font-semibold uppercase tracking-[0.06em] ${meta.classes}`}
+      className={cn(
+        "inline-flex items-center rounded-full border px-2.5 py-0.5 text-[0.72rem] font-semibold uppercase tracking-[0.06em]",
+        meta.classes,
+      )}
       style={{ fontFamily: "var(--font-dm-sans)" }}
     >
       {meta.label}
@@ -113,8 +117,8 @@ export default function StudentsPage() {
       />
     );
 
-  const totalStudents = data.total;
-  const totalPages = data.totalPages;
+  const totalStudents = data.meta.total;
+  const totalPages = data.meta.totalPages;
   const paginated = filtered;
 
   const handleSearch = (v: string) => {
