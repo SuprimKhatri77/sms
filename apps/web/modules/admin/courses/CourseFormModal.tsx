@@ -129,7 +129,7 @@ export function CourseFormModal({ initial, onSave, onClose }: CourseFormProps) {
             Cancel
           </button>
           <button
-            className="inline-flex items-center gap-[0.4rem] bg-blue-600 text-white border-0 rounded-lg px-4 py-2 text-[0.8125rem] font-semibold cursor-pointer hover:bg-blue-700 transition-colors"
+            className="inline-flex items-center gap-[0.4rem] bg-[#2f4e40] text-white border-0 rounded-lg px-4 py-2 text-[0.8125rem] font-semibold cursor-pointer hover:bg-blue-700 transition-colors"
             onClick={handleSubmit}
           >
             <Save size={15} />

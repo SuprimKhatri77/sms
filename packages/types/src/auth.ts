@@ -1,5 +1,6 @@
 import z from "zod";
 import { apiErrorSchema, baseAPIResponseSchema, errorResponse } from "./base";
+import { meta } from "zod/v4/core";
 
 export const loginInputSchema = z.object({
   email: z.email(),
@@ -23,8 +24,10 @@ export const userSchema = z.object({
 
 export const usersListSchema = baseAPIResponseSchema.extend({
   data: z.array(userSchema).optional(),
-  total: z.number().optional(),
-  totalPages: z.number().optional(),
+  meta: z.object({
+    total: z.number(),
+    totalPages: z.number(),
+  }),
 });
 
 export type UsersList = z.infer<typeof usersListSchema>;

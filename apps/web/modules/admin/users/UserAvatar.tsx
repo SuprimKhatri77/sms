@@ -23,14 +23,14 @@ export function UserAvatar({ name, imageUrl, size = "sm" }: UserAvatarProps) {
       <img
         src={imageUrl}
         alt={`${name}&apos;s avatar`}
-        className={`${sizeClasses} border-black object-cover rounded-none`}
+        className={`${sizeClasses} border-[rgba(47,78,64,0.25)] object-cover rounded-none`}
       />
     );
   }
 
   return (
     <div
-      className={`${sizeClasses} border-black bg-zinc-100 flex items-center justify-center font-mono font-bold text-black rounded-none flex-shrink-0`}
+      className={`${sizeClasses} flex shrink-0 items-center justify-center rounded-none border-[rgba(47,78,64,0.25)] bg-[rgba(47,78,64,0.08)] font-mono font-bold text-(--brand-green)`}
       aria-label={`Avatar placeholder for ${name}`}
     >
       {getInitials(name)}

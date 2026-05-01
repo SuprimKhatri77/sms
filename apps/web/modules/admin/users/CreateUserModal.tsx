@@ -80,18 +80,15 @@ export function CreateUserModal({ isOpen, onClose }: CreateUserModalProps) {
       aria-modal="true"
       aria-labelledby="create-user-title"
     >
-      <div className="bg-white border border-black w-full max-w-md">
+      <div className="w-full max-w-md border border-[rgba(47,78,64,0.22)] bg-white">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-black px-6 py-4">
-          <h2
-            id="create-user-title"
-            className="font-mono text-sm font-bold tracking-widest uppercase"
-          >
+        <div className="flex items-center justify-between border-b border-[rgba(47,78,64,0.16)] px-6 py-4">
+          <h2 id="create-user-title" className="font-mono text-sm font-bold tracking-widest text-(--brand-green) uppercase">
             Create User
           </h2>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-black hover:text-white transition-colors"
+            className="p-1 transition-colors hover:bg-[rgba(47,78,64,0.12)] hover:text-(--brand-green)"
             aria-label="Close modal"
           >
             <X size={16} />
@@ -126,7 +123,7 @@ export function CreateUserModal({ isOpen, onClose }: CreateUserModalProps) {
                       value={field.state.value}
                       onChange={(e) => field.handleChange(e.target.value)}
                       placeholder="Full name"
-                      className="w-full border border-black px-3 py-2 text-sm font-mono rounded-none outline-none focus:ring-2 focus:ring-black focus:ring-offset-0 placeholder:text-zinc-400"
+                      className="w-full rounded-none border border-[rgba(47,78,64,0.24)] px-3 py-2 font-mono text-sm outline-none focus:ring-2 focus:ring-[rgba(47,78,64,0.3)] focus:ring-offset-0 placeholder:text-[rgba(47,78,64,0.35)]"
                     />
                     {mergedError && (
                       <p className="mt-1 text-xs font-mono text-red-600">
@@ -158,7 +155,7 @@ export function CreateUserModal({ isOpen, onClose }: CreateUserModalProps) {
                       value={field.state.value}
                       onChange={(e) => field.handleChange(e.target.value)}
                       placeholder="user@example.com"
-                      className="w-full border border-black px-3 py-2 text-sm font-mono rounded-none outline-none focus:ring-2 focus:ring-black focus:ring-offset-0 placeholder:text-zinc-400"
+                      className="w-full rounded-none border border-[rgba(47,78,64,0.24)] px-3 py-2 font-mono text-sm outline-none focus:ring-2 focus:ring-[rgba(47,78,64,0.3)] focus:ring-offset-0 placeholder:text-[rgba(47,78,64,0.35)]"
                     />
                     {mergedError && (
                       <p className="mt-1 text-xs font-mono text-red-600">
@@ -190,7 +187,7 @@ export function CreateUserModal({ isOpen, onClose }: CreateUserModalProps) {
                       value={field.state.value}
                       onChange={(e) => field.handleChange(e.target.value)}
                       placeholder="Min. 8 characters"
-                      className="w-full border border-black px-3 py-2 text-sm font-mono rounded-none outline-none focus:ring-2 focus:ring-black focus:ring-offset-0 placeholder:text-zinc-400"
+                      className="w-full rounded-none border border-[rgba(47,78,64,0.24)] px-3 py-2 font-mono text-sm outline-none focus:ring-2 focus:ring-[rgba(47,78,64,0.3)] focus:ring-offset-0 placeholder:text-[rgba(47,78,64,0.35)]"
                     />
                     {mergedError && (
                       <p className="mt-1 text-xs font-mono text-red-600">
@@ -224,7 +221,7 @@ export function CreateUserModal({ isOpen, onClose }: CreateUserModalProps) {
                           e.target.value as CreateUserInput["role"],
                         );
                       }}
-                      className="w-full border border-black px-3 py-2 text-sm font-mono rounded-none outline-none focus:ring-2 focus:ring-black bg-white cursor-pointer"
+                      className="w-full cursor-pointer rounded-none border border-[rgba(47,78,64,0.24)] bg-white px-3 py-2 font-mono text-sm outline-none focus:ring-2 focus:ring-[rgba(47,78,64,0.3)]"
                     >
                       {ROLE_OPTIONS.map((opt) => (
                         <option key={opt.value} value={opt.value}>
@@ -244,19 +241,19 @@ export function CreateUserModal({ isOpen, onClose }: CreateUserModalProps) {
           </div>
 
           {/* Footer */}
-          <div className="flex gap-0 border-t border-black">
+          <div className="flex gap-0 border-t border-[rgba(47,78,64,0.16)]">
             <button
               type="button"
               disabled={isPending}
               onClick={onClose}
-              className="flex-1 py-3 font-mono text-xs font-semibold tracking-widest uppercase border-r border-black hover:bg-zinc-100 transition-colors"
+              className="flex-1 border-r border-[rgba(47,78,64,0.16)] py-3 font-mono text-xs font-semibold tracking-widest text-(--brand-green) uppercase transition-colors hover:bg-[rgba(47,78,64,0.06)]"
             >
               Cancel
             </button>
             <button
               disabled={isPending}
               type="submit"
-              className="flex-1 py-3 font-mono text-xs font-semibold tracking-widest uppercase bg-black text-white hover:bg-zinc-800 transition-colors flex items-center justify-center"
+              className="flex flex-1 items-center justify-center bg-(--brand-green) py-3 font-mono text-xs font-semibold tracking-widest text-white uppercase transition-colors hover:bg-(--brand-green-2)"
             >
               {isPending ? <Spinner /> : "Create"}
             </button>

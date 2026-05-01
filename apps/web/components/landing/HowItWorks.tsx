@@ -16,7 +16,7 @@ const steps = [
     step: "02",
     title: "Submit Application",
     description:
-      "Complete the online admission form with your child's details, academic background, and preferred program.",
+      "Complete the online admission form with your details and preferred training program.",
     icon: FileText,
     colorVar: "var(--brand-sage)",
     bgClass: "bg-[#6b9e6b]/10",
@@ -27,7 +27,7 @@ const steps = [
     step: "03",
     title: "Admin Review",
     description:
-      "Our admin team carefully reviews your application. You'll be notified of any additional requirements or updates.",
+      "Our admin team reviews your application and confirms the next steps.",
     icon: Search,
     colorVar: "var(--brand-mauve)",
     bgClass: "bg-[#7d6b8a]/10",
@@ -38,7 +38,7 @@ const steps = [
     step: "04",
     title: "Welcome Aboard",
     description:
-      "Once verified, receive your confirmation and welcome pack. Your child's journey at Greenfield begins!",
+      "Once approved, receive your confirmation and start your learning journey with us.",
     icon: PartyPopper,
     colorVar: "var(--brand-green)",
     bgClass: "bg-[#2d4a3e]/10",
@@ -55,9 +55,9 @@ export default function HowItWorks() {
     >
       <div className="mx-auto max-w-[1200px]">
         {/* Header */}
-        <div className="mb-[4.5rem] text-center">
+        <div className="mb-18 text-center">
           <span
-            className="mb-3 inline-block text-[0.78rem] font-semibold uppercase tracking-[0.1em] text-[#e8552a]"
+            className="mb-3 inline-block text-[0.78rem] font-semibold tracking-widest text-[#e8552a] uppercase"
             style={{ fontFamily: "var(--font-dm-sans)" }}
           >
             The Process
@@ -96,14 +96,14 @@ export default function HowItWorks() {
                 {/* Connector line — desktop only */}
                 {idx < steps.length - 1 && (
                   <div
-                    className="connector-line absolute right-[-1rem] top-8 z-[1] hidden h-[2px] w-8 lg:block"
+                    className="connector-line absolute -right-4 top-8 z-1 hidden h-[2px] w-8 lg:block"
                     style={{
                       background: `linear-gradient(to right, ${step.colorVar}60, transparent)`,
                     }}
                   />
                 )}
 
-                <div className="group flex h-full flex-col rounded-[18px] border border-black/[0.06] bg-white p-8 transition-all duration-[250ms] hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(0,0,0,0.08)]">
+                <div className="group flex h-full flex-col rounded-[18px] border border-black/6 bg-white p-8 transition-all duration-250 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(0,0,0,0.08)]">
                   {/* Icon row */}
                   <div className="mb-6 flex items-center justify-between">
                     <div

@@ -38,6 +38,7 @@ import api from "@/lib/axios";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth";
+import { Certificate } from "@/components/certificate/Certificate";
 
 type Props = {
   student: Extract<StudentDetail, { success: true }>["data"];
@@ -84,6 +85,7 @@ export default function StudentDetailPage({
 }: Props) {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showInvoice, setShowInvoice] = useState(false);
+  const [showCertificate, setShowCertificate] = useState(false);
   const [currentStatus, setCurrentStatus] = useState<Status>(student.status);
   const router = useRouter();
   const { user } = useAuthStore();
@@ -92,6 +94,11 @@ export default function StudentDetailPage({
   const totalFee = courses.reduce((s, c) => s + c.fee, 0) / 100;
   const balance = totalFee - totalPaid;
   const claimedAmount = student.claimedAmount / 100;
+  const issueDate = new Date().toLocaleDateString("en-NP", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 
   const { mutate: updateStatus } = useMutation({
     mutationFn: async (data: UpdateStudentStatus) => {
@@ -132,8 +139,8 @@ export default function StudentDetailPage({
   });
 
   const handlePrint = () => {
-    const totalPaidRaw = payments.reduce((s, p) => s + p.amount, 0);
-    const totalFeeRaw = courses.reduce((s, c) => s + c.fee, 0);
+    const totalPaidRaw = payments.reduce((s, p) => s + p.amount, 0) / 100;
+    const totalFeeRaw = courses.reduce((s, c) => s + c.fee, 0) / 100;
     const balanceRaw = totalFeeRaw - totalPaidRaw;
 
     const rows = {
@@ -154,7 +161,7 @@ export default function StudentDetailPage({
           ${new Date(p.addedAt).toLocaleDateString("en-NP", { day: "2-digit", month: "short", year: "numeric" })}
         </td>
         <td style="padding:9px 0;border-bottom:1px solid #f0f0f0;font-size:12px;color:#666;">${p.remarks ?? "—"}</td>
-        <td style="padding:9px 0;border-bottom:1px solid #f0f0f0;font-size:12px;color:#2d4a3e;text-align:right;font-weight:600;">NPR ${p.amount.toLocaleString()}</td>
+        <td style="padding:9px 0;border-bottom:1px solid #f0f0f0;font-size:12px;color:#2d4a3e;text-align:right;font-weight:600;">NPR ${(p.amount / 100).toLocaleString()}</td>
       </tr>`,
         )
         .join(""),
@@ -162,19 +169,21 @@ export default function StudentDetailPage({
 
     const html = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8"/><title>Invoice – ${student.referenceNo}</title>
-<style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;color:#2d4a3e;padding:48px;max-width:720px;margin:0 auto;}@media print{body{padding:32px;}@page{margin:1.5cm;size:A4;}}.divider{height:1px;background:#e8e8e8;margin:20px 0;}table{width:100%;border-collapse:collapse;}th{text-align:left;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#999;padding-bottom:8px;border-bottom:1px solid #eee;}th.right{text-align:right;}</style>
+<style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;color:#2f4e40;padding:24px;max-width:520px;margin:0 auto;}@media print{body{padding:12mm;}@page{margin:10mm;size:A5 portrait;}}.divider{height:1px;background:#efe8dd;margin:16px 0;}table{width:100%;border-collapse:collapse;}th{text-align:left;font-size:9px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:#9a8d7c;padding-bottom:8px;border-bottom:1px solid #efe8dd;}th.right{text-align:right;}</style>
 </head><body>
 <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;">
   <div>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
-      <div style="width:38px;height:38px;background:#e8552a;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#fff;">G</div>
-      <span style="font-size:18px;font-weight:700;color:#2d4a3e;">Greenfield Academy</span>
+      <div style="width:38px;height:38px;border-radius:10px;overflow:hidden;border:1px solid rgba(47,78,64,0.18);background:#fff;display:flex;align-items:center;justify-content:center;">
+        <img src="/assets/watermark.png" alt="Brew & Bake" style="width:30px;height:30px;object-fit:contain;display:block;" />
+      </div>
+      <span style="font-size:16px;font-weight:800;color:#2f4e40;letter-spacing:0.02em;">Brew & Bake Academy</span>
     </div>
-    <p style="font-size:12px;color:#999;margin-left:48px;">Thamel, Kathmandu · info@greenfield.edu.np</p>
+    <p style="font-size:12px;color:#999;margin-left:48px;">New Baneshwor, Kathmandu · brewandbake@example.com</p>
   </div>
   <div style="text-align:right;">
     <p style="font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#999;margin-bottom:4px;">Invoice</p>
-    <p style="font-size:14px;font-weight:600;color:#2d4a3e;font-family:monospace;">${student.referenceNo}</p>
+    <p style="font-size:13px;font-weight:700;color:#2f4e40;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${student.referenceNo}</p>
     <p style="font-size:12px;color:#999;margin-top:2px;">${new Date().toLocaleDateString("en-NP", { year: "numeric", month: "long", day: "numeric" })}</p>
   </div>
 </div>
@@ -201,12 +210,12 @@ export default function StudentDetailPage({
 <table style="margin-bottom:8px;"><thead><tr><th>Date</th><th>Remarks</th><th class="right">Amount</th></tr></thead><tbody>${rows.payments}</tbody></table>
 <div class="divider"></div>
 <div style="background:#f7f5f2;border-radius:12px;padding:20px 24px;">
-  <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;"><span style="color:#888;">Total Fee</span><span style="font-weight:500;color:#2d4a3e;">NPR ${totalFeeRaw.toLocaleString()}</span></div>
-  <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;"><span style="color:#888;">Total Paid</span><span style="font-weight:500;color:#2d4a3e;">NPR ${totalPaidRaw.toLocaleString()}</span></div>
-  <div style="height:1px;background:#e0ddd8;margin:8px 0;"></div>
-  <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:14px;"><span style="font-weight:700;color:#2d4a3e;">Balance Due</span><span style="font-weight:800;color:${balanceRaw > 0 ? "#dc2626" : "#16a34a"};">NPR ${Math.abs(balanceRaw).toLocaleString()}${balanceRaw === 0 ? " (Cleared)" : ""}</span></div>
+  <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;"><span style="color:rgba(47,78,64,0.65);">Total Fee</span><span style="font-weight:700;color:#2f4e40;">NPR ${totalFeeRaw.toLocaleString()}</span></div>
+  <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;"><span style="color:rgba(47,78,64,0.65);">Total Paid</span><span style="font-weight:700;color:#2f4e40;">NPR ${totalPaidRaw.toLocaleString()}</span></div>
+  <div style="height:1px;background:#e6ddcf;margin:8px 0;"></div>
+  <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:14px;"><span style="font-weight:900;color:#2f4e40;">Balance Due</span><span style="font-weight:900;color:${balanceRaw > 0 ? "#dc2626" : "#16a34a"};">NPR ${Math.abs(balanceRaw).toLocaleString()}${balanceRaw === 0 ? " (Cleared)" : ""}</span></div>
 </div>
-<p style="margin-top:36px;text-align:center;font-size:11px;color:#bbb;">Thank you for choosing Greenfield Academy &nbsp;·&nbsp; This is a computer-generated invoice</p>
+<p style="margin-top:36px;text-align:center;font-size:11px;color:#bbb;">Thank you for choosing Brew & Bake Academy &nbsp;·&nbsp; This is a computer-generated invoice</p>
 </body></html>`;
 
     const win = window.open("", "_blank");
@@ -274,6 +283,14 @@ export default function StudentDetailPage({
             >
               <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
               Add Payment
+            </button>
+            <button
+              onClick={() => setShowCertificate((v) => !v)}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-[#c28a4f]/25 bg-white px-4 py-2 text-[0.85rem] font-medium text-[#7a4e24] transition-all hover:border-[#c28a4f]/40 hover:bg-[#c28a4f]/10"
+              style={{ fontFamily: "var(--font-dm-sans)" }}
+            >
+              <Printer className="h-3.5 w-3.5" strokeWidth={1.75} />
+              {showCertificate ? "Hide Certificate" : "Issue Certificate"}
             </button>
             <button
               onClick={() => setShowInvoice(!showInvoice)}
@@ -378,6 +395,46 @@ export default function StudentDetailPage({
             </div>
 
             <Invoice student={student} payments={payments} courses={courses} />
+          </div>
+        )}
+
+        {/* ── Certificate preview ── */}
+        {showCertificate && (
+          <div className="mb-6">
+            <div className="mb-3 flex items-center justify-between">
+              <h2
+                className="text-[0.9rem] font-semibold text-[#2d4a3e]"
+                style={{ fontFamily: "var(--font-playfair)" }}
+              >
+                Certificate Preview
+              </h2>
+              <button
+                onClick={() => window.print()}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-[#c28a4f] px-4 py-2 text-[0.82rem] font-semibold text-white shadow-[0_4px_12px_rgba(194,138,79,0.28)] transition-all hover:-translate-y-0.5"
+                style={{ fontFamily: "var(--font-dm-sans)" }}
+              >
+                <Printer className="h-3.5 w-3.5" strokeWidth={2} />
+                Print Certificate
+              </button>
+            </div>
+
+            <div className="overflow-x-auto">
+              <div style={{ minWidth: 794 }}>
+                <Certificate
+                  studentName={student.fullName}
+                  referenceNo={student.referenceNo}
+                  courses={courses.map((c) => c.name)}
+                  issueDate={issueDate}
+                  schoolName="Bake & Brew Barista Coffee School"
+                  logoUrl="/assets/watermark-no-bg.png"
+                  directorSignatureUrl="/assets/logo.png"
+                  headSignatureUrl="/assets/logo.png"
+                  accreditationLogoUrl="/assets/watermark-no-bg.png"
+                  footerAddress="Brew & Bake Academy, New Baneshwor, Kathmandu"
+                  footerContact="+977 98XXXXXXXX | brewandbake@example.com"
+                />
+              </div>
+            </div>
           </div>
         )}
 

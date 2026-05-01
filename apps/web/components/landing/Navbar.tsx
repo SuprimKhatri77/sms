@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { X, Menu } from "lucide-react";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
+import { siteInfo } from "@/utils/site-info";
 
 const navLinks = [
   { label: "Home", href: "#home" },
@@ -48,28 +50,27 @@ export default function Navbar() {
 
   return (
     <header
-      className={`fixed left-0 right-0 top-0 z-[100] transition-all duration-300 ${
-        scrolled || pathname === "/admission"
-          ? "bg-[#2d4a3e]/97 shadow-[0_2px_24px_rgba(0,0,0,0.12)] backdrop-blur-xl"
-          : "bg-transparent"
-      }`}
+      className="fixed left-0 right-0 top-0 z-100 transition-all duration-300 
+          bg-[#2d4a3e]/97 shadow-[0_2px_24px_rgba(0,0,0,0.12)] backdrop-blur-xl
+      "
     >
       <div className="mx-auto flex h-[72px] max-w-[1200px] items-center justify-between px-6">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 no-underline">
-          <span
-            className="flex h-[38px] w-[38px] items-center justify-center rounded-[10px] bg-[#e8552a] text-[1.1rem] font-extrabold text-white"
-            style={{ fontFamily: "var(--font-playfair)" }}
-          >
-            G
+          <span className="flex h-30 w-30 items-center justify-center overflow-hidden">
+            <Image
+              src={siteInfo.assets.noBGLogo}
+              alt={siteInfo.company.shortName}
+              width={120}
+              height={120}
+            />
           </span>
-          <span
+          {/* <span
             className="text-[1.15rem] font-semibold tracking-[0.01em] text-white"
             style={{ fontFamily: "var(--font-playfair)" }}
           >
-            Greenfield
-            <span className="text-[#d6cbb8]"> Academy</span>
-          </span>
+            {siteInfo.company.shortName}
+          </span> */}
         </Link>
 
         {/* Desktop Nav */}
@@ -86,7 +87,7 @@ export default function Navbar() {
           ))}
           <Link
             href="/admission"
-            className="rounded-lg bg-[#e8552a] px-[1.4rem] py-[0.55rem] text-[0.9rem] font-semibold tracking-[0.02em] text-white transition-all duration-200 hover:-translate-y-px hover:opacity-90"
+            className="rounded-lg bg-[#c28a4f] px-[1.4rem] py-[0.55rem] text-[0.9rem] font-semibold tracking-[0.02em] text-white transition-all duration-200 hover:-translate-y-px hover:opacity-90"
             style={{ fontFamily: "var(--font-dm-sans)" }}
           >
             Apply Now

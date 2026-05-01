@@ -305,32 +305,32 @@ export default function CoursesPage() {
   });
 
   return (
-    <div className="min-h-screen bg-[#f5f4f2] p-8 px-4 font-sans">
+    <div className="min-h-screen bg-(--brand-cream) p-8 px-4 font-sans">
       <div className="max-w-240 mx-auto">
-        {/* Breadcrumb */}
-        <div className="flex items-center gap-1 text-xs text-gray-400 mb-6">
-          <span className="text-gray-500">Admin</span>
+        {/* Context */}
+        <div className="mb-6 flex items-center gap-1 text-xs text-[rgba(47,78,64,0.45)]">
+          <span className="text-[rgba(47,78,64,0.7)]">Admin</span>
           <ChevronRight size={12} />
-          <span className="text-gray-500">Courses</span>
+          <span className="text-[rgba(47,78,64,0.7)]">Courses</span>
         </div>
 
         {/* Page Header */}
         <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-50 rounded-lg grid place-items-center text-blue-600 flex-shrink-0">
+            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-[rgba(194,138,79,0.14)] text-(--brand-brown)">
               <BookOpen size={20} />
             </div>
             <div>
-              <h1 className="text-[1.375rem] font-bold tracking-tight">
+              <h1 className="text-[1.375rem] font-bold tracking-tight text-(--brand-green)">
                 Courses
               </h1>
-              <p className="text-[0.8125rem] text-gray-500 mt-[0.15rem]">
+              <p className="mt-[0.15rem] text-[0.8125rem] text-[rgba(47,78,64,0.55)]">
                 Manage available courses and their fees
               </p>
             </div>
           </div>
           <button
-            className="inline-flex items-center gap-[0.4rem] bg-blue-600 text-white border-0 rounded-lg px-4 py-2 text-[0.8125rem] font-semibold cursor-pointer hover:bg-blue-700 transition-colors whitespace-nowrap"
+            className="inline-flex cursor-pointer items-center gap-[0.4rem] whitespace-nowrap rounded-lg border-0 bg-(--brand-green) px-4 py-2 text-[0.8125rem] font-semibold text-white transition-colors hover:bg-(--brand-green-2)"
             onClick={() => setModal({ type: "add" })}
           >
             <Plus size={15} /> Add Course
@@ -352,12 +352,12 @@ export default function CoursesPage() {
           ].map(({ value, label }) => (
             <div
               key={label}
-              className="flex-1 min-w-[120px] bg-white border border-gray-200 rounded-lg px-4 py-[0.875rem] shadow-sm"
+              className="min-w-[120px] flex-1 rounded-lg border border-[rgba(47,78,64,0.14)] bg-white px-4 py-3.5 shadow-sm"
             >
-              <div className="text-[1.375rem] font-bold tracking-tight">
+              <div className="text-[1.375rem] font-bold tracking-tight text-(--brand-green)">
                 {value}
               </div>
-              <div className="text-[0.72rem] font-semibold uppercase tracking-wider text-gray-400 mt-[0.2rem]">
+              <div className="mt-[0.2rem] text-[0.72rem] font-semibold tracking-wider text-[rgba(47,78,64,0.45)] uppercase">
                 {label}
               </div>
             </div>
@@ -365,27 +365,27 @@ export default function CoursesPage() {
         </div>
 
         {/* Toolbar */}
-        <div className="flex items-center gap-[0.625rem] mb-4 flex-wrap">
+        <div className="mb-4 flex flex-wrap items-center gap-2.5">
           <div className="relative flex-1 min-w-[180px]">
             <Search
               size={15}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+              className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-[rgba(47,78,64,0.4)]"
             />
             <input
-              className="w-full py-2 pr-3 pl-9 border border-gray-200 rounded-lg text-sm bg-white text-gray-900 outline-none transition-all focus:border-blue-600 focus:ring-2 focus:ring-blue-600/10"
+              className="w-full rounded-lg border border-[rgba(47,78,64,0.14)] bg-white py-2 pr-3 pl-9 text-sm text-(--brand-green) outline-none transition-all focus:border-(--brand-green) focus:ring-2 focus:ring-[rgba(47,78,64,0.12)]"
               placeholder="Search courses…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <div className="flex gap-1 bg-white border border-gray-200 rounded-lg p-[0.2rem]">
+          <div className="flex gap-1 rounded-lg border border-[rgba(47,78,64,0.14)] bg-white p-[0.2rem]">
             {(["all", "active", "inactive"] as const).map((f) => (
               <button
                 key={f}
                 className={`px-3 py-[0.3rem] text-[0.78rem] font-medium rounded-[5px] border-0 cursor-pointer transition-all ${
                   filterActive === f
-                    ? "bg-blue-600 text-white"
-                    : "bg-transparent text-gray-500 hover:bg-gray-100"
+                    ? "bg-(--brand-green) text-white"
+                    : "bg-transparent text-[rgba(47,78,64,0.55)] hover:bg-[rgba(47,78,64,0.08)]"
                 }`}
                 onClick={() => setFilterActive(f)}
               >
@@ -396,21 +396,21 @@ export default function CoursesPage() {
         </div>
 
         {/* Table Card */}
-        <div className="bg-white border border-gray-200 rounded-[10px] shadow-sm overflow-hidden">
+        <div className="overflow-hidden rounded-[10px] border border-[rgba(47,78,64,0.14)] bg-white shadow-sm">
           {filtered.length > 0 && (
-            <div className="text-[0.78rem] text-gray-400 px-4 py-[0.65rem] border-b border-gray-200">
+            <div className="border-b border-[rgba(47,78,64,0.14)] px-4 py-[0.65rem] text-[0.78rem] text-[rgba(47,78,64,0.45)]">
               Showing {filtered.length} of {courses.length} courses
             </div>
           )}
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">
               <thead>
-                <tr className="bg-[#f5f4f2] border-b border-gray-200">
+                <tr className="border-b border-[rgba(47,78,64,0.14)] bg-[rgba(47,78,64,0.05)]">
                   {["Course Name", "Fee", "Status", "Created", "Actions"].map(
                     (h) => (
                       <th
                         key={h}
-                        className="px-4 py-[0.7rem] text-left text-[0.6875rem] font-bold uppercase tracking-[0.07em] text-gray-400 whitespace-nowrap"
+                        className="px-4 py-[0.7rem] text-left text-[0.6875rem] font-bold tracking-[0.07em] text-[rgba(47,78,64,0.45)] whitespace-nowrap uppercase"
                       >
                         {h}
                       </th>
@@ -422,7 +422,7 @@ export default function CoursesPage() {
                 {filtered.length === 0 ? (
                   <tr>
                     <td colSpan={5}>
-                      <div className="py-14 px-6 text-center text-gray-400">
+                      <div className="px-6 py-14 text-center text-[rgba(47,78,64,0.45)]">
                         <Search size={28} className="mx-auto" />
                         <p className="text-sm mt-2">
                           No courses found{search ? ` for "${search}"` : ""}.
@@ -434,15 +434,15 @@ export default function CoursesPage() {
                   filtered.map((course) => (
                     <tr
                       key={course.id}
-                      className="border-b border-gray-200 last:border-b-0 hover:bg-[#f5f4f2] transition-colors"
+                      className="border-b border-[rgba(47,78,64,0.12)] transition-colors last:border-b-0 hover:bg-[rgba(47,78,64,0.04)]"
                     >
-                      <td className="px-4 py-[0.875rem] text-sm font-semibold text-gray-900">
+                      <td className="px-4 py-3.5 text-sm font-semibold text-(--brand-green)">
                         {course.name}
                       </td>
-                      <td className="px-4 py-[0.875rem] text-[0.8125rem] text-gray-500 font-mono">
+                      <td className="px-4 py-3.5 font-mono text-[0.8125rem] text-[rgba(47,78,64,0.65)]">
                         {formatCurrency(course.fee / 100)}
                       </td>
-                      <td className="px-4 py-[0.875rem]">
+                      <td className="px-4 py-3.5">
                         <Toggle
                           checked={course.isActive}
                           onChange={(v) =>
@@ -450,13 +450,13 @@ export default function CoursesPage() {
                           }
                         />
                       </td>
-                      <td className="px-4 py-3.5 text-[0.78rem] text-gray-400 whitespace-nowrap max-sm:hidden">
+                      <td className="max-sm:hidden whitespace-nowrap px-4 py-3.5 text-[0.78rem] text-[rgba(47,78,64,0.45)]">
                         {formatDate(String(course.createdAt))}
                       </td>
                       <td className="px-4 py-3.5">
                         <div className="flex items-center gap-[0.4rem]">
                           <button
-                            className="w-7.5 h-7.5 rounded-md border border-gray-200 grid place-items-center cursor-pointer transition-all bg-white text-gray-500 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-600"
+                            className="grid h-7.5 w-7.5 cursor-pointer place-items-center rounded-md border border-[rgba(47,78,64,0.14)] bg-white text-[rgba(47,78,64,0.55)] transition-all hover:border-(--brand-brown) hover:bg-[rgba(194,138,79,0.12)] hover:text-(--brand-brown)"
                             title="Edit course"
                             onClick={() => {
                               setSelectedCourse(course);
@@ -466,7 +466,7 @@ export default function CoursesPage() {
                             <Pencil size={14} />
                           </button>
                           <button
-                            className="w-[30px] h-[30px] rounded-md border border-gray-200 grid place-items-center cursor-pointer transition-all bg-white text-gray-400 hover:bg-red-50 hover:text-red-600 hover:border-red-600"
+                            className="grid h-[30px] w-[30px] cursor-pointer place-items-center rounded-md border border-[rgba(47,78,64,0.14)] bg-white text-[rgba(47,78,64,0.45)] transition-all hover:border-red-500 hover:bg-red-50 hover:text-red-600"
                             title="Delete course"
                             onClick={() => {
                               setSelectedCourse(course);

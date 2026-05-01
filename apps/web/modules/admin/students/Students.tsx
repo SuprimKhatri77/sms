@@ -58,8 +58,6 @@ function StatusBadge({ status }: { status: Status }) {
   );
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
-
 export default function StudentsPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatus] = useState<Status | "all">("all");
@@ -135,10 +133,10 @@ export default function StudentsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f4f1ec] px-4 py-8 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-(--brand-cream) px-4 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
-        {/* Header */}
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        {/* ── Header ── */}
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1
               className="text-[1.8rem] font-bold leading-tight text-[#2d4a3e]"
@@ -146,74 +144,74 @@ export default function StudentsPage() {
             >
               Students
             </h1>
-            {filtered && (
-              <p
-                className="mt-0.5 text-[0.88rem] text-[#2d4a3e]/50"
-                style={{ fontFamily: "var(--font-dm-sans)" }}
-              >
-                {filtered.length} student{filtered.length !== 1 ? "s" : ""}{" "}
-                found
-              </p>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            <div
-              className="flex items-center gap-1.5 rounded-xl bg-white border border-[#2d4a3e]/10 px-3 py-2 text-[0.8rem] text-[#2d4a3e]/50"
+            <p
+              className="mt-0.5 text-[0.82rem] text-[#2d4a3e]/50"
               style={{ fontFamily: "var(--font-dm-sans)" }}
             >
-              <StudentIcon className="h-3.5 w-3.5" />
-              Total: {totalStudents}
-            </div>
+              {filtered.length} student{filtered.length !== 1 ? "s" : ""} found
+            </p>
+          </div>
+
+          {/* Total pill */}
+          <div
+            className="inline-flex items-center gap-1.5 border border-[#2d4a3e]/20 bg-white px-3 py-1.5 text-[0.78rem] font-medium text-[#2d4a3e]/60"
+            style={{ fontFamily: "var(--font-dm-sans)" }}
+          >
+            <StudentIcon className="h-3.5 w-3.5" />
+            Total: {totalStudents}
           </div>
         </div>
 
-        {/* Search + Filter bar */}
-        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center">
-          {/* Search */}
-          <div className="relative flex-1">
-            <Search
-              className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#2d4a3e]/35"
-              strokeWidth={1.75}
-            />
-            <input
-              type="text"
-              placeholder="Search by name, reference or phone…"
-              value={search}
-              onChange={(e) => handleSearch(e.target.value)}
-              className="w-full rounded-xl border border-[#2d4a3e]/12 bg-white py-2.5 pl-10 pr-4 text-[0.9rem] text-[#2d4a3e] outline-none placeholder:text-[#2d4a3e]/30 focus:border-[#e8552a] focus:ring-2 focus:ring-[#e8552a]/15"
+        {/* ── Search + Filters ── */}
+        <div className="mb-0 flex flex-col gap-0 border border-[#2d4a3e]/12 bg-white">
+          {/* Top row: search + filter toggle */}
+          <div className="flex items-stretch border-b border-[#2d4a3e]/10">
+            {/* Search */}
+            <div className="relative flex-1">
+              <Search
+                className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#2d4a3e]/30"
+                strokeWidth={1.75}
+              />
+              <input
+                type="text"
+                placeholder="Search by name, reference or phone…"
+                value={search}
+                onChange={(e) => handleSearch(e.target.value)}
+                className="h-full w-full border-0 bg-transparent py-3 pl-10 pr-4 text-[0.88rem] text-[#2d4a3e] outline-none placeholder:text-[#2d4a3e]/30 focus:ring-0"
+                style={{ fontFamily: "var(--font-dm-sans)" }}
+              />
+            </div>
+
+            {/* Mobile filter toggle */}
+            <button
+              onClick={() => setFilterOpen(!filterOpen)}
+              className="flex items-center gap-2 border-l border-[#2d4a3e]/10 px-4 py-3 text-[0.82rem] font-medium text-[#2d4a3e] sm:hidden"
               style={{ fontFamily: "var(--font-dm-sans)" }}
-            />
+            >
+              <Filter className="h-3.5 w-3.5" strokeWidth={1.75} />
+              Filters
+              {(statusFilter !== "all" || courseFilter !== "all") && (
+                <span className="flex h-4 w-4 items-center justify-center bg-(--brand-brown) text-[0.6rem] font-bold text-white">
+                  {
+                    [statusFilter !== "all", courseFilter !== "all"].filter(
+                      Boolean,
+                    ).length
+                  }
+                </span>
+              )}
+            </button>
           </div>
 
-          {/* Filter toggle (mobile) */}
-          <button
-            onClick={() => setFilterOpen(!filterOpen)}
-            className="flex items-center gap-2 rounded-xl border border-[#2d4a3e]/12 bg-white px-4 py-2.5 text-[0.88rem] font-medium text-[#2d4a3e] sm:hidden"
-            style={{ fontFamily: "var(--font-dm-sans)" }}
-          >
-            <Filter className="h-4 w-4" strokeWidth={1.75} />
-            Filters
-            {(statusFilter !== "all" || courseFilter !== "all") && (
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#e8552a] text-[0.65rem] font-bold text-white">
-                {
-                  [statusFilter !== "all", courseFilter !== "all"].filter(
-                    Boolean,
-                  ).length
-                }
-              </span>
-            )}
-          </button>
-
-          {/* Filters — always visible on sm+ */}
+          {/* Filter row — always visible sm+, toggled on mobile */}
           <div
-            className={`flex flex-col gap-2 sm:flex-row sm:gap-2 ${filterOpen ? "flex" : "hidden sm:flex"}`}
+            className={`${filterOpen ? "flex" : "hidden sm:flex"} flex-col gap-0 sm:flex-row sm:items-stretch`}
           >
-            {/* Status filter */}
-            <div className="relative">
+            {/* Status */}
+            <div className="relative border-b border-[#2d4a3e]/10 sm:border-b-0 sm:border-r">
               <select
                 value={statusFilter}
                 onChange={(e) => handleStatus(e.target.value as Status | "all")}
-                className="w-full appearance-none rounded-xl border border-[#2d4a3e]/12 bg-white py-2.5 pl-4 pr-9 text-[0.88rem] font-medium text-[#2d4a3e] outline-none focus:border-[#e8552a] focus:ring-2 focus:ring-[#e8552a]/15 sm:w-auto"
+                className="w-full appearance-none bg-white py-2.5 pl-4 pr-8 text-[0.82rem] font-medium text-[#2d4a3e] outline-none sm:w-44"
                 style={{ fontFamily: "var(--font-dm-sans)" }}
               >
                 <option value="all">All Statuses</option>
@@ -223,15 +221,15 @@ export default function StudentsPage() {
                   </option>
                 ))}
               </select>
-              <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#2d4a3e]/40" />
+              <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-3 w-3 -translate-y-1/2 text-[#2d4a3e]/35" />
             </div>
 
-            {/* Course filter */}
-            <div className="relative">
+            {/* Course */}
+            <div className="relative border-b border-[#2d4a3e]/10 sm:border-b-0 sm:border-r">
               <select
                 value={courseFilter}
                 onChange={(e) => handleCourse(e.target.value)}
-                className="w-full appearance-none rounded-xl border border-[#2d4a3e]/12 bg-white py-2.5 pl-4 pr-9 text-[0.88rem] font-medium text-[#2d4a3e] outline-none focus:border-[#e8552a] focus:ring-2 focus:ring-[#e8552a]/15 sm:w-auto"
+                className="w-full appearance-none bg-white py-2.5 pl-4 pr-8 text-[0.82rem] font-medium text-[#2d4a3e] outline-none sm:w-44"
                 style={{ fontFamily: "var(--font-dm-sans)" }}
               >
                 <option value="all">All Courses</option>
@@ -241,7 +239,7 @@ export default function StudentsPage() {
                   </option>
                 ))}
               </select>
-              <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#2d4a3e]/40" />
+              <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-3 w-3 -translate-y-1/2 text-[#2d4a3e]/35" />
             </div>
 
             {/* Clear */}
@@ -251,21 +249,22 @@ export default function StudentsPage() {
                   handleStatus("all");
                   handleCourse("all");
                 }}
-                className="rounded-xl border border-[#e8552a]/30 bg-[#e8552a]/08 px-4 py-2.5 text-[0.88rem] font-medium text-[#e8552a]"
+                className="border-b border-[#2d4a3e]/10 px-4 py-2.5 text-left text-[0.82rem] font-medium text-(--brand-brown) sm:border-b-0 sm:border-r"
                 style={{ fontFamily: "var(--font-dm-sans)" }}
               >
-                Clear
+                Clear filters
               </button>
             )}
           </div>
         </div>
 
-        {/* Table card */}
-        <div className="overflow-hidden rounded-2xl border border-black/[0.06] bg-white shadow-[0_4px_24px_rgba(0,0,0,0.04)]">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[640px]">
+        {/* ── Table ── */}
+        <div className="border border-t-0 border-[#2d4a3e]/12 bg-white">
+          {/* Desktop table */}
+          <div className="hidden overflow-x-auto sm:block">
+            <table className="w-full border-collapse">
               <thead>
-                <tr className="border-b border-[#2d4a3e]/08 bg-[#f4f1ec]/60">
+                <tr className="border-b border-[#2d4a3e]/10 bg-[#2d4a3e]">
                   {[
                     "Reference",
                     "Student",
@@ -277,7 +276,7 @@ export default function StudentsPage() {
                   ].map((h) => (
                     <th
                       key={h}
-                      className="px-5 py-3.5 text-left text-[0.72rem] font-semibold uppercase tracking-[0.07em] text-[#2d4a3e]/45"
+                      className="px-5 py-3 text-left text-[0.68rem] font-semibold uppercase tracking-[0.08em] text-white/60 first:pl-5"
                       style={{ fontFamily: "var(--font-dm-sans)" }}
                     >
                       {h}
@@ -286,53 +285,52 @@ export default function StudentsPage() {
                 </tr>
               </thead>
               <tbody>
-                {paginated && paginated.length === 0 ? (
+                {paginated.length === 0 ? (
                   <tr>
                     <td
                       colSpan={7}
-                      className="py-20 text-center text-[0.9rem] text-[#2d4a3e]/40"
+                      className="py-20 text-center text-[0.88rem] text-[#2d4a3e]/35"
                       style={{ fontFamily: "var(--font-dm-sans)" }}
                     >
                       No students match your filters.
                     </td>
                   </tr>
                 ) : (
-                  paginated &&
                   paginated.map((student, idx) => (
                     <tr
                       key={student.id}
-                      className={`border-b border-[#2d4a3e]/06 transition-colors hover:bg-[#f4f1ec]/50 ${paginated && idx === paginated.length - 1 ? "border-b-0" : ""}`}
+                      className={`group border-b border-[#2d4a3e]/08 transition-colors hover:bg-[#2d4a3e]/3 ${idx === paginated.length - 1 ? "border-b-0" : ""}`}
                     >
-                      <td className="px-5 py-4">
+                      <td className="px-5 py-3.5">
                         <span
-                          className="font-mono text-[0.78rem] text-[#2d4a3e]/50"
+                          className="font-mono text-[0.72rem] text-[#2d4a3e]/40"
                           style={{ fontFamily: "var(--font-dm-sans)" }}
                         >
                           {student.referenceNo}
                         </span>
                       </td>
-                      <td className="px-5 py-4">
+                      <td className="px-5 py-3.5">
                         <span
-                          className="text-[0.92rem] font-medium text-[#2d4a3e]"
+                          className="text-[0.9rem] font-semibold text-[#2d4a3e]"
                           style={{ fontFamily: "var(--font-dm-sans)" }}
                         >
                           {student.fullName}
                         </span>
                       </td>
-                      <td className="px-5 py-4">
+                      <td className="px-5 py-3.5">
                         <span
-                          className="text-[0.88rem] text-[#2d4a3e]/60"
+                          className="text-[0.84rem] text-[#2d4a3e]/55"
                           style={{ fontFamily: "var(--font-dm-sans)" }}
                         >
                           {student.phone}
                         </span>
                       </td>
-                      <td className="px-5 py-4">
+                      <td className="px-5 py-3.5">
                         <div className="flex flex-wrap gap-1">
                           {student.courses.map((c) => (
                             <span
                               key={c}
-                              className="rounded-full bg-[#2d4a3e]/08 px-2.5 py-0.5 text-[0.72rem] font-medium text-[#2d4a3e]"
+                              className="border border-[#2d4a3e]/15 bg-[#2d4a3e]/06 px-2 py-0.5 text-[0.68rem] font-semibold uppercase tracking-wide text-[#2d4a3e]/70"
                               style={{ fontFamily: "var(--font-dm-sans)" }}
                             >
                               {c}
@@ -340,21 +338,21 @@ export default function StudentsPage() {
                           ))}
                         </div>
                       </td>
-                      <td className="px-5 py-4">
+                      <td className="px-5 py-3.5">
                         <span
-                          className="text-[0.88rem] font-medium text-[#2d4a3e]"
+                          className="text-[0.88rem] font-semibold tabular-nums text-[#2d4a3e]"
                           style={{ fontFamily: "var(--font-dm-sans)" }}
                         >
                           NPR {(student.claimedAmount / 100).toLocaleString()}
                         </span>
                       </td>
-                      <td className="px-5 py-4">
+                      <td className="px-5 py-3.5">
                         <StatusBadge status={student.status} />
                       </td>
-                      <td className="px-5 py-4">
+                      <td className="px-5 py-3.5">
                         <Link
                           href={`/admin/students/${student.id}`}
-                          className="rounded-lg border border-[#2d4a3e]/15 px-3 py-1.5 text-[0.78rem] font-medium text-[#2d4a3e] transition-all hover:border-[#e8552a]/30 hover:bg-[#e8552a]/05 hover:text-[#e8552a]"
+                          className="border border-[#2d4a3e]/20 px-3 py-1.5 text-[0.75rem] font-semibold uppercase tracking-wide text-[#2d4a3e]/70 transition-all hover:border-(--brand-brown) hover:bg-(--brand-brown) hover:text-white"
                           style={{ fontFamily: "var(--font-dm-sans)" }}
                         >
                           View
@@ -367,28 +365,122 @@ export default function StudentsPage() {
             </table>
           </div>
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between border-t border-[#2d4a3e]/08 px-5 py-4">
-              <p
-                className="text-[0.82rem] text-[#2d4a3e]/45"
+          {/* Mobile card list */}
+          <div className="divide-y divide-[#2d4a3e]/08 sm:hidden">
+            {/* Mobile header */}
+            <div className="bg-[#2d4a3e] px-4 py-2.5">
+              <span
+                className="text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-white/50"
                 style={{ fontFamily: "var(--font-dm-sans)" }}
               >
-                Showing {(page - 1) * PAGE_SIZE + 1}–
-                {filtered && (
-                  <>
-                    {Math.min(page * PAGE_SIZE, filtered.length)} of{" "}
-                    {totalStudents}
-                  </>
-                )}
+                Students
+              </span>
+            </div>
+
+            {paginated.length === 0 ? (
+              <div
+                className="py-16 text-center text-[0.88rem] text-[#2d4a3e]/35"
+                style={{ fontFamily: "var(--font-dm-sans)" }}
+              >
+                No students match your filters.
+              </div>
+            ) : (
+              paginated.map((student) => (
+                <div key={student.id} className="px-4 py-4">
+                  {/* Top row: name + status */}
+                  <div className="mb-2 flex items-start justify-between gap-3">
+                    <div>
+                      <p
+                        className="text-[0.92rem] font-semibold text-[#2d4a3e]"
+                        style={{ fontFamily: "var(--font-dm-sans)" }}
+                      >
+                        {student.fullName}
+                      </p>
+                      <p
+                        className="mt-0.5 font-mono text-[0.7rem] text-[#2d4a3e]/40"
+                        style={{ fontFamily: "var(--font-dm-sans)" }}
+                      >
+                        {student.referenceNo}
+                      </p>
+                    </div>
+                    <StatusBadge status={student.status} />
+                  </div>
+
+                  {/* Details grid */}
+                  <div className="mb-3 grid grid-cols-2 gap-x-4 gap-y-1.5">
+                    <div>
+                      <p
+                        className="text-[0.65rem] font-semibold uppercase tracking-wide text-[#2d4a3e]/35"
+                        style={{ fontFamily: "var(--font-dm-sans)" }}
+                      >
+                        Phone
+                      </p>
+                      <p
+                        className="text-[0.82rem] text-[#2d4a3e]/65"
+                        style={{ fontFamily: "var(--font-dm-sans)" }}
+                      >
+                        {student.phone}
+                      </p>
+                    </div>
+                    <div>
+                      <p
+                        className="text-[0.65rem] font-semibold uppercase tracking-wide text-[#2d4a3e]/35"
+                        style={{ fontFamily: "var(--font-dm-sans)" }}
+                      >
+                        Claimed
+                      </p>
+                      <p
+                        className="text-[0.82rem] font-semibold tabular-nums text-[#2d4a3e]"
+                        style={{ fontFamily: "var(--font-dm-sans)" }}
+                      >
+                        NPR {(student.claimedAmount / 100).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Courses + View */}
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex flex-wrap gap-1">
+                      {student.courses.map((c) => (
+                        <span
+                          key={c}
+                          className="border border-[#2d4a3e]/15 bg-[#2d4a3e]/05 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-[#2d4a3e]/60"
+                          style={{ fontFamily: "var(--font-dm-sans)" }}
+                        >
+                          {c}
+                        </span>
+                      ))}
+                    </div>
+                    <Link
+                      href={`/admin/students/${student.id}`}
+                      className="shrink-0 border border-[#2d4a3e]/20 px-3 py-1.5 text-[0.72rem] font-semibold uppercase tracking-wide text-[#2d4a3e]/70 transition-all hover:border-(--brand-brown) hover:bg-(--brand-brown) hover:text-white"
+                      style={{ fontFamily: "var(--font-dm-sans)" }}
+                    >
+                      View
+                    </Link>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* ── Pagination ── */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between border-t border-[#2d4a3e]/10 px-5 py-3.5">
+              <p
+                className="text-[0.78rem] text-[#2d4a3e]/40"
+                style={{ fontFamily: "var(--font-dm-sans)" }}
+              >
+                {(page - 1) * PAGE_SIZE + 1}–
+                {Math.min(page * PAGE_SIZE, filtered.length)} of {totalStudents}
               </p>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-0">
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#2d4a3e]/12 bg-white text-[#2d4a3e] transition-all hover:border-[#2d4a3e]/25 disabled:cursor-not-allowed disabled:opacity-35"
+                  className="flex h-8 w-8 items-center justify-center border border-[#2d4a3e]/15 bg-white text-[#2d4a3e] transition-colors hover:bg-[#2d4a3e]/05 disabled:cursor-not-allowed disabled:opacity-30"
                 >
-                  <ChevronLeft className="h-4 w-4" strokeWidth={2} />
+                  <ChevronLeft className="h-3.5 w-3.5" strokeWidth={2} />
                 </button>
                 {Array.from({ length: totalPages }, (_, i) => i + 1)
                   .filter(
@@ -405,7 +497,7 @@ export default function StudentsPage() {
                     p === "..." ? (
                       <span
                         key={`ellipsis-${idx}`}
-                        className="px-1 text-[0.82rem] text-[#2d4a3e]/35"
+                        className="-ml-px flex h-8 w-8 items-center justify-center border border-[#2d4a3e]/15 bg-white text-[0.78rem] text-[#2d4a3e]/35"
                       >
                         …
                       </span>
@@ -413,10 +505,10 @@ export default function StudentsPage() {
                       <button
                         key={p}
                         onClick={() => setPage(p as number)}
-                        className={`flex h-8 w-8 items-center justify-center rounded-lg text-[0.82rem] font-medium transition-all ${
+                        className={`-ml-px flex h-8 w-8 items-center justify-center border text-[0.78rem] font-semibold transition-colors ${
                           page === p
-                            ? "bg-[#2d4a3e] text-white"
-                            : "border border-[#2d4a3e]/12 bg-white text-[#2d4a3e] hover:border-[#2d4a3e]/25"
+                            ? "border-[#2d4a3e] bg-[#2d4a3e] text-white"
+                            : "border-[#2d4a3e]/15 bg-white text-[#2d4a3e] hover:bg-[#2d4a3e]/05"
                         }`}
                         style={{ fontFamily: "var(--font-dm-sans)" }}
                       >
@@ -427,9 +519,9 @@ export default function StudentsPage() {
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page === totalPages}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#2d4a3e]/12 bg-white text-[#2d4a3e] transition-all hover:border-[#2d4a3e]/25 disabled:cursor-not-allowed disabled:opacity-35"
+                  className="-ml-px flex h-8 w-8 items-center justify-center border border-[#2d4a3e]/15 bg-white text-[#2d4a3e] transition-colors hover:bg-[#2d4a3e]/05 disabled:cursor-not-allowed disabled:opacity-30"
                 >
-                  <ChevronRight className="h-4 w-4" strokeWidth={2} />
+                  <ChevronRight className="h-3.5 w-3.5" strokeWidth={2} />
                 </button>
               </div>
             </div>

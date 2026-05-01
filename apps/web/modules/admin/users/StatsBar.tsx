@@ -23,16 +23,16 @@ export function StatsBar({ users }: StatsBarProps) {
   ];
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-0 border border-black mb-8">
+    <div className="mb-8 grid grid-cols-2 gap-0 border border-[rgba(47,78,64,0.18)] bg-white sm:grid-cols-4">
       {stats.map((stat, i) => (
         <div
           key={stat.label}
-          className={`px-5 py-4 ${i < stats.length - 1 ? "border-r border-black" : ""}`}
+          className={`px-5 py-4 ${i < stats.length - 1 ? "border-r border-[rgba(47,78,64,0.15)]" : ""}`}
         >
-          <p className="font-mono text-xs tracking-widest uppercase text-zinc-500 mb-1">
+          <p className="mb-1 font-mono text-xs tracking-widest text-[rgba(47,78,64,0.55)] uppercase">
             {stat.label}
           </p>
-          <p className="font-mono text-2xl font-bold text-black">
+          <p className="font-mono text-2xl font-bold text-(--brand-green)">
             {stat.count}
           </p>
         </div>
