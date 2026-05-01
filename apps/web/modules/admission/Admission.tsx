@@ -38,6 +38,7 @@ import { toast } from "sonner";
 import axios from "axios";
 import { mapFieldErrors } from "@/utils/api";
 import { cn } from "@/lib/utils";
+import { siteInfo } from "@/utils/site-info";
 
 interface FieldError {
   fullName?: string;
@@ -315,12 +316,12 @@ export default function AdmissionPage({ courses }: Props) {
 
   // ── Form ──
   return (
-    <main className="min-h-screen bg-[#f4f1ec] px-6 pb-24 pt-32">
+    <main className="min-h-screen bg-(--brand-cream) px-6 pb-24 pt-32">
       <div className="mx-auto max-w-2xl">
         {/* Back link */}
         <Link
           href="/"
-          className="mb-8 inline-flex items-center gap-1.5 text-[0.85rem] font-medium text-[#2d4a3e]/50 transition-colors hover:text-[#2d4a3e]"
+          className="mb-8 inline-flex items-center gap-1.5 text-[0.85rem] font-medium text-[rgba(47,78,64,0.55)] transition-colors hover:text-(--brand-green)"
           style={{ fontFamily: "var(--font-dm-sans)" }}
         >
           <ArrowLeft className="h-4 w-4" />
@@ -330,21 +331,18 @@ export default function AdmissionPage({ courses }: Props) {
         {/* Header */}
         <div className="mb-10">
           <span
-            className="mb-2 inline-block text-[0.78rem] font-semibold uppercase tracking-widest text-[#e8552a]"
+            className="mb-2 inline-block text-[0.78rem] font-semibold uppercase tracking-widest text-(--brand-brown)"
             style={{ fontFamily: "var(--font-dm-sans)" }}
           >
-            Admissions 2025–26
+            {siteInfo.admission.cycleLabel}
           </span>
           <h1
-            className="text-[clamp(1.9rem,4vw,2.6rem)] font-bold leading-[1.15] text-[#2d4a3e]"
+            className="text-[clamp(1.9rem,4vw,2.6rem)] font-bold leading-[1.15] text-(--brand-green)"
             style={{ fontFamily: "var(--font-playfair)" }}
           >
             Apply to{" "}
-            <em
-              className="font-medium text-[#7d6b8a]"
-              style={{ fontStyle: "italic" }}
-            >
-              Greenfield
+            <em className="font-medium text-(--brand-brown)" style={{ fontStyle: "italic" }}>
+              {siteInfo.company.shortName}
             </em>
           </h1>
         </div>
@@ -363,7 +361,7 @@ export default function AdmissionPage({ courses }: Props) {
                         done
                           ? "bg-[#2d4a3e] text-white"
                           : active
-                            ? "bg-[#e8552a] text-white shadow-[0_2px_12px_rgba(232,85,42,0.35)]"
+                            ? "bg-(--brand-brown) text-white shadow-[0_2px_12px_rgba(194,138,79,0.35)]"
                             : "bg-[#2d4a3e]/10 text-[#2d4a3e]/40"
                       }`}
                       style={{ fontFamily: "var(--font-dm-sans)" }}
@@ -377,7 +375,7 @@ export default function AdmissionPage({ courses }: Props) {
                     <span
                       className={`hidden text-[0.72rem] font-semibold uppercase tracking-[0.06em] sm:block ${
                         active
-                          ? "text-[#e8552a]"
+                          ? "text-(--brand-brown)"
                           : done
                             ? "text-[#2d4a3e]"
                             : "text-[#2d4a3e]/35"
@@ -520,13 +518,13 @@ export default function AdmissionPage({ courses }: Props) {
                     <div className="sm:col-span-2">
                       <div className="flex flex-col gap-1.5">
                         <label
-                          className="text-[0.8rem] font-semibold uppercase tracking-[0.07em] text-[#2d4a3e]"
+                          className="text-[0.8rem] font-semibold uppercase tracking-[0.07em] text-(--brand-green)"
                           style={{ fontFamily: "var(--font-dm-sans)" }}
                         >
-                          Address <span className="text-[#e8552a]">*</span>
+                          Address <span className="text-(--brand-brown)">*</span>
                         </label>
                         <div className="relative">
-                          <span className="pointer-events-none absolute left-3.5 top-3.5 text-[#2d4a3e]/40">
+                          <span className="pointer-events-none absolute left-3.5 top-3.5 text-[rgba(47,78,64,0.4)]">
                             <MapPin className="h-4 w-4" strokeWidth={1.75} />
                           </span>
                           <textarea
@@ -534,7 +532,7 @@ export default function AdmissionPage({ courses }: Props) {
                             placeholder="Street, City, District"
                             value={field.state.value}
                             onChange={(e) => field.handleChange(e.target.value)}
-                            className={`w-full resize-none rounded-xl border bg-white py-3 pl-10 pr-4 text-[0.92rem] text-[#2d4a3e] outline-none transition-all duration-200 placeholder:text-[#2d4a3e]/30 focus:border-[#e8552a] focus:ring-2 focus:ring-[#e8552a]/15 ${
+                            className={`w-full resize-none rounded-xl border bg-white py-3 pl-10 pr-4 text-[0.92rem] text-(--brand-green) outline-none transition-all duration-200 placeholder:text-[rgba(47,78,64,0.3)] focus:border-(--brand-brown) focus:ring-2 focus:ring-[rgba(194,138,79,0.15)] ${
                               mergedError
                                 ? "border-red-400 ring-2 ring-red-100"
                                 : "border-[#2d4a3e]/15"
@@ -572,7 +570,7 @@ export default function AdmissionPage({ courses }: Props) {
                           (optional)
                         </span> */}
                       </label>
-                      <label className="flex cursor-pointer items-center gap-4 rounded-xl border border-dashed border-[#2d4a3e]/20 bg-[#f4f1ec]/60 p-4 transition-colors hover:border-[#e8552a]/40 hover:bg-[#e8552a]/5">
+                      <label className="flex cursor-pointer items-center gap-4 rounded-xl border border-dashed border-[rgba(47,78,64,0.2)] bg-[rgba(47,78,64,0.04)] p-4 transition-colors hover:border-[rgba(194,138,79,0.5)] hover:bg-[rgba(194,138,79,0.06)]">
                         {isUploadingImage ? (
                           <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-[#2d4a3e]/08">
                             <Loader2 className="h-5 w-5 animate-spin text-[#2d4a3e]/40" />
@@ -848,7 +846,7 @@ export default function AdmissionPage({ courses }: Props) {
               <button
                 type="button"
                 onClick={goNext}
-                className="inline-flex items-center gap-2 rounded-xl bg-[#e8552a] px-6 py-3 text-[0.9rem] font-semibold text-white shadow-[0_4px_16px_rgba(232,85,42,0.3)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(232,85,42,0.4)]"
+                className="inline-flex items-center gap-2 rounded-xl bg-(--brand-brown) px-6 py-3 text-[0.9rem] font-semibold text-white shadow-[0_4px_16px_rgba(194,138,79,0.3)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(194,138,79,0.4)]"
                 style={{ fontFamily: "var(--font-dm-sans)" }}
               >
                 Continue

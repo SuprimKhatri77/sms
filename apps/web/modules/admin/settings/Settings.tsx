@@ -95,26 +95,26 @@ export default function SettingsPage() {
     <>
       <style>{GLOBAL_STYLES}</style>
 
-      <div className="min-h-screen bg-stone-100 px-4 py-8">
+      <div className="min-h-screen bg-(--brand-cream) px-4 py-8">
         <div className="max-w-[760px] mx-auto">
-          {/* Breadcrumb */}
-          <div className="flex items-center gap-1 text-xs text-stone-400 mb-6">
-            <span className="text-stone-500">Admin</span>
+          {/* Local context pill */}
+          <div className="mb-6 flex items-center gap-1 text-xs text-[rgba(47,78,64,0.45)]">
+            <span className="text-[rgba(47,78,64,0.7)]">Admin</span>
             <ChevronRight size={12} />
-            <span className="text-stone-500">Settings</span>
+            <span className="text-[rgba(47,78,64,0.7)]">Settings</span>
           </div>
 
           {/* Page header */}
           <div className="flex items-start justify-between gap-4 mb-8 flex-wrap">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-50 rounded-lg grid place-items-center text-blue-600 flex-shrink-0">
+              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-[rgba(194,138,79,0.14)] text-(--brand-brown)">
                 <Settings size={20} />
               </div>
               <div>
-                <h1 className="text-[1.375rem] font-bold tracking-tight text-stone-800">
+                <h1 className="text-[1.375rem] font-bold tracking-tight text-(--brand-green)">
                   Site Settings
                 </h1>
-                <p className="text-[0.8125rem] text-stone-500 mt-0.5">
+                <p className="mt-0.5 text-[0.8125rem] text-[rgba(47,78,64,0.55)]">
                   Manage global configuration values
                 </p>
               </div>
@@ -128,15 +128,15 @@ export default function SettingsPage() {
           </div>
 
           {/* Card */}
-          <div className="bg-white border border-stone-200 rounded-[10px] shadow-sm overflow-hidden">
-            <div className="px-5 py-3.5 border-b border-stone-200 flex items-center justify-between">
-              <span className="text-[0.6875rem] font-semibold uppercase tracking-widest text-stone-400">
+          <div className="overflow-hidden rounded-[10px] border border-[rgba(47,78,64,0.14)] bg-white shadow-sm">
+            <div className="flex items-center justify-between border-b border-[rgba(47,78,64,0.14)] px-5 py-3.5">
+              <span className="text-[0.6875rem] font-semibold uppercase tracking-widest text-[rgba(47,78,64,0.45)]">
                 {settings.length} {settings.length === 1 ? "entry" : "entries"}
               </span>
             </div>
 
             {settings.length === 0 ? (
-              <div className="px-6 py-12 text-center text-sm text-stone-400">
+              <div className="px-6 py-12 text-center text-sm text-[rgba(47,78,64,0.45)]">
                 No settings configured yet.
               </div>
             ) : (

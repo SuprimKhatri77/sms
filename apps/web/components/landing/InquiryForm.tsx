@@ -8,6 +8,7 @@ import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
 import { useState } from "react";
 import { toast } from "sonner";
+import { siteInfo } from "@/utils/site-info";
 
 type FormData = {
   full_name: string;
@@ -341,17 +342,17 @@ export default function InquiryFormPage() {
             <ContactCard
               icon={<PhoneIcon />}
               label="Call Us"
-              value="+1 (555) 000-1234"
+              value={siteInfo.contact.phone}
             />
             <ContactCard
               icon={<MailIcon />}
               label="Email Us"
-              value="admissions@greenfieldacademy.edu"
+              value={siteInfo.contact.email}
             />
             <ContactCard
               icon={<ClockIcon />}
               label="Office Hours"
-              value="Mon – Fri, 8:00 AM – 4:00 PM"
+              value={siteInfo.contact.officeHours}
             />
           </div>
         </div>

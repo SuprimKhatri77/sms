@@ -6,12 +6,13 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import { dmSans, lora, playfair } from "@/utils/font";
 import NavFooterWrapper from "@/components/wrapper/nav-footer-wrapper";
+import { siteInfo } from "@/utils/site-info";
 
 export const metadata: Metadata = {
-  title: "Greenfield Academy | Excellence in Education",
+  title: `${siteInfo.company.shortName} | Professional Training`,
   description:
-    "Empowering students through quality education. Apply now or send us an inquiry to begin your journey at Greenfield Academy.",
-  keywords: ["school", "academy", "admission", "education", "enrollment"],
+    "Apply for professional barista, bakery, and hospitality training. Send an inquiry to start your journey with Brew & Bake Academy.",
+  keywords: ["barista", "bakery", "hospitality", "training", "admission"],
 };
 
 export default function RootLayout({

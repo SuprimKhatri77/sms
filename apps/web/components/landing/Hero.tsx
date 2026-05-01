@@ -1,15 +1,17 @@
 import Link from "next/link";
+import { siteInfo } from "@/utils/site-info";
 
-const stats = [
-  {
-    number: "1,200+",
-    label: "Students Enrolled",
-    colorClass: "text-[#e8552a]",
-  },
-  { number: "98%", label: "Parent Satisfaction", colorClass: "text-[#6b9e6b]" },
-  { number: "150+", label: "Qualified Staff", colorClass: "text-[#7d6b8a]" },
-  { number: "15+", label: "Years of Excellence", colorClass: "text-[#d6cbb8]" },
-];
+const stats = siteInfo.stats.map((s, index) => ({
+  ...s,
+  colorClass:
+    index === 0
+      ? "text-(--brand-brown)"
+      : index === 1
+        ? "text-[rgba(255,255,255,0.85)]"
+        : index === 2
+          ? "text-[rgba(194,138,79,0.82)]"
+          : "text-[rgba(255,255,255,0.75)]",
+}));
 
 export default function Hero() {
   return (
@@ -25,14 +27,14 @@ export default function Hero() {
     >
       {/* Decorative blobs */}
       <div
-        className="pointer-events-none absolute -right-[5%] top-[15%] h-[420px] w-[420px] rounded-full"
+        className="pointer-events-none absolute top-[15%] right-[-5%] h-[420px] w-[420px] rounded-full"
         style={{
           background:
             "radial-gradient(circle, rgba(232,85,42,0.15) 0%, transparent 70%)",
         }}
       />
       <div
-        className="pointer-events-none absolute -left-[8%] bottom-[10%] h-[320px] w-[320px] rounded-full"
+        className="pointer-events-none absolute bottom-[10%] left-[-8%] h-[320px] w-[320px] rounded-full"
         style={{
           background:
             "radial-gradient(circle, rgba(107,158,107,0.15) 0%, transparent 70%)",
@@ -46,10 +48,10 @@ export default function Hero() {
           <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-[#e8552a]/30 bg-[#e8552a]/15 px-4 py-[0.4rem]">
             <span className="h-[7px] w-[7px] rounded-full bg-[#e8552a]" />
             <span
-              className="text-[0.82rem] font-medium tracking-[0.05em] text-[#d6cbb8]"
+              className="text-[0.82rem] font-medium tracking-wider text-[#d6cbb8]"
               style={{ fontFamily: "var(--font-dm-sans)" }}
             >
-              Admissions Open for 2025–26
+              {siteInfo.admission.cycleLabel}
             </span>
           </div>
 
@@ -58,15 +60,15 @@ export default function Hero() {
             className="mb-6 text-[clamp(2.4rem,5vw,3.8rem)] font-extrabold leading-[1.12] text-white"
             style={{ fontFamily: "var(--font-playfair)" }}
           >
-            Where Every Child
+            Build Your Skills in
             <br />
-            <span className="text-[#6b9e6b]">Discovers</span> Their
+            <span className="text-[rgba(194,138,79,0.95)]">Coffee</span>, Bakery
             <br />
             <em
               className="font-medium text-[#d6cbb8]"
               style={{ fontStyle: "italic" }}
             >
-              Potential
+              & Hospitality
             </em>
           </h1>
 
@@ -75,16 +77,16 @@ export default function Hero() {
             className="mb-10 max-w-[440px] text-[1.05rem] leading-[1.75] text-white/70"
             style={{ fontFamily: "var(--font-dm-sans)" }}
           >
-            Greenfield Academy offers a nurturing environment where curiosity is
-            celebrated, character is built, and futures are shaped — from early
-            years through secondary education.
+            {siteInfo.company.name} delivers practical, job-focused training
+            with real mentors, modern labs, and a culture that helps students
+            become confident professionals.
           </p>
 
           {/* CTAs */}
           <div className="flex flex-wrap gap-4">
             <Link
               href="/admission"
-              className="inline-block rounded-[10px] bg-[#e8552a] px-8 py-[0.85rem] text-[0.95rem] font-semibold tracking-[0.02em] text-white shadow-[0_4px_20px_rgba(232,85,42,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_6px_28px_rgba(232,85,42,0.45)]"
+              className="inline-block rounded-[10px] bg-[#c28a4f] px-8 py-[0.85rem] text-[0.95rem] font-semibold tracking-[0.02em] text-white shadow-[0_4px_20px_rgba(232,85,42,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_6px_28px_rgba(232,85,42,0.45)]"
               style={{ fontFamily: "var(--font-dm-sans)" }}
             >
               Apply for Admission
@@ -102,14 +104,14 @@ export default function Hero() {
         {/* ── Right: Stats card ── */}
         <div className="order-1 lg:order-2">
           <div
-            className="rounded-[20px] border border-white/[0.12] p-6 backdrop-blur-xl sm:p-10"
+            className="rounded-[20px] border border-white/12 p-6 backdrop-blur-xl sm:p-10"
             style={{ background: "rgba(255,255,255,0.06)" }}
           >
             <div className="grid grid-cols-2 gap-4">
               {stats.map((stat) => (
                 <div
                   key={stat.label}
-                  className="rounded-[14px] border border-white/[0.08] p-5 text-center"
+                  className="rounded-[14px] border border-white/8 p-5 text-center"
                   style={{ background: "rgba(255,255,255,0.04)" }}
                 >
                   <div

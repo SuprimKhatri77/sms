@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
 
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
@@ -12,15 +13,24 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import { QuestionIcon, RowsIcon, StudentIcon } from "@phosphor-icons/react";
+import { QuestionIcon, StudentIcon } from "@phosphor-icons/react";
 import { Book, Settings, TrendingUp, User } from "lucide-react";
+import { siteInfo } from "@/utils/site-info";
 
 const data = {
   teams: [
     {
-      name: "Acme Inc",
-      logo: <RowsIcon />,
-      plan: "Enterprise",
+      name: "Brew & Bake Academy",
+      logo: (
+        <Image
+          src={siteInfo.assets.watermarkNoBG}
+          alt="Brew & Bake"
+          width={24}
+          height={24}
+          unoptimized
+        />
+      ),
+      plan: "Admin Panel",
     },
   ],
   navMain: [

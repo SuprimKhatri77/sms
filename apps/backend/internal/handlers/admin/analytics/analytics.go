@@ -10,15 +10,15 @@ import (
 	"github.com/suprimkhatri77/sms/backend/internal/types"
 )
 
+type result[T any] struct {
+	data T
+	err  error
+}
+
 func GetAnalytics(queries repository.AnalyticsRepository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
 		ctx := c.Request.Context()
-
-		type result[T any] struct {
-			data T
-			err  error
-		}
 
 		overviewCh := make(chan result[db.GetAnalyticsOverviewRow], 1)
 		monthlyRevenueCh := make(chan result[[]db.GetMonthlyRevenueRow], 1)

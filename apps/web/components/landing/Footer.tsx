@@ -1,4 +1,6 @@
 import Link from "next/link";
+import Image from "next/image";
+import { siteInfo } from "@/utils/site-info";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -148,23 +150,27 @@ const ArrowRightIcon = () => (
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
 const socialLinks: SocialLink[] = [
-  { label: "Facebook", href: "#", icon: <FacebookIcon /> },
-  { label: "Instagram", href: "#", icon: <InstagramIcon /> },
-  { label: "TikTok", href: "#", icon: <TikTokIcon /> },
+  { label: "Facebook", href: siteInfo.social.facebook, icon: <FacebookIcon /> },
+  {
+    label: "Instagram",
+    href: siteInfo.social.instagram,
+    icon: <InstagramIcon />,
+  },
+  { label: "TikTok", href: siteInfo.social.tiktok, icon: <TikTokIcon /> },
 ];
 
 const quickLinks: NavLink[] = [
   { label: "Home", href: "#home" },
-  { label: "Why Greenfield", href: "#why-us" },
+  { label: "Why Us", href: "#why-us" },
   { label: "Programs", href: "#programs" },
   { label: "How It Works", href: "#how-it-works" },
   { label: "Inquire", href: "#inquiry" },
 ];
 
 const contactInfo: ContactItem[] = [
-  { icon: <MapPinIcon />, text: "123 Academy Road, Greenfield City" },
-  { icon: <PhoneIcon />, text: "+1 (555) 000-1234" },
-  { icon: <MailIcon />, text: "info@greenfieldacademy.edu" },
+  { icon: <MapPinIcon />, text: siteInfo.contact.address },
+  { icon: <PhoneIcon />, text: siteInfo.contact.phone },
+  { icon: <MailIcon />, text: siteInfo.contact.email },
 ];
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -182,23 +188,21 @@ export default function Footer() {
         <div>
           {/* Logo */}
           <div className="flex items-center gap-2.5 mb-4">
-            <span
-              className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-lg shrink-0"
-              style={{
-                backgroundColor: "var(--brand-orange)",
-                fontFamily: "var(--font-playfair)",
-              }}
-              aria-hidden="true"
-            >
-              G
+            <span className="flex h-30 w-30 shrink-0 items-center justify-center overflow-hidden ">
+              <Image
+                src={siteInfo.assets.noBGLogo}
+                alt={siteInfo.company.shortName}
+                width={120}
+                height={120}
+                unoptimized
+              />
             </span>
-            <span
+            {/* <span
               className="text-lg font-semibold text-white"
               style={{ fontFamily: "var(--font-playfair)" }}
             >
-              Greenfield{" "}
-              <span style={{ color: "var(--brand-cream)" }}>Academy</span>
-            </span>
+              {siteInfo.company.shortName}
+            </span> */}
           </div>
 
           {/* Tagline */}
@@ -209,14 +213,13 @@ export default function Footer() {
               color: "rgba(255,255,255,0.65)",
             }}
           >
-            Nurturing young minds and shaping tomorrow&apos;s leaders through
-            quality, compassionate education.
+            {siteInfo.company.tagline}
           </p>
 
           {/* Social Icons */}
           <div className="flex gap-3">
             {socialLinks.map((social) => (
-              <a
+              <Link
                 key={social.label}
                 href={social.href}
                 aria-label={social.label}
@@ -225,7 +228,6 @@ export default function Footer() {
                   borderColor: "rgba(255,255,255,0.2)",
                   color: "rgba(255,255,255,0.75)",
                 }}
-                // Tailwind JIT can't read CSS vars in hover, so we use a group trick via CSS class
                 onMouseEnter={(e) => {
                   (e.currentTarget as HTMLAnchorElement).style.backgroundColor =
                     "var(--brand-orange)";
@@ -243,7 +245,7 @@ export default function Footer() {
                 }}
               >
                 {social.icon}
-              </a>
+              </Link>
             ))}
           </div>
         </div>
@@ -369,7 +371,7 @@ export default function Footer() {
             color: "rgba(255,255,255,0.4)",
           }}
         >
-          &copy; {year} Greenfield Academy. All rights reserved.
+          &copy; {year} {siteInfo.company.shortName}. All rights reserved.
         </p>
       </div>
     </footer>

@@ -72,14 +72,15 @@
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  /* Sidebar (admin) */
+  --sidebar: #fbfaf7;
+  --sidebar-foreground: #1a1a1a;
+  --sidebar-primary: var(--brand-green);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: rgba(47, 78, 64, 0.08);
+  --sidebar-accent-foreground: var(--brand-green);
+  --sidebar-border: rgba(47, 78, 64, 0.14);
+  --sidebar-ring: rgba(47, 78, 64, 0.35);
 }
 
 .dark {
@@ -106,14 +107,14 @@
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar: #14241e;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: var(--brand-brown);
+  --sidebar-primary-foreground: #14241e;
+  --sidebar-accent: rgba(194, 138, 79, 0.16);
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: rgba(255, 255, 255, 0.12);
+  --sidebar-ring: rgba(194, 138, 79, 0.45);
 }
 
 @layer base {
@@ -129,11 +130,16 @@
 }
 
 :root {
-  --brand-orange: #e8552a;
-  --brand-green: #2d4a3e;
-  --brand-sage: #6b9e6b;
-  --brand-mauve: #7d6b8a;
-  --brand-cream: #d6cbb8;
+  /* Brand palette (from logo) */
+  --brand-green: #2f4e40;
+  --brand-green-2: #3a5a49;
+  --brand-brown: #c28a4f;
+  --brand-cream: #fbfaf7;
+  --brand-ink: #1a1a1a;
+  /* Backward-compatible aliases used in older components */
+  --brand-orange: var(--brand-brown);
+  --brand-sage: var(--brand-green-2);
+  --brand-mauve: #7a6a57;
 
   --font-playfair: var(--font-playfair);
   --font-dm-sans: var(--font-dm-sans);

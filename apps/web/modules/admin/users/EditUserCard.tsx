@@ -97,18 +97,18 @@ export function EditUserCard({ user, onClose }: EditUserCardProps) {
 
       {/* Panel */}
       <aside
-        className="fixed right-0 top-0 z-50 h-full w-full max-w-sm bg-white border-l border-black flex flex-col overflow-y-auto"
+        className="fixed right-0 top-0 z-50 flex h-full w-full max-w-sm flex-col overflow-y-auto border-l border-[rgba(47,78,64,0.22)] bg-white"
         role="complementary"
         aria-label="Edit user panel"
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-black px-6 py-4 shrink-0">
-          <h2 className="font-mono text-sm font-bold tracking-widest uppercase">
+        <div className="shrink-0 flex items-center justify-between border-b border-[rgba(47,78,64,0.16)] px-6 py-4">
+          <h2 className="font-mono text-sm font-bold tracking-widest text-(--brand-green) uppercase">
             Edit User
           </h2>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-black hover:text-white transition-colors"
+            className="p-1 transition-colors hover:bg-[rgba(47,78,64,0.12)] hover:text-(--brand-green)"
             aria-label="Close panel"
           >
             <X size={16} />
@@ -116,25 +116,25 @@ export function EditUserCard({ user, onClose }: EditUserCardProps) {
         </div>
 
         {/* Avatar + meta */}
-        <div className="flex flex-col items-center gap-3 border-b border-black px-6 py-6">
+        <div className="flex flex-col items-center gap-3 border-b border-[rgba(47,78,64,0.16)] px-6 py-6">
           <UserAvatar
             name={user.name}
             imageUrl={user.imageUrl ?? ""}
             size="lg"
           />
           <div className="text-center">
-            <p className="font-mono text-xs text-zinc-500 tracking-widest uppercase">
+            <p className="font-mono text-xs tracking-widest text-[rgba(47,78,64,0.55)] uppercase">
               ID
             </p>
-            <p className="font-mono text-xs text-zinc-400 break-all">
+            <p className="font-mono text-xs break-all text-[rgba(47,78,64,0.45)]">
               {user.id}
             </p>
           </div>
           <div className="text-center">
-            <p className="font-mono text-xs text-zinc-500 tracking-widest uppercase">
+            <p className="font-mono text-xs tracking-widest text-[rgba(47,78,64,0.55)] uppercase">
               Joined
             </p>
-            <p className="font-mono text-xs text-zinc-600">{joinDate}</p>
+            <p className="font-mono text-xs text-[rgba(47,78,64,0.65)]">{joinDate}</p>
           </div>
         </div>
 
@@ -166,7 +166,7 @@ export function EditUserCard({ user, onClose }: EditUserCardProps) {
                       type="text"
                       value={field.state.value}
                       onChange={(e) => field.handleChange(e.target.value)}
-                      className="w-full border border-black px-3 py-2 text-sm font-mono rounded-none outline-none focus:ring-2 focus:ring-black"
+                      className="w-full rounded-none border border-[rgba(47,78,64,0.24)] px-3 py-2 font-mono text-sm outline-none focus:ring-2 focus:ring-[rgba(47,78,64,0.3)]"
                     />
                     {mergedError && (
                       <p className="mt-1 text-xs font-mono text-red-600">
@@ -198,7 +198,7 @@ export function EditUserCard({ user, onClose }: EditUserCardProps) {
                       type="email"
                       value={field.state.value}
                       onChange={(e) => field.handleChange(e.target.value)}
-                      className="w-full border border-black px-3 py-2 text-sm font-mono rounded-none outline-none focus:ring-2 focus:ring-black"
+                      className="w-full rounded-none border border-[rgba(47,78,64,0.24)] px-3 py-2 font-mono text-sm outline-none focus:ring-2 focus:ring-[rgba(47,78,64,0.3)]"
                     />
                     {mergedError && (
                       <p className="mt-1 text-xs font-mono text-red-600">
@@ -232,7 +232,7 @@ export function EditUserCard({ user, onClose }: EditUserCardProps) {
                           e.target.value as UpdateUserInput["role"],
                         );
                       }}
-                      className="w-full border border-black px-3 py-2 text-sm font-mono rounded-none outline-none focus:ring-2 focus:ring-black bg-white cursor-pointer"
+                      className="w-full cursor-pointer rounded-none border border-[rgba(47,78,64,0.24)] bg-white px-3 py-2 font-mono text-sm outline-none focus:ring-2 focus:ring-[rgba(47,78,64,0.3)]"
                     >
                       {ROLE_OPTIONS.map((opt) => (
                         <option key={opt.value} value={opt.value}>
@@ -252,19 +252,19 @@ export function EditUserCard({ user, onClose }: EditUserCardProps) {
           </div>
 
           {/* Footer */}
-          <div className="flex border-t border-black shrink-0">
+          <div className="shrink-0 flex border-t border-[rgba(47,78,64,0.16)]">
             <button
               type="button"
               disabled={isPending}
               onClick={onClose}
-              className="flex-1 py-3 font-mono text-xs font-semibold tracking-widest uppercase border-r border-black hover:bg-zinc-100 transition-colors"
+              className="flex-1 border-r border-[rgba(47,78,64,0.16)] py-3 font-mono text-xs font-semibold tracking-widest text-(--brand-green) uppercase transition-colors hover:bg-[rgba(47,78,64,0.06)]"
             >
               Cancel
             </button>
             <button
               disabled={isPending}
               type="submit"
-              className="flex-1 py-3 font-mono text-xs font-semibold tracking-widest uppercase bg-black text-white hover:bg-zinc-800 transition-colors flex items-center justify-center"
+              className="flex flex-1 items-center justify-center bg-(--brand-green) py-3 font-mono text-xs font-semibold tracking-widest text-white uppercase transition-colors hover:bg-(--brand-green-2)"
             >
               {isPending ? <Spinner /> : "Save"}
             </button>

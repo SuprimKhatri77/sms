@@ -34,11 +34,12 @@ export function Pagination({
   const pages = getPageNumbers(currentPage, totalPages);
 
   const btnBase =
-    "inline-flex items-center justify-center w-9 h-9 font-mono text-xs font-semibold border border-black transition-colors select-none";
-  const btnActive = "bg-black text-white";
-  const btnInactive = "bg-white text-black hover:bg-black hover:text-white";
+    "inline-flex items-center justify-center w-9 h-9 font-mono text-xs font-semibold border border-[rgba(47,78,64,0.2)] transition-colors select-none";
+  const btnActive = "bg-(--brand-green) text-white";
+  const btnInactive =
+    "bg-white text-(--brand-green) hover:bg-(--brand-green) hover:text-white";
   const btnDisabled =
-    "border-zinc-300 text-zinc-300 cursor-not-allowed pointer-events-none";
+    "border-[rgba(47,78,64,0.12)] text-[rgba(47,78,64,0.25)] cursor-not-allowed pointer-events-none";
 
   return (
     <div
@@ -61,7 +62,7 @@ export function Pagination({
         p === "..." ? (
           <span
             key={`ellipsis-${i}`}
-            className={`${btnBase} border-r-0 cursor-default pointer-events-none text-zinc-400`}
+            className={`${btnBase} border-r-0 cursor-default pointer-events-none text-[rgba(47,78,64,0.45)]`}
           >
             &hellip;
           </span>

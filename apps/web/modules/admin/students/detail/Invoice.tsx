@@ -4,6 +4,7 @@ import {
   StudentPaymentDetails,
 } from "@repo/types";
 import { STATUS_META } from "./StudentDetail";
+import Image from "next/image";
 
 type Props = {
   student: Extract<StudentDetail, { success: true }>["data"];
@@ -24,24 +25,27 @@ export function Invoice({ student, payments, courses }: Props) {
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
           <div className="mb-1 flex items-center gap-2">
-            <div
-              className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#e8552a] text-[1rem] font-extrabold text-white"
-              style={{ fontFamily: "var(--font-playfair)" }}
-            >
-              G
+            <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl border border-[#2d4a3e]/15 bg-white">
+              <Image
+                src="/assets/watermark.png"
+                alt="Brew & Bake"
+                width={28}
+                height={28}
+                unoptimized
+              />
             </div>
             <span
               className="text-[1.1rem] font-bold text-[#2d4a3e]"
               style={{ fontFamily: "var(--font-playfair)" }}
             >
-              Greenfield Academy
+              Brew & Bake Academy
             </span>
           </div>
           <p
             className="text-[0.78rem] text-[#2d4a3e]/45"
             style={{ fontFamily: "var(--font-dm-sans)" }}
           >
-            Thamel, Kathmandu · info@greenfield.edu.np
+            New Baneshwor, Kathmandu · brewandbake@example.com
           </p>
         </div>
         <div className="text-right">
@@ -196,7 +200,7 @@ export function Invoice({ student, payments, courses }: Props) {
                 className="py-2 text-right text-[0.82rem] font-medium text-[#2d4a3e]"
                 style={{ fontFamily: "var(--font-dm-sans)" }}
               >
-                NPR {p.amount.toLocaleString()}
+                NPR {(p.amount / 100).toLocaleString()}
               </td>
             </tr>
           ))}
@@ -234,8 +238,8 @@ export function Invoice({ student, payments, courses }: Props) {
         className="mt-6 text-center text-[0.72rem] text-[#2d4a3e]/30"
         style={{ fontFamily: "var(--font-dm-sans)" }}
       >
-        Thank you for choosing Greenfield Academy · This is a computer-generated
-        invoice
+        Thank you for choosing Brew & Bake Academy · This is a
+        computer-generated invoice
       </p>
     </div>
   );

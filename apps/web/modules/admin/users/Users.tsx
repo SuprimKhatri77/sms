@@ -35,8 +35,8 @@ export function UsersPageClient() {
   if (isError || error) return <UsersErrorState />;
 
   const users = data?.data;
-  const totalUsers = data?.total ?? 0;
-  const totalPages = data?.totalPages ?? 1;
+  const totalUsers = data?.meta.total ?? 0;
+  const totalPages = data?.meta.totalPages ?? 1;
 
   const start = (page - 1) * PAGE_SIZE + 1;
   const end = Math.min(page * PAGE_SIZE, totalUsers);
@@ -47,20 +47,20 @@ export function UsersPageClient() {
   }
 
   return (
-    <div className="min-h-screen bg-white px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-(--brand-cream) px-4 py-8 sm:px-6 lg:px-8">
       {/* Page header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
-          <h1 className="font-mono text-2xl font-bold tracking-tight text-black uppercase">
+          <h1 className="font-mono text-2xl font-bold tracking-tight text-(--brand-green) uppercase">
             Users
           </h1>
-          <p className="font-mono text-xs text-zinc-500 tracking-widest mt-1">
+          <p className="font-mono text-xs text-[rgba(47,78,64,0.55)] tracking-widest mt-1">
             {totalUsers} total
           </p>
         </div>
         <button
           onClick={() => setIsCreateOpen(true)}
-          className="inline-flex items-center gap-2 bg-black text-white px-5 py-2.5 font-mono text-xs font-semibold tracking-widest uppercase hover:bg-zinc-800 transition-colors border border-black self-start sm:self-auto"
+          className="inline-flex items-center gap-2 self-start rounded-lg border border-(--brand-brown) bg-(--brand-brown) px-5 py-2.5 font-mono text-xs font-semibold tracking-widest text-white uppercase transition-colors hover:bg-[#ad7843] sm:self-auto"
         >
           <Plus size={14} />
           Create User
@@ -79,7 +79,7 @@ export function UsersPageClient() {
           <UsersTable users={users} onRowClick={setSelectedUser} />
 
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-6">
-            <p className="font-mono text-xs text-zinc-500 tracking-wide">
+            <p className="font-mono text-xs tracking-wide text-[rgba(47,78,64,0.55)]">
               Showing {start}&ndash;{end} of {totalUsers} users
             </p>
             {totalPages > 1 && (

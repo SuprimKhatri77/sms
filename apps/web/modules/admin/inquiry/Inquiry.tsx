@@ -56,11 +56,11 @@ export interface SourceColorConfig {
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const SOURCE_COLORS: Record<string, SourceColorConfig> = {
-  website: { bg: "#2d4a3e11", text: "#2d4a3e", border: "#2d4a3e22" },
-  facebook: { bg: "#6b9e6b11", text: "#4a7a60", border: "#6b9e6b33" },
-  instagram: { bg: "#7d6b8a11", text: "#7d6b8a", border: "#7d6b8a33" },
-  referral: { bg: "#e8552a11", text: "#e8552a", border: "#e8552a33" },
-  other: { bg: "#d6cbb833", text: "#7d6b8a", border: "#d6cbb8" },
+  website: { bg: "#2f4e4011", text: "#2f4e40", border: "#2f4e4033" },
+  facebook: { bg: "#3a5a4911", text: "#3a5a49", border: "#3a5a4933" },
+  instagram: { bg: "#c28a4f11", text: "#a06d3a", border: "#c28a4f33" },
+  referral: { bg: "#c28a4f22", text: "#8f5f31", border: "#c28a4f44" },
+  other: { bg: "#fbf4ea", text: "#7a5a38", border: "#ead6bc" },
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -356,7 +356,7 @@ export default function AdminInquiryPage() {
 
   // ── Main render ───────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "#faf9f7" }}>
+    <div className="min-h-screen" style={{ backgroundColor: "#fbfaf7" }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-8 md:py-10">
         {/* ── Header ── */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
@@ -364,18 +364,18 @@ export default function AdminInquiryPage() {
             <div className="flex items-center gap-2 mb-1">
               <span
                 className="text-xs font-semibold tracking-widest uppercase px-2.5 py-1 rounded-full"
-                style={{ backgroundColor: "#2d4a3e11", color: "#2d4a3e" }}
+                style={{ backgroundColor: "#2f4e4011", color: "#2f4e40" }}
               >
                 Admin
               </span>
             </div>
             <h1
               className="text-3xl font-bold"
-              style={{ color: "#2d4a3e", fontFamily: "Georgia, serif" }}
+              style={{ color: "#2f4e40", fontFamily: "Georgia, serif" }}
             >
               Inquiries
             </h1>
-            <p className="text-sm mt-1" style={{ color: "#7d6b8a" }}>
+            <p className="text-sm mt-1" style={{ color: "rgba(47,78,64,0.58)" }}>
               Manage and respond to visitor submissions
             </p>
           </div>
