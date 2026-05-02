@@ -20,5 +20,9 @@
   "workspaces": [
     "apps/*",
     "packages/*"
-  ]
+  ],
+  "dependencies": {
+    "motion": "^12.38.0",
+    "react-use-measure": "^2.1.7"
+  }
 }
