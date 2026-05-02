@@ -11,7 +11,14 @@ const nextConfig: NextConfig = {
     serverFunctions: true,
   },
   images: {
-    remotePatterns: [{ hostname: "randomuser.me", protocol: "https" }],
+    remotePatterns: [
+      { hostname: "randomuser.me", protocol: "https" },
+      { hostname: "picsum.photos", protocol: "https" },
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+      },
+    ],
   },
 };
 
