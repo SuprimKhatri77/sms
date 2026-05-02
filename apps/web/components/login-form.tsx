@@ -127,7 +127,11 @@ export function LoginForm({
           }}
         </FormField>
         <Field>
-          <Button disabled={isPending} type="submit" className="rounded-none">
+          <Button
+            disabled={isPending}
+            type="submit"
+            className="rounded-none bg-[#c28a4f]"
+          >
             {isPending ? <Spinner /> : "Login"}
           </Button>
         </Field>
