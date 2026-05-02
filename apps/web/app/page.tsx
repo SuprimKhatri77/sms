@@ -1,9 +1,11 @@
 "use client";
 
+import ImageGallery from "@/components/image-gallery";
 import Hero from "@/components/landing/Hero";
 import HowItWorks from "@/components/landing/HowItWorks";
 import InquiryForm from "@/components/landing/InquiryForm";
 import Programs from "@/components/landing/Programs";
+import { TestimonialsSection } from "@/components/landing/Testimonials";
 import WhyUs from "@/components/landing/Whyus";
 
 export default function Home() {
@@ -13,6 +15,8 @@ export default function Home() {
       <WhyUs />
       <Programs />
       <HowItWorks />
+      <ImageGallery />
+      <TestimonialsSection />
       <InquiryForm />
     </main>
   );
