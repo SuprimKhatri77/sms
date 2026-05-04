@@ -19,12 +19,12 @@ WHERE fiscal_year = $1;
 -- name: CreateStudent :one
 INSERT INTO students (
     reference_no, fiscal_year, serial_no, full_name, dob, gender,
-    phone, email, address, guardian_name, guardian_phone,
+    phone, address, guardian_name, guardian_phone,
     photo_url, source, claimed_amount, status
 ) VALUES (
     $1, $2, $3, $4, $5, $6,
-    $7, $8, $9, $10, $11,
-    $12, $13, $14, 'pending'
+    $7, $8, $9, $10,
+    $11, $12, $13, 'pending'
 ) RETURNING *;
 
 -- name: GetStudentByID :one

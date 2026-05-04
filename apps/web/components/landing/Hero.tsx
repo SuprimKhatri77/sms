@@ -91,13 +91,13 @@ export default function Hero() {
             >
               Apply for Admission
             </Link>
-            <a
+            <Link
               href="#inquiry"
               className="inline-block rounded-[10px] border border-white/25 px-8 py-[0.85rem] text-[0.95rem] font-medium text-white/85 transition-all duration-200 hover:border-[#d6cbb8] hover:text-[#d6cbb8]"
               style={{ fontFamily: "var(--font-dm-sans)" }}
             >
               Send Inquiry
-            </a>
+            </Link>
           </div>
         </div>
 

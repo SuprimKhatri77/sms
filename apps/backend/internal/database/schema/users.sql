@@ -4,6 +4,6 @@ CREATE TABLE users (
     email         VARCHAR NOT NULL UNIQUE,
     password_hash VARCHAR NOT NULL,
     image_url     TEXT,
-    role          VARCHAR NOT NULL DEFAULT 'user' CHECK (role IN("user","admin","superadmin")),
+    role          VARCHAR NOT NULL DEFAULT 'user' CHECK (role IN("admin","superadmin","student")),
     created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

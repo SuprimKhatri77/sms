@@ -1,6 +1,5 @@
 import z from "zod";
 import { apiErrorSchema, baseAPIResponseSchema, errorResponse } from "./base";
-import { meta } from "zod/v4/core";
 
 export const loginInputSchema = z.object({
   email: z.email(),
@@ -12,10 +11,56 @@ export const loginResponse = apiErrorSchema;
 export type LoginInput = z.infer<typeof loginInputSchema>;
 export type LoginResponse = z.infer<typeof loginResponse>;
 
+export const signupInputSchema = z
+  .object({
+    name: z
+      .string({ error: "Name is required" })
+      .min(2, "Name must be at least 2 characters")
+      .max(50, "Name cannot exceed 50 characters")
+      .regex(/^[A-Za-z ]+$/, "Full name can only contain letters and spaces")
+      .trim(),
+
+    email: z.email("Please enter a valid email address").trim(),
+
+    password: z
+      .string({ error: "Password is required" })
+      .min(8, "Password must be at least 8 characters")
+      .max(50, "Password cannot exceed 50 characters"),
+
+    confirmPassword: z.string({ error: "Please confirm your password" }),
+  })
+  .superRefine((data, ctx) => {
+    if (data.password !== data.confirmPassword) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Passwords do not match",
+        path: ["confirmPassword"],
+      });
+    }
+  });
+
+export const signupResponseSchema = z.discriminatedUnion("success", [
+  z.object({
+    success: z.literal(true),
+    message: z.string(),
+  }),
+  z.object({
+    success: z.literal(false),
+    message: z.string(),
+    errors: z.array(errorResponse).optional(),
+  }),
+]);
+
+export type SignupInput = z.infer<typeof signupInputSchema>;
+export type SignupResponse = z.infer<typeof signupResponseSchema>;
+
 // user types
 export const userSchema = z.object({
-  name: z.string(),
-  role: z.enum(["user", "admin", "superadmin"]),
+  name: z
+    .string()
+    .regex(/^[A-Za-z ]+$/, "Full name can only contain letters and spaces")
+    .trim(),
+  role: z.enum(["admin", "student", "superadmin"]),
   email: z.email(),
   id: z.uuid(),
   imageUrl: z.url().optional(),

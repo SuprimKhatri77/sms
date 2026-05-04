@@ -14,13 +14,13 @@ import (
 const createStudent = `-- name: CreateStudent :one
 INSERT INTO students (
     reference_no, fiscal_year, serial_no, full_name, dob, gender,
-    phone, email, address, guardian_name, guardian_phone,
+    phone, address, guardian_name, guardian_phone,
     photo_url, source, claimed_amount, status
 ) VALUES (
     $1, $2, $3, $4, $5, $6,
-    $7, $8, $9, $10, $11,
-    $12, $13, $14, 'pending'
-) RETURNING id, reference_no, fiscal_year, serial_no, full_name, dob, gender, phone, email, address, guardian_name, guardian_phone, photo_url, source, claimed_amount, status, notes, created_at
+    $7, $8, $9, $10,
+    $11, $12, $13, 'pending'
+) RETURNING id, student_id, reference_no, fiscal_year, serial_no, full_name, dob, gender, phone, address, guardian_name, guardian_phone, photo_url, source, claimed_amount, status, notes, created_at
 `
 
 type CreateStudentParams struct {
@@ -31,7 +31,6 @@ type CreateStudentParams struct {
 	Dob           pgtype.Date `json:"dob"`
 	Gender        string      `json:"gender"`
 	Phone         string      `json:"phone"`
-	Email         pgtype.Text `json:"email"`
 	Address       string      `json:"address"`
 	GuardianName  string      `json:"guardianName"`
 	GuardianPhone string      `json:"guardianPhone"`
@@ -49,7 +48,6 @@ func (q *Queries) CreateStudent(ctx context.Context, arg CreateStudentParams) (S
 		arg.Dob,
 		arg.Gender,
 		arg.Phone,
-		arg.Email,
 		arg.Address,
 		arg.GuardianName,
 		arg.GuardianPhone,
@@ -60,6 +58,7 @@ func (q *Queries) CreateStudent(ctx context.Context, arg CreateStudentParams) (S
 	var i Student
 	err := row.Scan(
 		&i.ID,
+		&i.StudentID,
 		&i.ReferenceNo,
 		&i.FiscalYear,
 		&i.SerialNo,
@@ -67,7 +66,6 @@ func (q *Queries) CreateStudent(ctx context.Context, arg CreateStudentParams) (S
 		&i.Dob,
 		&i.Gender,
 		&i.Phone,
-		&i.Email,
 		&i.Address,
 		&i.GuardianName,
 		&i.GuardianPhone,
@@ -95,7 +93,7 @@ func (q *Queries) GetNextSerialNo(ctx context.Context, fiscalYear string) (int32
 }
 
 const getStudentByID = `-- name: GetStudentByID :one
-SELECT id, reference_no, fiscal_year, serial_no, full_name, dob, gender, phone, email, address, guardian_name, guardian_phone, photo_url, source, claimed_amount, status, notes, created_at FROM students WHERE id = $1
+SELECT id, student_id, reference_no, fiscal_year, serial_no, full_name, dob, gender, phone, address, guardian_name, guardian_phone, photo_url, source, claimed_amount, status, notes, created_at FROM students WHERE id = $1
 `
 
 func (q *Queries) GetStudentByID(ctx context.Context, id pgtype.UUID) (Student, error) {
@@ -103,6 +101,7 @@ func (q *Queries) GetStudentByID(ctx context.Context, id pgtype.UUID) (Student, 
 	var i Student
 	err := row.Scan(
 		&i.ID,
+		&i.StudentID,
 		&i.ReferenceNo,
 		&i.FiscalYear,
 		&i.SerialNo,
@@ -110,7 +109,6 @@ func (q *Queries) GetStudentByID(ctx context.Context, id pgtype.UUID) (Student, 
 		&i.Dob,
 		&i.Gender,
 		&i.Phone,
-		&i.Email,
 		&i.Address,
 		&i.GuardianName,
 		&i.GuardianPhone,
@@ -228,7 +226,7 @@ func (q *Queries) ListStudents(ctx context.Context, arg ListStudentsParams) ([]L
 
 const updateStudentStatus = `-- name: UpdateStudentStatus :one
 UPDATE students SET status = $2
-WHERE id = $1 RETURNING id, reference_no, fiscal_year, serial_no, full_name, dob, gender, phone, email, address, guardian_name, guardian_phone, photo_url, source, claimed_amount, status, notes, created_at
+WHERE id = $1 RETURNING id, student_id, reference_no, fiscal_year, serial_no, full_name, dob, gender, phone, address, guardian_name, guardian_phone, photo_url, source, claimed_amount, status, notes, created_at
 `
 
 type UpdateStudentStatusParams struct {
@@ -241,6 +239,7 @@ func (q *Queries) UpdateStudentStatus(ctx context.Context, arg UpdateStudentStat
 	var i Student
 	err := row.Scan(
 		&i.ID,
+		&i.StudentID,
 		&i.ReferenceNo,
 		&i.FiscalYear,
 		&i.SerialNo,
@@ -248,7 +247,6 @@ func (q *Queries) UpdateStudentStatus(ctx context.Context, arg UpdateStudentStat
 		&i.Dob,
 		&i.Gender,
 		&i.Phone,
-		&i.Email,
 		&i.Address,
 		&i.GuardianName,
 		&i.GuardianPhone,

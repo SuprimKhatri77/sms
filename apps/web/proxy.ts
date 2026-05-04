@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { attemptRefresh, getSession } from "@/lib/middleware/auth";
+import {
+  attemptRefresh,
+  getSession,
+  getSessionFromRequest,
+} from "@/lib/middleware/auth";
 import { PUBLIC_ROUTES, ROLE_RULES } from "./lib/middleware/config";
 
 export async function proxy(req: NextRequest) {
@@ -13,13 +17,13 @@ export async function proxy(req: NextRequest) {
 
   if (isPublicRoute) {
     const refreshToken = req.cookies.get("refresh_token")?.value;
-    console.log("public route, has refresh token:", !!refreshToken);
-
     if (refreshToken) {
-      console.log("redirecting to /admin from public route");
-      return NextResponse.redirect(new URL("/admin", req.url));
+      const user = await getSessionFromRequest(req);
+      if (user?.role === "student")
+        return NextResponse.redirect(new URL("/dashboard", req.url));
+      if (user?.role === "admin" || user?.role === "superadmin")
+        return NextResponse.redirect(new URL("/admin", req.url));
     }
-
     return NextResponse.next();
   }
 
@@ -40,7 +44,7 @@ export async function proxy(req: NextRequest) {
 
   if (!refreshToken) {
     console.log("no refresh token, redirecting to /auth");
-    return NextResponse.redirect(new URL("/auth", req.url));
+    return NextResponse.redirect(new URL("/auth/login", req.url));
   }
 
   if (accessToken) {
@@ -61,5 +65,10 @@ export async function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/auth"],
+  matcher: [
+    "/admin/:path*",
+    "/dashboard/:path*",
+    "/admission/:path*",
+    "/auth/:path*",
+  ],
 };

@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/suprimkhatri77/sms/backend/internal/config"
 	"github.com/suprimkhatri77/sms/backend/internal/constants"
@@ -23,69 +23,59 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func Login(
-	queries repository.AuthRepository,
-	cfg *config.Config,
-) gin.HandlerFunc {
+func Signup(queries repository.AuthRepository, cfg *config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
 
-		var loginRequest types.LoginRequest
-		if err := c.ShouldBindJSON(&loginRequest); err != nil {
-			slog.Warn("invalid request payload", "error", err)
-
+		var req types.SignupRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
 			c.JSON(http.StatusBadRequest, types.APIResponse{
 				Success: false,
-				Message: "Invalid request data",
+				Message: "Invalid request body",
 				Code:    constants.ValidationFailed,
-				Errors:  validator.Parse(err, loginRequest),
+				Errors:  validator.Parse(err, req),
 			})
 			return
 		}
 
-		utils.TrimStruct(&loginRequest, "Password")
+		utils.TrimStruct(&req, "Password")
 
-		slog.Info("login attempt")
-
-		user, err := queries.GetUserByEmail(ctx, loginRequest.Email)
+		passwordHash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 		if err != nil {
-			if errors.Is(err, pgx.ErrNoRows) {
-				slog.Warn("invalid credentials (user not found)")
-
-				c.JSON(http.StatusUnauthorized, types.APIResponse{
-					Success: false,
-					Message: "Invalid credentials",
-					Code:    constants.InvalidCredentials,
-				})
-				return
-			}
-
-			slog.Error("failed to fetch user", "error", err)
-
 			c.JSON(http.StatusInternalServerError, types.APIResponse{
 				Success: false,
-				Message: "Something went wrong",
+				Message: "Failed to process request",
 				Code:    constants.InternalServerError,
 			})
 			return
 		}
 
-		err = bcrypt.CompareHashAndPassword(
-			[]byte(user.PasswordHash),
-			[]byte(loginRequest.Password),
-		)
-		if err != nil {
-			slog.Warn("invalid credentials (password mismatch)", "user_id", user.ID)
+		passwordHashString := fmt.Sprintf("%x", passwordHash)
 
-			c.JSON(http.StatusUnauthorized, types.APIResponse{
+		user, err := queries.CreateUser(ctx, db.CreateUserParams{
+			Name:         req.Name,
+			Email:        req.Email,
+			PasswordHash: passwordHashString,
+			Role:         "student",
+		})
+
+		if err != nil {
+			var pgErr *pgconn.PgError
+			if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+				c.JSON(http.StatusConflict, types.APIResponse{
+					Success: false,
+					Message: "User already exists",
+					Code:    constants.UserAlreadyExists,
+				})
+				return
+			}
+			c.JSON(http.StatusInternalServerError, types.APIResponse{
 				Success: false,
-				Message: "Invalid credentials",
-				Code:    constants.InvalidCredentials,
+				Message: "Failed to process request",
+				Code:    constants.InternalServerError,
 			})
 			return
 		}
-
-		slog.Info("password verified", "user_id", user.ID)
 
 		accessClaims := jwt.MapClaims{
 			"user_id": user.ID,
@@ -96,11 +86,9 @@ func Login(
 		accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims)
 		accessTokenString, err := accessToken.SignedString([]byte(cfg.JWTAccessSecret))
 		if err != nil {
-			slog.Error("failed to sign access token", "error", err, "user_id", user.ID)
-
 			c.JSON(http.StatusInternalServerError, types.APIResponse{
 				Success: false,
-				Message: "Something went wrong",
+				Message: "Failed to process request",
 				Code:    constants.InternalServerError,
 			})
 			return
@@ -157,11 +145,10 @@ func Login(
 		utils.SetAuthCookie(c, "access_token", accessTokenString, 15*60, cfg)
 		utils.SetAuthCookie(c, "refresh_token", refreshTokenString, 30*24*60*60, cfg)
 
-		slog.Info("login successful", "user_id", user.ID)
-
-		c.JSON(http.StatusOK, types.APIResponse{
+		c.JSON(http.StatusCreated, types.APIResponse{
 			Success: true,
-			Message: "logged in successfully",
+			Message: "Signup successful",
 		})
+
 	}
 }

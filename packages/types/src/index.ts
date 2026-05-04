@@ -1,10 +1,13 @@
 export {
   loginInputSchema,
   loginResponse,
+  signupInputSchema,
   type LoginInput,
   type LoginResponse,
   type User,
   type UsersList,
+  type SignupResponse,
+  type SignupInput,
 } from "./auth";
 
 export { type BaseAPIResponse, type APIResponse } from "./base";

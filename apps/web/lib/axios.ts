@@ -81,7 +81,7 @@ api.interceptors.response.use(
 
       // refresh token expired or missing — kick to login
       if (typeof window !== "undefined") {
-        window.location.href = "/auth";
+        window.location.href = "/auth/login";
       }
 
       return Promise.reject(refreshError);

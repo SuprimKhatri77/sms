@@ -61,6 +61,7 @@ type Setting struct {
 
 type Student struct {
 	ID            pgtype.UUID        `json:"id"`
+	StudentID     pgtype.UUID        `json:"studentId"`
 	ReferenceNo   string             `json:"referenceNo"`
 	FiscalYear    string             `json:"fiscalYear"`
 	SerialNo      int32              `json:"serialNo"`
@@ -68,7 +69,6 @@ type Student struct {
 	Dob           pgtype.Date        `json:"dob"`
 	Gender        string             `json:"gender"`
 	Phone         string             `json:"phone"`
-	Email         pgtype.Text        `json:"email"`
 	Address       string             `json:"address"`
 	GuardianName  string             `json:"guardianName"`
 	GuardianPhone string             `json:"guardianPhone"`

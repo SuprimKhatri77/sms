@@ -48,6 +48,10 @@ func ListStudents(queries repository.AdminRepository) gin.HandlerFunc {
 			c.JSON(http.StatusOK, types.APIResponse{
 				Success: true,
 				Data:    []db.ListStudentsRow{},
+				Meta: &types.PaginationMeta{
+					Limit: PAGE_LIMIT,
+					Total: 0,
+				},
 			})
 			return
 		}

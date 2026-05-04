@@ -352,7 +352,7 @@ export default function CoursesPage() {
           ].map(({ value, label }) => (
             <div
               key={label}
-              className="min-w-[120px] flex-1 rounded-lg border border-[rgba(47,78,64,0.14)] bg-white px-4 py-3.5 shadow-sm"
+              className="min-w-30 flex-1 rounded-lg border border-[rgba(47,78,64,0.14)] bg-white px-4 py-3.5 shadow-sm"
             >
               <div className="text-[1.375rem] font-bold tracking-tight text-(--brand-green)">
                 {value}
@@ -366,7 +366,7 @@ export default function CoursesPage() {
 
         {/* Toolbar */}
         <div className="mb-4 flex flex-wrap items-center gap-2.5">
-          <div className="relative flex-1 min-w-[180px]">
+          <div className="relative flex-1 min-w-45">
             <Search
               size={15}
               className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-[rgba(47,78,64,0.4)]"
@@ -466,7 +466,7 @@ export default function CoursesPage() {
                             <Pencil size={14} />
                           </button>
                           <button
-                            className="grid h-[30px] w-[30px] cursor-pointer place-items-center rounded-md border border-[rgba(47,78,64,0.14)] bg-white text-[rgba(47,78,64,0.45)] transition-all hover:border-red-500 hover:bg-red-50 hover:text-red-600"
+                            className="grid h-7.5 w-7.5 cursor-pointer place-items-center rounded-md border border-[rgba(47,78,64,0.14)] bg-white text-[rgba(47,78,64,0.45)] transition-all hover:border-red-500 hover:bg-red-50 hover:text-red-600"
                             title="Delete course"
                             onClick={() => {
                               setSelectedCourse(course);
