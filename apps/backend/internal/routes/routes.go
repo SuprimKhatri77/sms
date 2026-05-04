@@ -38,10 +38,11 @@ func Setup(r *gin.Engine, cfg Config) {
 
 	// auth routes
 	authRouter.POST("/login", auth.Login(cfg.Queries, cfg.Config))
+	authRouter.POST("/signup", auth.Signup(cfg.Queries, cfg.Config))
 	authRouter.POST("/logout", auth.Logout(cfg.Queries, cfg.Config))
 	authRouter.POST("/refresh", auth.RotateTokens(cfg.Queries, cfg.Config))
 	authRouter.POST("/bootstrap", auth.Bootstrap(cfg.Queries, cfg.Config))
-	authRouter.GET("/me", middleware.RequireAuth(cfg.Config), middleware.RequireRole("admin", "superadmin"), auth.Me(cfg.Queries))
+	authRouter.GET("/me", middleware.RequireAuth(cfg.Config), middleware.RequireRole("admin", "superadmin", "student"), auth.Me(cfg.Queries))
 
 	adminRouter := router.Group("/admin", middleware.RequireAuth(cfg.Config), middleware.RequireRole("admin", "superadmin"))
 

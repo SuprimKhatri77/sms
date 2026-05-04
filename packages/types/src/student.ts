@@ -34,7 +34,7 @@ export const createStudentAdmissionRequest = z.object({
     .trim()
     .min(1, "Full name is required")
     .min(5, "Full name must be at least 5 characters")
-    .max(70, "Full name must be less than 70 characters")
+    .max(50, "Full name must be less than 70 characters")
     .regex(/^[A-Za-z ]+$/, "Full name can only contain letters and spaces"),
 
   phone: z

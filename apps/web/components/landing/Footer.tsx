@@ -190,11 +190,10 @@ export default function Footer() {
           <div className="flex items-center gap-2.5 mb-4">
             <span className="flex h-30 w-30 shrink-0 items-center justify-center overflow-hidden ">
               <Image
-                src={siteInfo.assets.noBGLogo}
+                src={siteInfo.assets.whiteLogoNoBG}
                 alt={siteInfo.company.shortName}
                 width={120}
                 height={120}
-                unoptimized
               />
             </span>
             {/* <span
@@ -264,7 +263,7 @@ export default function Footer() {
           <ul className="flex flex-col gap-3">
             {quickLinks.map((link) => (
               <li key={link.label}>
-                <a
+                <Link
                   href={link.href}
                   className="group flex items-center gap-2 text-sm transition-colors duration-200"
                   style={{
@@ -284,7 +283,7 @@ export default function Footer() {
                     <ChevronRightIcon />
                   </span>
                   {link.label}
-                </a>
+                </Link>
               </li>
             ))}
           </ul>
@@ -306,7 +305,7 @@ export default function Footer() {
               <div key={item.text} className="flex items-start gap-3">
                 <span
                   className="mt-0.5 shrink-0"
-                  style={{ color: "var(--brand-sage)" }}
+                  style={{ color: "var(--brand-brown)" }}
                 >
                   {item.icon}
                 </span>

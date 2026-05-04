@@ -46,7 +46,6 @@ export const studentDetailResponseSchema = z.discriminatedUnion("success", [
       dob: z.date(),
       gender: z.enum(["male", "female", "other"]),
       phone: z.string(),
-      email: z.email(),
       address: z.string(),
       guardianName: z.string(),
       guardianPhone: z.string(),

@@ -89,27 +89,10 @@ func RequireAuth(cfg *config.Config) gin.HandlerFunc {
 		}
 
 		role, ok := claims["role"].(string)
-		if !ok || (role != "admin" && role != "superadmin" && role != "user") {
+		if !ok || (role != "admin" && role != "superadmin" && role != "student") {
 			slog.Warn("invalid role in claims",
 				"user_id", userID,
 				"role", role,
-				"path", c.FullPath(),
-				"ip", c.ClientIP(),
-			)
-
-			c.JSON(http.StatusUnauthorized, types.APIResponse{
-				Success: false,
-				Message: "Invalid token claims",
-				Code:    constants.Unauthorized,
-			})
-			c.Abort()
-			return
-		}
-
-		email, ok := claims["email"].(string)
-		if !ok {
-			slog.Warn("missing email in claims",
-				"user_id", userID,
 				"path", c.FullPath(),
 				"ip", c.ClientIP(),
 			)
@@ -132,7 +115,6 @@ func RequireAuth(cfg *config.Config) gin.HandlerFunc {
 
 		c.Set("userID", userID)
 		c.Set("role", role)
-		c.Set("email", email)
 
 		c.Next()
 	}

@@ -28,25 +28,6 @@ func CreateStudent(queries repository.StudentRepository, pool *pgxpool.Pool) gin
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
 
-		tx, err := pool.Begin(ctx)
-		if err != nil {
-			slog.Error("failed to begin transaction",
-				"path", c.FullPath(),
-				"ip", c.ClientIP(),
-				"error", err,
-			)
-
-			c.JSON(http.StatusInternalServerError, types.APIResponse{
-				Success: false,
-				Message: "Failed to process request",
-				Code:    constants.InternalServerError,
-			})
-			return
-		}
-		defer tx.Rollback(ctx)
-
-		qtx := queries.WithTx(tx)
-
 		var req types.CreateStudentRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
 			slog.Warn("invalid request payload",
@@ -81,6 +62,25 @@ func CreateStudent(queries repository.StudentRepository, pool *pgxpool.Pool) gin
 			})
 			return
 		}
+
+		tx, err := pool.Begin(ctx)
+		if err != nil {
+			slog.Error("failed to begin transaction",
+				"path", c.FullPath(),
+				"ip", c.ClientIP(),
+				"error", err,
+			)
+
+			c.JSON(http.StatusInternalServerError, types.APIResponse{
+				Success: false,
+				Message: "Failed to process request",
+				Code:    constants.InternalServerError,
+			})
+			return
+		}
+		defer tx.Rollback(ctx)
+
+		qtx := queries.WithTx(tx)
 
 		settingsData, err := qtx.GetAdmissionSettings(ctx)
 		if err != nil {
@@ -130,7 +130,6 @@ func CreateStudent(queries repository.StudentRepository, pool *pgxpool.Pool) gin
 		student, err := qtx.CreateStudent(ctx, db.CreateStudentParams{
 			FullName:      req.FullName,
 			Gender:        req.Gender,
-			Email:         pgtype.Text{String: req.Email, Valid: true},
 			GuardianName:  req.GuardianName,
 			GuardianPhone: req.GuardianPhone,
 			ClaimedAmount: int32(req.ClaimedAmount * 100),

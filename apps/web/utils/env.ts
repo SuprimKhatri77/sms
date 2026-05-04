@@ -3,10 +3,10 @@ import { z } from "zod";
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]),
   NEXT_PUBLIC_API_URL: z.url(),
+  COOKIE_DOMAIN: z.string(),
 });
 
 const parsed = envSchema.safeParse(process.env);
-console.log("parsed: ", parsed.data);
 
 if (!parsed.success) {
   const fieldErros = z.treeifyError(parsed.error).properties;

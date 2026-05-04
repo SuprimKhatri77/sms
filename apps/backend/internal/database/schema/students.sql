@@ -1,5 +1,6 @@
 CREATE TABLE students (
     id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    student_id     UUID NOT NULL UNIQUE,
     reference_no   VARCHAR NOT NULL UNIQUE,
     fiscal_year    VARCHAR NOT NULL,
     serial_no      INTEGER NOT NULL,
@@ -7,7 +8,6 @@ CREATE TABLE students (
     dob            DATE NOT NULL,
     gender         VARCHAR NOT NULL,
     phone          VARCHAR NOT NULL UNIQUE,
-    email          VARCHAR UNIQUE,
     address        TEXT NOT NULL,
     guardian_name  VARCHAR NOT NULL,
     guardian_phone VARCHAR NOT NULL,

@@ -318,16 +318,6 @@ export default function AdmissionPage({ courses }: Props) {
   return (
     <main className="min-h-screen bg-(--brand-cream) px-6 pb-24 pt-32">
       <div className="mx-auto max-w-2xl">
-        {/* Back link */}
-        <Link
-          href="/"
-          className="mb-8 inline-flex items-center gap-1.5 text-[0.85rem] font-medium text-[rgba(47,78,64,0.55)] transition-colors hover:text-(--brand-green)"
-          style={{ fontFamily: "var(--font-dm-sans)" }}
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Home
-        </Link>
-
         {/* Header */}
         <div className="mb-10">
           <span
@@ -341,7 +331,10 @@ export default function AdmissionPage({ courses }: Props) {
             style={{ fontFamily: "var(--font-playfair)" }}
           >
             Apply to{" "}
-            <em className="font-medium text-(--brand-brown)" style={{ fontStyle: "italic" }}>
+            <em
+              className="font-medium text-(--brand-brown)"
+              style={{ fontStyle: "italic" }}
+            >
               {siteInfo.company.shortName}
             </em>
           </h1>
@@ -521,7 +514,8 @@ export default function AdmissionPage({ courses }: Props) {
                           className="text-[0.8rem] font-semibold uppercase tracking-[0.07em] text-(--brand-green)"
                           style={{ fontFamily: "var(--font-dm-sans)" }}
                         >
-                          Address <span className="text-(--brand-brown)">*</span>
+                          Address{" "}
+                          <span className="text-(--brand-brown)">*</span>
                         </label>
                         <div className="relative">
                           <span className="pointer-events-none absolute left-3.5 top-3.5 text-[rgba(47,78,64,0.4)]">

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { SessionUser } from "./types";
+import { User } from "@repo/types";
 
-export async function getSession(token: string): Promise<SessionUser | null> {
+export async function getSession(token: string): Promise<User | null> {
   try {
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/me`,
@@ -37,18 +37,18 @@ export async function attemptRefresh(
 
     if (!res.ok) {
       console.log("in !res.ok block clearing cookies.....");
-      const redirect = NextResponse.redirect(new URL("/auth", req.url));
+      const redirect = NextResponse.redirect(new URL("/auth/login", req.url));
       redirect.cookies.set("access_token", "", {
         maxAge: 0,
         path: "/",
-        domain: ".sms.suprimkhatri.com.np",
+        domain: process.env.COOKIE_DOMAIN,
         secure: true,
         httpOnly: true,
       });
       redirect.cookies.set("refresh_token", "", {
         maxAge: 0,
         path: "/",
-        domain: ".sms.suprimkhatri.com.np",
+        domain: process.env.COOKIE_DOMAIN,
         secure: true,
         httpOnly: true,
       });
@@ -62,13 +62,13 @@ export async function attemptRefresh(
     const newAccessToken = extractTokenFromCookie(cookies.join("; "));
 
     if (!newAccessToken) {
-      return NextResponse.redirect(new URL("/auth", req.url));
+      return NextResponse.redirect(new URL("/auth/login", req.url));
     }
 
     const user = await getSession(newAccessToken);
 
     if (!user) {
-      return NextResponse.redirect(new URL("/auth", req.url));
+      return NextResponse.redirect(new URL("/auth/login", req.url));
     }
 
     if (!requiredRoles.includes(user.role)) {
@@ -92,8 +92,38 @@ export async function attemptRefresh(
 
     return response;
   } catch {
-    return NextResponse.redirect(new URL("/auth", req.url));
+    return NextResponse.redirect(new URL("/auth/login", req.url));
   }
+}
+
+export async function getSessionFromRequest(
+  req: NextRequest,
+): Promise<User | null> {
+  const accessToken = req.cookies.get("access_token")?.value;
+  const refreshToken = req.cookies.get("refresh_token")?.value;
+
+  if (!refreshToken) return null;
+
+  if (accessToken) {
+    const user = await getSession(accessToken);
+    if (user) return user;
+  }
+
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/refresh`,
+    {
+      method: "POST",
+      headers: { Cookie: `refresh_token=${refreshToken}` },
+    },
+  );
+
+  if (!res.ok) return null;
+
+  const cookies = res.headers.getSetCookie();
+  const newAccessToken = extractTokenFromCookie(cookies.join("; "));
+  if (!newAccessToken) return null;
+
+  return getSession(newAccessToken);
 }
 
 // parses access_token value out of the set-cookie header string

@@ -7,6 +7,7 @@ import {
   FieldGroup,
   FieldLabel,
   FieldError,
+  FieldDescription,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useForm } from "@tanstack/react-form-nextjs";
@@ -19,6 +20,7 @@ import { ApiError, mapFieldErrors } from "@/utils/api";
 import { useRouter } from "next/navigation";
 import api from "@/lib/axios";
 import axios from "axios";
+import Link from "next/link";
 
 type FieldErrors = Partial<Record<keyof LoginInput, string>>;
 export function LoginForm({
@@ -134,6 +136,14 @@ export function LoginForm({
           >
             {isPending ? <Spinner /> : "Login"}
           </Button>
+        </Field>
+        <Field>
+          <FieldDescription className="text-center">
+            Don&apos;t have an account?{" "}
+            <Link href="/auth/signup" className="underline underline-offset-4">
+              Sign up
+            </Link>
+          </FieldDescription>
         </Field>
       </FieldGroup>
     </form>

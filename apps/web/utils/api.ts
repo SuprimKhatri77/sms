@@ -42,8 +42,6 @@ export async function apiFetch<T>(
   return result as ApiSuccess<T>;
 }
 
-// turns errors array → { field: message } map
-// { email: "invalid email format", password: "password is required" }
 export function mapFieldErrors(error: APIResponse): Record<string, string> {
   return Object.fromEntries(
     (error.errors ?? []).map(({ field, message }) => [field, message]),
