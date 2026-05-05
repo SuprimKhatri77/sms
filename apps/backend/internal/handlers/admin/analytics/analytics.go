@@ -8,6 +8,7 @@ import (
 	db "github.com/suprimkhatri77/sms/backend/internal/database/generated"
 	"github.com/suprimkhatri77/sms/backend/internal/repository"
 	"github.com/suprimkhatri77/sms/backend/internal/types"
+	"github.com/suprimkhatri77/sms/backend/internal/utils"
 )
 
 type result[T any] struct {
@@ -105,6 +106,11 @@ func GetAnalytics(queries repository.AnalyticsRepository) gin.HandlerFunc {
 				return
 			}
 		}
+
+		monthlyRevenueRes.data = utils.EnsureSlice(monthlyRevenueRes.data)
+		monthlyAdmissionsRes.data = utils.EnsureSlice(monthlyAdmissionsRes.data)
+		sourceBreakdownRes.data = utils.EnsureSlice(sourceBreakdownRes.data)
+		monthlyInquiriesRes.data = utils.EnsureSlice(monthlyInquiriesRes.data)
 
 		c.JSON(http.StatusOK, types.APIResponse{
 			Success: true,

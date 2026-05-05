@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import {
   User,
   Calendar,
@@ -10,12 +9,10 @@ import {
   MapPin,
   Users,
   BookOpen,
-  DollarSign,
   ChevronRight,
   ChevronLeft,
   CheckCircle2,
   Upload,
-  ArrowLeft,
   Loader2,
 } from "lucide-react";
 import { StepTitle } from "./StepTile";
@@ -39,6 +36,7 @@ import axios from "axios";
 import { mapFieldErrors } from "@/utils/api";
 import { cn } from "@/lib/utils";
 import { siteInfo } from "@/utils/site-info";
+import { useAuthStore } from "@/store/auth";
 
 interface FieldError {
   fullName?: string;
@@ -51,7 +49,7 @@ interface FieldError {
   guardianPhone?: string;
   courses?: string;
   source?: string;
-  claimedAmount?: string;
+  // claimedAmount?: string;
   photoUrl?: string;
 }
 
@@ -69,7 +67,7 @@ const FIELD_STEP_MAP: Record<keyof FieldError, number> = {
 
   courses: 2,
   source: 2,
-  claimedAmount: 2,
+  // claimedAmount: 2,
 };
 
 const SOURCES = [
@@ -121,13 +119,13 @@ function validateStep(step: number, data: ValidateStepData): FieldError {
     if (!data.courses.length)
       errors.courses = "Please select at least one course";
     if (!data.source) errors.source = "Please select how you heard about us";
-    if (!String(data.claimedAmount).trim())
-      errors.claimedAmount = "Please enter an amount";
-    else if (
-      isNaN(Number(data.claimedAmount)) ||
-      Number(data.claimedAmount) < 0
-    )
-      errors.claimedAmount = "Enter a valid amount";
+    // if (!String(data.claimedAmount).trim())
+    //   errors.claimedAmount = "Please enter an amount";
+    // else if (
+    //   isNaN(Number(data.claimedAmount)) ||
+    //   Number(data.claimedAmount) < 0
+    // )
+    //   errors.claimedAmount = "Enter a valid amount";
   }
 
   return errors;
@@ -137,6 +135,7 @@ type Props = {
   courses: Extract<CoursesList, { success: true }>["data"];
 };
 export default function AdmissionPage({ courses }: Props) {
+  const user = useAuthStore((state) => state.user);
   const [currentStep, setCurrentStep] = useState(0);
   const [errors, setErrors] = useState<Partial<FieldError>>({});
   const [photo, setPhoto] = useState<{
@@ -199,7 +198,7 @@ export default function AdmissionPage({ courses }: Props) {
       guardianPhone: "",
       courses: [] as string[],
       address: "",
-      claimedAmount: null as number | null,
+      // claimedAmount: null as number | null,
       photoUrl: "",
     },
     validators: {
@@ -209,7 +208,7 @@ export default function AdmissionPage({ courses }: Props) {
       mutate({
         ...value,
         dob: value.dob,
-        claimedAmount: value.claimedAmount ?? 0,
+        // claimedAmount: value.claimedAmount ?? 0,
       });
     },
     onSubmitInvalid: ({ formApi }) => {
@@ -288,7 +287,7 @@ export default function AdmissionPage({ courses }: Props) {
       guardianPhone: getFieldValue("guardianPhone"),
       courses: getFieldValue("courses"),
       source: getFieldValue("source"),
-      claimedAmount: getFieldValue("claimedAmount"),
+      // claimedAmount: getFieldValue("claimedAmount"),
       photoUrl: photo?.url ?? "",
     });
 
@@ -312,7 +311,7 @@ export default function AdmissionPage({ courses }: Props) {
     GENDERS.find((g) => g.value === getFieldValue("gender"))?.label ??
     getFieldValue("gender");
 
-  const amount = getFieldValue("claimedAmount");
+  // const amount = getFieldValue("claimedAmount");
 
   // ── Form ──
   return (
@@ -487,18 +486,16 @@ export default function AdmissionPage({ courses }: Props) {
               </FormField>
 
               <FormField name="email">
-                {(field) => {
-                  const fieldError = field.state.meta.errors[0]?.message;
-                  const mergedError = fieldError ?? errors.email;
+                {() => {
                   return (
                     <InputField
                       label="Email"
                       icon={Mail}
                       type="email"
                       placeholder="optional"
-                      value={field.state.value}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                      error={mergedError}
+                      value={user?.email ?? ""}
+                      disabled
+                      className="bg-gray-100 text-gray-500 cursor-not-allowed opacity-70 border-gray-200"
                     />
                   );
                 }}
@@ -722,7 +719,7 @@ export default function AdmissionPage({ courses }: Props) {
               }}
             </FormField>
 
-            <FormField name="claimedAmount">
+            {/* <FormField name="claimedAmount">
               {(field) => {
                 const fieldError = field.state.meta.errors[0]?.message;
                 const mergedError = fieldError ?? errors.claimedAmount;
@@ -743,7 +740,7 @@ export default function AdmissionPage({ courses }: Props) {
                   />
                 );
               }}
-            </FormField>
+            </FormField> */}
           </div>
 
           {/* Step 3 — Review */}
@@ -804,12 +801,12 @@ export default function AdmissionPage({ courses }: Props) {
                   }
                 />
                 <ReviewRow label="Source" value={sourceLabel} />
-                <ReviewRow
+                {/* <ReviewRow
                   label="Claimed Amount"
                   value={
                     amount != null ? `NPR ${amount.toLocaleString()}` : "0"
                   }
-                />
+                /> */}
               </ReviewSection>
             </div>
             <p

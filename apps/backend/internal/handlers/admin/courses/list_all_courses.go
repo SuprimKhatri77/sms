@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/suprimkhatri77/sms/backend/internal/constants"
+	db "github.com/suprimkhatri77/sms/backend/internal/database/generated"
 	"github.com/suprimkhatri77/sms/backend/internal/repository"
 	"github.com/suprimkhatri77/sms/backend/internal/types"
 )
@@ -25,12 +26,7 @@ func ListAllCourses(queries repository.CoursesRepository) gin.HandlerFunc {
 		}
 
 		if len(courses) == 0 {
-			c.JSON(http.StatusOK, types.APIResponse{
-				Success: true,
-				Message: "No courses found",
-				Data:    []types.Courses{},
-			})
-			return
+			courses = []db.Course{}
 		}
 
 		c.JSON(http.StatusOK, types.APIResponse{

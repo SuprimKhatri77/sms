@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
 	"github.com/suprimkhatri77/sms/backend/internal/constants"
+	db "github.com/suprimkhatri77/sms/backend/internal/database/generated"
 	"github.com/suprimkhatri77/sms/backend/internal/repository"
 	"github.com/suprimkhatri77/sms/backend/internal/types"
 	"github.com/suprimkhatri77/sms/backend/internal/utils"
@@ -142,12 +143,7 @@ func StudentPaymentDetails(queries repository.AdminRepository) gin.HandlerFunc {
 		}
 
 		if len(payments) == 0 {
-			c.JSON(http.StatusNotFound, types.APIResponse{
-				Success: false,
-				Message: "Student not found or no payment was recorded",
-				Code:    constants.StudentNotFound,
-			})
-			return
+			payments = []db.GetPaymentsByStudentRow{}
 		}
 
 		c.JSON(http.StatusOK, types.APIResponse{

@@ -72,7 +72,7 @@ export default function Navbar() {
           {navLinks.map((link) => (
             <Link
               key={link.label}
-              href={link.href}
+              href={`/${link.href}`}
               className="text-[0.9rem] font-medium tracking-[0.02em] text-white/85 transition-colors duration-200 hover:text-[#d6cbb8]"
               style={{ fontFamily: "var(--font-dm-sans)" }}
             >
@@ -87,13 +87,25 @@ export default function Navbar() {
             >
               Apply Now
             </Link>
-            {!user && (
+            {!user ? (
               <Link
                 href="/auth/login"
                 className="inline-block rounded-[10px] border border-white/25 px-8 py-2 text-[0.95rem] font-medium text-white/85 transition-all duration-200 hover:border-[#d6cbb8] hover:text-[#d6cbb8]"
                 style={{ fontFamily: "var(--font-dm-sans)" }}
               >
                 Login
+              </Link>
+            ) : (
+              <Link
+                href={
+                  user.role === "admin" || user.role === "superadmin"
+                    ? "/admin"
+                    : "/dashboard"
+                }
+                className="inline-block rounded-[10px] border border-white/25 px-8 py-2 text-[0.95rem] font-medium text-white/85 transition-all duration-200 hover:border-[#d6cbb8] hover:text-[#d6cbb8]"
+                style={{ fontFamily: "var(--font-dm-sans)" }}
+              >
+                Dashboard
               </Link>
             )}
           </div>
@@ -145,13 +157,25 @@ export default function Navbar() {
             >
               Apply Now
             </Link>
-            {!user && (
+            {!user ? (
               <Link
                 href="/auth/login"
                 className="inline-block rounded-[10px] border border-white/25 px-8 py-2 text-[0.95rem] font-medium text-white/85 transition-all duration-200 hover:border-[#d6cbb8] hover:text-[#d6cbb8]"
                 style={{ fontFamily: "var(--font-dm-sans)" }}
               >
                 Login
+              </Link>
+            ) : (
+              <Link
+                href={
+                  user.role === "admin" || user.role === "superadmin"
+                    ? "/admin"
+                    : "/dashboard"
+                }
+                className="inline-block rounded-[10px] border border-white/25 px-8 py-2 text-[0.95rem] font-medium text-white/85 transition-all duration-200 hover:border-[#d6cbb8] hover:text-[#d6cbb8]"
+                style={{ fontFamily: "var(--font-dm-sans)" }}
+              >
+                Dashboard
               </Link>
             )}
           </div>

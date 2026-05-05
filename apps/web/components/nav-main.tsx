@@ -37,7 +37,7 @@ export function NavMain({
             >
               <Link
                 href={`/admin${item.url}`}
-                className="flex items-center gap-2 font-medium"
+                className="flex items-center gap-2 font-medium text-[14px]"
               >
                 {item.icon}
                 {!isCollapsed && <span>{item.title}</span>}

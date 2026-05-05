@@ -7,6 +7,8 @@ import { Toaster } from "@/components/ui/sonner";
 import { dmSans, lora, playfair } from "@/utils/font";
 import NavFooterWrapper from "@/components/wrapper/nav-footer-wrapper";
 import { siteInfo } from "@/utils/site-info";
+import { getCurrentUser } from "@/lib/queries/auth/get-current-user";
+import { AuthProvider } from "@/components/providers/auth-provider";
 
 export const metadata: Metadata = {
   title: `${siteInfo.company.shortName} | Professional Training`,
@@ -15,11 +17,13 @@ export const metadata: Metadata = {
   keywords: ["barista", "bakery", "hospitality", "training", "admission"],
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const user = await getCurrentUser();
+
   return (
     <html
       lang="en"
@@ -34,6 +38,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <ReactQueryProvider>
+          <AuthProvider user={user} />
           <TooltipProvider>
             <NavFooterWrapper>{children}</NavFooterWrapper>
           </TooltipProvider>

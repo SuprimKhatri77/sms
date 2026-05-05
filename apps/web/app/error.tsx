@@ -1,19 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
 
 export default function GlobalError({
-  error,
   reset,
 }: {
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  useEffect(() => {
-    console.error(error);
-  }, [error]);
-
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#f4f1ec] px-6">
       {/* Decorative blobs */}
@@ -75,14 +69,14 @@ export default function GlobalError({
         </p>
 
         {/* Error digest for support */}
-        {error.digest && (
+        {/* {error.digest && (
           <p
             className="mb-8 font-mono text-[0.75rem] text-[#2d4a3e]/30"
             style={{ fontFamily: "var(--font-dm-sans)" }}
           >
             Error ID: {error.digest}
           </p>
-        )}
+        )} */}
 
         <div className="flex flex-wrap items-center justify-center gap-3">
           <button
