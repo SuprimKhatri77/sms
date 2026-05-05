@@ -41,14 +41,14 @@ export async function attemptRefresh(
       redirect.cookies.set("access_token", "", {
         maxAge: 0,
         path: "/",
-        domain: ".sms.suprimkhatri.com.np",
+        domain: process.env.COOKIE_DOMAIN,
         secure: true,
         httpOnly: true,
       });
       redirect.cookies.set("refresh_token", "", {
         maxAge: 0,
         path: "/",
-        domain: ".sms.suprimkhatri.com.np",
+        domain: process.env.COOKIE_DOMAIN,
         secure: true,
         httpOnly: true,
       });

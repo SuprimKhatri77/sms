@@ -50,7 +50,11 @@ func ListInquiries(queries repository.AdminRepository) gin.HandlerFunc {
 		if total == 0 {
 			c.JSON(http.StatusOK, types.APIResponse{
 				Success: true,
-				Data:    []db.Inquiry{},
+				Data: types.InquiriesResponse{
+					Inquiries:   []db.Inquiry{},
+					UnreadCount: 0,
+					ReadCount:   0,
+				},
 				Meta: &types.PaginationMeta{
 					Total:      0,
 					TotalPages: 0,

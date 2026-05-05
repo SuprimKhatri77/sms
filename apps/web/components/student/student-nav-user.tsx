@@ -21,11 +21,11 @@ import { useAuthStore } from "@/store/auth";
 import { CaretUpDownIcon, SignOutIcon } from "@phosphor-icons/react";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Spinner } from "./ui/spinner";
 import { useRouter } from "next/navigation";
 import { BaseAPIResponse } from "@repo/types";
+import { Spinner } from "../ui/spinner";
 
-export function NavUser() {
+export function StudentNavUser() {
   const user = useAuthStore((state) => state.user);
   const { isMobile } = useSidebar();
   const router = useRouter();

@@ -99,7 +99,7 @@ SELECT
     s.id, s.student_id, s.reference_no, s.fiscal_year, s.serial_no, s.full_name, s.dob, s.gender, s.phone, s.address, s.guardian_name, s.guardian_phone, s.photo_url, s.source, s.claimed_amount, s.status, s.notes, s.created_at,
     u.email
 FROM students s
-JOIN users u ON s.user_id = u.id
+JOIN users u ON s.student_id = u.id
 WHERE s.id = $1
 `
 

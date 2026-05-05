@@ -216,7 +216,9 @@ export default function AdminInquiryPage() {
 
   const filtered = useMemo<Inquiry[]>(() => {
     if (!data || !data.success) return [];
+
     const { inquiries } = data.data;
+    if (inquiries.length === 0) return [];
     let list = [...inquiries];
 
     if (filter === "unread") list = list.filter((i) => !i.isRead);
@@ -375,7 +377,10 @@ export default function AdminInquiryPage() {
             >
               Inquiries
             </h1>
-            <p className="text-sm mt-1" style={{ color: "rgba(47,78,64,0.58)" }}>
+            <p
+              className="text-sm mt-1"
+              style={{ color: "rgba(47,78,64,0.58)" }}
+            >
               Manage and respond to visitor submissions
             </p>
           </div>

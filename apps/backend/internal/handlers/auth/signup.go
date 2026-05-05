@@ -50,12 +50,10 @@ func Signup(queries repository.AuthRepository, cfg *config.Config) gin.HandlerFu
 			return
 		}
 
-		passwordHashString := fmt.Sprintf("%x", passwordHash)
-
 		user, err := queries.CreateUser(ctx, db.CreateUserParams{
 			Name:         req.Name,
 			Email:        req.Email,
-			PasswordHash: passwordHashString,
+			PasswordHash: string(passwordHash),
 			Role:         "student",
 		})
 

@@ -43,8 +43,6 @@ func Login(
 			return
 		}
 
-		utils.TrimStruct(&loginRequest, "Password")
-
 		slog.Info("login attempt")
 
 		user, err := queries.GetUserByEmail(ctx, loginRequest.Email)
