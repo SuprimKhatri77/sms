@@ -20,15 +20,20 @@ WHERE fiscal_year = $1;
 INSERT INTO students (
     reference_no, fiscal_year, serial_no, full_name, dob, gender,
     phone, address, guardian_name, guardian_phone,
-    photo_url, source, claimed_amount, status
+    photo_url, source, claimed_amount, status, student_id
 ) VALUES (
     $1, $2, $3, $4, $5, $6,
     $7, $8, $9, $10,
-    $11, $12, $13, 'pending'
+    $11, $12, $13, 'pending',$14
 ) RETURNING *;
 
 -- name: GetStudentByID :one
-SELECT * FROM students WHERE id = $1;
+SELECT 
+    s.*,
+    u.email
+FROM students s
+JOIN users u ON s.user_id = u.id
+WHERE s.id = $1;
 
 -- name: UpdateStudentStatus :one
 UPDATE students SET status = $2

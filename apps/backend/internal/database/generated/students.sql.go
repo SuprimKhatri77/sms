@@ -15,11 +15,11 @@ const createStudent = `-- name: CreateStudent :one
 INSERT INTO students (
     reference_no, fiscal_year, serial_no, full_name, dob, gender,
     phone, address, guardian_name, guardian_phone,
-    photo_url, source, claimed_amount, status
+    photo_url, source, claimed_amount, status, student_id
 ) VALUES (
     $1, $2, $3, $4, $5, $6,
     $7, $8, $9, $10,
-    $11, $12, $13, 'pending'
+    $11, $12, $13, 'pending',$14
 ) RETURNING id, student_id, reference_no, fiscal_year, serial_no, full_name, dob, gender, phone, address, guardian_name, guardian_phone, photo_url, source, claimed_amount, status, notes, created_at
 `
 
@@ -37,6 +37,7 @@ type CreateStudentParams struct {
 	PhotoUrl      pgtype.Text `json:"photoUrl"`
 	Source        string      `json:"source"`
 	ClaimedAmount int32       `json:"claimedAmount"`
+	StudentID     pgtype.UUID `json:"studentId"`
 }
 
 func (q *Queries) CreateStudent(ctx context.Context, arg CreateStudentParams) (Student, error) {
@@ -54,6 +55,7 @@ func (q *Queries) CreateStudent(ctx context.Context, arg CreateStudentParams) (S
 		arg.PhotoUrl,
 		arg.Source,
 		arg.ClaimedAmount,
+		arg.StudentID,
 	)
 	var i Student
 	err := row.Scan(
@@ -93,12 +95,39 @@ func (q *Queries) GetNextSerialNo(ctx context.Context, fiscalYear string) (int32
 }
 
 const getStudentByID = `-- name: GetStudentByID :one
-SELECT id, student_id, reference_no, fiscal_year, serial_no, full_name, dob, gender, phone, address, guardian_name, guardian_phone, photo_url, source, claimed_amount, status, notes, created_at FROM students WHERE id = $1
+SELECT 
+    s.id, s.student_id, s.reference_no, s.fiscal_year, s.serial_no, s.full_name, s.dob, s.gender, s.phone, s.address, s.guardian_name, s.guardian_phone, s.photo_url, s.source, s.claimed_amount, s.status, s.notes, s.created_at,
+    u.email
+FROM students s
+JOIN users u ON s.user_id = u.id
+WHERE s.id = $1
 `
 
-func (q *Queries) GetStudentByID(ctx context.Context, id pgtype.UUID) (Student, error) {
+type GetStudentByIDRow struct {
+	ID            pgtype.UUID        `json:"id"`
+	StudentID     pgtype.UUID        `json:"studentId"`
+	ReferenceNo   string             `json:"referenceNo"`
+	FiscalYear    string             `json:"fiscalYear"`
+	SerialNo      int32              `json:"serialNo"`
+	FullName      string             `json:"fullName"`
+	Dob           pgtype.Date        `json:"dob"`
+	Gender        string             `json:"gender"`
+	Phone         string             `json:"phone"`
+	Address       string             `json:"address"`
+	GuardianName  string             `json:"guardianName"`
+	GuardianPhone string             `json:"guardianPhone"`
+	PhotoUrl      pgtype.Text        `json:"photoUrl"`
+	Source        string             `json:"source"`
+	ClaimedAmount int32              `json:"claimedAmount"`
+	Status        string             `json:"status"`
+	Notes         pgtype.Text        `json:"notes"`
+	CreatedAt     pgtype.Timestamptz `json:"createdAt"`
+	Email         string             `json:"email"`
+}
+
+func (q *Queries) GetStudentByID(ctx context.Context, id pgtype.UUID) (GetStudentByIDRow, error) {
 	row := q.db.QueryRow(ctx, getStudentByID, id)
-	var i Student
+	var i GetStudentByIDRow
 	err := row.Scan(
 		&i.ID,
 		&i.StudentID,
@@ -118,6 +147,7 @@ func (q *Queries) GetStudentByID(ctx context.Context, id pgtype.UUID) (Student, 
 		&i.Status,
 		&i.Notes,
 		&i.CreatedAt,
+		&i.Email,
 	)
 	return i, err
 }

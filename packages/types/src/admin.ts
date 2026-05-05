@@ -39,6 +39,7 @@ export const studentDetailResponseSchema = z.discriminatedUnion("success", [
     success: z.literal(true),
     data: z.object({
       id: z.uuid(),
+      email: z.email(),
       referenceNo: z.string(),
       fiscalYear: z.string(),
       serialNo: z.number,

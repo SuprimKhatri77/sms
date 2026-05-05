@@ -24,7 +24,7 @@ interface EditUserCardProps {
 }
 
 const ROLE_OPTIONS: { value: UserRole; label: string }[] = [
-  { value: "user", label: "User" },
+  { value: "student", label: "Student" },
   { value: "admin", label: "Admin" },
   { value: "superadmin", label: "Superadmin" },
 ];
@@ -134,7 +134,9 @@ export function EditUserCard({ user, onClose }: EditUserCardProps) {
             <p className="font-mono text-xs tracking-widest text-[rgba(47,78,64,0.55)] uppercase">
               Joined
             </p>
-            <p className="font-mono text-xs text-[rgba(47,78,64,0.65)]">{joinDate}</p>
+            <p className="font-mono text-xs text-[rgba(47,78,64,0.65)]">
+              {joinDate}
+            </p>
           </div>
         </div>
 

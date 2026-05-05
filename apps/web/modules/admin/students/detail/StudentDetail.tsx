@@ -39,6 +39,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth";
 import { Certificate } from "@/components/certificate/Certificate";
+import { siteInfo } from "@/utils/site-info";
 
 type Props = {
   student: Extract<StudentDetail, { success: true }>["data"];
@@ -179,7 +180,7 @@ export default function StudentDetailPage({
       </div>
       <span style="font-size:16px;font-weight:800;color:#2f4e40;letter-spacing:0.02em;">Brew & Bake Academy</span>
     </div>
-    <p style="font-size:12px;color:#999;margin-left:48px;">New Baneshwor, Kathmandu · brewandbake@example.com</p>
+    <p style="font-size:12px;color:#999;margin-left:48px;">${siteInfo.contact.address} · ${siteInfo.contact.email}</p>
   </div>
   <div style="text-align:right;">
     <p style="font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#999;margin-bottom:4px;">Invoice</p>

@@ -28,6 +28,18 @@ func CreateStudent(queries repository.StudentRepository, pool *pgxpool.Pool) gin
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
 
+		userIDFromContext := c.MustGet("userID").(string)
+		userID, err := utils.ConvertToUUID(userIDFromContext)
+
+		if err != nil {
+			c.JSON(http.StatusBadRequest, types.APIResponse{
+				Success: false,
+				Message: "Invalid user ID format",
+				Code:    constants.InvalidIDFormat,
+			})
+			return
+		}
+
 		var req types.CreateStudentRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
 			slog.Warn("invalid request payload",
@@ -141,6 +153,7 @@ func CreateStudent(queries repository.StudentRepository, pool *pgxpool.Pool) gin
 			ReferenceNo:   referenceNumber,
 			SerialNo:      serialNo,
 			FiscalYear:    settings.FiscalYear,
+			StudentID:     userID,
 		})
 
 		if err != nil {

@@ -17,7 +17,7 @@ export function StatsBar({ users }: StatsBarProps) {
 
   const stats: StatItem[] = [
     { label: "Total", count: users.length },
-    { label: "Users", count: countByRole("user") },
+    { label: "Students", count: countByRole("student") },
     { label: "Admins", count: countByRole("admin") },
     { label: "Superadmins", count: countByRole("superadmin") },
   ];

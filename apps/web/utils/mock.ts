@@ -1,13 +1,6 @@
 import { IconKey } from "@/app/courses/[slug]/page";
-import {
-  Coffee,
-  CroissantIcon,
-  GlassWater,
-  UtensilsCrossed,
-  type LucideIcon,
-} from "lucide-react";
 
-export type UserRole = "user" | "admin" | "superadmin";
+export type UserRole = "student" | "admin" | "superadmin";
 
 export interface User {
   id: string;
@@ -44,7 +37,7 @@ export const MOCK_USERS: User[] = [
     email: "carol.white@example.com",
     password_hash: "$2b$10$hashedpassword3",
     image_url: null,
-    role: "user",
+    role: "student",
     created_at: "2024-02-20T14:00:00Z",
   },
   {
@@ -53,7 +46,7 @@ export const MOCK_USERS: User[] = [
     email: "david.kim@example.com",
     password_hash: "$2b$10$hashedpassword4",
     image_url: null,
-    role: "user",
+    role: "student",
     created_at: "2024-03-05T09:45:00Z",
   },
   {
@@ -71,7 +64,7 @@ export const MOCK_USERS: User[] = [
     email: "frank.nguyen@example.com",
     password_hash: "$2b$10$hashedpassword6",
     image_url: null,
-    role: "user",
+    role: "student",
     created_at: "2024-04-02T16:20:00Z",
   },
   {
@@ -80,7 +73,7 @@ export const MOCK_USERS: User[] = [
     email: "grace.lee@example.com",
     password_hash: "$2b$10$hashedpassword7",
     image_url: null,
-    role: "user",
+    role: "student",
     created_at: "2024-04-22T13:10:00Z",
   },
   {
@@ -89,7 +82,7 @@ export const MOCK_USERS: User[] = [
     email: "henry.patel@example.com",
     password_hash: "$2b$10$hashedpassword8",
     image_url: null,
-    role: "user",
+    role: "student",
     created_at: "2024-05-08T08:00:00Z",
   },
   {
@@ -107,7 +100,7 @@ export const MOCK_USERS: User[] = [
     email: "james.walker@example.com",
     password_hash: "$2b$10$hashedpassword10",
     image_url: null,
-    role: "user",
+    role: "student",
     created_at: "2024-06-12T12:30:00Z",
   },
   {
@@ -116,7 +109,7 @@ export const MOCK_USERS: User[] = [
     email: "karen.thompson@example.com",
     password_hash: "$2b$10$hashedpassword11",
     image_url: null,
-    role: "user",
+    role: "student",
     created_at: "2024-06-30T10:00:00Z",
   },
   {
@@ -125,7 +118,7 @@ export const MOCK_USERS: User[] = [
     email: "liam.brooks@example.com",
     password_hash: "$2b$10$hashedpassword12",
     image_url: null,
-    role: "user",
+    role: "student",
     created_at: "2024-07-15T07:30:00Z",
   },
   {
@@ -143,7 +136,7 @@ export const MOCK_USERS: User[] = [
     email: "noah.davis@example.com",
     password_hash: "$2b$10$hashedpassword14",
     image_url: null,
-    role: "user",
+    role: "student",
     created_at: "2024-08-10T11:00:00Z",
   },
   {
@@ -152,7 +145,7 @@ export const MOCK_USERS: User[] = [
     email: "olivia.brown@example.com",
     password_hash: "$2b$10$hashedpassword15",
     image_url: null,
-    role: "user",
+    role: "student",
     created_at: "2024-08-25T09:20:00Z",
   },
   {
@@ -170,7 +163,7 @@ export const MOCK_USERS: User[] = [
     email: "quinn.taylor@example.com",
     password_hash: "$2b$10$hashedpassword17",
     image_url: null,
-    role: "user",
+    role: "student",
     created_at: "2024-09-18T13:40:00Z",
   },
   {
@@ -179,7 +172,7 @@ export const MOCK_USERS: User[] = [
     email: "rachel.green@example.com",
     password_hash: "$2b$10$hashedpassword18",
     image_url: null,
-    role: "user",
+    role: "student",
     created_at: "2024-10-02T08:10:00Z",
   },
   {
@@ -197,7 +190,7 @@ export const MOCK_USERS: User[] = [
     email: "tina.clark@example.com",
     password_hash: "$2b$10$hashedpassword20",
     image_url: null,
-    role: "user",
+    role: "student",
     created_at: "2024-11-08T12:00:00Z",
   },
 ];

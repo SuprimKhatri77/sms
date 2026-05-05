@@ -9,7 +9,7 @@ import (
 )
 
 type AdminRepository interface {
-	GetStudentByID(ctx context.Context, id pgtype.UUID) (db.Student, error)
+	GetStudentByID(ctx context.Context, id pgtype.UUID) (db.GetStudentByIDRow, error)
 	ListStudents(ctx context.Context, params db.ListStudentsParams) ([]db.ListStudentsRow, error)
 	GetStudentsCount(ctx context.Context) (int64, error)
 	GetCoursesByStudentID(ctx context.Context, studentID pgtype.UUID) ([]db.Course, error)
