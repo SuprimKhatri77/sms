@@ -44,6 +44,13 @@ type Payment struct {
 	Remarks   pgtype.Text        `json:"remarks"`
 }
 
+type Product struct {
+	ID        pgtype.UUID        `json:"id"`
+	Name      string             `json:"name"`
+	Unit      string             `json:"unit"`
+	CreatedAt pgtype.Timestamptz `json:"createdAt"`
+}
+
 type RefreshToken struct {
 	ID        pgtype.UUID        `json:"id"`
 	UserID    pgtype.UUID        `json:"userId"`
@@ -57,6 +64,28 @@ type RefreshToken struct {
 type Setting struct {
 	Key   string `json:"key"`
 	Value string `json:"value"`
+}
+
+type StockIn struct {
+	ID        pgtype.UUID        `json:"id"`
+	ProductID pgtype.UUID        `json:"productId"`
+	Date      string             `json:"date"`
+	InvoiceNo pgtype.Text        `json:"invoiceNo"`
+	Qty       int32              `json:"qty"`
+	Rate      int32              `json:"rate"`
+	Note      pgtype.Text        `json:"note"`
+	CreatedAt pgtype.Timestamptz `json:"createdAt"`
+}
+
+type StockOut struct {
+	ID        pgtype.UUID        `json:"id"`
+	ProductID pgtype.UUID        `json:"productId"`
+	Date      string             `json:"date"`
+	BillNo    pgtype.Text        `json:"billNo"`
+	Qty       int32              `json:"qty"`
+	Rate      int32              `json:"rate"`
+	Note      pgtype.Text        `json:"note"`
+	CreatedAt pgtype.Timestamptz `json:"createdAt"`
 }
 
 type Student struct {
@@ -93,4 +122,14 @@ type User struct {
 	ImageUrl     pgtype.Text        `json:"imageUrl"`
 	Role         string             `json:"role"`
 	CreatedAt    pgtype.Timestamptz `json:"createdAt"`
+}
+
+type Wastage struct {
+	ID        pgtype.UUID        `json:"id"`
+	ProductID pgtype.UUID        `json:"productId"`
+	Date      string             `json:"date"`
+	Qty       int32              `json:"qty"`
+	Rate      int32              `json:"rate"`
+	Reason    pgtype.Text        `json:"reason"`
+	CreatedAt pgtype.Timestamptz `json:"createdAt"`
 }

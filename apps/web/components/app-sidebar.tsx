@@ -14,7 +14,7 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { QuestionIcon, StudentIcon } from "@phosphor-icons/react";
-import { Book, Settings, TrendingUp, User } from "lucide-react";
+import { Book, Package, Settings, TrendingUp, User } from "lucide-react";
 import { siteInfo } from "@/utils/site-info";
 
 const data = {
@@ -27,7 +27,6 @@ const data = {
           alt="Brew & Bake"
           width={24}
           height={24}
-          unoptimized
         />
       ),
       plan: "Admin Panel",
@@ -63,6 +62,18 @@ const data = {
       title: "Inquiries",
       url: "/inquiries",
       icon: <QuestionIcon />,
+    },
+    {
+      title: "Inventory",
+      url: "/inventory",
+      icon: <Package />,
+      items: [
+        { title: "Products", url: "/inventory/products" },
+        { title: "Stock In", url: "/inventory/stock-in" },
+        { title: "Stock Out", url: "/inventory/stock-out" },
+        { title: "Wastage", url: "/inventory/wastage" },
+        { title: "Summary", url: "/inventory/summary" },
+      ],
     },
   ],
 };

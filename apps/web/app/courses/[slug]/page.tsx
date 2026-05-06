@@ -374,7 +374,7 @@ export default async function CoursePage({
       </section>
 
       {/* ── Curriculum ─────────────────────────────────────────────────────── */}
-      {/* <section
+      <section
         id="curriculum"
         className="scroll-mt-20 px-6 py-20"
         style={{ backgroundColor: "#f3f1eb" }}
@@ -393,7 +393,7 @@ export default async function CoursePage({
 
           <CurriculumAccordion course={course} />
         </div>
-      </section> */}
+      </section>
 
       {/* ── Video section ──────────────────────────────────────────────────── */}
       <section

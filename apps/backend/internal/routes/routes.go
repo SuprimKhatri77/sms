@@ -4,18 +4,30 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/suprimkhatri77/sms/backend/internal/config"
+
 	db "github.com/suprimkhatri77/sms/backend/internal/database/generated"
+
 	adminAnalytics "github.com/suprimkhatri77/sms/backend/internal/handlers/admin/analytics"
 	adminCourses "github.com/suprimkhatri77/sms/backend/internal/handlers/admin/courses"
 	adminInquiries "github.com/suprimkhatri77/sms/backend/internal/handlers/admin/inquiries"
+	"github.com/suprimkhatri77/sms/backend/internal/handlers/admin/inventory/products"
+
 	adminPayments "github.com/suprimkhatri77/sms/backend/internal/handlers/admin/payments"
+
 	adminSettings "github.com/suprimkhatri77/sms/backend/internal/handlers/admin/settings"
 	adminStudents "github.com/suprimkhatri77/sms/backend/internal/handlers/admin/students"
 	adminUsers "github.com/suprimkhatri77/sms/backend/internal/handlers/admin/users"
+
+	adminInventoryStockIn "github.com/suprimkhatri77/sms/backend/internal/handlers/admin/inventory/stock/in"
+	adminInventoryStockOut "github.com/suprimkhatri77/sms/backend/internal/handlers/admin/inventory/stock/out"
+	adminInventorySummary "github.com/suprimkhatri77/sms/backend/internal/handlers/admin/inventory/summary"
+
 	"github.com/suprimkhatri77/sms/backend/internal/handlers/auth"
 	"github.com/suprimkhatri77/sms/backend/internal/handlers/courses"
 	"github.com/suprimkhatri77/sms/backend/internal/handlers/student"
+
 	upload "github.com/suprimkhatri77/sms/backend/internal/handlers/uploads"
+
 	"github.com/suprimkhatri77/sms/backend/internal/middleware"
 	"github.com/suprimkhatri77/sms/backend/internal/pkg/cloudinary"
 	"github.com/suprimkhatri77/sms/backend/internal/repository"
@@ -79,6 +91,28 @@ func Setup(r *gin.Engine, cfg Config) {
 
 	// admin/analytics
 	adminRouter.GET("/analytics", adminAnalytics.GetAnalytics(cfg.Queries))
+
+	// admin/inventory
+	adminInventoryRouter := adminRouter.Group("/inventory")
+	adminInventoryRouter.GET("", products.ListProducts(cfg.Queries))
+	adminInventoryRouter.POST("", products.CreateProduct(cfg.Queries))
+	adminInventoryRouter.PUT("/:productID", products.EditProduct(cfg.Queries))
+	adminInventoryRouter.DELETE("/:productID", products.DeleteProduct(cfg.Queries))
+
+	// admin/inventory/stock/in
+	adminInventoryRouter.GET("/stock/in", adminInventoryStockIn.ListStockIn(cfg.Queries))
+	adminInventoryRouter.POST("/stock/in", adminInventoryStockIn.CreateStockIn(cfg.Queries))
+	adminInventoryRouter.PUT("/stock/in/:stockID", adminInventoryStockIn.UpdateStockIn(cfg.Queries))
+	adminInventoryRouter.DELETE("/stock/in/:stockID", adminInventoryStockIn.DeleteStockIn(cfg.Queries))
+
+	// admin/inventory/stock/out
+	adminInventoryRouter.GET("/stock/out", adminInventoryStockOut.ListStockOut(cfg.Queries))
+	adminInventoryRouter.POST("/stock/out", adminInventoryStockOut.CreateStockOut(cfg.Queries))
+	adminInventoryRouter.PUT("/stock/out/:stockOutID", adminInventoryStockOut.UpdateStockOut(cfg.Queries))
+	adminInventoryRouter.DELETE("/stock/out/:stockOutID", adminInventoryStockOut.DeleteStockOut(cfg.Queries))
+
+	// admin/inventory/summary
+	adminInventoryRouter.GET("/summary", adminInventorySummary.GetInventorySummary(cfg.Queries))
 
 	// public student routes
 	studentRouter := router.Group("/students")
