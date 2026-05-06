@@ -1,0 +1,4 @@
+DROP TABLE IF EXISTS wastage;
+DROP TABLE IF EXISTS stock_out;
+DROP TABLE IF EXISTS stock_in;
+DROP TABLE IF EXISTS products;

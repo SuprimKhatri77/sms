@@ -43,4 +43,11 @@ const (
 	ImageIsRequired    = "IMAGE_IS_REQUIRED"
 	InvalidImageFormat = "INVALID_IMAGE_FORMAT"
 	InvalidImageSize   = "INVALID_IMAGE_SIZE"
+
+	// inventory
+	ProductAlreadyExists = "PRODUCT_ALREADY_EXISTS"
+	ProductNotFound      = "PRODUCT_NOT_FOUND"
+	MissingProductID     = "MISSING_PRODUCT_ID"
+
+	MissingStockID = "MISSING_STOCK_ID"
 )
