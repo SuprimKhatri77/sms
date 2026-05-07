@@ -19,7 +19,8 @@ SELECT
     p.unit AS product_unit
 FROM wastage w
 JOIN products p ON p.id = w.product_id
-ORDER BY w.created_at DESC;
+ORDER BY w.created_at DESC
+LIMIT $1 OFFSET $2;
 
 -- name: ListWastageByProduct :many
 SELECT
@@ -50,3 +51,6 @@ RETURNING *;
 -- name: DeleteWastage :exec
 DELETE FROM wastage
 WHERE id = $1;
+
+-- name: GetWastageCount :one
+SELECT COUNT(*) FROM wastage;

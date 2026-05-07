@@ -1,4 +1,4 @@
-package in
+package wastage
 
 import (
 	"net/http"
@@ -11,7 +11,7 @@ import (
 	"github.com/suprimkhatri77/sms/backend/internal/types"
 )
 
-func ListStockIn(queries repository.InventoryRepository) gin.HandlerFunc {
+func ListWastageStock(queries repository.InventoryRepository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
 		const LIMIT = 20
@@ -26,7 +26,7 @@ func ListStockIn(queries repository.InventoryRepository) gin.HandlerFunc {
 			return
 		}
 
-		total, err := queries.GetStockInCount(ctx)
+		total, err := queries.GetWastageCount(ctx)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, types.APIResponse{
 				Success: false,
@@ -39,7 +39,7 @@ func ListStockIn(queries repository.InventoryRepository) gin.HandlerFunc {
 		if total == 0 {
 			c.JSON(http.StatusOK, types.APIResponse{
 				Success: true,
-				Data:    []db.ListStockInRow{},
+				Data:    []db.ListWastageRow{},
 				Meta: &types.PaginationMeta{
 					Total:      int(total),
 					Limit:      LIMIT,
@@ -62,10 +62,11 @@ func ListStockIn(queries repository.InventoryRepository) gin.HandlerFunc {
 
 		offset := LIMIT * (page - 1)
 
-		stockList, err := queries.ListStockIn(ctx, db.ListStockInParams{
-			Offset: int32(offset),
+		wastageList, err := queries.ListWastage(ctx, db.ListWastageParams{
 			Limit:  LIMIT,
+			Offset: int32(offset),
 		})
+
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, types.APIResponse{
 				Success: false,
@@ -75,13 +76,13 @@ func ListStockIn(queries repository.InventoryRepository) gin.HandlerFunc {
 			return
 		}
 
-		if len(stockList) == 0 {
-			stockList = []db.ListStockInRow{}
+		if len(wastageList) == 0 {
+			wastageList = []db.ListWastageRow{}
 		}
 
 		c.JSON(http.StatusOK, types.APIResponse{
 			Success: true,
-			Data:    stockList,
+			Data:    wastageList,
 			Meta: &types.PaginationMeta{
 				Total:      int(total),
 				TotalPages: int(totalPages),

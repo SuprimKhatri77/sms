@@ -93,13 +93,30 @@ func (q *Queries) GetProductByName(ctx context.Context, name string) (Product, e
 	return i, err
 }
 
+const getProductCount = `-- name: GetProductCount :one
+SELECT COUNT(*) FROM products
+`
+
+func (q *Queries) GetProductCount(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, getProductCount)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const listProducts = `-- name: ListProducts :many
 SELECT id, name, unit, created_at FROM products
 ORDER BY name ASC
+LIMIT $1 OFFSET $2
 `
 
-func (q *Queries) ListProducts(ctx context.Context) ([]Product, error) {
-	rows, err := q.db.Query(ctx, listProducts)
+type ListProductsParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]Product, error) {
+	rows, err := q.db.Query(ctx, listProducts, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}

@@ -13,7 +13,8 @@ WHERE name = $1;
 
 -- name: ListProducts :many
 SELECT * FROM products
-ORDER BY name ASC;
+ORDER BY name ASC
+LIMIT $1 OFFSET $2;
 
 -- name: UpdateProduct :one
 UPDATE products
@@ -31,3 +32,6 @@ SELECT rate FROM stock_in
 WHERE product_id = $1
 ORDER BY created_at DESC
 LIMIT 1;
+
+-- name: GetProductCount :one
+SELECT COUNT(*) FROM products;

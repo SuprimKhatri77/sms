@@ -11,20 +11,228 @@ import { Pagination } from "../shared/Pagination";
 import { ProductsTable } from "./ProductsTable";
 import { ProductDialog } from "./ProductDialog";
 
-import { mockProducts } from "../lib/mock-data";
-import { generateId, paginate, DEFAULT_PAGE_SIZE } from "../lib/utils";
-import type { Product, ProductFormValues } from "../types";
+import { paginate } from "../lib/utils";
 import { EmptyState } from "../shared/EmptyState";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  CreateProductInput,
+  CreateProductResponse,
+  DeleteProductResponse,
+  GetProductResponse,
+  UpdateProductResponse,
+} from "@repo/types";
+import ProductsLoading from "./ProductsLoading";
+import { ProductsError } from "./ProductsError";
+import api from "@/lib/axios";
+import axios from "axios";
+
+type Product = Extract<GetProductResponse, { success: true }>["data"][number];
 
 export function ProductsClient() {
-  const [products, setProducts] = useState<Product[]>(mockProducts);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [page, setPage] = useState(1);
+  const queryClient = useQueryClient();
 
-  const pageSize = DEFAULT_PAGE_SIZE;
+  const { data, isPending, isError, refetch, error } = useQuery({
+    queryKey: ["admin-inventory-products", page],
+    queryFn: async () => {
+      const res = await api.get<GetProductResponse>(
+        `/admin/inventory/products?page=${page}`,
+      );
+      return res.data;
+    },
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000,
+  });
+
+  const createProduct = useMutation({
+    mutationFn: async (data: CreateProductInput) => {
+      try {
+        const res = await api.post<CreateProductResponse>(
+          "/admin/inventory/products",
+          data,
+        );
+        if (!res.data.success) throw res.data;
+        return res.data;
+      } catch (err) {
+        if (axios.isAxiosError(err)) throw err.response?.data;
+        throw err;
+      }
+    },
+    onMutate: async (data) => {
+      await queryClient.cancelQueries({
+        queryKey: ["admin-inventory-products", page],
+      });
+      const previousProducts = queryClient.getQueryData<GetProductResponse>([
+        "admin-inventory-products",
+      ]);
+      const optimisticProduct = {
+        id: crypto.randomUUID(),
+        name: data.name,
+        unit: data.unit,
+        createdAt: new Date(),
+      };
+
+      queryClient.setQueryData<GetProductResponse>(
+        ["admin-inventory-products"],
+        (old) => {
+          if (!old || !old.success) return old;
+          return {
+            ...old,
+            data: [...old.data, optimisticProduct],
+          };
+        },
+      );
+
+      return { previousProducts, optimisticProduct };
+    },
+    onSuccess: (result, _, context) => {
+      toast.success(result.message);
+      queryClient.setQueryData<GetProductResponse>(
+        ["admin-inventory-products", page],
+        (old) => {
+          if (!old || !old.success) return old;
+          return {
+            ...old,
+            data: old.data.map((p) =>
+              p.id === context.optimisticProduct.id ? { ...result.data } : p,
+            ),
+          };
+        },
+      );
+    },
+    onError: (error, _, context) => {
+      if (context?.previousProducts) {
+        queryClient.setQueryData(
+          ["admin-inventory-products", page],
+          context.previousProducts,
+        );
+      }
+      toast.error(error.message ?? "Something went wrong");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-inventory-products"] });
+    },
+  });
+
+  const updateProduct = useMutation({
+    mutationFn: async ({
+      id,
+      ...data
+    }: CreateProductInput & { id: string }) => {
+      try {
+        const res = await api.put<UpdateProductResponse>(
+          `/admin/inventory/products/${id}`,
+          data,
+        );
+        if (!res.data.success) throw res.data;
+        return res.data;
+      } catch (err) {
+        if (axios.isAxiosError(err)) throw err.response?.data;
+        throw err;
+      }
+    },
+    onMutate: async (data) => {
+      await queryClient.cancelQueries({
+        queryKey: ["admin-inventory-products", page],
+      });
+      const previousProducts = queryClient.getQueryData<GetProductResponse>([
+        "admin-inventory-products",
+      ]);
+      const optimisticProduct = {
+        id: data.id,
+        name: data.name,
+        unit: data.unit,
+        createdAt: editingProduct?.createdAt ?? new Date(),
+      };
+
+      queryClient.setQueryData<GetProductResponse>(
+        ["admin-inventory-products"],
+        (old) => {
+          if (!old || !old.success) return old;
+          return {
+            ...old,
+            data: old.data.map((p) =>
+              p.id === optimisticProduct.id ? { ...optimisticProduct } : p,
+            ),
+          };
+        },
+      );
+
+      return { previousProducts };
+    },
+    onSuccess: (result) => {
+      toast.success(result.message);
+    },
+    onError: (error, _, context) => {
+      if (context?.previousProducts) {
+        queryClient.setQueryData(
+          ["admin-inventory-products", page],
+          context.previousProducts,
+        );
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-inventory-products"] });
+    },
+  });
+
+  const deleteProduct = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await api.delete<DeleteProductResponse>(
+        `/admin/inventory/products/${id}`,
+      );
+      if (!res.data.success) throw res.data;
+      return res.data;
+    },
+    onMutate: async (id: string) => {
+      setDeletingProduct(null);
+      await queryClient.cancelQueries({
+        queryKey: ["admin-inventory-products", page],
+      });
+      const previousProducts = queryClient.getQueryData([
+        "admin-inventory-products",
+      ]);
+
+      queryClient.setQueryData<GetProductResponse>(
+        ["admin-inventory-products", page],
+        (old) => {
+          if (!old || !old.success) return old;
+          return {
+            ...old,
+            data: old.data.filter((p) => p.id !== id),
+          };
+        },
+      );
+      return { previousProducts };
+    },
+    onSuccess: (result) => {
+      toast.success(result.message);
+      setIsDeleting(false);
+    },
+    onError: (__, _, context) => {
+      if (context?.previousProducts) {
+        queryClient.setQueryData(
+          ["admin-inventory-products", page],
+          context.previousProducts,
+        );
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-inventory-products"] });
+    },
+  });
+  if (isPending) return <ProductsLoading />;
+  if (isError) return <ProductsError error={error} reset={refetch} />;
+  if (!data || !data.success)
+    return <ProductsError error={data} reset={refetch} />;
+
+  const products = data.data;
+
+  const pageSize = data.meta.limit;
   const paginated = paginate(products, page, pageSize);
 
   const handleCreate = () => {
@@ -41,37 +249,17 @@ export function ProductsClient() {
     setDeletingProduct(product);
   };
 
-  const handleSubmit = async (values: ProductFormValues) => {
-    // Simulate API delay
-    await new Promise((r) => setTimeout(r, 500));
-
+  const handleSubmit = async (values: CreateProductInput) => {
     if (editingProduct) {
-      setProducts((prev) =>
-        prev.map((p) => (p.id === editingProduct.id ? { ...p, ...values } : p)),
-      );
-      toast.success(`"${values.name}" updated successfully.`);
+      await updateProduct.mutateAsync({ ...values, id: editingProduct.id });
     } else {
-      const newProduct: Product = {
-        id: generateId("prod"),
-        name: values.name,
-        unit: values.unit,
-        created_at: new Date().toISOString(),
-      };
-      setProducts((prev) => [newProduct, ...prev]);
-      toast.success(`"${values.name}" created successfully.`);
+      await createProduct.mutateAsync(values);
     }
   };
 
   const handleConfirmDelete = async () => {
     if (!deletingProduct) return;
-    setIsDeleting(true);
-    await new Promise((r) => setTimeout(r, 500));
-    setProducts((prev) => prev.filter((p) => p.id !== deletingProduct.id));
-    toast.success(`"${deletingProduct.name}" deleted.`);
-    setIsDeleting(false);
-    setDeletingProduct(null);
-    // Reset to page 1 if current page is now empty
-    if (paginated.length === 1 && page > 1) setPage(page - 1);
+    await deleteProduct.mutateAsync(deletingProduct.id);
   };
 
   return (
@@ -102,7 +290,11 @@ export function ProductsClient() {
           />
           <Pagination
             page={page}
-            meta={{ total: 0, totalPages: 0, limit: 20 }}
+            meta={{
+              total: data.meta.total,
+              totalPages: data.meta.totalPages,
+              limit: data.meta.limit,
+            }}
             onPageChange={setPage}
           />
         </>

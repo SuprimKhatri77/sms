@@ -10,23 +10,27 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { UnitCombobox } from "./UnitComboBox";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { PRODUCT_UNITS } from "../lib/utils";
-import type { Product, ProductFormValues } from "../types";
-import { FormField } from "../shared/FormField";
+  type CreateProductInput,
+  CreateProductResponse,
+  createProductSchema,
+  GetProductResponse,
+} from "@repo/types/inventory";
+import { toast } from "sonner";
+import { useState } from "react";
+
+type Product = Extract<GetProductResponse, { success: true }>["data"][number];
+type BackendError = Extract<CreateProductResponse, { success: false }>;
 
 type ProductDialogProps = {
   open: boolean;
   onClose: () => void;
-  onSubmit: (values: ProductFormValues) => Promise<void>;
+  onSubmit: (values: CreateProductInput) => Promise<void>;
   editingProduct?: Product | null;
 };
+type ProductFields = keyof CreateProductInput;
 
 export function ProductDialog({
   open,
@@ -34,22 +38,46 @@ export function ProductDialog({
   onSubmit,
   editingProduct,
 }: ProductDialogProps) {
+  const [backendErrors, setBackendErrors] = useState<
+    Partial<Record<ProductFields, string>>
+  >({});
+
   const form = useForm({
     defaultValues: {
       name: editingProduct?.name ?? "",
       unit: editingProduct?.unit ?? "pieces",
-    } satisfies ProductFormValues,
-    onSubmit: async ({ value }) => {
-      // Validate manually since we're not using zod here
-      if (!value.name.trim()) return;
-      await onSubmit(value);
-      form.reset();
-      onClose();
+    },
+
+    validators: {
+      onSubmit: createProductSchema,
+    },
+    onSubmitInvalid: ({ formApi }) => {
+      formApi.validate("submit");
+    },
+    onSubmit: async ({ value, formApi }) => {
+      try {
+        await onSubmit(value);
+        formApi.reset();
+        onClose();
+      } catch (err) {
+        const error = err as BackendError;
+        toast.error(error?.message ?? "Something went wrong");
+        if (error?.errors?.length) {
+          const mapped: Partial<Record<ProductFields, string>> = {};
+          for (const fieldErr of error.errors) {
+            mapped[fieldErr.field as ProductFields] = fieldErr.message;
+          }
+          setBackendErrors(mapped);
+        } else {
+          toast.error(error?.message ?? "Something went wrong");
+        }
+      }
     },
   });
 
   const handleClose = () => {
     form.reset();
+    setBackendErrors({});
     onClose();
   };
 
@@ -74,65 +102,84 @@ export function ProductDialog({
           className="space-y-4 pt-2"
         >
           {/* Name field */}
-          <form.Field
-            name="name"
-            validators={{
-              onChange: ({ value }) =>
-                !value.trim() ? "Product name is required" : undefined,
+          <form.Field name="name">
+            {(field) => {
+              const fieldError = field.state.meta.errors[0]?.message;
+              const mergedError = fieldError ?? backendErrors.name;
+
+              return (
+                <div className="space-y-1.5">
+                  <Label
+                    className="text-sm font-medium text-[var(--brand-ink)]"
+                    style={{ fontFamily: "var(--font-dm-sans)" }}
+                  >
+                    Product Name
+                    <span className="text-red-500 ml-0.5">*</span>
+                  </Label>
+                  <Input
+                    value={field.state.value}
+                    onChange={(e) => {
+                      field.handleChange(e.target.value);
+                      setBackendErrors((prev) => ({
+                        ...prev,
+                        name: undefined,
+                      }));
+                    }}
+                    onBlur={field.handleBlur}
+                    placeholder="e.g. T-Shirt"
+                    className="border-[var(--brand-ink)]/20 bg-white focus-visible:ring-[var(--brand-green)]"
+                    style={{ fontFamily: "var(--font-dm-sans)" }}
+                  />
+                  {mergedError && (
+                    <p
+                      className="text-xs text-red-500"
+                      style={{ fontFamily: "var(--font-dm-sans)" }}
+                    >
+                      {mergedError}
+                    </p>
+                  )}
+                </div>
+              );
             }}
-          >
-            {(field) => (
-              <FormField
-                label="Product Name"
-                error={field.state.meta.errors[0]}
-                required
-              >
-                <Input
-                  value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  onBlur={field.handleBlur}
-                  placeholder="e.g. T-Shirt"
-                  className="border-[var(--brand-ink)]/20 bg-white focus-visible:ring-[var(--brand-green)]"
-                  style={{ fontFamily: "var(--font-dm-sans)" }}
-                />
-              </FormField>
-            )}
           </form.Field>
 
           {/* Unit field */}
-          <form.Field
-            name="unit"
-            validators={{
-              onChange: ({ value }) =>
-                !value ? "Please select a unit" : undefined,
-            }}
-          >
-            {(field) => (
-              <FormField
-                label="Unit"
-                error={field.state.meta.errors[0]}
-                required
-              >
-                <Select
-                  value={field.state.value}
-                  onValueChange={(v) => field.handleChange(v as string)}
-                >
-                  <SelectTrigger
-                    className="border-[var(--brand-ink)]/20 bg-white focus:ring-[var(--brand-green)]"
+          <form.Field name="unit">
+            {(field) => {
+              const fieldError = field.state.meta.errors[0]?.message;
+              const mergedError = fieldError ?? backendErrors.unit;
+
+              return (
+                <div className="space-y-1.5">
+                  <Label
+                    className="text-sm font-medium text-[var(--brand-ink)]"
                     style={{ fontFamily: "var(--font-dm-sans)" }}
                   >
-                    <SelectValue placeholder="Select unit" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PRODUCT_UNITS.map((u) => (
-                      <SelectItem key={u} value={u}>
-                        {u}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormField>
-            )}
+                    Unit
+                    <span className="text-red-500 ml-0.5">*</span>
+                  </Label>
+                  <UnitCombobox
+                    value={field.state.value}
+                    onChange={(v) => {
+                      field.handleChange(v);
+                      setBackendErrors((prev) => ({
+                        ...prev,
+                        unit: undefined,
+                      }));
+                    }}
+                    onBlur={field.handleBlur}
+                  />
+                  {mergedError && (
+                    <p
+                      className="text-xs text-red-500"
+                      style={{ fontFamily: "var(--font-dm-sans)" }}
+                    >
+                      {mergedError}
+                    </p>
+                  )}
+                </div>
+              );
+            }}
           </form.Field>
 
           <DialogFooter className="pt-2 gap-2">

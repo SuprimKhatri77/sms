@@ -19,7 +19,8 @@ SELECT
     p.unit AS product_unit
 FROM stock_in si
 JOIN products p ON p.id = si.product_id
-ORDER BY si.created_at DESC;
+ORDER BY si.created_at DESC
+LIMIT $1 OFFSET $2;
 
 -- name: ListStockInByProduct :many
 SELECT
@@ -50,3 +51,6 @@ RETURNING *;
 -- name: DeleteStockIn :exec
 DELETE FROM stock_in
 WHERE id = $1;
+
+-- name: GetStockInCount :one
+SELECT COUNT(*) FROM stock_in;

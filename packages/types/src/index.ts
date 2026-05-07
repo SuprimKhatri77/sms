@@ -28,6 +28,15 @@ export {
 
 export { type ImageUploadResponse } from "./upload";
 
+export {
+  createProductResponseSchema,
+  type CreateProductInput,
+  type CreateProductResponse,
+  type GetProductResponse,
+  type UpdateProductResponse,
+  type DeleteProductResponse,
+} from "./inventory";
+
 export { type CoursesList } from "./courses";
 export {
   addPaymentSchema,

@@ -100,6 +100,17 @@ func (q *Queries) GetStockOutByID(ctx context.Context, id pgtype.UUID) (GetStock
 	return i, err
 }
 
+const getStockOutCount = `-- name: GetStockOutCount :one
+SELECT COUNT(*) FROM stock_out
+`
+
+func (q *Queries) GetStockOutCount(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, getStockOutCount)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const listStockOut = `-- name: ListStockOut :many
 SELECT
     so.id, so.product_id, so.date, so.bill_no, so.qty, so.rate, so.note, so.created_at,
@@ -108,7 +119,13 @@ SELECT
 FROM stock_out so
 JOIN products p ON p.id = so.product_id
 ORDER BY so.created_at DESC
+LIMIT $1 OFFSET $2
 `
+
+type ListStockOutParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
 
 type ListStockOutRow struct {
 	ID          pgtype.UUID        `json:"id"`
@@ -123,8 +140,8 @@ type ListStockOutRow struct {
 	ProductUnit string             `json:"productUnit"`
 }
 
-func (q *Queries) ListStockOut(ctx context.Context) ([]ListStockOutRow, error) {
-	rows, err := q.db.Query(ctx, listStockOut)
+func (q *Queries) ListStockOut(ctx context.Context, arg ListStockOutParams) ([]ListStockOutRow, error) {
+	rows, err := q.db.Query(ctx, listStockOut, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}

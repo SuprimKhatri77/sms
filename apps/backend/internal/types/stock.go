@@ -43,3 +43,10 @@ type CreateWastageRequest struct {
 	Rate      int    `json:"rate" binding:"required,gt=0"`
 	Reason    string `json:"reason" binding:"omitempty"`
 }
+type UpdateWastageRequest struct {
+	ProductID string `json:"productID" binding:"required,uuid"`
+	Quantity  int    `json:"quantity" binding:"required,min=1,max=10000000"`
+	Date      string `json:"date" binding:"required"`
+	Rate      int    `json:"rate" binding:"required,gt=0"`
+	Reason    string `json:"reason" binding:"omitempty"`
+}

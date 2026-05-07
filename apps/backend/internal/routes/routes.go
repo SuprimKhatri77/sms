@@ -20,6 +20,7 @@ import (
 
 	adminInventoryStockIn "github.com/suprimkhatri77/sms/backend/internal/handlers/admin/inventory/stock/in"
 	adminInventoryStockOut "github.com/suprimkhatri77/sms/backend/internal/handlers/admin/inventory/stock/out"
+	adminInventoryWastage "github.com/suprimkhatri77/sms/backend/internal/handlers/admin/inventory/stock/wastage"
 	adminInventorySummary "github.com/suprimkhatri77/sms/backend/internal/handlers/admin/inventory/summary"
 
 	"github.com/suprimkhatri77/sms/backend/internal/handlers/auth"
@@ -94,10 +95,10 @@ func Setup(r *gin.Engine, cfg Config) {
 
 	// admin/inventory
 	adminInventoryRouter := adminRouter.Group("/inventory")
-	adminInventoryRouter.GET("", products.ListProducts(cfg.Queries))
-	adminInventoryRouter.POST("", products.CreateProduct(cfg.Queries))
-	adminInventoryRouter.PUT("/:productID", products.EditProduct(cfg.Queries))
-	adminInventoryRouter.DELETE("/:productID", products.DeleteProduct(cfg.Queries))
+	adminInventoryRouter.GET("/products", products.ListProducts(cfg.Queries))
+	adminInventoryRouter.POST("/products", products.CreateProduct(cfg.Queries))
+	adminInventoryRouter.PUT("/products/:productID", products.EditProduct(cfg.Queries))
+	adminInventoryRouter.DELETE("/products/:productID", products.DeleteProduct(cfg.Queries))
 
 	// admin/inventory/stock/in
 	adminInventoryRouter.GET("/stock/in", adminInventoryStockIn.ListStockIn(cfg.Queries))
@@ -110,6 +111,12 @@ func Setup(r *gin.Engine, cfg Config) {
 	adminInventoryRouter.POST("/stock/out", adminInventoryStockOut.CreateStockOut(cfg.Queries))
 	adminInventoryRouter.PUT("/stock/out/:stockOutID", adminInventoryStockOut.UpdateStockOut(cfg.Queries))
 	adminInventoryRouter.DELETE("/stock/out/:stockOutID", adminInventoryStockOut.DeleteStockOut(cfg.Queries))
+
+	// admin/inventory/wastages
+	adminInventoryRouter.GET("/wastages", adminInventoryWastage.ListWastageStock(cfg.Queries))
+	adminInventoryRouter.POST("/wastages", adminInventoryWastage.CreateWastage(cfg.Queries))
+	adminInventoryRouter.PUT("/wastages/:wastageID", adminInventoryWastage.UpdateWastage(cfg.Queries))
+	adminInventoryRouter.DELETE("/wastages/:wastageID", adminInventoryWastage.DeleteWastage(cfg.Queries))
 
 	// admin/inventory/summary
 	adminInventoryRouter.GET("/summary", adminInventorySummary.GetInventorySummary(cfg.Queries))
