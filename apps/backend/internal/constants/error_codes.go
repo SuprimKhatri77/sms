@@ -50,4 +50,6 @@ const (
 	MissingProductID     = "MISSING_PRODUCT_ID"
 
 	MissingStockID = "MISSING_STOCK_ID"
+
+	MissingWastageID = "MISSING_WASTAGE_ID"
 )

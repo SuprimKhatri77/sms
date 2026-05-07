@@ -11,7 +11,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2 } from "lucide-react";
 import { formatCreatedAt } from "../lib/utils";
-import type { Product } from "../types";
+import { GetProductResponse } from "@repo/types";
+
+type Product = Extract<GetProductResponse, { success: true }>["data"][number];
 
 type ProductsTableProps = {
   products: Product[];
@@ -81,7 +83,7 @@ export function ProductsTable({
                 className="text-[var(--brand-ink)]/70"
                 style={{ fontFamily: "var(--font-dm-sans)" }}
               >
-                {formatCreatedAt(product.created_at)}
+                {formatCreatedAt(String(product.createdAt))}
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex items-center justify-end gap-1">

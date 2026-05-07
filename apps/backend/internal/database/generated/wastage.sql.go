@@ -95,6 +95,17 @@ func (q *Queries) GetWastageByID(ctx context.Context, id pgtype.UUID) (GetWastag
 	return i, err
 }
 
+const getWastageCount = `-- name: GetWastageCount :one
+SELECT COUNT(*) FROM wastage
+`
+
+func (q *Queries) GetWastageCount(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, getWastageCount)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const listWastage = `-- name: ListWastage :many
 SELECT
     w.id, w.product_id, w.date, w.qty, w.rate, w.reason, w.created_at,
@@ -103,7 +114,13 @@ SELECT
 FROM wastage w
 JOIN products p ON p.id = w.product_id
 ORDER BY w.created_at DESC
+LIMIT $1 OFFSET $2
 `
+
+type ListWastageParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
 
 type ListWastageRow struct {
 	ID          pgtype.UUID        `json:"id"`
@@ -117,8 +134,8 @@ type ListWastageRow struct {
 	ProductUnit string             `json:"productUnit"`
 }
 
-func (q *Queries) ListWastage(ctx context.Context) ([]ListWastageRow, error) {
-	rows, err := q.db.Query(ctx, listWastage)
+func (q *Queries) ListWastage(ctx context.Context, arg ListWastageParams) ([]ListWastageRow, error) {
+	rows, err := q.db.Query(ctx, listWastage, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}

@@ -19,7 +19,8 @@ SELECT
     p.unit AS product_unit
 FROM stock_out so
 JOIN products p ON p.id = so.product_id
-ORDER BY so.created_at DESC;
+ORDER BY so.created_at DESC
+LIMIT $1 OFFSET $2;
 
 -- name: ListStockOutByProduct :many
 SELECT
@@ -61,3 +62,6 @@ RETURNING *;
 -- name: DeleteStockOut :exec
 DELETE FROM stock_out
 WHERE id = $1;
+
+-- name: GetStockOutCount :one
+SELECT COUNT(*) FROM stock_out;
