@@ -13,12 +13,19 @@ import { Pencil, Trash2 } from "lucide-react";
 import { AmountCell } from "../shared/AmountCell";
 import { EmptyState } from "../shared/EmptyState";
 import { Pagination } from "../shared/Pagination";
-import type { StockOut } from "../types";
+import { ListStockOutResponse } from "@repo/types";
+
+type StockOut = Extract<
+  ListStockOutResponse,
+  { success: true }
+>["data"][number];
 
 type Props = {
   data: StockOut[];
   currentPage: number;
   totalPages: number;
+  limit: number;
+  total: number;
   onPageChange: (page: number) => void;
   onEdit: (item: StockOut) => void;
   onDelete: (item: StockOut) => void;
@@ -26,6 +33,8 @@ type Props = {
 
 export function StockOutTable({
   data,
+  limit,
+  total,
   currentPage,
   totalPages,
   onPageChange,
@@ -69,18 +78,18 @@ export function StockOutTable({
                 className="border-[var(--brand-green)]/10 hover:bg-[var(--brand-green)]/3 font-[var(--font-dm-sans)]"
               >
                 <TableCell className="font-medium text-[var(--brand-ink)]">
-                  {row.product_name}
+                  {row.productName}
                 </TableCell>
                 <TableCell className="text-[var(--brand-ink)]/70">
                   {row.date}
                 </TableCell>
                 <TableCell className="text-[var(--brand-ink)]/60">
-                  {row.bill_no ?? "—"}
+                  {row.billNo ?? "—"}
                 </TableCell>
                 <TableCell>
                   {row.qty}{" "}
                   <span className="text-xs text-[var(--brand-ink)]/50">
-                    {row.product_unit}
+                    {row.productUnit}
                   </span>
                 </TableCell>
                 <TableCell>
@@ -119,7 +128,7 @@ export function StockOutTable({
       </div>
       <Pagination
         page={currentPage}
-        meta={{ total: data.length, totalPages: totalPages, limit: 20 }}
+        meta={{ total, totalPages, limit }}
         onPageChange={onPageChange}
       />
     </div>

@@ -1,6 +1,7 @@
 package in
 
 import (
+	"math"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -63,7 +64,7 @@ func UpdateStockIn(queries repository.InventoryRepository) gin.HandlerFunc {
 		_, err = queries.UpdateStockIn(ctx, db.UpdateStockInParams{
 			ID:        stockID,
 			ProductID: productID,
-			Rate:      int32(req.Rate),
+			Rate:      int32(math.Round(req.Rate * 100)),
 			Qty:       int32(req.Quantity),
 			Note:      utils.ToNullableText(req.Note),
 			InvoiceNo: utils.ToNullableText(req.InvoiceNo),

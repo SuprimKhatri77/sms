@@ -45,7 +45,7 @@ func DeleteStockIn(queries repository.InventoryRepository) gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, types.APIResponse{
-			Success: false,
+			Success: true,
 			Message: "Stock deleted",
 		})
 	}

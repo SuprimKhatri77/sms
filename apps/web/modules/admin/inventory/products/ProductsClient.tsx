@@ -259,7 +259,7 @@ export function ProductsClient() {
 
   const handleConfirmDelete = async () => {
     if (!deletingProduct) return;
-    await deleteProduct.mutateAsync(deletingProduct.id);
+    await deleteProduct.mutate(deletingProduct.id);
   };
 
   return (
@@ -270,7 +270,7 @@ export function ProductsClient() {
         action={
           <Button
             onClick={handleCreate}
-            className="bg-[var(--brand-green)] hover:bg-[var(--brand-green-2)] text-white gap-2"
+            className="bg-(--brand-green) hover:bg-(--brand-green-2) text-white gap-2"
             style={{ fontFamily: "var(--font-dm-sans)" }}
           >
             <Plus className="h-4 w-4" />

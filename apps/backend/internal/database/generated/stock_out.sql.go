@@ -129,7 +129,7 @@ type ListStockOutParams struct {
 
 type ListStockOutRow struct {
 	ID          pgtype.UUID        `json:"id"`
-	ProductID   pgtype.UUID        `json:"productId"`
+	ProductID   pgtype.UUID        `json:"productID"`
 	Date        string             `json:"date"`
 	BillNo      pgtype.Text        `json:"billNo"`
 	Qty         int32              `json:"qty"`

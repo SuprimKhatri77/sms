@@ -1,4 +1,3 @@
-// modules/admin/inventory/components/wastage/WastageClient.tsx
 "use client";
 
 import { useState, useMemo } from "react";

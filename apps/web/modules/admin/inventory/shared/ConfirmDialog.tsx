@@ -31,7 +31,7 @@ export function ConfirmDialog({
         <DialogHeader>
           <DialogTitle
             className="text-[var(--brand-ink)]"
-            style={{ fontFamily: "var(--font-playfair)" }}
+            style={{ fontFamily: "var(--font-lora)" }}
           >
             Delete {itemName}?
           </DialogTitle>
