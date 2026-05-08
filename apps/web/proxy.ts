@@ -17,6 +17,13 @@ export async function proxy(req: NextRequest) {
 
   if (isPublicRoute) {
     const refreshToken = req.cookies.get("refresh_token")?.value;
+    console.log(
+      "public route hit:",
+      req.nextUrl.pathname,
+      "has refresh token:",
+      !!refreshToken,
+    );
+
     if (refreshToken) {
       const user = await getSessionFromRequest(req);
       if (user?.role === "student")

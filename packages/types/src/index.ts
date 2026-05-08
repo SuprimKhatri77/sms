@@ -30,11 +30,24 @@ export { type ImageUploadResponse } from "./upload";
 
 export {
   createProductResponseSchema,
+  createStockInSchema,
+  createStockOutSchema,
+  editStockOutSchema,
   type CreateProductInput,
   type CreateProductResponse,
   type GetProductResponse,
   type UpdateProductResponse,
   type DeleteProductResponse,
+  type CreateStockInResponse,
+  type CreateStockInInput,
+  type ListStockInResponse,
+  type DeleteStockInResponse,
+  type CreateStockOutInput,
+  type ListStockOutResponse,
+  type CreateStockOutResponse,
+  type DeleteStockOutResponse,
+  type EditStockOutResponse,
+  type EditStockOutInput,
 } from "./inventory";
 
 export { type CoursesList } from "./courses";

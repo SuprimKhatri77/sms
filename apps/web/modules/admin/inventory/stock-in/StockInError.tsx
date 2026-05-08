@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { AlertTriangle } from "lucide-react";
 
-type Props = { error: Error; reset: () => void };
+type Props = { error: { message: string }; reset: () => void };
 
 export default function StockInError({ error, reset }: Props) {
   return (

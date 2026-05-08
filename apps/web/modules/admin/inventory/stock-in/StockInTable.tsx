@@ -13,12 +13,15 @@ import { Pencil, Trash2 } from "lucide-react";
 import { AmountCell } from "../shared/AmountCell";
 import { EmptyState } from "../shared/EmptyState";
 import { Pagination } from "../shared/Pagination";
-import type { StockIn } from "../types";
+import { ListStockInResponse } from "@repo/types";
 
+type StockIn = Extract<ListStockInResponse, { success: true }>["data"][number];
 type Props = {
   data: StockIn[];
   currentPage: number;
   totalPages: number;
+  limit: number;
+  total: number;
   onPageChange: (page: number) => void;
   onEdit: (item: StockIn) => void;
   onDelete: (item: StockIn) => void;
@@ -27,6 +30,8 @@ type Props = {
 export function StockInTable({
   data,
   currentPage,
+  limit,
+  total,
   totalPages,
   onPageChange,
   onEdit,
@@ -70,18 +75,18 @@ export function StockInTable({
                 className="border-[var(--brand-green)]/10 hover:bg-[var(--brand-green)]/3 font-[var(--font-dm-sans)]"
               >
                 <TableCell className="font-medium text-[var(--brand-ink)]">
-                  {row.product_name}
+                  {row.productName}
                 </TableCell>
                 <TableCell className="text-[var(--brand-ink)]/70">
                   {row.date}
                 </TableCell>
                 <TableCell className="text-[var(--brand-ink)]/60">
-                  {row.invoice_no ?? "—"}
+                  {row.invoiceNo ?? "—"}
                 </TableCell>
                 <TableCell className="text-[var(--brand-ink)]">
                   {row.qty}{" "}
                   <span className="text-xs text-[var(--brand-ink)]/50">
-                    {row.product_unit}
+                    {row.productUnit}
                   </span>
                 </TableCell>
                 <TableCell>
@@ -120,7 +125,7 @@ export function StockInTable({
       </div>
       <Pagination
         page={currentPage}
-        meta={{ total: data.length, totalPages: totalPages, limit: 20 }}
+        meta={{ total, totalPages, limit }}
         onPageChange={onPageChange}
       />
     </div>

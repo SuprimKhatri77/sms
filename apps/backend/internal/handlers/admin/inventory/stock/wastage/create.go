@@ -1,6 +1,7 @@
 package wastage
 
 import (
+	"math"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -42,7 +43,7 @@ func CreateWastage(queries repository.InventoryRepository) gin.HandlerFunc {
 		wastage, err := queries.CreateWastage(ctx, db.CreateWastageParams{
 			ProductID: productID,
 			Date:      req.Date,
-			Rate:      int32(req.Rate),
+			Rate:      int32(math.Round(req.Rate * 100)),
 			Reason:    utils.ToNullableText(req.Reason),
 			Qty:       int32(req.Quantity),
 		})

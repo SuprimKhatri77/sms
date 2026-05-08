@@ -1,7 +1,5 @@
 "use client";
 
-import { useForm } from "@tanstack/react-form-nextjs";
-import { z } from "zod";
 import {
   Dialog,
   DialogContent,
@@ -19,58 +17,143 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { mockProducts } from "../lib/mock-data";
-import type { StockIn, Product } from "../types";
 
-const stockInSchema = z.object({
-  product_id: z.string().min(1, "Product is required"),
-  date: z.string().min(1, "Date is required"),
-  invoice_no: z.string().optional(),
-  qty: z.number({ error: "Qty must be a number" }).min(1, "Min 1"),
-  // User enters in Rs; we multiply ×100 before saving
-  rate: z.number({ error: "Rate must be a number" }).min(0.01, "Rate required"),
-  note: z.string().optional(),
-});
+import {
+  CreateStockInInput,
+  CreateStockInResponse,
+  createStockInSchema,
+  GetProductResponse,
+  ListStockInResponse,
+} from "@repo/types";
+import { useQuery } from "@tanstack/react-query";
+import api from "@/lib/axios";
+import StockInError from "./StockInError";
+import { useEffect, useMemo, useState } from "react";
+import z from "zod";
+import { toast } from "sonner";
+import { mapFieldErrors } from "@/utils/api";
 
+type StockIn = Extract<ListStockInResponse, { success: true }>["data"][number];
+type BackendError = Extract<CreateStockInResponse, { success: false }>;
+
+type StockInFormData = Omit<
+  StockIn,
+  "id" | "createdAt" | "productName" | "productUnit" | "updatedAt" | "qty"
+> & {
+  quantity: number;
+};
 type Props = {
   open: boolean;
   onClose: () => void;
-  onSubmit: (
-    data: Omit<StockIn, "id" | "created_at" | "product_name" | "product_unit">,
-  ) => Promise<void>;
+  onSubmit: (data: StockInFormData) => Promise<void>;
   initialData?: StockIn | null;
 };
 
 export function StockInDialog({ open, onClose, onSubmit, initialData }: Props) {
   const isEdit = !!initialData;
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [formData, setFromData] = useState({
+    invoiceNo: initialData?.invoiceNo ?? "",
+    note: initialData?.note ?? "",
+    productID: initialData?.productID ?? "",
+    quantity: initialData?.qty?.toString() ?? "1",
+    rate: initialData?.rate ? (initialData.rate / 100).toString() : "",
+    date: initialData?.date ?? "",
+  });
+  useEffect(() => {
+    if (initialData) {
+      setTimeout(() => {
+        setFromData({
+          invoiceNo: initialData.invoiceNo ?? "",
+          note: initialData.note ?? "",
+          productID: initialData.productID ?? "",
+          quantity: initialData.qty.toString(),
+          rate: (initialData.rate / 100).toString(),
+          date: initialData.date ?? "",
+        });
+      }, 0);
+    } else {
+      setTimeout(() => {
+        setFromData({
+          invoiceNo: "",
+          note: "",
+          productID: "",
+          quantity: "1",
+          rate: "",
+          date: "",
+        });
+      }, 0);
+    }
+  }, [initialData]);
+  const [errors, setErrors] =
+    useState<Partial<Record<keyof CreateStockInInput, string>>>();
 
-  const form = useForm({
-    defaultValues: {
-      product_id: initialData?.product_id ?? "",
-      date: initialData?.date ?? "",
-      invoice_no: initialData?.invoice_no ?? "",
-      qty: initialData?.qty ?? 1,
-      rate: initialData ? initialData.rate / 100 : 0,
-      note: initialData?.note ?? "",
-    },
-    validators: {
-      onChange: stockInSchema,
-    },
-    onSubmit: async ({ value }) => {
-      await onSubmit({
-        product_id: value.product_id,
-        date: value.date,
-        invoice_no: value.invoice_no || null,
-        qty: value.qty,
-        // multiply ×100 to convert Rs → cents before sending to backend
-        rate: Math.round(value.rate * 100),
-        note: value.note || null,
+  const handleSubmit = async (data: CreateStockInInput) => {
+    setIsSubmitting(true);
+    const validateFields = createStockInSchema.safeParse(data);
+    if (!validateFields.success) {
+      setIsSubmitting(false);
+      const tree = z.treeifyError(validateFields.error).properties;
+      setErrors({
+        note: tree?.note?.errors[0],
+        quantity: tree?.quantity?.errors[0],
+        productID: tree?.productID?.errors[0],
+        rate: tree?.rate?.errors[0],
+        invoiceNo: tree?.invoiceNo?.errors[0],
+        date: tree?.date?.errors[0],
       });
-      form.reset();
+      return;
+    }
+    try {
+      await onSubmit(data);
+      setFromData({
+        invoiceNo: "",
+        note: "",
+        productID: "",
+        quantity: "1",
+        rate: "",
+        date: "",
+      });
+      setErrors({});
       onClose();
+    } catch (err) {
+      const error = err as BackendError;
+      toast.error(error?.message ?? "Something went wrong");
+      if (error?.errors?.length) {
+        setErrors(mapFieldErrors(error));
+      } else {
+        toast.error(error?.message ?? "Something went wrong");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  const { data, isPending, isError, refetch, error } = useQuery({
+    queryKey: ["admin-inventory-stock-in"],
+    queryFn: async () => {
+      const res = await api.get<GetProductResponse>(
+        `/admin/inventory/products`,
+      );
+      return res.data;
     },
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000,
   });
 
+  const selectedProduct = useMemo(() => {
+    if (!data || !data.success || !formData.productID) return undefined;
+    return data.data.find((p) => p.id === formData.productID);
+  }, [data, formData.productID]);
+
+  if (isError) return <StockInError error={error} reset={refetch} />;
+  if (!data || !data.success)
+    return (
+      <StockInError
+        error={data ?? { message: "Failed to process request" }}
+        reset={refetch}
+      />
+    );
+  const products = data.data;
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="sm:max-w-md bg-[var(--brand-cream)] border-[var(--brand-green)]/20">
@@ -83,151 +166,168 @@ export function StockInDialog({ open, onClose, onSubmit, initialData }: Props) {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            form.handleSubmit();
+            handleSubmit({
+              ...formData,
+              quantity: Number(formData.quantity),
+              rate: Number(formData.rate),
+            });
           }}
           className="space-y-4"
         >
           {/* Product */}
-          <form.Field name="product_id">
-            {(field) => (
-              <div className="space-y-1">
-                <Label className="font-[var(--font-dm-sans)] text-[var(--brand-ink)]">
-                  Product <span className="text-red-500">*</span>
-                </Label>
-                <Select
-                  value={field.state.value}
-                  onValueChange={(v) => field.handleChange(v)}
-                >
-                  <SelectTrigger className="border-[var(--brand-green)]/30 focus:ring-[var(--brand-green)]">
-                    <SelectValue placeholder="Select product" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {mockProducts.map((p: Product) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {field.state.meta.errors.length > 0 && (
-                  <p className="text-xs text-red-500">
-                    {field.state.meta.errors[0]}
-                  </p>
-                )}
-              </div>
-            )}
-          </form.Field>
+          {isPending ? (
+            <div className="space-y-1">
+              <Label className="font-[var(--font-dm-sans)] text-[var(--brand-ink)]">
+                Product <span className="text-red-500">*</span>
+              </Label>
+
+              <div className="h-10 w-full animate-pulse rounded-md border border-[var(--brand-green)]/20 bg-muted" />
+            </div>
+          ) : (
+            <div className="space-y-1">
+              <Label className="font-[var(--font-dm-sans)] text-[var(--brand-ink)]">
+                Product <span className="text-red-500">*</span>
+              </Label>
+
+              <Select
+                value={formData.productID}
+                onValueChange={(v) =>
+                  setFromData((prev) => ({
+                    ...prev,
+                    productID: v as string,
+                  }))
+                }
+              >
+                <SelectTrigger className="border-[var(--brand-green)]/30 focus:ring-[var(--brand-green)]">
+                  <SelectValue placeholder="Select product">
+                    {selectedProduct?.name}
+                  </SelectValue>
+                </SelectTrigger>
+
+                <SelectContent>
+                  {products.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {errors?.productID && (
+                <p className="text-xs text-red-500">{errors.productID}</p>
+              )}
+            </div>
+          )}
 
           {/* Date (BS) */}
-          <form.Field name="date">
-            {(field) => (
-              <div className="space-y-1">
-                <Label className="font-[var(--font-dm-sans)] text-[var(--brand-ink)]">
-                  Date (BS) <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  placeholder="2081-01-15"
-                  value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  className="border-[var(--brand-green)]/30 focus-visible:ring-[var(--brand-green)]"
-                />
-                {field.state.meta.errors.length > 0 && (
-                  <p className="text-xs text-red-500">
-                    {field.state.meta.errors[0]}
-                  </p>
-                )}
-              </div>
+          <div className="space-y-1">
+            <Label className="font-[var(--font-dm-sans)] text-[var(--brand-ink)]">
+              Date (BS) <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              placeholder="2081-01-15"
+              value={formData.date}
+              onChange={(e) =>
+                setFromData((prev) => ({
+                  ...prev,
+                  date: e.target.value,
+                }))
+              }
+              className="border-[var(--brand-green)]/30 focus-visible:ring-[var(--brand-green)]"
+            />
+            {errors?.date && (
+              <p className="text-xs text-red-500">{errors.date}</p>
             )}
-          </form.Field>
+          </div>
 
           {/* Invoice No */}
-          <form.Field name="invoice_no">
-            {(field) => (
-              <div className="space-y-1">
-                <Label className="font-[var(--font-dm-sans)] text-[var(--brand-ink)]">
-                  Invoice No{" "}
-                  <span className="text-[var(--brand-brown)] text-xs">
-                    (optional)
-                  </span>
-                </Label>
-                <Input
-                  placeholder="INV-001"
-                  value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  className="border-[var(--brand-green)]/30 focus-visible:ring-[var(--brand-green)]"
-                />
-              </div>
-            )}
-          </form.Field>
+          <div className="space-y-1">
+            <Label className="font-[var(--font-dm-sans)] text-[var(--brand-ink)]">
+              Invoice No{" "}
+              <span className="text-[var(--brand-brown)] text-xs">
+                (optional)
+              </span>
+            </Label>
+            <Input
+              placeholder="INV-001"
+              value={formData.invoiceNo}
+              onChange={(e) =>
+                setFromData((prev) => ({
+                  ...prev,
+                  invoiceNo: e.target.value,
+                }))
+              }
+              className="border-[var(--brand-green)]/30 focus-visible:ring-[var(--brand-green)]"
+            />
+          </div>
 
           {/* Qty + Rate side by side */}
           <div className="grid grid-cols-2 gap-3">
-            <form.Field name="qty">
-              {(field) => (
-                <div className="space-y-1">
-                  <Label className="font-[var(--font-dm-sans)] text-[var(--brand-ink)]">
-                    Qty <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    type="number"
-                    min={1}
-                    value={field.state.value}
-                    onChange={(e) => field.handleChange(Number(e.target.value))}
-                    className="border-[var(--brand-green)]/30 focus-visible:ring-[var(--brand-green)]"
-                  />
-                  {field.state.meta.errors.length > 0 && (
-                    <p className="text-xs text-red-500">
-                      {field.state.meta.errors[0]}
-                    </p>
-                  )}
-                </div>
+            <div className="space-y-1">
+              <Label className="font-[var(--font-dm-sans)] text-[var(--brand-ink)]">
+                Qty <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                type="number"
+                min={1}
+                value={formData.quantity}
+                onChange={(e) =>
+                  setFromData((prev) => ({
+                    ...prev,
+                    quantity: e.target.value,
+                  }))
+                }
+                className="border-[var(--brand-green)]/30 focus-visible:ring-[var(--brand-green)]"
+              />
+              {errors?.quantity && (
+                <p className="text-xs text-red-500">{errors.quantity}</p>
               )}
-            </form.Field>
+            </div>
 
-            <form.Field name="rate">
-              {(field) => (
-                <div className="space-y-1">
-                  <Label className="font-[var(--font-dm-sans)] text-[var(--brand-ink)]">
-                    Rate (Rs.) <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    type="number"
-                    min={0.01}
-                    step={0.01}
-                    value={field.state.value}
-                    onChange={(e) => field.handleChange(Number(e.target.value))}
-                    className="border-[var(--brand-green)]/30 focus-visible:ring-[var(--brand-green)]"
-                  />
-                  {field.state.meta.errors.length > 0 && (
-                    <p className="text-xs text-red-500">
-                      {field.state.meta.errors[0]}
-                    </p>
-                  )}
-                </div>
+            <div className="space-y-1">
+              <Label className="font-[var(--font-dm-sans)] text-[var(--brand-ink)]">
+                Rate (Rs.) <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                type="number"
+                min={0.01}
+                step={0.01}
+                value={formData.rate}
+                onChange={(e) =>
+                  setFromData((prev) => ({
+                    ...prev,
+                    rate: e.target.value,
+                  }))
+                }
+                className="border-[var(--brand-green)]/30 focus-visible:ring-[var(--brand-green)]"
+              />
+              {errors?.rate && (
+                <p className="text-xs text-red-500">{errors.rate}</p>
               )}
-            </form.Field>
+            </div>
           </div>
 
           {/* Note */}
-          <form.Field name="note">
-            {(field) => (
-              <div className="space-y-1">
-                <Label className="font-[var(--font-dm-sans)] text-[var(--brand-ink)]">
-                  Note{" "}
-                  <span className="text-[var(--brand-brown)] text-xs">
-                    (optional)
-                  </span>
-                </Label>
-                <textarea
-                  value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  rows={2}
-                  className="w-full rounded-md border border-[var(--brand-green)]/30 bg-white px-3 py-2 text-sm font-[var(--font-dm-sans)] focus:outline-none focus:ring-1 focus:ring-[var(--brand-green)]"
-                  placeholder="Optional note..."
-                />
-              </div>
-            )}
-          </form.Field>
+          <div className="space-y-1">
+            <Label className="font-[var(--font-dm-sans)] text-[var(--brand-ink)]">
+              Note{" "}
+              <span className="text-[var(--brand-brown)] text-xs">
+                (optional)
+              </span>
+            </Label>
+            <textarea
+              value={formData.note}
+              onChange={(e) =>
+                setFromData((prev) => ({
+                  ...prev,
+                  note: e.target.value,
+                }))
+              }
+              rows={2}
+              className="w-full rounded-md border border-[var(--brand-green)]/30 bg-white px-3 py-2 text-sm font-[var(--font-dm-sans)] focus:outline-none focus:ring-1 focus:ring-[var(--brand-green)]"
+              placeholder="Optional note..."
+            />
+          </div>
 
           <DialogFooter className="pt-2">
             <Button
@@ -238,17 +338,14 @@ export function StockInDialog({ open, onClose, onSubmit, initialData }: Props) {
             >
               Cancel
             </Button>
-            <form.Subscribe selector={(s) => s.isSubmitting}>
-              {(isSubmitting) => (
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="bg-[var(--brand-green)] hover:bg-[var(--brand-green-2)] text-white font-[var(--font-dm-sans)]"
-                >
-                  {isSubmitting ? "Saving..." : isEdit ? "Update" : "Add"}
-                </Button>
-              )}
-            </form.Subscribe>
+
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="bg-[var(--brand-green)] hover:bg-[var(--brand-green-2)] text-white font-[var(--font-dm-sans)]"
+            >
+              {isSubmitting ? "Saving..." : isEdit ? "Update" : "Add"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { InventoryPageHeader } from "../shared/InventoryPageHeader";
 import { StockOutTable } from "./StockOutTable";
@@ -8,67 +8,157 @@ import { StockOutDialog } from "./StockOutDialog";
 import { ConfirmDialog } from "../shared/ConfirmDialog";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { mockStockOut, mockProducts } from "../lib/mock-data";
-import { paginate, DEFAULT_PAGE_SIZE } from "../lib/utils";
-import type { StockOut } from "../types";
+import {
+  CreateStockOutResponse,
+  DeleteStockOutResponse,
+  EditStockOutResponse,
+  GetProductResponse,
+  ListStockOutResponse,
+} from "@repo/types";
+import api from "@/lib/axios";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import StockOutLoading from "./StockOutLoading";
+import StockOutError from "./StockOutError";
+import axios from "axios";
 
+type StockOut = Extract<
+  ListStockOutResponse,
+  { success: true }
+>["data"][number];
+type StockOutFormData = Omit<
+  StockOut,
+  "id" | "createdAt" | "productName" | "productUnit" | "updatedAt" | "qty"
+> & {
+  quantity: number;
+};
 export function StockOutClient() {
-  const [records, setRecords] = useState<StockOut[]>(mockStockOut);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<StockOut | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<StockOut | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const queryClient = useQueryClient();
 
-  const totalPages = Math.ceil(records.length / DEFAULT_PAGE_SIZE);
-  const pageData = useMemo(
-    () => paginate(records, currentPage),
-    [records, currentPage],
-  );
-
-  const handleSubmit = async (
-    data: Omit<StockOut, "id" | "created_at" | "product_name" | "product_unit">,
-  ) => {
-    await new Promise((r) => setTimeout(r, 500));
-    const product = mockProducts.find((p) => p.id === data.product_id);
-    if (!product) throw new Error("Product not found");
-
-    if (editTarget) {
-      setRecords((prev) =>
-        prev.map((r) =>
-          r.id === editTarget.id
-            ? {
-                ...r,
-                ...data,
-                product_name: product.name,
-                product_unit: product.unit,
-              }
-            : r,
-        ),
+  const { data, isPending, isError, refetch, error } = useQuery({
+    queryKey: ["admin-inventory-stock-out", currentPage],
+    queryFn: async () => {
+      const res = await api.get<ListStockOutResponse>(
+        `/admin/inventory/stock/out?page=${currentPage}`,
       );
-      toast.success("Stock-out record updated");
+      return res.data;
+    },
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000,
+  });
+
+  const { data: productsData, isPending: productsPending } = useQuery({
+    queryKey: ["admin-inventory-stock-in"],
+    queryFn: async () => {
+      const res = await api.get<GetProductResponse>(
+        `/admin/inventory/products`,
+      );
+      return res.data;
+    },
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000,
+  });
+
+  const createStockOut = useMutation({
+    mutationFn: async (data: StockOutFormData) => {
+      try {
+        const res = await api.post<CreateStockOutResponse>(
+          `/admin/inventory/stock/out`,
+          data,
+        );
+        if (!res.data.success) throw res.data;
+        return res.data;
+      } catch (err) {
+        if (axios.isAxiosError(err)) throw err.response?.data;
+        throw err;
+      }
+    },
+    onSuccess: (result) => {
+      toast.success(result.message);
+      queryClient.invalidateQueries({
+        queryKey: ["admin-inventory-stock-out", currentPage],
+      });
+    },
+  });
+  const updateStockOut = useMutation({
+    mutationFn: async ({ id, ...data }: StockOutFormData & { id: string }) => {
+      try {
+        const res = await api.put<EditStockOutResponse>(
+          `/admin/inventory/stock/out/${id}`,
+          data,
+        );
+        if (!res.data.success) throw res.data;
+        return res.data;
+      } catch (err) {
+        if (axios.isAxiosError(err)) throw err.response?.data;
+        throw err;
+      }
+    },
+    onSuccess: (result) => {
+      toast.success(result.message);
+      queryClient.invalidateQueries({
+        queryKey: ["admin-inventory-stock-out", currentPage],
+      });
+    },
+  });
+  const deleteStockOut = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await api.delete<DeleteStockOutResponse>(
+        `/admin/inventory/stock/out/${id}`,
+      );
+      if (!res.data.success) throw res.data;
+      return res.data;
+    },
+    onSuccess: (result) => {
+      toast.success(result.message);
+      queryClient.invalidateQueries({
+        queryKey: ["admin-inventory-stock-out", currentPage],
+      });
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  if (isPending || !data || productsPending || !productsData)
+    return <StockOutLoading />;
+  if (isError) return <StockOutError error={error} reset={refetch} />;
+  if (!data.success || !productsData.success)
+    return (
+      <StockOutError
+        error={{ ...data, message: "Failed to process request" }}
+        reset={refetch}
+      />
+    );
+
+  const records = data.data;
+  const limit = data.meta.limit;
+  const total = data.meta.total;
+  const totalPages = data.meta.totalPages;
+
+  const handleSubmit = async (data: StockOutFormData) => {
+    if (editTarget) {
+      await updateStockOut.mutateAsync({ id: editTarget.id, ...data });
       setEditTarget(null);
     } else {
-      setRecords((prev) => [
-        {
-          id: crypto.randomUUID(),
-          created_at: new Date().toISOString(),
-          product_name: product.name,
-          product_unit: product.unit,
-          ...data,
-        },
-        ...prev,
-      ]);
-      toast.success("Stock-out record added");
+      await createStockOut.mutateAsync(data);
     }
   };
 
   const handleDelete = () => {
     if (!deleteTarget) return;
-    setRecords((prev) => prev.filter((r) => r.id !== deleteTarget.id));
-    toast.success("Record deleted");
+    deleteStockOut.mutate(deleteTarget.id);
     setDeleteTarget(null);
   };
 
+  const handleClose = () => {
+    setDialogOpen(false);
+
+    setTimeout(() => setEditTarget(null), 200);
+  };
   return (
     <div className="space-y-6 min-h-screen bg-(--brand-cream) px-4 py-8 sm:px-6 lg:px-8 mx-auto max-w-7xl">
       <InventoryPageHeader
@@ -87,7 +177,9 @@ export function StockOutClient() {
         }
       />
       <StockOutTable
-        data={pageData}
+        data={records}
+        limit={limit}
+        total={total}
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={setCurrentPage}
@@ -99,17 +191,16 @@ export function StockOutClient() {
       />
       <StockOutDialog
         open={dialogOpen}
-        onClose={() => {
-          setDialogOpen(false);
-          setEditTarget(null);
-        }}
+        products={productsData.data}
+        stockOut={records}
+        onClose={handleClose}
         onSubmit={handleSubmit}
         initialData={editTarget}
       />
       {deleteTarget && (
         <ConfirmDialog
           open
-          itemName={`${deleteTarget.product_name} on ${deleteTarget.date}`}
+          itemName={`${deleteTarget.productName} on ${deleteTarget.date}`}
           onConfirm={handleDelete}
           onCancel={() => setDeleteTarget(null)}
         />

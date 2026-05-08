@@ -25,6 +25,7 @@ export async function attemptRefresh(
   requiredRoles: string[],
 ) {
   try {
+    console.log("attemptRefresh called, path:", req.nextUrl.pathname);
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/refresh`,
       {
@@ -36,23 +37,39 @@ export async function attemptRefresh(
     console.log("refresh response status:", res.status);
 
     if (!res.ok) {
-      console.log("in !res.ok block clearing cookies.....");
-      const redirect = NextResponse.redirect(new URL("/auth/login", req.url));
-      redirect.cookies.set("access_token", "", {
-        maxAge: 0,
-        path: "/",
-        domain: process.env.COOKIE_DOMAIN,
-        secure: true,
-        httpOnly: true,
-      });
-      redirect.cookies.set("refresh_token", "", {
-        maxAge: 0,
-        path: "/",
-        domain: process.env.COOKIE_DOMAIN,
-        secure: true,
-        httpOnly: true,
-      });
-      return redirect;
+      console.log(
+        "refresh failed with status:",
+        res.status,
+        "— clearing cookies:",
+        res.status === 401 ? "YES" : "NO",
+      );
+      if (res.status === 401) {
+        console.log("in !res.ok block clearing cookies.....");
+        const redirect = NextResponse.redirect(new URL("/auth/login", req.url));
+        redirect.cookies.set("access_token", "", {
+          maxAge: 0,
+          path: "/",
+          domain:
+            process.env.NODE_ENV === "production"
+              ? process.env.COOKIE_DOMAIN
+              : "",
+          secure: process.env.NODE_ENV === "production",
+          httpOnly: true,
+        });
+        redirect.cookies.set("refresh_token", "", {
+          maxAge: 0,
+          path: "/",
+          domain:
+            process.env.NODE_ENV === "production"
+              ? process.env.COOKIE_DOMAIN
+              : "",
+          secure: process.env.NODE_ENV === "production",
+          httpOnly: true,
+        });
+        return redirect;
+      }
+
+      return NextResponse.redirect(new URL("/auth/login", req.url));
     }
 
     // get ALL cookies from refresh response
@@ -91,7 +108,8 @@ export async function attemptRefresh(
     });
 
     return response;
-  } catch {
+  } catch (error) {
+    console.log("attemptRefresh threw an error:", error);
     return NextResponse.redirect(new URL("/auth/login", req.url));
   }
 }

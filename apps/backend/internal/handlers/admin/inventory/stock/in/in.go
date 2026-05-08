@@ -1,6 +1,7 @@
 package in
 
 import (
+	"math"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -43,7 +44,7 @@ func CreateStockIn(queries repository.InventoryRepository) gin.HandlerFunc {
 			ProductID: productID,
 			Note:      utils.ToNullableText(req.Note),
 			InvoiceNo: utils.ToNullableText(req.InvoiceNo),
-			Rate:      int32(req.Rate),
+			Rate:      int32(math.Round(req.Rate * 100)),
 			Qty:       int32(req.Quantity),
 			Date:      req.Date,
 		})
