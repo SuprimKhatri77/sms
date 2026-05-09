@@ -33,6 +33,8 @@ export {
   createStockInSchema,
   createStockOutSchema,
   editStockOutSchema,
+  createWastageSchema,
+  editWastageSchema,
   type CreateProductInput,
   type CreateProductResponse,
   type GetProductResponse,
@@ -48,6 +50,13 @@ export {
   type DeleteStockOutResponse,
   type EditStockOutResponse,
   type EditStockOutInput,
+  type DeleteWastageResponse,
+  type EditWastageResponse,
+  type EditWastageInput,
+  type CreateWastageInput,
+  type CreateWastageResponse,
+  type ListWastageResponse,
+  type InventorySummaryResponse,
 } from "./inventory";
 
 export { type CoursesList } from "./courses";

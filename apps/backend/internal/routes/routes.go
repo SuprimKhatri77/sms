@@ -19,7 +19,7 @@ import (
 	adminUsers "github.com/suprimkhatri77/sms/backend/internal/handlers/admin/users"
 
 	adminInventoryStockIn "github.com/suprimkhatri77/sms/backend/internal/handlers/admin/inventory/stock/in"
-	adminInventoryStockOut "github.com/suprimkhatri77/sms/backend/internal/handlers/admin/inventory/stock/out"
+	adminInventoryStockOut "github.com/suprimkhatri77/sms/backend/internal/handlers/admin/inventory/stock/stock-out"
 	adminInventoryWastage "github.com/suprimkhatri77/sms/backend/internal/handlers/admin/inventory/stock/wastage"
 	adminInventorySummary "github.com/suprimkhatri77/sms/backend/internal/handlers/admin/inventory/summary"
 

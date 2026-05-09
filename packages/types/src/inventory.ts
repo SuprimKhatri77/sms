@@ -272,3 +272,144 @@ export const deleteStockOutResponseSchema = z.discriminatedUnion("success", [
 export type DeleteStockOutResponse = z.infer<
   typeof deleteStockOutResponseSchema
 >;
+
+const wastageRecordSchema = z.object({
+  id: z.uuid(),
+  productID: z.uuid(),
+  productName: z.string(),
+  productUnit: z.string(),
+  qty: z.number().min(1),
+  date: z.string(),
+  rate: z.number().gt(0),
+  reason: z.string().optional(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+});
+
+export const listWastageResponse = z.discriminatedUnion("success", [
+  z.object({
+    success: z.literal(true),
+    data: z.array(wastageRecordSchema),
+    meta: z.object({
+      total: z.number(),
+      totalPages: z.number(),
+      limit: z.number(),
+      page: z.number(),
+    }),
+  }),
+  z.object({
+    success: z.literal(false),
+    message: z.string(),
+    code: z.string(),
+  }),
+]);
+
+export type ListWastageResponse = z.infer<typeof listWastageResponse>;
+
+export const createWastageSchema = z.object({
+  productID: z.uuid(),
+  quantity: z.number().min(1),
+  rate: z.number().gt(0),
+  date: z
+    .string()
+    .regex(
+      /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/,
+      "Date must be in YYYY-MM-DD format",
+    ),
+  reason: z.string().optional(),
+});
+
+export type CreateWastageInput = z.infer<typeof createWastageSchema>;
+
+export const createWastageResponse = z.discriminatedUnion("success", [
+  z.object({
+    success: z.literal(true),
+    message: z.string(),
+    data: wastageRecordSchema,
+  }),
+  z.object({
+    success: z.literal(false),
+    message: z.string(),
+    errors: z.array(errorResponse).optional(),
+    code: z.string(),
+  }),
+]);
+
+export type CreateWastageResponse = z.infer<typeof createWastageResponse>;
+
+export const deleteWastageResponseSchema = z.discriminatedUnion("success", [
+  z.object({
+    success: z.literal(true),
+    message: z.string(),
+  }),
+  z.object({
+    success: z.literal(false),
+    message: z.string(),
+    code: z.string(),
+  }),
+]);
+
+export type DeleteWastageResponse = z.infer<typeof deleteWastageResponseSchema>;
+
+export const editWastageSchema = z.object({
+  productID: z.uuid(),
+  quantity: z.number().min(1),
+  rate: z.number().gt(0),
+  date: z
+    .string()
+    .regex(
+      /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/,
+      "Date must be in YYYY-MM-DD format",
+    ),
+  reason: z.string().optional(),
+});
+
+export type EditWastageInput = z.infer<typeof editWastageSchema>;
+
+export const editWastageResponse = z.discriminatedUnion("success", [
+  z.object({
+    success: z.literal(true),
+    message: z.string(),
+    data: wastageRecordSchema,
+  }),
+  z.object({
+    success: z.literal(false),
+    message: z.string(),
+    errors: z.array(errorResponse).optional(),
+    code: z.string(),
+  }),
+]);
+
+export type EditWastageResponse = z.infer<typeof editWastageResponse>;
+
+export const inventorySummarySchema = z.object({
+  productId: z.uuid(),
+  productName: z.string(),
+  productUnit: z.string(),
+  stockInQty: z.number(),
+  stockOutQty: z.number(),
+  wastageQty: z.number(),
+  closingQty: z.number(),
+  stockInAmount: z.number(),
+  stockOutAmount: z.number(),
+  wastageAmount: z.number(),
+  closingAmount: z.number(),
+});
+
+export type InventorySummaryRow = z.infer<typeof inventorySummarySchema>;
+
+export const inventorySummaryResponseSchema = z.discriminatedUnion("success", [
+  z.object({
+    success: z.literal(true),
+    data: z.array(inventorySummarySchema),
+  }),
+  z.object({
+    success: z.literal(false),
+    message: z.string(),
+    code: z.string(),
+  }),
+]);
+
+export type InventorySummaryResponse = z.infer<
+  typeof inventorySummaryResponseSchema
+>;
