@@ -1,19 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { User } from "@repo/types";
+import { jwtDecode } from "jwt-decode";
 
-export async function getSession(token: string): Promise<User | null> {
+export function getSession(token: string): User | null {
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/me`,
-      {
-        headers: { Cookie: `access_token=${token}` },
-      },
-    );
-    console.log("api url in getsession:", process.env.NEXT_PUBLIC_API_URL);
-    console.log("response: ", res);
-    if (!res.ok) return null;
-    const body = await res.json();
-    return body.data;
+    const decoded = jwtDecode<User & { exp: number }>(token);
+    if (decoded.exp * 1000 < Date.now()) return null;
+    return decoded;
   } catch {
     return null;
   }

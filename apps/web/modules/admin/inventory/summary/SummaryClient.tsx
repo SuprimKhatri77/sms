@@ -16,13 +16,41 @@ import {
 } from "../lib/mock-data";
 import { computeSummary } from "../lib/utils";
 import type { InventorySummaryRow } from "../types";
+import { useQuery } from "@tanstack/react-query";
+import { InventorySummaryResponse } from "@repo/types";
+import api from "@/lib/axios";
+import SummaryLoading from "./SummaryLoading";
+import SummaryError from "./SummaryError";
 
 export function SummaryClient() {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [filtered, setFiltered] = useState<InventorySummaryRow[] | null>(null);
 
-  const displayData = filtered ?? mockSummary;
+  const { data, isPending, isError, refetch, error } = useQuery({
+    queryKey: ["admin-inventory-summary"],
+    queryFn: async () => {
+      const res = await api.get<InventorySummaryResponse>(
+        `/admin/inventory/summary`,
+      );
+      return res.data;
+    },
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000,
+  });
+
+  if (isPending || !data) return <SummaryLoading />;
+  if (isError) return <SummaryError error={error} reset={refetch} />;
+  if (!data.success)
+    return (
+      <SummaryError
+        error={{ ...data, message: "Failed to process request" }}
+        reset={refetch}
+      />
+    );
+
+  const summary = data.data;
+  const displayData = filtered ?? summary;
 
   const handleFilter = () => {
     if (!fromDate && !toDate) {
@@ -66,18 +94,18 @@ export function SummaryClient() {
       <InventoryPageHeader
         title="Inventory Summary"
         description="Overview of stock levels and valuations across all products."
-        action={
-          <Button
-            variant="outline"
-            className="border-[var(--brand-green)]/30 text-[var(--brand-green)] gap-2 font-[var(--font-dm-sans)]"
-          >
-            <Download size={15} /> Export
-          </Button>
-        }
+        // action={
+        //   <Button
+        //     variant="outline"
+        //     className="border-[var(--brand-green)]/30 text-[var(--brand-green)] gap-2 font-[var(--font-dm-sans)]"
+        //   >
+        //     <Download size={15} /> Export
+        //   </Button>
+        // }
       />
 
       {/* Date filter */}
-      <div className="flex flex-wrap items-end gap-3 p-4 rounded-lg border border-[var(--brand-green)]/15 bg-[var(--brand-green)]/3">
+      {/* <div className="flex flex-wrap items-end gap-3 p-4 rounded-lg border border-[var(--brand-green)]/15 bg-[var(--brand-green)]/3">
         <div className="space-y-1">
           <Label className="font-[var(--font-dm-sans)] text-sm text-[var(--brand-ink)]">
             From (BS)
@@ -117,9 +145,9 @@ export function SummaryClient() {
             </Button>
           )}
         </div>
-      </div>
+      </div> */}
 
-      <SummaryTable data={displayData} />
+      <SummaryTable data={summary} />
     </div>
   );
 }

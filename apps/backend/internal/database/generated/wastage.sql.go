@@ -124,7 +124,7 @@ type ListWastageParams struct {
 
 type ListWastageRow struct {
 	ID          pgtype.UUID        `json:"id"`
-	ProductID   pgtype.UUID        `json:"productId"`
+	ProductID   pgtype.UUID        `json:"productID"`
 	Date        string             `json:"date"`
 	Qty         int32              `json:"qty"`
 	Rate        int32              `json:"rate"`

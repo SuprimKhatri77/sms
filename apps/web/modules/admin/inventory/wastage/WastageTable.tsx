@@ -13,12 +13,16 @@ import { Pencil, Trash2 } from "lucide-react";
 import { AmountCell } from "../shared/AmountCell";
 import { EmptyState } from "../shared/EmptyState";
 import { Pagination } from "../shared/Pagination";
-import type { Wastage } from "../types";
+import { ListWastageResponse } from "@repo/types/inventory";
+
+type Wastage = Extract<ListWastageResponse, { success: true }>["data"][number];
 
 type Props = {
   data: Wastage[];
   currentPage: number;
   totalPages: number;
+  limit: number;
+  total: number;
   onPageChange: (page: number) => void;
   onEdit: (item: Wastage) => void;
   onDelete: (item: Wastage) => void;
@@ -27,6 +31,8 @@ type Props = {
 export function WastageTable({
   data,
   currentPage,
+  limit,
+  total,
   totalPages,
   onPageChange,
   onEdit,
@@ -68,7 +74,7 @@ export function WastageTable({
                 className="border-[var(--brand-green)]/10 hover:bg-[var(--brand-green)]/3 font-[var(--font-dm-sans)]"
               >
                 <TableCell className="font-medium text-[var(--brand-ink)]">
-                  {row.product_name}
+                  {row.productName}
                 </TableCell>
                 <TableCell className="text-[var(--brand-ink)]/70">
                   {row.date}
@@ -76,7 +82,7 @@ export function WastageTable({
                 <TableCell>
                   {row.qty}{" "}
                   <span className="text-xs text-[var(--brand-ink)]/50">
-                    {row.product_unit}
+                    {row.productUnit}
                   </span>
                 </TableCell>
                 <TableCell>
@@ -114,7 +120,7 @@ export function WastageTable({
         </Table>
       </div>
       <Pagination
-        meta={{ totalPages: totalPages, total: data.length, limit: 20 }}
+        meta={{ totalPages, total, limit }}
         page={currentPage}
         onPageChange={onPageChange}
       />

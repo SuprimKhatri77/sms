@@ -11,9 +11,13 @@ import {
 } from "@/components/ui/table";
 import { AmountCell } from "../shared/AmountCell";
 import { EmptyState } from "../shared/EmptyState";
-import type { InventorySummaryRow } from "../types";
 import { formatAmount } from "../lib/utils";
+import { InventorySummaryResponse } from "@repo/types";
 
+type InventorySummaryRow = Extract<
+  InventorySummaryResponse,
+  { success: true }
+>["data"][number];
 type Props = { data: InventorySummaryRow[] };
 
 export function SummaryTable({ data }: Props) {
@@ -25,10 +29,10 @@ export function SummaryTable({ data }: Props) {
   // Totals row — sum all amount columns
   const totals = data.reduce(
     (acc, row) => ({
-      stock_in_amount: acc.stock_in_amount + row.stock_in_amount,
-      stock_out_amount: acc.stock_out_amount + row.stock_out_amount,
-      wastage_amount: acc.wastage_amount + row.wastage_amount,
-      closing_amount: acc.closing_amount + row.closing_amount,
+      stock_in_amount: acc.stock_in_amount + row.stockInAmount,
+      stock_out_amount: acc.stock_out_amount + row.stockOutAmount,
+      wastage_amount: acc.wastage_amount + row.wastageAmount,
+      closing_amount: acc.closing_amount + row.closingAmount,
     }),
     {
       stock_in_amount: 0,
@@ -67,38 +71,38 @@ export function SummaryTable({ data }: Props) {
         <TableBody>
           {data.map((row) => (
             <TableRow
-              key={row.product_id}
+              key={row.productId}
               className="border-[var(--brand-green)]/10 hover:bg-[var(--brand-green)]/3 font-[var(--font-dm-sans)]"
             >
               <TableCell className="font-medium text-[var(--brand-ink)]">
-                {row.product_name}
+                {row.productName}
               </TableCell>
               <TableCell className="text-[var(--brand-ink)]/60 text-xs">
-                {row.product_unit}
+                {row.productUnit}
               </TableCell>
               <TableCell className="text-[var(--brand-ink)]">
-                {row.stock_in_qty}
+                {row.stockInQty}
               </TableCell>
               <TableCell className="text-[var(--brand-ink)]">
-                {row.stock_out_qty}
+                {row.stockOutQty}
               </TableCell>
               <TableCell className="text-[var(--brand-ink)]">
-                {row.wastage_qty}
+                {row.wastageQty}
               </TableCell>
               <TableCell className="font-semibold text-[var(--brand-green)]">
-                {row.closing_qty}
+                {row.closingQty}
               </TableCell>
               <TableCell>
-                <AmountCell cents={row.stock_in_amount} />
+                <AmountCell cents={row.stockInAmount} />
               </TableCell>
               <TableCell>
-                <AmountCell cents={row.stock_out_amount} />
+                <AmountCell cents={row.stockOutAmount} />
               </TableCell>
               <TableCell>
-                <AmountCell cents={row.wastage_amount} />
+                <AmountCell cents={row.wastageAmount} />
               </TableCell>
               <TableCell className="font-semibold">
-                <AmountCell cents={row.closing_amount} />
+                <AmountCell cents={row.closingAmount} />
               </TableCell>
             </TableRow>
           ))}
