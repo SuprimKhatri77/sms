@@ -109,6 +109,7 @@ func RotateTokens(queries repository.AuthRepository, cfg *config.Config) gin.Han
 			if errors.Is(err, pgx.ErrNoRows) {
 				utils.SetAuthCookie(c, "access_token", "", -1, cfg)
 				utils.SetAuthCookie(c, "refresh_token", "", -1, cfg)
+				utils.SetPublicCookie(c, "is_logged_in", "", -1, cfg)
 
 				c.JSON(http.StatusUnauthorized, types.APIResponse{
 					Success: false,

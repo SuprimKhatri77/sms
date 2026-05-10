@@ -78,7 +78,8 @@ api.interceptors.response.use(
       //   );
       // }
 
-      document.cookie = "is_logged_in=; max-age=0; path=/";
+      document.cookie = `is_logged_in=; max-age=0; path=/; domain=${window.location.hostname.includes("sms.suprimkhatri.com.np") ? ".sms.suprimkhatri.com.np" : ""}`;
+
       processQueue(refreshError); // reject all queued requests
 
       // refresh token expired or missing — kick to login
