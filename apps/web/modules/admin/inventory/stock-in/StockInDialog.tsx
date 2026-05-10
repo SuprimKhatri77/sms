@@ -42,14 +42,24 @@ type StockInFormData = Omit<
 > & {
   quantity: number;
 };
+
+type Product = Extract<GetProductResponse, { success: true }>["data"][number];
+
 type Props = {
   open: boolean;
   onClose: () => void;
+  products: Product[];
   onSubmit: (data: StockInFormData) => Promise<void>;
   initialData?: StockIn | null;
 };
 
-export function StockInDialog({ open, onClose, onSubmit, initialData }: Props) {
+export function StockInDialog({
+  open,
+  onClose,
+  onSubmit,
+  initialData,
+  products,
+}: Props) {
   const isEdit = !!initialData;
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [formData, setFromData] = useState({
@@ -128,32 +138,12 @@ export function StockInDialog({ open, onClose, onSubmit, initialData }: Props) {
       setIsSubmitting(false);
     }
   };
-  const { data, isPending, isError, refetch, error } = useQuery({
-    queryKey: ["admin-inventory-stock-in"],
-    queryFn: async () => {
-      const res = await api.get<GetProductResponse>(
-        `/admin/inventory/products`,
-      );
-      return res.data;
-    },
-    staleTime: 30 * 1000,
-    gcTime: 5 * 60 * 1000,
-  });
 
   const selectedProduct = useMemo(() => {
-    if (!data || !data.success || !formData.productID) return undefined;
-    return data.data.find((p) => p.id === formData.productID);
-  }, [data, formData.productID]);
+    if (!products || !formData.productID) return undefined;
+    return products.find((p) => p.id === formData.productID);
+  }, [products, formData.productID]);
 
-  if (isError) return <StockInError error={error} reset={refetch} />;
-  if (!data || !data.success)
-    return (
-      <StockInError
-        error={data ?? { message: "Failed to process request" }}
-        reset={refetch}
-      />
-    );
-  const products = data.data;
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="sm:max-w-md bg-[var(--brand-cream)] border-[var(--brand-green)]/20">
@@ -175,49 +165,40 @@ export function StockInDialog({ open, onClose, onSubmit, initialData }: Props) {
           className="space-y-4"
         >
           {/* Product */}
-          {isPending ? (
-            <div className="space-y-1">
-              <Label className="font-[var(--font-dm-sans)] text-[var(--brand-ink)]">
-                Product <span className="text-red-500">*</span>
-              </Label>
 
-              <div className="h-10 w-full animate-pulse rounded-md border border-[var(--brand-green)]/20 bg-muted" />
-            </div>
-          ) : (
-            <div className="space-y-1">
-              <Label className="font-[var(--font-dm-sans)] text-[var(--brand-ink)]">
-                Product <span className="text-red-500">*</span>
-              </Label>
+          <div className="space-y-1">
+            <Label className="font-[var(--font-dm-sans)] text-[var(--brand-ink)]">
+              Product <span className="text-red-500">*</span>
+            </Label>
 
-              <Select
-                value={formData.productID}
-                onValueChange={(v) =>
-                  setFromData((prev) => ({
-                    ...prev,
-                    productID: v as string,
-                  }))
-                }
-              >
-                <SelectTrigger className="border-[var(--brand-green)]/30 focus:ring-[var(--brand-green)]">
-                  <SelectValue placeholder="Select product">
-                    {selectedProduct?.name}
-                  </SelectValue>
-                </SelectTrigger>
+            <Select
+              value={formData.productID}
+              onValueChange={(v) =>
+                setFromData((prev) => ({
+                  ...prev,
+                  productID: v as string,
+                }))
+              }
+            >
+              <SelectTrigger className="border-[var(--brand-green)]/30 focus:ring-[var(--brand-green)]">
+                <SelectValue placeholder="Select product">
+                  {selectedProduct?.name}
+                </SelectValue>
+              </SelectTrigger>
 
-                <SelectContent>
-                  {products.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <SelectContent>
+                {products.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-              {errors?.productID && (
-                <p className="text-xs text-red-500">{errors.productID}</p>
-              )}
-            </div>
-          )}
+            {errors?.productID && (
+              <p className="text-xs text-red-500">{errors.productID}</p>
+            )}
+          </div>
 
           {/* Date (BS) */}
           <div className="space-y-1">

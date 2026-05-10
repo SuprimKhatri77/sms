@@ -1,23 +1,17 @@
-import { env } from "@/utils/env";
-import { getAllCookies } from "@/utils/get-all-cookies";
-import { User } from "@repo/types";
+import { JWTUser } from "@repo/types";
+import { jwtDecode } from "jwt-decode";
+import { cookies } from "next/headers";
 
-interface APIResponse {
-  success: boolean;
-  message: string;
-  data: User;
-}
-export async function getCurrentUser() {
-  const response = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/v1/auth/me`, {
-    method: "GET",
-    headers: {
-      Cookie: await getAllCookies(),
-    },
-  });
+export async function getCurrentUser(): Promise<JWTUser | null> {
+  const cookieStore = await cookies();
+  const accessToken = cookieStore.get("access_token")?.value;
+  if (!accessToken) return null;
 
-  const data = (await response.json()) as APIResponse;
-
-  if (!response.ok) return null;
-
-  return data.data;
+  try {
+    const decoded = jwtDecode<JWTUser & { exp: number }>(accessToken);
+    if (decoded.exp * 1000 < Date.now()) return null;
+    return decoded;
+  } catch {
+    return null;
+  }
 }

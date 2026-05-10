@@ -162,10 +162,12 @@ func RotateTokens(queries repository.AuthRepository, cfg *config.Config) gin.Han
 		}
 
 		accessClaims := jwt.MapClaims{
-			"user_id": user.ID,
-			"email":   user.Email,
-			"role":    user.Role,
-			"exp":     time.Now().Add(15 * time.Minute).Unix(),
+			"userID":   user.ID,
+			"role":     user.Role,
+			"email":    user.Email,
+			"name":     user.Name,
+			"imageURL": user.ImageUrl,
+			"exp":      time.Now().Add(15 * time.Minute).Unix(),
 		}
 
 		accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims)
@@ -234,6 +236,7 @@ func RotateTokens(queries repository.AuthRepository, cfg *config.Config) gin.Han
 
 		utils.SetAuthCookie(c, "access_token", accessTokenString, 15*60, cfg)
 		utils.SetAuthCookie(c, "refresh_token", newRefreshTokenString, 30*24*60*60, cfg)
+		utils.SetPublicCookie(c, "is_logged_in", "true", 30*24*60*60, cfg)
 
 		slog.Info("tokens rotated successfully",
 			"user_id", user.ID,

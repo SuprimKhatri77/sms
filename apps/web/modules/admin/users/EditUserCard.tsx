@@ -35,7 +35,6 @@ export function EditUserCard({ user, onClose }: EditUserCardProps) {
 
   const { mutate, isPending, reset } = useMutation({
     mutationFn: async (data: UpdateUserInput) => {
-      console.log("userid: ", user?.id);
       const res = await api.put<APIResponse>(`/admin/users/${user?.id}`, data);
       return res.data;
     },

@@ -35,7 +35,6 @@ export default function SettingsPage() {
 
   const { mutate: updateSettings } = useMutation({
     mutationFn: async ({ key, value }: UpdateSetting) => {
-      console.log(`url: /admin/settings/${key}`);
       const res = await api.put<UpdateSettingResponse>(
         `/admin/settings/${key}`,
         { value },

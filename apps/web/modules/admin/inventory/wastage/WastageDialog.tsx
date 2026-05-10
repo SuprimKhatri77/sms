@@ -63,7 +63,6 @@ export function WastageDialog({
   products,
 }: Props) {
   const [isEdit, setIsEdit] = useState(!!initialData);
-  console.log("initial data: ", initialData);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [errors, setErrors] =
@@ -114,7 +113,6 @@ export function WastageDialog({
       onClose();
     } catch (err) {
       const error = err as BackendError;
-      console.log("error: ", error);
       toast.error(error?.message ?? "Something went wrong");
       if (error?.errors?.length) {
         setErrors(mapFieldErrors(error));

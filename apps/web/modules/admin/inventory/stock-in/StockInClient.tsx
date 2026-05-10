@@ -12,6 +12,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CreateStockInResponse,
   DeleteStockInResponse,
+  GetProductResponse,
   ListStockInResponse,
 } from "@repo/types";
 import api from "@/lib/axios";
@@ -45,6 +46,17 @@ export function StockInClient() {
     gcTime: 5 * 60 * 1000,
   });
 
+  const { data: productsData, isPending: productsPending } = useQuery({
+    queryKey: ["admin-inventory-stock-in-products"],
+    queryFn: async () => {
+      const res = await api.get<GetProductResponse>(
+        `/admin/inventory/products`,
+      );
+      return res.data;
+    },
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000,
+  });
   const createStockIn = useMutation({
     mutationFn: async (data: StockInFormData) => {
       try {
@@ -106,10 +118,22 @@ export function StockInClient() {
     },
   });
 
-  if (isPending) return <StockInLoading />;
+  if (isPending || !data || !productsData || productsPending)
+    return <StockInLoading />;
   if (isError) return <StockInError error={error} reset={refetch} />;
-  if (!data || !data.success)
-    return <StockInError error={data} reset={refetch} />;
+  if (!data.success || !productsData.success)
+    return (
+      <StockInError
+        error={{
+          message: !data.success
+            ? data.message
+            : !productsData.success
+              ? productsData.message
+              : "Failed to process request",
+        }}
+        reset={refetch}
+      />
+    );
 
   const records = data.data;
   const limit = data.meta.limit;
@@ -164,6 +188,7 @@ export function StockInClient() {
       />
 
       <StockInDialog
+        products={productsData.data}
         open={dialogOpen}
         onClose={() => {
           setDialogOpen(false);

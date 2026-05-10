@@ -91,8 +91,6 @@ type ValidateStepData = Omit<CreateStudentAdmission, "dob"> & { dob: string };
 function validateStep(step: number, data: ValidateStepData): FieldError {
   const errors: FieldError = {};
 
-  console.log("photo url in validate step: ", data.photoUrl);
-
   if (step === 0) {
     if (!data.fullName.trim()) errors.fullName = "Full name is required";
     if (!data.dob) errors.dob = "Date of birth is required";

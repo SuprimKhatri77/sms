@@ -117,6 +117,7 @@ func Logout(queries repository.AuthRepository, cfg *config.Config) gin.HandlerFu
 
 		utils.SetAuthCookie(c, "access_token", "", -1, cfg)
 		utils.SetAuthCookie(c, "refresh_token", "", -1, cfg)
+		utils.SetPublicCookie(c, "is_logged_in", "", -1, cfg)
 
 		slog.Info("user logged out",
 			"path", c.FullPath(),

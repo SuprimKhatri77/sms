@@ -12,7 +12,7 @@ export const siteInfo = {
   },
   social: {
     facebook: "#",
-    instagram: "https://www.instagram.com/p/DX1XS6ZFKdO/",
+    instagram: "https://www.instagram.com/brewbakeacademy/",
     tiktok: "#",
   },
   assets: {
