@@ -6,7 +6,7 @@
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": [".next/**", "!.next/cache/**", "server"],
-      "env": ["NODE_ENV"]
+      "env": ["NODE_ENV", "NEXT_PUBLIC_API_URL", "COOKIE_DOMAIN"]
     },
     "generate": {},
     "lint": {
