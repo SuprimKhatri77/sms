@@ -89,7 +89,8 @@ export default function StudentDetailPage({
   const [showCertificate, setShowCertificate] = useState(false);
   const [currentStatus, setCurrentStatus] = useState<Status>(student.status);
   const router = useRouter();
-  const { user } = useAuthStore();
+  const user = useAuthStore((state) => state.user);
+  console.log("user: ", user);
 
   const totalPaid = payments.reduce((s, p) => s + p.amount, 0) / 100;
   const totalFee = courses.reduce((s, c) => s + c.fee, 0) / 100;
@@ -235,7 +236,7 @@ export default function StudentDetailPage({
       {showPaymentModal && (
         <AddPaymentModal
           onClose={() => setShowPaymentModal(false)}
-          onAdd={(data) => addPayment({ ...data, addedBy: user!.id })}
+          onAdd={(data) => addPayment({ ...data })}
         />
       )}
 
@@ -286,20 +287,20 @@ export default function StudentDetailPage({
               Add Payment
             </button>
             <button
-              onClick={() => setShowCertificate((v) => !v)}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-[#c28a4f]/25 bg-white px-4 py-2 text-[0.85rem] font-medium text-[#7a4e24] transition-all hover:border-[#c28a4f]/40 hover:bg-[#c28a4f]/10"
-              style={{ fontFamily: "var(--font-dm-sans)" }}
-            >
-              <Printer className="h-3.5 w-3.5" strokeWidth={1.75} />
-              {showCertificate ? "Hide Certificate" : "Issue Certificate"}
-            </button>
-            <button
               onClick={() => setShowInvoice(!showInvoice)}
               className="inline-flex items-center gap-1.5 rounded-xl border border-[#2d4a3e]/15 bg-white px-4 py-2 text-[0.85rem] font-medium text-[#2d4a3e] transition-all hover:border-[#2d4a3e]/30 hover:bg-[#2d4a3e]/5"
               style={{ fontFamily: "var(--font-dm-sans)" }}
             >
               <Printer className="h-3.5 w-3.5" strokeWidth={1.75} />
               {showInvoice ? "Hide Invoice" : "View Invoice"}
+            </button>
+            <button
+              onClick={() => setShowCertificate((v) => !v)}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-[#c28a4f]/25 bg-white px-4 py-2 text-[0.85rem] font-medium text-[#7a4e24] transition-all hover:border-[#c28a4f]/40 hover:bg-[#c28a4f]/10"
+              style={{ fontFamily: "var(--font-dm-sans)" }}
+            >
+              <Printer className="h-3.5 w-3.5" strokeWidth={1.75} />
+              {showCertificate ? "Hide Certificate" : "Issue Certificate"}
             </button>
           </div>
         </div>
@@ -426,13 +427,13 @@ export default function StudentDetailPage({
                   referenceNo={student.referenceNo}
                   courses={courses.map((c) => c.name)}
                   issueDate={issueDate}
-                  schoolName="Bake & Brew Barista Coffee School"
+                  schoolName={siteInfo.company.name}
                   logoUrl="/assets/watermark-no-bg.png"
                   directorSignatureUrl="/assets/logo.png"
                   headSignatureUrl="/assets/logo.png"
                   accreditationLogoUrl="/assets/watermark-no-bg.png"
-                  footerAddress="Brew & Bake Academy, New Baneshwor, Kathmandu"
-                  footerContact="+977 98XXXXXXXX | brewandbake@example.com"
+                  footerAddress={siteInfo.contact.address}
+                  footerContact={siteInfo.contact.email}
                 />
               </div>
             </div>

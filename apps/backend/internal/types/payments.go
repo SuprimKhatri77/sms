@@ -14,6 +14,5 @@ type Payment struct {
 
 type AddPaymentRequest struct {
 	Amount  float64 `json:"amount" binding:"required,gt=0"`
-	AddedBy string  `json:"addedBy" binding:"required,uuid"`
-	Remarks string  `json:"remarks,omitempty" binding:"omitempty,min=5"`
+	Remarks string  `json:"remarks,omitempty" binding:"omitempty,min=1,max=200"`
 }

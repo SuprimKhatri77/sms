@@ -142,7 +142,6 @@ export type UpdateStudentStatusResponse = z.infer<
 
 export const addPaymentSchema = z.object({
   amount: z.number().gt(0),
-  addedBy: z.uuid(),
   remarks: z.string().min(3).max(100).optional(),
 });
 
