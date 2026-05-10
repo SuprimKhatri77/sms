@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import Image, { type ImageLoader } from "next/image";
 import styles from "./Certificate.module.css";
 
@@ -90,7 +89,6 @@ export function Certificate({
               src={logoUrl}
               alt=""
               loader={passthroughLoader}
-              unoptimized
               priority
               width={150}
               height={150}
@@ -214,4 +212,3 @@ export function Certificate({
     </div>
   );
 }
-

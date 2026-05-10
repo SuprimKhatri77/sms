@@ -21,6 +21,8 @@ func AddPayment(queries repository.AdminRepository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
 
+		userIDFromContext := c.MustGet("userID").(string)
+
 		studentIDFromParams := c.Param("studentID")
 		if studentIDFromParams == "" {
 			slog.Warn("missing student id",
@@ -66,11 +68,11 @@ func AddPayment(queries repository.AdminRepository) gin.HandlerFunc {
 
 		utils.TrimStruct(&req)
 
-		addedBy, err := utils.ConvertToUUID(req.AddedBy)
+		addedBy, err := utils.ConvertToUUID(userIDFromContext)
 		if err != nil {
 			slog.Warn("invalid added_by id",
 				slog.String("handler", "AddPayment"),
-				slog.String("added_by_raw", req.AddedBy),
+				slog.String("added_by_raw", userIDFromContext),
 				slog.Any("error", err),
 			)
 			c.JSON(http.StatusBadRequest, types.APIResponse{
@@ -100,7 +102,7 @@ func AddPayment(queries repository.AdminRepository) gin.HandlerFunc {
 			return
 		}
 
-		if student.Status != "accepted" && student.Status != "completed" {
+		if student.Status != "active" && student.Status != "completed" {
 			c.JSON(http.StatusBadRequest, types.APIResponse{
 				Success: false,
 				Message: "Cannot add payment for a student with pending or rejected status",
@@ -114,7 +116,7 @@ func AddPayment(queries repository.AdminRepository) gin.HandlerFunc {
 		slog.Info("adding payment",
 			slog.String("handler", "AddPayment"),
 			slog.String("student_id", studentIDFromParams),
-			slog.String("added_by", req.AddedBy),
+			slog.String("added_by", userIDFromContext),
 			slog.Int("amount", int(amount)),
 		)
 
@@ -133,7 +135,7 @@ func AddPayment(queries repository.AdminRepository) gin.HandlerFunc {
 					slog.String("handler", "AddPayment"),
 					slog.String("constraint", pgErr.ConstraintName),
 					slog.String("student_id", studentIDFromParams),
-					slog.String("added_by", req.AddedBy),
+					slog.String("added_by", userIDFromContext),
 				)
 
 				switch pgErr.ConstraintName {
@@ -157,7 +159,7 @@ func AddPayment(queries repository.AdminRepository) gin.HandlerFunc {
 				slog.String("handler", "AddPayment"),
 				slog.Any("error", err),
 				slog.String("student_id", studentIDFromParams),
-				slog.String("added_by", req.AddedBy),
+				slog.String("added_by", userIDFromContext),
 			)
 
 			c.JSON(http.StatusInternalServerError, types.APIResponse{
@@ -171,7 +173,7 @@ func AddPayment(queries repository.AdminRepository) gin.HandlerFunc {
 		slog.Info("payment added successfully",
 			slog.String("handler", "AddPayment"),
 			slog.String("student_id", studentIDFromParams),
-			slog.String("added_by", req.AddedBy),
+			slog.String("added_by", userIDFromContext),
 			slog.Int("amount", int(amount)),
 		)
 

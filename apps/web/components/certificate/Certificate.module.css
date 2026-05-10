@@ -105,7 +105,13 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: 16px;
-  font-family: "Oswald", system-ui, -apple-system, Segoe UI, Roboto, Arial,
+  font-family:
+    "Oswald",
+    system-ui,
+    -apple-system,
+    Segoe UI,
+    Roboto,
+    Arial,
     sans-serif;
   color: rgba(70, 40, 16, 0.9);
   letter-spacing: 0.03em;
@@ -126,10 +132,10 @@
 
 .logoCorner {
   position: absolute;
-  top: -30px;
+  top: -22px;
   left: -30px;
-  width: 150px;
-  height: 150px;
+  width: 140px;
+  height: 140px;
   border-radius: 999px;
   background: #ffffff;
   border: 8px solid #fbfaf7;
@@ -152,7 +158,13 @@
   right: 26px;
   z-index: 4;
   text-align: right;
-  font-family: "Oswald", system-ui, -apple-system, Segoe UI, Roboto, Arial,
+  font-family:
+    "Oswald",
+    system-ui,
+    -apple-system,
+    Segoe UI,
+    Roboto,
+    Arial,
     sans-serif;
   letter-spacing: 0.02em;
 }
@@ -202,7 +214,13 @@
 }
 
 .schoolName {
-  font-family: "Oswald", system-ui, -apple-system, Segoe UI, Roboto, Arial,
+  font-family:
+    "Oswald",
+    system-ui,
+    -apple-system,
+    Segoe UI,
+    Roboto,
+    Arial,
     sans-serif;
   font-size: 26px;
   letter-spacing: 0.12em;
@@ -229,7 +247,13 @@
 }
 
 .studentName {
-  font-family: "Oswald", system-ui, -apple-system, Segoe UI, Roboto, Arial,
+  font-family:
+    "Oswald",
+    system-ui,
+    -apple-system,
+    Segoe UI,
+    Roboto,
+    Arial,
     sans-serif;
   text-transform: uppercase;
   font-weight: 700;
@@ -251,7 +275,13 @@
 }
 
 .courses {
-  font-family: "Oswald", system-ui, -apple-system, Segoe UI, Roboto, Arial,
+  font-family:
+    "Oswald",
+    system-ui,
+    -apple-system,
+    Segoe UI,
+    Roboto,
+    Arial,
     sans-serif;
   font-size: 18px;
   font-weight: 600;
@@ -316,4 +346,3 @@
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.14);
   padding: 8px;
 }
-
