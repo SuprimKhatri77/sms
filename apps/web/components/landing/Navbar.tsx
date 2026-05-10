@@ -6,7 +6,6 @@ import { X, Menu } from "lucide-react";
 import Image from "next/image";
 import { siteInfo } from "@/utils/site-info";
 import { useAuthStore } from "@/store/auth";
-import { Button } from "../ui/button";
 
 const navLinks = [
   { label: "Home", href: "#home" },
@@ -20,7 +19,6 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const user = useAuthStore((state) => state.user);
-  console.log("user: ", user);
 
   useEffect(() => {
     document.body.style.overflow = menuOpen ? "hidden" : "";

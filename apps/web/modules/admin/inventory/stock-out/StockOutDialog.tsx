@@ -119,7 +119,6 @@ export function StockOutDialog({
       onClose();
     } catch (err) {
       const error = err as BackendError;
-      console.log("error: ", error);
       toast.error(error?.message ?? "Something went wrong");
       if (error?.errors?.length) {
         setErrors(mapFieldErrors(error));

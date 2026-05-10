@@ -27,6 +27,7 @@ import { BaseAPIResponse } from "@repo/types";
 
 export function NavUser() {
   const user = useAuthStore((state) => state.user);
+  const clearUser = useAuthStore((state) => state.clearUser);
   const { isMobile } = useSidebar();
   const router = useRouter();
 
@@ -36,6 +37,7 @@ export function NavUser() {
       return response.data;
     },
     onSuccess: (result) => {
+      clearUser();
       toast.success(result.message);
       router.replace("/auth/login");
       reset();

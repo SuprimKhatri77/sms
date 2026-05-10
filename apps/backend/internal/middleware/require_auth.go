@@ -72,9 +72,9 @@ func RequireAuth(cfg *config.Config) gin.HandlerFunc {
 			return
 		}
 
-		userID, ok := claims["user_id"].(string)
+		userID, ok := claims["userID"].(string)
 		if !ok {
-			slog.Warn("missing user_id in claims",
+			slog.Warn("missing userID in claims",
 				"path", c.FullPath(),
 				"ip", c.ClientIP(),
 			)

@@ -160,11 +160,11 @@ const socialLinks: SocialLink[] = [
 ];
 
 const quickLinks: NavLink[] = [
-  { label: "Home", href: "#home" },
-  { label: "Why Us", href: "#why-us" },
-  { label: "Programs", href: "#programs" },
-  { label: "How It Works", href: "#how-it-works" },
-  { label: "Inquire", href: "#inquiry" },
+  { label: "Home", href: "/#home" },
+  { label: "Why Us", href: "/#why-us" },
+  { label: "Programs", href: "/#programs" },
+  { label: "How It Works", href: "/#how-it-works" },
+  { label: "Inquire", href: "/#inquiry" },
 ];
 
 const contactInfo: ContactItem[] = [
@@ -221,6 +221,7 @@ export default function Footer() {
               <Link
                 key={social.label}
                 href={social.href}
+                target="_blank"
                 aria-label={social.label}
                 className="w-10 h-10 rounded-full flex items-center justify-center border transition-colors duration-200"
                 style={{

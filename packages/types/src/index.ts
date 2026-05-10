@@ -8,6 +8,7 @@ export {
   type UsersList,
   type SignupResponse,
   type SignupInput,
+  type JWTUser,
 } from "./auth";
 
 export { type BaseAPIResponse, type APIResponse } from "./base";

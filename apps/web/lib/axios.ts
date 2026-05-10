@@ -70,13 +70,13 @@ api.interceptors.response.use(
       processQueue(null); // unblock queued requests
       return api(originalRequest); // retry the original call
     } catch (refreshError) {
-      if (axios.isAxiosError(refreshError)) {
-        console.log(
-          "refresh failed:",
-          refreshError.response?.status,
-          refreshError.response?.data,
-        );
-      }
+      // if (axios.isAxiosError(refreshError)) {
+      //   console.log(
+      //     "refresh failed:",
+      //     refreshError.response?.status,
+      //     refreshError.response?.data,
+      //   );
+      // }
       processQueue(refreshError); // reject all queued requests
 
       // refresh token expired or missing — kick to login

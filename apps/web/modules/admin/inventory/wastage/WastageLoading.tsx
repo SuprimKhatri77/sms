@@ -1,7 +1,7 @@
 import { Skeleton } from "@/components/ui/skeleton";
 export default function WastageLoading() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-h-screen bg-(--brand-cream) px-4 py-8 sm:px-6 lg:px-8 mx-auto max-w-7xl">
       <div className="space-y-2">
         <Skeleton className="h-8 w-48 bg-[var(--brand-green)]/10" />
         <Skeleton className="h-4 w-72 bg-[var(--brand-green)]/6" />

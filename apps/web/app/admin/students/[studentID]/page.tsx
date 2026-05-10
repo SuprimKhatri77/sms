@@ -8,7 +8,6 @@ export default async function Page({
 }: {
   params: Promise<{ studentID: string }>;
 }) {
-  console.log("in the /admin/students/:id route");
   const { studentID } = await params;
   if (!studentID) {
     return (

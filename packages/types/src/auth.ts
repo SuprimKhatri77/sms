@@ -77,3 +77,13 @@ export const usersListSchema = baseAPIResponseSchema.extend({
 
 export type UsersList = z.infer<typeof usersListSchema>;
 export type User = z.infer<typeof userSchema>;
+
+export const jwtUserSchema = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  role: z.enum(["admin", "student", "superadmin"]),
+  email: z.email(),
+  imageUrl: z.url().optional(),
+});
+
+export type JWTUser = z.infer<typeof jwtUserSchema>;

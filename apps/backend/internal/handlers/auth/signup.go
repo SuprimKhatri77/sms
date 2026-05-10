@@ -76,9 +76,12 @@ func Signup(queries repository.AuthRepository, cfg *config.Config) gin.HandlerFu
 		}
 
 		accessClaims := jwt.MapClaims{
-			"user_id": user.ID,
-			"role":    user.Role,
-			"exp":     time.Now().Add(15 * time.Minute).Unix(),
+			"userID":   user.ID,
+			"role":     user.Role,
+			"email":    user.Email,
+			"name":     user.Name,
+			"imageURL": user.ImageUrl,
+			"exp":      time.Now().Add(15 * time.Minute).Unix(),
 		}
 
 		accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims)
@@ -142,6 +145,7 @@ func Signup(queries repository.AuthRepository, cfg *config.Config) gin.HandlerFu
 
 		utils.SetAuthCookie(c, "access_token", accessTokenString, 15*60, cfg)
 		utils.SetAuthCookie(c, "refresh_token", refreshTokenString, 30*24*60*60, cfg)
+		utils.SetPublicCookie(c, "is_logged_in", "true", 30*24*60*60, cfg)
 
 		c.JSON(http.StatusCreated, types.APIResponse{
 			Success: true,

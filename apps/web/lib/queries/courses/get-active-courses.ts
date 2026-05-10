@@ -6,8 +6,6 @@ export async function getActiveCourses() {
     method: "GET",
   });
 
-  console.log("res: ", res);
-
   const data = (await res.json()) as CoursesList;
   if (!res.ok || !data.success)
     throw new Error(!data.success ? data.message : "Failed to fetch courses");

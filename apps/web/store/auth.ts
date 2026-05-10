@@ -1,9 +1,9 @@
-import { User } from "@repo/types";
+import { JWTUser } from "@repo/types";
 import { create } from "zustand";
 
 interface AuthStore {
-  user: User | null;
-  setUser: (user: User) => void;
+  user: JWTUser | null;
+  setUser: (user: JWTUser) => void;
   clearUser: () => void;
 }
 

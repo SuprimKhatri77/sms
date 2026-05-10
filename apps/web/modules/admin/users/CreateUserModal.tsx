@@ -63,7 +63,6 @@ export function CreateUserModal({ isOpen, onClose }: CreateUserModalProps) {
       onSubmit: createUserSchema,
     },
     onSubmit: ({ value }) => {
-      console.log("SUBMIT CALLED", value);
       mutate(value);
     },
     onSubmitInvalid: ({ formApi }) => {
@@ -83,7 +82,10 @@ export function CreateUserModal({ isOpen, onClose }: CreateUserModalProps) {
       <div className="w-full max-w-md border border-[rgba(47,78,64,0.22)] bg-white">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[rgba(47,78,64,0.16)] px-6 py-4">
-          <h2 id="create-user-title" className="font-mono text-sm font-bold tracking-widest text-(--brand-green) uppercase">
+          <h2
+            id="create-user-title"
+            className="font-mono text-sm font-bold tracking-widest text-(--brand-green) uppercase"
+          >
             Create User
           </h2>
           <button
