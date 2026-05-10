@@ -322,7 +322,7 @@ export default function StudentDetailPage({
         </div>
 
         {/* ── Summary stat row ── */}
-        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
           {[
             {
               label: "Total Fee",
@@ -344,11 +344,11 @@ export default function StudentDetailPage({
                     ? "cleared"
                     : "overpaid",
             },
-            {
-              label: "Claimed",
-              value: `NPR ${claimedAmount.toLocaleString()}`,
-              sub: "by student",
-            },
+            // {
+            //   label: "Claimed",
+            //   value: `NPR ${claimedAmount.toLocaleString()}`,
+            //   sub: "by student",
+            // },
           ].map(({ label, value, sub }) => (
             <div
               key={label}
