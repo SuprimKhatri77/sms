@@ -1,9 +1,5 @@
 import z from "zod";
-import {
-  baseAPIResponseSchema,
-  fieldErrorSchema,
-  type APIResponse,
-} from "./base";
+import { baseAPIResponseSchema } from "./base";
 
 export const listStudentResponseSchema = z.discriminatedUnion("success", [
   z.object({

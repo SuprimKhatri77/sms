@@ -86,23 +86,13 @@ func GetPaginatedUsers(queries repository.UserRepository) gin.HandlerFunc {
 			return
 		}
 
-		var usersList []types.UserResponse
-
-		for _, v := range users {
-			usersList = append(usersList, types.UserResponse{
-				ID:        v.ID,
-				Name:      v.Name,
-				Email:     v.Email,
-				ImageUrl:  v.ImageUrl,
-				Role:      v.Role,
-				CreatedAt: v.CreatedAt,
-			})
+		if len(users) == 0 {
+			users = []db.GetPaginatedUsersRow{}
 		}
 
 		c.JSON(http.StatusOK, types.APIResponse{
 			Success: true,
-
-			Data: usersList,
+			Data:    users,
 			Meta: &types.PaginationMeta{
 				Limit:      int(PAGE_LIMIT),
 				Total:      int(total),

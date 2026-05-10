@@ -54,7 +54,17 @@ func (q *Queries) DeleteUser(ctx context.Context, id pgtype.UUID) error {
 }
 
 const getPaginatedUsers = `-- name: GetPaginatedUsers :many
-SELECT id, name, email, password_hash, image_url, role, created_at FROM users LIMIT $1 OFFSET $2
+SELECT 
+    id, 
+    name, 
+    email, 
+    role,
+    created_at,
+    image_url 
+FROM users 
+WHERE role IN ('student', 'admin') 
+ORDER BY created_at DESC, id ASC
+LIMIT $1 OFFSET $2
 `
 
 type GetPaginatedUsersParams struct {
@@ -62,23 +72,31 @@ type GetPaginatedUsersParams struct {
 	Offset int32 `json:"offset"`
 }
 
-func (q *Queries) GetPaginatedUsers(ctx context.Context, arg GetPaginatedUsersParams) ([]User, error) {
+type GetPaginatedUsersRow struct {
+	ID        pgtype.UUID        `json:"id"`
+	Name      string             `json:"name"`
+	Email     string             `json:"email"`
+	Role      string             `json:"role"`
+	CreatedAt pgtype.Timestamptz `json:"createdAt"`
+	ImageUrl  pgtype.Text        `json:"imageUrl"`
+}
+
+func (q *Queries) GetPaginatedUsers(ctx context.Context, arg GetPaginatedUsersParams) ([]GetPaginatedUsersRow, error) {
 	rows, err := q.db.Query(ctx, getPaginatedUsers, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []User
+	var items []GetPaginatedUsersRow
 	for rows.Next() {
-		var i User
+		var i GetPaginatedUsersRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Name,
 			&i.Email,
-			&i.PasswordHash,
-			&i.ImageUrl,
 			&i.Role,
 			&i.CreatedAt,
+			&i.ImageUrl,
 		); err != nil {
 			return nil, err
 		}
