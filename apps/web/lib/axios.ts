@@ -77,6 +77,8 @@ api.interceptors.response.use(
       //     refreshError.response?.data,
       //   );
       // }
+
+      document.cookie = "is_logged_in=; max-age=0; path=/";
       processQueue(refreshError); // reject all queued requests
 
       // refresh token expired or missing — kick to login

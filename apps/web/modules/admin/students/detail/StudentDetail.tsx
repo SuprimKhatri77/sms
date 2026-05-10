@@ -95,7 +95,7 @@ export default function StudentDetailPage({
   const totalPaid = payments.reduce((s, p) => s + p.amount, 0) / 100;
   const totalFee = courses.reduce((s, c) => s + c.fee, 0) / 100;
   const balance = totalFee - totalPaid;
-  const claimedAmount = student.claimedAmount / 100;
+  // const claimedAmount = student.claimedAmount / 100;
   const issueDate = new Date().toLocaleDateString("en-NP", {
     year: "numeric",
     month: "long",

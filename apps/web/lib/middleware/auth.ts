@@ -59,6 +59,16 @@ export async function attemptRefresh(
           secure: process.env.NODE_ENV === "production",
           httpOnly: true,
         });
+        redirect.cookies.set("is_logged_in", "", {
+          maxAge: 0,
+          path: "/",
+          domain:
+            process.env.NODE_ENV === "production"
+              ? process.env.COOKIE_DOMAIN
+              : "",
+          secure: process.env.NODE_ENV === "production",
+          httpOnly: false,
+        });
         return redirect;
       }
 
