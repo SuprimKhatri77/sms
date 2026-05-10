@@ -19,7 +19,7 @@ func UpdateUser(queries repository.UserRepository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
 
-		requestUserID, _ := c.Get("userID") // actor (from auth middleware)
+		requestUserID := c.MustGet("userID")
 
 		userIDFromParam := c.Param("userID")
 
