@@ -1,8 +1,8 @@
 import { UserRole } from "@/utils/mock";
 
 const roleStyles: Record<UserRole, string> = {
-  superadmin:
-    "bg-(--brand-green) text-white border border-(--brand-green) text-xs font-semibold tracking-widest uppercase px-2 py-0.5",
+  // superadmin:
+  //   "bg-(--brand-green) text-white border border-(--brand-green) text-xs font-semibold tracking-widest uppercase px-2 py-0.5",
   admin:
     "bg-(--brand-green-2) text-white border border-(--brand-green-2) text-xs font-semibold tracking-widest uppercase px-2 py-0.5",
   student:

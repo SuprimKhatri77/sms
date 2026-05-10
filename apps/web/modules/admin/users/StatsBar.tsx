@@ -19,7 +19,7 @@ export function StatsBar({ users }: StatsBarProps) {
     { label: "Total", count: users.length },
     { label: "Students", count: countByRole("student") },
     { label: "Admins", count: countByRole("admin") },
-    { label: "Superadmins", count: countByRole("superadmin") },
+    // { label: "Superadmins", count: countByRole("superadmin") },
   ];
 
   return (

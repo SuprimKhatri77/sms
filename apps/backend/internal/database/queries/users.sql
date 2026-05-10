@@ -36,6 +36,6 @@ LIMIT $1 OFFSET $2;
 
 
 -- name: GetUsersCount :one
-SELECT COUNT(*) FROM users;
+SELECT COUNT(*) FROM users WHERE ROLE IN ('student','admin');
 
 

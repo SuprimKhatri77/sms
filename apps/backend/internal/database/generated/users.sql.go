@@ -147,7 +147,7 @@ func (q *Queries) GetUserByID(ctx context.Context, id pgtype.UUID) (User, error)
 }
 
 const getUsersCount = `-- name: GetUsersCount :one
-SELECT COUNT(*) FROM users
+SELECT COUNT(*) FROM users WHERE ROLE IN ('student','admin')
 `
 
 func (q *Queries) GetUsersCount(ctx context.Context) (int64, error) {
