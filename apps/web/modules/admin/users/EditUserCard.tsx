@@ -26,7 +26,6 @@ interface EditUserCardProps {
 const ROLE_OPTIONS: { value: UserRole; label: string }[] = [
   { value: "student", label: "Student" },
   { value: "admin", label: "Admin" },
-  { value: "superadmin", label: "Superadmin" },
 ];
 
 export function EditUserCard({ user, onClose }: EditUserCardProps) {
@@ -65,7 +64,7 @@ export function EditUserCard({ user, onClose }: EditUserCardProps) {
     defaultValues: {
       name: user?.name ?? "",
       email: user?.email ?? "",
-      role: user?.role as "user" | "superadmin" | "admin",
+      role: user?.role as "student" | "admin",
     },
     validators: {
       onSubmit: updateUserSchema,

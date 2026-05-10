@@ -22,7 +22,17 @@ DELETE FROM users WHERE id = $1;
 
 
 -- name: GetPaginatedUsers :many
-SELECT * FROM users LIMIT $1 OFFSET $2;
+SELECT 
+    id, 
+    name, 
+    email, 
+    role,
+    created_at,
+    image_url 
+FROM users 
+WHERE role IN ('student', 'admin') 
+ORDER BY created_at DESC, id ASC
+LIMIT $1 OFFSET $2;
 
 
 -- name: GetUsersCount :one

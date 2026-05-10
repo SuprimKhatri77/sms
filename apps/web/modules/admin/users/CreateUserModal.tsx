@@ -17,9 +17,8 @@ interface CreateUserModalProps {
 }
 
 const ROLE_OPTIONS: { value: CreateUserInput["role"]; label: string }[] = [
-  { value: "user", label: "User" },
+  { value: "student", label: "Student" },
   { value: "admin", label: "Admin" },
-  { value: "superadmin", label: "Superadmin" },
 ];
 
 export function CreateUserModal({ isOpen, onClose }: CreateUserModalProps) {
@@ -57,7 +56,7 @@ export function CreateUserModal({ isOpen, onClose }: CreateUserModalProps) {
       name: "",
       email: "",
       password: "",
-      role: "user" as "user" | "superadmin" | "admin",
+      role: "student" as "student" | "admin",
     },
     validators: {
       onSubmit: createUserSchema,

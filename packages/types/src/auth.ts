@@ -60,7 +60,7 @@ export const userSchema = z.object({
     .string()
     .regex(/^[A-Za-z ]+$/, "Full name can only contain letters and spaces")
     .trim(),
-  role: z.enum(["admin", "student", "superadmin"]),
+  role: z.enum(["admin", "student"]),
   email: z.email(),
   id: z.uuid(),
   imageUrl: z.url().optional(),
