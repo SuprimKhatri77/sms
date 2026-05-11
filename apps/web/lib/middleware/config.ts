@@ -5,3 +5,5 @@ export const ROLE_RULES: Record<string, string[]> = {
 };
 
 export const PUBLIC_ROUTES = ["/auth"];
+
+export const UNAUTHENTICATED_ONLY_ROUTES = ["/auth"];

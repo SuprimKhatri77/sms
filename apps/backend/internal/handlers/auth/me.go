@@ -79,11 +79,7 @@ func Me(queries repository.AuthRepository) gin.HandlerFunc {
 			Success: true,
 			Message: "Valid session",
 			Data: types.UserResponse{
-				ID:       user.ID,
-				Email:    user.Email,
-				Role:     user.Role,
-				Name:     user.Name,
-				ImageUrl: user.ImageUrl,
+				User: user,
 			},
 		})
 	}

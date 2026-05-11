@@ -20,11 +20,11 @@ WHERE fiscal_year = $1;
 INSERT INTO students (
     reference_no, fiscal_year, serial_no, full_name, dob, gender,
     phone, address, guardian_name, guardian_phone,
-    photo_url, source, claimed_amount, status, student_id
+    photo_url, source, status, student_id
 ) VALUES (
     $1, $2, $3, $4, $5, $6,
     $7, $8, $9, $10,
-    $11, $12, $13, 'pending',$14
+    $11, $12, 'pending',$13
 ) RETURNING *;
 
 -- name: GetStudentByID :one
@@ -47,7 +47,6 @@ SELECT
     s.full_name,
     s.phone,
     s.status,
-    s.claimed_amount,
     s.created_at,
   COALESCE(
     STRING_AGG(c.name, ',' ORDER BY c.name),

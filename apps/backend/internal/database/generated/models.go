@@ -103,7 +103,6 @@ type Student struct {
 	GuardianPhone string             `json:"guardianPhone"`
 	PhotoUrl      pgtype.Text        `json:"photoUrl"`
 	Source        string             `json:"source"`
-	ClaimedAmount int32              `json:"claimedAmount"`
 	Status        string             `json:"status"`
 	Notes         pgtype.Text        `json:"notes"`
 	CreatedAt     pgtype.Timestamptz `json:"createdAt"`

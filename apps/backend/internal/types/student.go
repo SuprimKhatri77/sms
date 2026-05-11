@@ -9,7 +9,6 @@ type CreateStudentRequest struct {
 	Email         string   `json:"email" binding:"required,email"`
 	Address       string   `json:"address" binding:"required,max=70"`
 	PhotoUrl      string   `json:"photoUrl" binding:"required,url"`
-	ClaimedAmount float64  `json:"claimedAmount" binding:"required,gt=0"`
 	Source        string   `json:"source" binding:"required,oneof=facebook instagram tiktok referral inperson"`
 	GuardianName  string   `json:"guardianName" binding:"required,min=2,max=70"`
 	GuardianPhone string   `json:"guardianPhone" binding:"required,nepal_phone"`
@@ -33,7 +32,6 @@ type Student struct {
 	Email         pgtype.Text `json:"email"`
 	Address       string      `json:"address"`
 	PhotoUrl      pgtype.Text `json:"photoUrl"`
-	ClaimedAmount int         `json:"claimedAmount"`
 	Source        string      `json:"source"`
 	GuardianName  string      `json:"guardianName"`
 	GuardianPhone string      `json:"guardianPhone"`
@@ -45,13 +43,12 @@ type Student struct {
 	Status        string      `json:"status"`
 }
 type ListStudent struct {
-	ID            pgtype.UUID `json:"id"`
-	FullName      string      `json:"fullName"`
-	Phone         string      `json:"phone"`
-	ClaimedAmount int         `json:"claimedAmount"`
-	ReferenceNo   string      `json:"referenceNo"`
-	Status        string      `json:"status"`
-	Courses       []string    `json:"courses"`
+	ID          pgtype.UUID `json:"id"`
+	FullName    string      `json:"fullName"`
+	Phone       string      `json:"phone"`
+	ReferenceNo string      `json:"referenceNo"`
+	Status      string      `json:"status"`
+	Courses     []string    `json:"courses"`
 }
 
 type UpdateStudentStatusRequest struct {

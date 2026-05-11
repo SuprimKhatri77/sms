@@ -19,8 +19,9 @@ import { Spinner } from "@/components/ui/spinner";
 import { ApiError, mapFieldErrors } from "@/utils/api";
 import { useRouter } from "next/navigation";
 import api from "@/lib/axios";
-import axios from "axios";
 import Link from "next/link";
+import { AxiosError } from "axios";
+import { useAuthStore } from "@/store/auth";
 
 type FieldErrors = Partial<Record<keyof LoginInput, string>>;
 export function LoginForm({
@@ -29,27 +30,34 @@ export function LoginForm({
 }: React.ComponentProps<"form">) {
   const [errors, setErrors] = useState<FieldErrors>();
   const router = useRouter();
-  const { mutate, isPending, reset } = useMutation({
-    mutationFn: async (data: LoginInput) => {
-      const res = await api.post<LoginResponse>("/auth/login", data);
+  const { mutate, isPending, reset } = useMutation<
+    Extract<LoginResponse, { success: true }>,
+    AxiosError<ApiError>,
+    LoginInput
+  >({
+    mutationFn: async (data) => {
+      const res = await api.post<Extract<LoginResponse, { success: true }>>(
+        "/auth/login",
+        data,
+      );
       return res.data;
     },
-    onSuccess: (result: LoginResponse) => {
+    onSuccess: (result) => {
+      const user = result.data.user;
+
+      useAuthStore.getState().setUser(user);
+
       toast.success(result.message);
-      router.replace("/admin");
+      router.replace(`/${result.data.user.role === "student" ? "" : "admin"}`);
       formReset();
       reset();
     },
     onError: (error) => {
-      if (axios.isAxiosError(error)) {
-        const data = error.response?.data as ApiError;
-
-        if (data?.errors) {
-          setErrors(mapFieldErrors(data));
-        }
-
-        toast.error(data?.message ?? "An unexpected error occurred.");
+      const data = error.response?.data;
+      if (data?.errors) {
+        setErrors(mapFieldErrors(data));
       }
+      toast.error(data?.message ?? "An unexpected error occurred.");
       reset();
     },
   });

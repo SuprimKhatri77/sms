@@ -88,13 +88,12 @@ func ListStudents(queries repository.AdminRepository) gin.HandlerFunc {
 				courses = []string{}
 			}
 			studentList = append(studentList, types.ListStudent{
-				ID:            v.ID,
-				FullName:      v.FullName,
-				Status:        v.Status,
-				ReferenceNo:   v.ReferenceNo,
-				ClaimedAmount: int(v.ClaimedAmount),
-				Courses:       courses,
-				Phone:         v.Phone,
+				ID:          v.ID,
+				FullName:    v.FullName,
+				Status:      v.Status,
+				ReferenceNo: v.ReferenceNo,
+				Courses:     courses,
+				Phone:       v.Phone,
 			})
 		}
 

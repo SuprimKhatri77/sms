@@ -189,7 +189,7 @@ export default function AdmissionPage({ courses }: Props) {
       fullName: "",
       phone: "",
       source: "" as CreateStudentAdmission["source"],
-      email: "",
+      email: user?.email ?? "",
       dob: "",
       gender: "" as CreateStudentAdmission["gender"],
       guardianName: "",
@@ -211,6 +211,7 @@ export default function AdmissionPage({ courses }: Props) {
     },
     onSubmitInvalid: ({ formApi }) => {
       const errors = formApi.state.errors;
+      console.error("errors: ", errors);
 
       if (!errors?.length) return;
 
@@ -294,7 +295,9 @@ export default function AdmissionPage({ courses }: Props) {
       return;
     }
     setErrors({});
-    setCurrentStep((s) => s + 1);
+    setTimeout(() => {
+      setCurrentStep((s) => s + 1);
+    }, 0);
   };
 
   const goBack = () => {
@@ -392,7 +395,17 @@ export default function AdmissionPage({ courses }: Props) {
         <form
           onSubmit={(e) => {
             e.preventDefault();
+
+            if (currentStep !== STEPS.length - 1) {
+              return;
+            }
+
             handleSubmit();
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && currentStep !== STEPS.length - 1) {
+              e.preventDefault();
+            }
           }}
           className="rounded-2xl border border-black/6 bg-white p-6 shadow-[0_4px_32px_rgba(0,0,0,0.05)] sm:p-10"
         >
@@ -484,14 +497,14 @@ export default function AdmissionPage({ courses }: Props) {
               </FormField>
 
               <FormField name="email">
-                {() => {
+                {(field) => {
                   return (
                     <InputField
                       label="Email"
                       icon={Mail}
                       type="email"
                       placeholder="optional"
-                      value={user?.email ?? ""}
+                      value={field.state.value}
                       disabled
                       className="bg-gray-100 text-gray-500 cursor-not-allowed opacity-70 border-gray-200"
                     />
@@ -758,7 +771,10 @@ export default function AdmissionPage({ courses }: Props) {
                 <ReviewRow label="Date of Birth" value={getFieldValue("dob")} />
                 <ReviewRow label="Gender" value={genderLabel} />
                 <ReviewRow label="Phone" value={getFieldValue("phone")} />
-                <ReviewRow label="Email" value={getFieldValue("email")} />
+                <ReviewRow
+                  label="Email"
+                  value={getFieldValue("email") ?? user?.email}
+                />
                 <ReviewRow label="Address" value={getFieldValue("address")} />
                 {photo?.url && (
                   <div className="flex items-center justify-between py-3">
@@ -831,27 +847,32 @@ export default function AdmissionPage({ courses }: Props) {
                 Back
               </button>
             )}
-            {currentStep < STEPS.length - 1 ? (
-              <button
-                type="button"
-                onClick={goNext}
-                className="inline-flex items-center gap-2 rounded-xl bg-(--brand-brown) px-6 py-3 text-[0.9rem] font-semibold text-white shadow-[0_4px_16px_rgba(194,138,79,0.3)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(194,138,79,0.4)]"
-                style={{ fontFamily: "var(--font-dm-sans)" }}
-              >
-                Continue
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            ) : (
-              <button
-                type="submit"
-                disabled={isPending || isUploadingImage}
-                className="inline-flex items-center gap-2 rounded-xl bg-[#2d4a3e] px-6 py-3 text-[0.9rem] font-semibold text-white shadow-[0_4px_16px_rgba(45,74,62,0.25)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(45,74,62,0.35)] disabled:cursor-not-allowed disabled:opacity-60"
-                style={{ fontFamily: "var(--font-dm-sans)" }}
-              >
-                {isPending ? "Submitting…" : "Submit Application"}
-                {!isPending && <CheckCircle2 className="h-4 w-4" />}
-              </button>
-            )}
+            <button
+              type={currentStep === STEPS.length - 1 ? "submit" : "button"}
+              onClick={currentStep === STEPS.length - 1 ? undefined : goNext}
+              disabled={
+                currentStep === STEPS.length - 1 &&
+                (isPending || isUploadingImage)
+              }
+              className={`inline-flex items-center gap-2 rounded-xl px-6 py-3 text-[0.9rem] font-semibold text-white transition-all duration-200 ${
+                currentStep === STEPS.length - 1
+                  ? "bg-[#2d4a3e] shadow-[0_4px_16px_rgba(45,74,62,0.25)] hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(45,74,62,0.35)] disabled:cursor-not-allowed disabled:opacity-60"
+                  : "bg-(--brand-brown) shadow-[0_4px_16px_rgba(194,138,79,0.3)] hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(194,138,79,0.4)]"
+              }`}
+              style={{ fontFamily: "var(--font-dm-sans)" }}
+            >
+              {currentStep === STEPS.length - 1 ? (
+                <>
+                  {isPending ? "Submitting…" : "Submit Application"}
+                  {!isPending && <CheckCircle2 className="h-4 w-4" />}
+                </>
+              ) : (
+                <>
+                  Continue
+                  <ChevronRight className="h-4 w-4" />
+                </>
+              )}
+            </button>
           </div>
         </form>
       </div>

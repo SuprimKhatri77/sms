@@ -15,12 +15,12 @@ const createStudent = `-- name: CreateStudent :one
 INSERT INTO students (
     reference_no, fiscal_year, serial_no, full_name, dob, gender,
     phone, address, guardian_name, guardian_phone,
-    photo_url, source, claimed_amount, status, student_id
+    photo_url, source, status, student_id
 ) VALUES (
     $1, $2, $3, $4, $5, $6,
     $7, $8, $9, $10,
-    $11, $12, $13, 'pending',$14
-) RETURNING id, student_id, reference_no, fiscal_year, serial_no, full_name, dob, gender, phone, address, guardian_name, guardian_phone, photo_url, source, claimed_amount, status, notes, created_at
+    $11, $12, 'pending',$13
+) RETURNING id, student_id, reference_no, fiscal_year, serial_no, full_name, dob, gender, phone, address, guardian_name, guardian_phone, photo_url, source, status, notes, created_at
 `
 
 type CreateStudentParams struct {
@@ -36,7 +36,6 @@ type CreateStudentParams struct {
 	GuardianPhone string      `json:"guardianPhone"`
 	PhotoUrl      pgtype.Text `json:"photoUrl"`
 	Source        string      `json:"source"`
-	ClaimedAmount int32       `json:"claimedAmount"`
 	StudentID     pgtype.UUID `json:"studentId"`
 }
 
@@ -54,7 +53,6 @@ func (q *Queries) CreateStudent(ctx context.Context, arg CreateStudentParams) (S
 		arg.GuardianPhone,
 		arg.PhotoUrl,
 		arg.Source,
-		arg.ClaimedAmount,
 		arg.StudentID,
 	)
 	var i Student
@@ -73,7 +71,6 @@ func (q *Queries) CreateStudent(ctx context.Context, arg CreateStudentParams) (S
 		&i.GuardianPhone,
 		&i.PhotoUrl,
 		&i.Source,
-		&i.ClaimedAmount,
 		&i.Status,
 		&i.Notes,
 		&i.CreatedAt,
@@ -96,7 +93,7 @@ func (q *Queries) GetNextSerialNo(ctx context.Context, fiscalYear string) (int32
 
 const getStudentByID = `-- name: GetStudentByID :one
 SELECT 
-    s.id, s.student_id, s.reference_no, s.fiscal_year, s.serial_no, s.full_name, s.dob, s.gender, s.phone, s.address, s.guardian_name, s.guardian_phone, s.photo_url, s.source, s.claimed_amount, s.status, s.notes, s.created_at,
+    s.id, s.student_id, s.reference_no, s.fiscal_year, s.serial_no, s.full_name, s.dob, s.gender, s.phone, s.address, s.guardian_name, s.guardian_phone, s.photo_url, s.source, s.status, s.notes, s.created_at,
     u.email
 FROM students s
 JOIN users u ON s.student_id = u.id
@@ -118,7 +115,6 @@ type GetStudentByIDRow struct {
 	GuardianPhone string             `json:"guardianPhone"`
 	PhotoUrl      pgtype.Text        `json:"photoUrl"`
 	Source        string             `json:"source"`
-	ClaimedAmount int32              `json:"claimedAmount"`
 	Status        string             `json:"status"`
 	Notes         pgtype.Text        `json:"notes"`
 	CreatedAt     pgtype.Timestamptz `json:"createdAt"`
@@ -143,7 +139,6 @@ func (q *Queries) GetStudentByID(ctx context.Context, id pgtype.UUID) (GetStuden
 		&i.GuardianPhone,
 		&i.PhotoUrl,
 		&i.Source,
-		&i.ClaimedAmount,
 		&i.Status,
 		&i.Notes,
 		&i.CreatedAt,
@@ -195,7 +190,6 @@ SELECT
     s.full_name,
     s.phone,
     s.status,
-    s.claimed_amount,
     s.created_at,
   COALESCE(
     STRING_AGG(c.name, ',' ORDER BY c.name),
@@ -215,14 +209,13 @@ type ListStudentsParams struct {
 }
 
 type ListStudentsRow struct {
-	ID            pgtype.UUID        `json:"id"`
-	ReferenceNo   string             `json:"referenceNo"`
-	FullName      string             `json:"fullName"`
-	Phone         string             `json:"phone"`
-	Status        string             `json:"status"`
-	ClaimedAmount int32              `json:"claimedAmount"`
-	CreatedAt     pgtype.Timestamptz `json:"createdAt"`
-	Courses       interface{}        `json:"courses"`
+	ID          pgtype.UUID        `json:"id"`
+	ReferenceNo string             `json:"referenceNo"`
+	FullName    string             `json:"fullName"`
+	Phone       string             `json:"phone"`
+	Status      string             `json:"status"`
+	CreatedAt   pgtype.Timestamptz `json:"createdAt"`
+	Courses     interface{}        `json:"courses"`
 }
 
 func (q *Queries) ListStudents(ctx context.Context, arg ListStudentsParams) ([]ListStudentsRow, error) {
@@ -240,7 +233,6 @@ func (q *Queries) ListStudents(ctx context.Context, arg ListStudentsParams) ([]L
 			&i.FullName,
 			&i.Phone,
 			&i.Status,
-			&i.ClaimedAmount,
 			&i.CreatedAt,
 			&i.Courses,
 		); err != nil {
@@ -256,7 +248,7 @@ func (q *Queries) ListStudents(ctx context.Context, arg ListStudentsParams) ([]L
 
 const updateStudentStatus = `-- name: UpdateStudentStatus :one
 UPDATE students SET status = $2
-WHERE id = $1 RETURNING id, student_id, reference_no, fiscal_year, serial_no, full_name, dob, gender, phone, address, guardian_name, guardian_phone, photo_url, source, claimed_amount, status, notes, created_at
+WHERE id = $1 RETURNING id, student_id, reference_no, fiscal_year, serial_no, full_name, dob, gender, phone, address, guardian_name, guardian_phone, photo_url, source, status, notes, created_at
 `
 
 type UpdateStudentStatusParams struct {
@@ -282,7 +274,6 @@ func (q *Queries) UpdateStudentStatus(ctx context.Context, arg UpdateStudentStat
 		&i.GuardianPhone,
 		&i.PhotoUrl,
 		&i.Source,
-		&i.ClaimedAmount,
 		&i.Status,
 		&i.Notes,
 		&i.CreatedAt,

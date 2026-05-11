@@ -270,7 +270,6 @@ export default function StudentsPage() {
                     "Student",
                     "Phone",
                     "Courses",
-                    "Claimed",
                     "Status",
                     "",
                   ].map((h) => (
@@ -338,14 +337,14 @@ export default function StudentsPage() {
                           ))}
                         </div>
                       </td>
-                      <td className="px-5 py-3.5">
+                      {/* <td className="px-5 py-3.5">
                         <span
                           className="text-[0.88rem] font-semibold tabular-nums text-[#2d4a3e]"
                           style={{ fontFamily: "var(--font-dm-sans)" }}
                         >
                           NPR {(student.claimedAmount / 100).toLocaleString()}
                         </span>
-                      </td>
+                      </td> */}
                       <td className="px-5 py-3.5">
                         <StatusBadge status={student.status} />
                       </td>
@@ -422,7 +421,7 @@ export default function StudentsPage() {
                         {student.phone}
                       </p>
                     </div>
-                    <div>
+                    {/* <div>
                       <p
                         className="text-[0.65rem] font-semibold uppercase tracking-wide text-[#2d4a3e]/35"
                         style={{ fontFamily: "var(--font-dm-sans)" }}
@@ -435,7 +434,7 @@ export default function StudentsPage() {
                       >
                         NPR {(student.claimedAmount / 100).toLocaleString()}
                       </p>
-                    </div>
+                    </div> */}
                   </div>
 
                   {/* Courses + View */}

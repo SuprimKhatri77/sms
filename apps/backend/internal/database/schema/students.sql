@@ -13,7 +13,6 @@ CREATE TABLE students (
     guardian_phone VARCHAR NOT NULL,
     photo_url      VARCHAR,
     source         VARCHAR NOT NULL,
-    claimed_amount INTEGER NOT NULL,
     status         VARCHAR NOT NULL DEFAULT 'pending',
     notes          TEXT,
     created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),

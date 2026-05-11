@@ -27,6 +27,7 @@ import { Spinner } from "../ui/spinner";
 
 export function StudentNavUser() {
   const user = useAuthStore((state) => state.user);
+  const clearUser = useAuthStore((state) => state.clearUser);
   const { isMobile } = useSidebar();
   const router = useRouter();
 
@@ -36,6 +37,7 @@ export function StudentNavUser() {
       return response.data;
     },
     onSuccess: (result) => {
+      clearUser();
       toast.success(result.message);
       router.replace("/auth/login");
       reset();

@@ -1,0 +1,2 @@
+ALTER TABLE students
+ADD COLUMN claimed_amount INTEGER NOT NULL;

@@ -12,7 +12,6 @@ export const listStudentResponseSchema = z.discriminatedUnion("success", [
         referenceNo: z.string(),
         courses: z.array(z.string()),
         status: z.enum(["pending", "completed", "rejected", "active"]),
-        claimedAmount: z.number(),
       }),
     ),
     meta: z.object({
@@ -55,7 +54,6 @@ export const studentDetailResponseSchema = z.discriminatedUnion("success", [
         "referral",
         "inperson",
       ]),
-      claimedAmount: z.number(),
       status: z.enum(["pending", "active", "completed", "rejected"]),
       notes: z.string(),
       createdAt: z.date(),
