@@ -5,6 +5,7 @@ import {
 } from "@repo/types";
 import { STATUS_META } from "./StudentDetail";
 import Image from "next/image";
+import { siteInfo } from "@/utils/site-info";
 
 type Props = {
   student: Extract<StudentDetail, { success: true }>["data"];
@@ -14,7 +15,7 @@ type Props = {
 export function Invoice({ student, payments, courses }: Props) {
   const totalPaid = payments.reduce((s, p) => s + p.amount, 0) / 100;
   const totalFee = courses.reduce((s, c) => s + c.fee, 0) / 100;
-  const balance = totalFee - totalPaid;
+  // const balance = totalFee - totalPaid;
 
   return (
     <div
@@ -45,7 +46,7 @@ export function Invoice({ student, payments, courses }: Props) {
             className="text-[0.78rem] text-[#2d4a3e]/45"
             style={{ fontFamily: "var(--font-dm-sans)" }}
           >
-            New Baneshwor, Kathmandu · brewandbake@example.com
+            {siteInfo.contact.address} · {siteInfo.contact.phone}
           </p>
         </div>
         <div className="text-right">
@@ -79,7 +80,7 @@ export function Invoice({ student, payments, courses }: Props) {
           ["Student", student.fullName],
           ["Phone", student.phone],
           ["Fiscal Year", student.fiscalYear],
-          ["Status", STATUS_META[student.status].label],
+          // ["Status", STATUS_META[student.status].label],
         ].map(([label, val]) => (
           <div key={label}>
             <p
@@ -126,7 +127,7 @@ export function Invoice({ student, payments, courses }: Props) {
           {courses.map((c) => (
             <tr key={c.id} className="border-b border-[#2d4a3e]/06">
               <td
-                className="py-2 text-[0.88rem] text-[#2d4a3e]"
+                className="py-2 text-[0.88rem] text-[#2d4a3e] capitalize"
                 style={{ fontFamily: "var(--font-dm-sans)" }}
               >
                 {c.name}
@@ -157,7 +158,7 @@ export function Invoice({ student, payments, courses }: Props) {
       </table>
 
       {/* Payments */}
-      <p
+      {/* <p
         className="mb-2 text-[0.72rem] font-semibold uppercase tracking-[0.07em] text-[#2d4a3e]/40"
         style={{ fontFamily: "var(--font-dm-sans)" }}
       >
@@ -205,10 +206,10 @@ export function Invoice({ student, payments, courses }: Props) {
             </tr>
           ))}
         </tbody>
-      </table>
+      </table> */}
 
       {/* Summary box */}
-      <div className="rounded-xl bg-[#f4f1ec] p-4">
+      {/* <div className="rounded-xl bg-[#f4f1ec] p-4">
         {[
           { label: "Total Fee", value: totalFee, muted: true },
           { label: "Total Paid", value: totalPaid, muted: false },
@@ -232,7 +233,7 @@ export function Invoice({ student, payments, courses }: Props) {
             </span>
           </div>
         ))}
-      </div>
+      </div> */}
 
       <p
         className="mt-6 text-center text-[0.72rem] text-[#2d4a3e]/30"

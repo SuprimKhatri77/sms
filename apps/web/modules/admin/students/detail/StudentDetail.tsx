@@ -40,6 +40,7 @@ import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth";
 import { Certificate } from "@/components/certificate/Certificate";
 import { siteInfo } from "@/utils/site-info";
+import { usePrintInvoice } from "./PrintInvoice";
 
 type Props = {
   student: Extract<StudentDetail, { success: true }>["data"];
@@ -140,96 +141,7 @@ export default function StudentDetailPage({
     },
   });
 
-  const handlePrint = () => {
-    const totalPaidRaw = payments.reduce((s, p) => s + p.amount, 0) / 100;
-    const totalFeeRaw = courses.reduce((s, c) => s + c.fee, 0) / 100;
-    const balanceRaw = totalFeeRaw - totalPaidRaw;
-
-    const rows = {
-      courses: courses
-        .map(
-          (c) => `
-      <tr>
-        <td style="padding:10px 0;border-bottom:1px solid #eee;font-size:13px;color:#2d4a3e;">${c.name}</td>
-        <td style="padding:10px 0;border-bottom:1px solid #eee;font-size:13px;color:#2d4a3e;text-align:right;">NPR ${(c.fee / 100).toLocaleString()}</td>
-      </tr>`,
-        )
-        .join(""),
-      payments: payments
-        .map(
-          (p) => `
-      <tr>
-        <td style="padding:9px 0;border-bottom:1px solid #f0f0f0;font-size:12px;color:#666;">
-          ${new Date(p.addedAt).toLocaleDateString("en-NP", { day: "2-digit", month: "short", year: "numeric" })}
-        </td>
-        <td style="padding:9px 0;border-bottom:1px solid #f0f0f0;font-size:12px;color:#666;">${p.remarks ?? "—"}</td>
-        <td style="padding:9px 0;border-bottom:1px solid #f0f0f0;font-size:12px;color:#2d4a3e;text-align:right;font-weight:600;">NPR ${(p.amount / 100).toLocaleString()}</td>
-      </tr>`,
-        )
-        .join(""),
-    };
-
-    const html = `<!DOCTYPE html>
-<html><head><meta charset="UTF-8"/><title>Invoice – ${student.referenceNo}</title>
-<style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;color:#2f4e40;padding:24px;max-width:520px;margin:0 auto;}@media print{body{padding:12mm;}@page{margin:10mm;size:A5 portrait;}}.divider{height:1px;background:#efe8dd;margin:16px 0;}table{width:100%;border-collapse:collapse;}th{text-align:left;font-size:9px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:#9a8d7c;padding-bottom:8px;border-bottom:1px solid #efe8dd;}th.right{text-align:right;}</style>
-</head><body>
-<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;">
-  <div>
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
-      <div style="width:38px;height:38px;border-radius:10px;overflow:hidden;border:1px solid rgba(47,78,64,0.18);background:#fff;display:flex;align-items:center;justify-content:center;">
-        <img src="/assets/watermark.png" alt="Brew & Bake" style="width:30px;height:30px;object-fit:contain;display:block;" />
-      </div>
-      <span style="font-size:16px;font-weight:800;color:#2f4e40;letter-spacing:0.02em;">Brew & Bake Academy</span>
-    </div>
-    <p style="font-size:12px;color:#999;margin-left:48px;">${siteInfo.contact.address} · ${siteInfo.contact.email}</p>
-  </div>
-  <div style="text-align:right;">
-    <p style="font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#999;margin-bottom:4px;">Invoice</p>
-    <p style="font-size:13px;font-weight:700;color:#2f4e40;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${student.referenceNo}</p>
-    <p style="font-size:12px;color:#999;margin-top:2px;">${new Date().toLocaleDateString("en-NP", { year: "numeric", month: "long", day: "numeric" })}</p>
-  </div>
-</div>
-<div class="divider"></div>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px 32px;margin-bottom:28px;">
-  ${[
-    ["Student", student.fullName],
-    ["Phone", student.phone],
-    ["Fiscal Year", student.fiscalYear],
-    // ["Status", STATUS_META[currentStatus].label],
-  ]
-    .map(
-      ([l, v]) =>
-        `<div><p style="font-size:10px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:#aaa;margin-bottom:3px;">${l}</p><p style="font-size:13px;font-weight:600;color:#2d4a3e;">${v}</p></div>`,
-    )
-    .join("")}
-</div>
-<div class="divider"></div>
-<p style="font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#aaa;margin-bottom:10px;">Enrolled Courses</p>
-<table style="margin-bottom:8px;"><thead><tr><th>Course</th><th class="right">Fee</th></tr></thead><tbody>${rows.courses}</tbody>
-<tfoot><tr><td style="padding-top:12px;font-size:13px;font-weight:700;color:#2d4a3e;">Total Fee</td><td style="padding-top:12px;font-size:13px;font-weight:700;color:#2d4a3e;text-align:right;">NPR ${totalFeeRaw.toLocaleString()}</td></tr></tfoot></table>
-<div class="divider"></div>
-<p style="font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#aaa;margin-bottom:10px;">Payment History</p>
-<table style="margin-bottom:8px;"><thead><tr><th>Date</th><th>Remarks</th><th class="right">Amount</th></tr></thead><tbody>${rows.payments}</tbody></table>
-<div class="divider"></div>
-<div style="background:#f7f5f2;border-radius:12px;padding:20px 24px;">
-  <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;"><span style="color:rgba(47,78,64,0.65);">Total Fee</span><span style="font-weight:700;color:#2f4e40;">NPR ${totalFeeRaw.toLocaleString()}</span></div>
-  <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;"><span style="color:rgba(47,78,64,0.65);">Total Paid</span><span style="font-weight:700;color:#2f4e40;">NPR ${totalPaidRaw.toLocaleString()}</span></div>
-  <div style="height:1px;background:#e6ddcf;margin:8px 0;"></div>
-  <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:14px;"><span style="font-weight:900;color:#2f4e40;">Balance Due</span><span style="font-weight:900;color:${balanceRaw > 0 ? "#dc2626" : "#16a34a"};">NPR ${Math.abs(balanceRaw).toLocaleString()}${balanceRaw === 0 ? " (Cleared)" : ""}</span></div>
-</div>
-<p style="margin-top:36px;text-align:center;font-size:11px;color:#bbb;">Thank you for choosing Brew & Bake Academy &nbsp;·&nbsp; This is a computer-generated invoice</p>
-</body></html>`;
-
-    const win = window.open("", "_blank");
-    if (!win) return;
-    win.document.write(html);
-    win.document.close();
-    win.focus();
-    setTimeout(() => {
-      win.print();
-      win.close();
-    }, 400);
-  };
+  const { handlePrint } = usePrintInvoice({ student, courses, payments });
 
   return (
     <div className="min-h-screen bg-[#f4f1ec] px-4 py-8 sm:px-6 lg:px-8">
