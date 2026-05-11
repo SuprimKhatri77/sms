@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { InventoryPageHeader } from "../shared/InventoryPageHeader";
 import { StockInDialog } from "./StockInDialog";
 import { ConfirmDialog } from "../shared/ConfirmDialog";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { CalendarIcon, Plus, Search, X } from "lucide-react";
 import { StockInTable } from "./StockInTable";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -19,6 +19,15 @@ import api from "@/lib/axios";
 import StockInLoading from "./StockInLoadingSkeleton";
 import StockInError from "./StockInError";
 import axios from "axios";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 
 type StockIn = Extract<ListStockInResponse, { success: true }>["data"][number];
 type StockInFormData = Omit<
@@ -29,11 +38,27 @@ type StockInFormData = Omit<
 };
 
 export function StockInClient() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const [search, setSearch] = useState(searchParams.get("search") ?? "");
+  const [dateFrom, setDateFrom] = useState(searchParams.get("from") ?? "");
+  const [dateTo, setDateTo] = useState(searchParams.get("to") ?? "");
+  const [pendingFrom, setPendingFrom] = useState(
+    searchParams.get("from") ?? "",
+  );
+  const [pendingTo, setPendingTo] = useState(searchParams.get("to") ?? "");
+  const [priceSort, setPriceSort] = useState<"asc" | "desc" | "">(
+    (searchParams.get("sort") as "asc" | "desc") ?? "",
+  );
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<StockIn | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<StockIn | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const queryClient = useQueryClient();
+
   const { data, isPending, isError, refetch, error } = useQuery({
     queryKey: ["admin-inventory-stock-in", currentPage],
     queryFn: async () => {
@@ -118,6 +143,19 @@ export function StockInClient() {
     },
   });
 
+  const updateParams = useCallback(
+    (updates: Record<string, string>) => {
+      const params = new URLSearchParams(searchParams.toString());
+      Object.entries(updates).forEach(([k, v]) => {
+        if (v) params.set(k, v);
+        else params.delete(k);
+      });
+      params.delete("page");
+      router.push(`${pathname}?${params.toString()}`);
+    },
+    [searchParams, pathname, router],
+  );
+
   if (isPending || !data || !productsData || productsPending)
     return <StockInLoading />;
   if (isError) return <StockInError error={error} reset={refetch} />;
@@ -137,8 +175,57 @@ export function StockInClient() {
 
   const records = data.data;
   const limit = data.meta.limit;
-  const total = data.meta.total;
-  const totalPages = data.meta.totalPages;
+
+  // --- Filter handlers ---
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    // swap this for: debouncedSearch(value) → updateParams({ search: value })
+    updateParams({ search: value });
+    setCurrentPage(1);
+  };
+
+  const handleApplyDates = () => {
+    setDateFrom(pendingFrom);
+    setDateTo(pendingTo);
+    updateParams({ from: pendingFrom, to: pendingTo });
+    setCurrentPage(1);
+  };
+
+  const handlePriceSort = (value: "asc" | "desc" | "") => {
+    setPriceSort(value);
+    updateParams({ sort: value });
+    setCurrentPage(1);
+  };
+
+  const handleClear = () => {
+    setSearch("");
+    setPendingFrom("");
+    setPendingTo("");
+    setDateFrom("");
+    setDateTo("");
+    setPriceSort("");
+    setCurrentPage(1);
+    router.push(pathname);
+  };
+
+  const hasActiveFilters = !!search || !!dateFrom || !!dateTo || !!priceSort;
+  const hasPendingDateChange = pendingFrom !== dateFrom || pendingTo !== dateTo;
+
+  const filtered = records
+    .filter((r) => {
+      const q = search.toLowerCase();
+      const matchesSearch =
+        !search ||
+        r.productName.toLowerCase().includes(q) ||
+        r.invoiceNo?.toLowerCase().includes(q);
+      const matchesFrom = !dateFrom || r.date >= dateFrom;
+      const matchesTo = !dateTo || r.date <= dateTo;
+      return matchesSearch && matchesFrom && matchesTo;
+    })
+    .sort((a, b) => {
+      if (!priceSort) return 0;
+      return priceSort === "asc" ? a.rate - b.rate : b.rate - a.rate;
+    });
 
   const handleSubmit = async (data: StockInFormData) => {
     if (editTarget) {
@@ -156,7 +243,7 @@ export function StockInClient() {
   };
 
   return (
-    <div className="space-y-6 min-h-screen bg-(--brand-cream) px-4 py-8 sm:px-6 lg:px-8 mx-auto max-w-7xl">
+    <div className="space-y-4 min-h-screen bg-(--brand-cream) px-4 py-8 sm:px-6 lg:px-8 mx-auto max-w-8xl">
       <InventoryPageHeader
         title="Stock In"
         description="Track all incoming inventory and purchase records."
@@ -173,12 +260,107 @@ export function StockInClient() {
         }
       />
 
+      {/* ── Filters ── */}
+      <div className="flex flex-col gap-3">
+        {/* Row 1: Search + Price sort */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <Input
+              placeholder="Search by product name or invoice no…"
+              value={search}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              className="pl-9"
+              style={{ fontFamily: "var(--font-dm-sans)" }}
+            />
+          </div>
+
+          <Select
+            value={priceSort}
+            onValueChange={(v) => handlePriceSort(v as "asc" | "desc" | "")}
+          >
+            <SelectTrigger
+              className="w-full sm:w-44"
+              style={{ fontFamily: "var(--font-dm-sans)" }}
+            >
+              <SelectValue placeholder="Sort by rate" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Default</SelectItem>
+              <SelectItem value="asc">Rate: Low → High</SelectItem>
+              <SelectItem value="desc">Rate: High → Low</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Row 2: Date range + Apply + Clear */}
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
+          <div className="relative">
+            <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <Input
+              type="date"
+              value={pendingFrom}
+              onChange={(e) => setPendingFrom(e.target.value)}
+              className="pl-9 w-38"
+              style={{ fontFamily: "var(--font-dm-sans)" }}
+            />
+          </div>
+
+          <span className="text-muted-foreground text-sm shrink-0">to</span>
+
+          <div className="relative">
+            <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <Input
+              type="date"
+              value={pendingTo}
+              onChange={(e) => setPendingTo(e.target.value)}
+              className="pl-9 w-38"
+              style={{ fontFamily: "var(--font-dm-sans)" }}
+            />
+          </div>
+
+          {hasPendingDateChange && (
+            <Button
+              size="sm"
+              onClick={handleApplyDates}
+              className="bg-(--brand-green) hover:bg-(--brand-green-2) text-white shrink-0"
+              style={{ fontFamily: "var(--font-dm-sans)" }}
+            >
+              Apply
+            </Button>
+          )}
+
+          {hasActiveFilters && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleClear}
+              className="text-muted-foreground hover:text-foreground gap-1 shrink-0"
+              style={{ fontFamily: "var(--font-dm-sans)" }}
+            >
+              <X className="h-3.5 w-3.5" />
+              Clear
+            </Button>
+          )}
+
+          {hasActiveFilters && (
+            <p
+              className="text-sm text-muted-foreground ml-auto"
+              style={{ fontFamily: "var(--font-dm-sans)" }}
+            >
+              {filtered.length} of {records.length} record
+              {records.length !== 1 ? "s" : ""}
+            </p>
+          )}
+        </div>
+      </div>
+
       <StockInTable
-        data={records}
-        total={total}
+        data={filtered}
+        total={filtered.length}
         limit={limit}
         currentPage={currentPage}
-        totalPages={totalPages}
+        totalPages={Math.ceil(filtered.length / limit)}
         onPageChange={setCurrentPage}
         onEdit={(item) => {
           setDialogOpen(true);

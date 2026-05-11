@@ -116,9 +116,7 @@ func UpdateUser(queries repository.UserRepository) gin.HandlerFunc {
 			Success: true,
 			Message: "User updated",
 			Data: types.UserResponse{
-				Name:  updatedUser.Name,
-				Email: updatedUser.Email,
-				Role:  updatedUser.Role,
+				User: updatedUser,
 			},
 		})
 	}

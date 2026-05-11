@@ -1,5 +1,10 @@
 package types
 
+import (
+	"github.com/jackc/pgx/v5/pgtype"
+	db "github.com/suprimkhatri77/sms/backend/internal/database/generated"
+)
+
 type AppError struct {
 	Code    string `json:"code"`
 	Field   string `json:"field,omitempty"`
@@ -20,4 +25,16 @@ type PaginationMeta struct {
 	TotalPages int `json:"totalPages"`
 	Page       int `json:"page,omitempty"`
 	Limit      int `json:"limit"`
+}
+
+type User struct {
+	ID       pgtype.UUID `json:"id"`
+	Name     string      `json:"name"`
+	Role     string      `json:"role"`
+	Email    string      `json:"email"`
+	ImageUrl string      `json:"imageUrl"`
+}
+
+type UserResponse struct {
+	User db.User `json:"user"`
 }

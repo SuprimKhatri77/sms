@@ -16,10 +16,11 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import api from "@/lib/axios";
 import { toast } from "sonner";
-import axios from "axios";
+import { AxiosError } from "axios";
 import { ApiError } from "@repo/types/base";
 import { mapFieldErrors } from "@/utils/api";
 import { Spinner } from "./ui/spinner";
+import { useAuthStore } from "@/store/auth";
 
 type SignupPayload = Omit<SignupInput, "confirmPassword">;
 type FieldErrors = Partial<Record<keyof SignupPayload, string>>;
@@ -30,27 +31,30 @@ export function SignupForm({
 }: React.ComponentProps<"form">) {
   const [errors, setErrors] = useState<FieldErrors>();
   const router = useRouter();
-  const { mutate, isPending, reset } = useMutation({
+  const { mutate, isPending, reset } = useMutation<
+    SignupResponse,
+    AxiosError<ApiError>,
+    SignupPayload
+  >({
     mutationFn: async (data: SignupPayload) => {
-      const res = await api.post<SignupResponse>("/auth/signup", data);
+      const res = await api.post("/auth/signup", data);
       return res.data;
     },
     onSuccess: (result) => {
+      const user = result.data.user;
+
+      useAuthStore.getState().setUser(user);
       toast.success(result.message);
-      router.replace("/admin");
+      router.replace(`/${user.role === "student" ? "/dashboard" : "admin"}`);
       formReset();
       reset();
     },
     onError: (error) => {
-      if (axios.isAxiosError(error)) {
-        const data = error.response?.data as ApiError;
-
-        if (data?.errors) {
-          setErrors(mapFieldErrors(data));
-        }
-
-        toast.error(data?.message ?? "An unexpected error occurred.");
+      const data = error.response?.data;
+      if (data?.errors) {
+        setErrors(mapFieldErrors(data));
       }
+      toast.error(data?.message ?? "An unexpected error occurred.");
       reset();
     },
   });

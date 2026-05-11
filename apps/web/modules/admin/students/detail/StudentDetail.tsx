@@ -151,7 +151,7 @@ export default function StudentDetailPage({
           (c) => `
       <tr>
         <td style="padding:10px 0;border-bottom:1px solid #eee;font-size:13px;color:#2d4a3e;">${c.name}</td>
-        <td style="padding:10px 0;border-bottom:1px solid #eee;font-size:13px;color:#2d4a3e;text-align:right;">NPR ${c.fee.toLocaleString()}</td>
+        <td style="padding:10px 0;border-bottom:1px solid #eee;font-size:13px;color:#2d4a3e;text-align:right;">NPR ${(c.fee / 100).toLocaleString()}</td>
       </tr>`,
         )
         .join(""),
@@ -195,7 +195,7 @@ export default function StudentDetailPage({
     ["Student", student.fullName],
     ["Phone", student.phone],
     ["Fiscal Year", student.fiscalYear],
-    ["Status", STATUS_META[currentStatus].label],
+    // ["Status", STATUS_META[currentStatus].label],
   ]
     .map(
       ([l, v]) =>

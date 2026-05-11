@@ -1,22 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
+import { attemptRefresh, getSession } from "@/lib/middleware/auth";
 import {
-  attemptRefresh,
-  getSession,
-  getSessionFromRequest,
-} from "@/lib/middleware/auth";
-import { PUBLIC_ROUTES, ROLE_RULES } from "./lib/middleware/config";
+  ROLE_RULES,
+  UNAUTHENTICATED_ONLY_ROUTES,
+} from "./lib/middleware/config";
 
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   console.log("middleware triggered:", pathname);
 
-  const isPublicRoute = PUBLIC_ROUTES.some((p) => pathname.startsWith(p));
+  const isUnauthenticatedOnlyRoute = UNAUTHENTICATED_ONLY_ROUTES.some((p) =>
+    pathname.startsWith(p),
+  );
   const requiredRoles = Object.entries(ROLE_RULES).find(([path]) =>
     pathname.startsWith(path),
   )?.[1];
 
-  if (isPublicRoute) {
+  if (isUnauthenticatedOnlyRoute) {
     const refreshToken = req.cookies.get("refresh_token")?.value;
+    if (!refreshToken) return NextResponse.next();
     console.log(
       "public route hit:",
       req.nextUrl.pathname,
@@ -24,13 +26,18 @@ export async function proxy(req: NextRequest) {
       !!refreshToken,
     );
 
-    if (refreshToken) {
-      const user = await getSessionFromRequest(req);
+    const accessToken = req.cookies.get("access_token")?.value;
+    console.log("access token: ", accessToken);
+
+    if (accessToken) {
+      const user = getSession(accessToken);
+      console.log("user: ", user);
       if (user?.role === "student")
         return NextResponse.redirect(new URL("/dashboard", req.url));
       if (user?.role === "admin" || user?.role === "superadmin")
         return NextResponse.redirect(new URL("/admin", req.url));
     }
+
     return NextResponse.next();
   }
 

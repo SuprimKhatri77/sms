@@ -6,7 +6,32 @@ export const loginInputSchema = z.object({
   password: z.string().min(8).max(50),
 });
 
-export const loginResponse = apiErrorSchema;
+export const userSchema = z.object({
+  name: z
+    .string()
+    .regex(/^[A-Za-z ]+$/, "Full name can only contain letters and spaces")
+    .trim(),
+  role: z.enum(["admin", "student"]),
+  email: z.email(),
+  id: z.uuid(),
+  imageUrl: z.url().optional(),
+  createdAt: z.date(),
+});
+
+export const loginResponse = z.discriminatedUnion("success", [
+  z.object({
+    success: z.literal(true),
+    message: z.string(),
+    data: z.object({
+      user: userSchema.omit({ createdAt: true }),
+    }),
+  }),
+  z.object({
+    success: z.literal(false),
+    message: z.string(),
+    errors: z.array(errorResponse).optional(),
+  }),
+]);
 
 export type LoginInput = z.infer<typeof loginInputSchema>;
 export type LoginResponse = z.infer<typeof loginResponse>;
@@ -39,33 +64,16 @@ export const signupInputSchema = z
     }
   });
 
-export const signupResponseSchema = z.discriminatedUnion("success", [
-  z.object({
-    success: z.literal(true),
-    message: z.string(),
+export const signupResponseSchema = z.object({
+  message: z.string(),
+  success: z.literal(true),
+  data: z.object({
+    user: userSchema.omit({ createdAt: true }),
   }),
-  z.object({
-    success: z.literal(false),
-    message: z.string(),
-    errors: z.array(errorResponse).optional(),
-  }),
-]);
+});
 
 export type SignupInput = z.infer<typeof signupInputSchema>;
 export type SignupResponse = z.infer<typeof signupResponseSchema>;
-
-// user types
-export const userSchema = z.object({
-  name: z
-    .string()
-    .regex(/^[A-Za-z ]+$/, "Full name can only contain letters and spaces")
-    .trim(),
-  role: z.enum(["admin", "student"]),
-  email: z.email(),
-  id: z.uuid(),
-  imageUrl: z.url().optional(),
-  createdAt: z.date(),
-});
 
 export const usersListSchema = baseAPIResponseSchema.extend({
   data: z.array(userSchema).optional(),

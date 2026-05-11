@@ -144,7 +144,6 @@ func CreateStudent(queries repository.StudentRepository, pool *pgxpool.Pool) gin
 			Gender:        req.Gender,
 			GuardianName:  req.GuardianName,
 			GuardianPhone: req.GuardianPhone,
-			ClaimedAmount: int32(req.ClaimedAmount * 100),
 			Phone:         req.Phone,
 			PhotoUrl:      pgtype.Text{String: req.PhotoUrl, Valid: true},
 			Source:        req.Source,
