@@ -1,29 +1,28 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { AxiosError } from "axios";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
+  APIError,
   Supplier,
   UpdateSupplierInput,
   updateSupplierSchema,
 } from "@repo/types";
 import z from "zod";
-import { AxiosError } from "axios";
-import { APIError } from "@repo/types";
 
+import { AdminDrawer } from "@/components/admin/admin-drawer";
+import {
+  adminPrimaryButtonClass,
+  adminSecondaryButtonClass,
+} from "@/components/admin/admin-styles";
 import { mapFieldErrors } from "@/utils/api";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { FieldError } from "@/components/ui/field";
+import {
+  AccountingFormField,
+  AccountingFormSection,
+  accountingFieldInputClass,
+} from "../shared/accounting-styles";
 
 interface SupplierEditDialogProps {
   supplier: Supplier | null;
@@ -43,6 +42,7 @@ export function SupplierEditDialog({
   const [phone, setPhone] = useState("");
   const [errors, setErrors] =
     useState<Partial<Record<keyof UpdateSupplierInput, string>>>();
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (supplier) {
@@ -52,6 +52,7 @@ export function SupplierEditDialog({
         setPhone(supplier.phone ?? "");
         setErrors({});
       }, 0);
+      setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [supplier]);
 
@@ -93,94 +94,120 @@ export function SupplierEditDialog({
     }
   };
 
-  return (
-    <Dialog open={!!supplier} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle style={{ color: "var(--brand-ink)" }}>
-            Edit Supplier
-          </DialogTitle>
-          <DialogDescription>
-            Update the supplier&apos;s details below.
-          </DialogDescription>
-        </DialogHeader>
+  const handleClose = () => {
+    onClose();
+  };
 
-        <div className="space-y-4 py-2">
-          <div className="flex flex-col gap-1.5">
-            <Label className="text-sm font-medium">
-              Company Name <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              className="h-9"
+  const unchanged =
+    supplier &&
+    companyName.trim() === supplier.companyName &&
+    (vatNo.trim() || undefined) === (supplier.vatNo || undefined) &&
+    (phone.trim() || undefined) === (supplier.phone || undefined);
+
+  return (
+    <AdminDrawer
+      open={!!supplier}
+      onOpenChange={(next) => !next && handleClose()}
+      title="Edit Supplier"
+      description="Update the supplier's details below."
+      footer={
+        <div className="flex items-center justify-end gap-2.5">
+          <button
+            type="button"
+            onClick={handleClose}
+            disabled={loading}
+            className={adminSecondaryButtonClass}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={loading || !!unchanged || !companyName.trim()}
+            className={adminPrimaryButtonClass}
+          >
+            {loading ? "Saving…" : "Save Changes"}
+          </button>
+        </div>
+      }
+    >
+      <div className="flex flex-col gap-8 px-8 py-10">
+        <AccountingFormSection title="Supplier details">
+          <AccountingFormField
+            label="Company Name"
+            htmlFor="edit-supplier-company"
+            required
+            error={errors?.companyName}
+          >
+            <input
+              id="edit-supplier-company"
+              ref={inputRef}
+              type="text"
               value={companyName}
               onChange={(e) => {
                 setCompanyName(e.target.value);
                 setErrors((prev) => ({ ...prev, companyName: undefined }));
               }}
-              onKeyDown={(e) => e.key === "Enter" && handleSave()}
-              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSave();
+                if (e.key === "Escape") handleClose();
+              }}
+              disabled={loading}
+              className={cn(
+                accountingFieldInputClass,
+                errors?.companyName && "border-[#9a3412]",
+              )}
             />
-            {errors?.companyName && (
-              <FieldError>{errors.companyName}</FieldError>
-            )}
-          </div>
+          </AccountingFormField>
 
-          <div className="flex flex-col gap-1.5">
-            <Label className="text-sm font-medium">
-              VAT No.{" "}
-              <span className="text-xs font-normal text-stone-400">
-                (optional)
-              </span>
-            </Label>
-            <Input
+          <AccountingFormField
+            label="VAT No."
+            htmlFor="edit-supplier-vat"
+            optional
+            error={errors?.vatNo}
+          >
+            <input
+              id="edit-supplier-vat"
+              type="text"
               placeholder="e.g. 300123456"
-              className="h-9 font-mono"
               value={vatNo}
               onChange={(e) => {
                 setVatNo(e.target.value);
                 setErrors((prev) => ({ ...prev, vatNo: undefined }));
               }}
+              disabled={loading}
+              className={cn(
+                accountingFieldInputClass,
+                "font-mono",
+                errors?.vatNo && "border-[#9a3412]",
+              )}
             />
-            {errors?.vatNo && <FieldError>{errors.vatNo}</FieldError>}
-          </div>
+          </AccountingFormField>
 
-          <div className="flex flex-col gap-1.5">
-            <Label className="text-sm font-medium">
-              Phone{" "}
-              <span className="text-xs font-normal text-stone-400">
-                (optional)
-              </span>
-            </Label>
-            <Input
+          <AccountingFormField
+            label="Phone"
+            htmlFor="edit-supplier-phone"
+            optional
+            error={errors?.phone}
+          >
+            <input
+              id="edit-supplier-phone"
               type="tel"
               placeholder="e.g. 9841000000"
-              className="h-9"
               value={phone}
               onChange={(e) => {
                 setPhone(e.target.value);
                 setErrors((prev) => ({ ...prev, phone: undefined }));
               }}
+              disabled={loading}
+              className={cn(
+                accountingFieldInputClass,
+                errors?.phone && "border-[#9a3412]",
+              )}
             />
-            {errors?.phone && <FieldError>{errors.phone}</FieldError>}
-          </div>
-        </div>
-
-        <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={onClose} disabled={loading}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSave}
-            disabled={loading}
-            style={{
-              backgroundColor: "var(--brand-green)",
-              color: "var(--brand-cream)",
-            }}
-          >
-            {loading ? "Saving..." : "Save Changes"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          </AccountingFormField>
+        </AccountingFormSection>
+      </div>
+    </AdminDrawer>
   );
 }

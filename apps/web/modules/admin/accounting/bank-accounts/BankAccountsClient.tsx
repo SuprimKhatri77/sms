@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
 
+import { AdminPageLayout } from "@/components/admin/admin-page-layout";
+import { adminPrimaryButtonClass } from "@/components/admin/admin-styles";
+import { accountingTableWrapClass } from "../shared/accounting-styles";
 import { BankAccountSkeleton } from "./BankAccountSkeleton";
 import { BankAccountsError } from "./BankAccountsError";
 import { BankAccountsEmpty } from "./BankAccountEmpty";
@@ -72,39 +75,36 @@ export function BankAccountsClient() {
   };
 
   return (
-    <div className="flex flex-col gap-7">
-      {/* Page header */}
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="font-[family-name:var(--font-lora)] text-2xl font-bold text-[#1a1a1a] leading-tight mb-1">
-            Bank Accounts
-          </h1>
-          <p className="text-sm text-stone-500 font-[family-name:var(--font-dm-sans)]">
-            Manage accounts linked to your banks for payment processing.
-          </p>
-        </div>
+    <AdminPageLayout
+      title="Bank Accounts"
+      description="Manage accounts linked to your banks for payment processing."
+      maxWidth="wide"
+      action={
         <button
+          type="button"
           onClick={() => setCreateOpen(true)}
-          className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-[#2f4e40] text-[#fbfaf7] text-sm font-medium font-[family-name:var(--font-dm-sans)] hover:bg-[#3a5a49] hover:shadow-md transition-all cursor-pointer shrink-0"
+          className={adminPrimaryButtonClass}
         >
           <Plus size={15} strokeWidth={2.5} />
           Add Account
         </button>
-      </div>
-
-      {/* Content */}
+      }
+    >
       <div className="min-h-80">
-        {isPending && <BankAccountSkeleton />}
-        {(isError || error) && (
-          <BankAccountsError
-            message={error.message ?? "Something went wrong"}
-            onRetry={refetch}
-          />
-        )}
-        {!isPending && !isError && data.meta.total === 0 && (
-          <BankAccountsEmpty onAdd={() => setCreateOpen(true)} />
-        )}
-        {!isPending && !isError && data && data.meta.total > 0 && (
+        {isPending ? (
+          <BankAccountSkeleton />
+        ) : isError || error ? (
+          <div className={accountingTableWrapClass}>
+            <BankAccountsError
+              message={error?.message ?? "Something went wrong"}
+              onRetry={refetch}
+            />
+          </div>
+        ) : data?.meta.total === 0 ? (
+          <div className={accountingTableWrapClass}>
+            <BankAccountsEmpty onAdd={() => setCreateOpen(true)} />
+          </div>
+        ) : data ? (
           <BankAccountsTable
             accounts={data.bankAccounts}
             meta={data.meta}
@@ -114,10 +114,9 @@ export function BankAccountsClient() {
             onToggleDefault={handleToggleDefault}
             onPageChange={setPage}
           />
-        )}
+        ) : null}
       </div>
 
-      {/* Dialogs */}
       <BankAccountCreateDialog
         open={createOpen}
         loading={createBankAccount.isPending}
@@ -138,6 +137,6 @@ export function BankAccountsClient() {
         onClose={() => setDeleteAccount(null)}
         onConfirm={handleDelete}
       />
-    </div>
+    </AdminPageLayout>
   );
 }

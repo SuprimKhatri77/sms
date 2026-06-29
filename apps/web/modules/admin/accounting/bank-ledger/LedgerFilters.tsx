@@ -1,6 +1,5 @@
 "use client";
 
-import { SlidersHorizontal } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -8,8 +7,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
 import { BankAccountForDropdown } from "@repo/types";
+import {
+  AccountingFilterShell,
+  accountingLabelClass,
+  accountingSelectTriggerClass,
+} from "../shared/accounting-styles";
 
 export type FilterState = {
   bankId: string;
@@ -65,30 +68,29 @@ export function LedgerFilters({
       bankName: selectedAccount?.bankName ?? filters.bankName,
     });
   }
-  return (
-    <div
-      className="rounded-lg border px-5 py-4"
-      style={{ borderColor: "#e5e0d6", backgroundColor: "#fff" }}
-    >
-      <span
-        className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide mb-3"
-        style={{ color: "#6b7280" }}
-      >
-        <SlidersHorizontal size={13} />
-        Filters
-      </span>
 
-      <div className="flex flex-wrap gap-3">
-        {/* Bank selector */}
-        <div className="flex flex-col gap-1 flex-1 min-w-[160px]">
-          <Label
-            className="text-xs font-medium uppercase tracking-wide"
-            style={{ color: "#9ca3af" }}
-          >
-            Bank
-          </Label>
+  const hasActiveFilters =
+    filters.bankId !== "all" || filters.accountId !== "all";
+
+  function handleClear() {
+    onChange({
+      bankId: "all",
+      bankName: "all",
+      accountId: "all",
+      accountName: "all",
+    });
+  }
+
+  return (
+    <AccountingFilterShell
+      hasActiveFilters={hasActiveFilters}
+      onClear={handleClear}
+    >
+      <div className="flex flex-wrap gap-4">
+        <div className="flex min-w-[160px] flex-1 flex-col gap-2">
+          <span className={accountingLabelClass}>Bank</span>
           <Select value={filters.bankId} onValueChange={handleBankChange}>
-            <SelectTrigger className="h-9 text-sm w-full">
+            <SelectTrigger className={accountingSelectTriggerClass}>
               <SelectValue placeholder="All Banks">
                 {filters.bankId === "all"
                   ? "All Banks"
@@ -107,20 +109,14 @@ export function LedgerFilters({
           </Select>
         </div>
 
-        {/* Account selector */}
         {!hideAccountSelector && (
-          <div className="flex flex-col gap-1 flex-1 min-w-[160px]">
-            <Label
-              className="text-xs font-medium uppercase tracking-wide"
-              style={{ color: "#9ca3af" }}
-            >
-              Bank Account
-            </Label>
+          <div className="flex min-w-[160px] flex-1 flex-col gap-2">
+            <span className={accountingLabelClass}>Bank Account</span>
             <Select
               value={filters.accountId}
               onValueChange={handleAccountChange}
             >
-              <SelectTrigger className="h-9 text-sm w-full">
+              <SelectTrigger className={accountingSelectTriggerClass}>
                 <SelectValue placeholder="All Accounts">
                   {filters.accountId === "all"
                     ? "All Accounts"
@@ -133,7 +129,10 @@ export function LedgerFilters({
                 {filteredAccounts.map((a) => (
                   <SelectItem key={a.id} value={a.id}>
                     {a.accountName}
-                    <span style={{ color: "#9ca3af" }}> — {a.bankName}</span>
+                    <span className="text-[rgba(47,78,64,0.45)]">
+                      {" "}
+                      — {a.bankName}
+                    </span>
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -141,6 +140,6 @@ export function LedgerFilters({
           </div>
         )}
       </div>
-    </div>
+    </AccountingFilterShell>
   );
 }

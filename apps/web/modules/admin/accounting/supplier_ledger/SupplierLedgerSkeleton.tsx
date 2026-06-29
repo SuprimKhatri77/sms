@@ -1,46 +1,63 @@
+import {
+  accountingTableWrapClass,
+  accountingThClass,
+} from "../shared/accounting-styles";
+
+const thClass = `${accountingThClass} bg-[rgba(47,78,64,0.03)]`;
+const tableClass = "w-full table-fixed border-collapse text-left text-sm";
+
+function SkeletonColGroup() {
+  return (
+    <colgroup>
+      <col style={{ width: "5%" }} />
+      <col style={{ width: "11%" }} />
+      <col style={{ width: "20%" }} />
+      <col style={{ width: "6%" }} />
+      <col style={{ width: "14%" }} />
+      <col style={{ width: "14%" }} />
+      <col style={{ width: "30%" }} />
+    </colgroup>
+  );
+}
+
 export function SupplierLedgerSkeleton() {
   return (
     <div
-      className="rounded-xl border flex flex-col overflow-hidden animate-pulse"
+      className={`${accountingTableWrapClass} flex w-full animate-pulse flex-col overflow-hidden`}
       style={{
-        borderColor: "#e5e0d6",
         height: "calc(100vh - 360px)",
         minHeight: "320px",
       }}
     >
-      {/* Sticky header */}
-      <div
-        className="flex gap-4 px-4 py-3"
-        style={{ backgroundColor: "var(--brand-green)", opacity: 0.7 }}
-      >
-        {[40, 90, 130, 50, 100, 100, 140, 90].map((w, i) => (
-          <div
-            key={i}
-            className="h-3 rounded bg-white/20"
-            style={{ width: `${w}px` }}
-          />
-        ))}
-      </div>
-      {/* Rows */}
-      <div className="flex-1 overflow-hidden">
-        {Array.from({ length: 12 }).map((_, i) => (
-          <div
-            key={i}
-            className="flex gap-4 items-center px-4 py-3 border-b"
-            style={{
-              borderColor: "#f0ede7",
-              backgroundColor: i % 2 === 0 ? "#fff" : "#faf9f6",
-            }}
-          >
-            {[40, 90, 130, 50, 100, 100, 140, 90].map((w, j) => (
-              <div
-                key={j}
-                className="h-3 rounded bg-stone-100"
-                style={{ width: `${w}px` }}
-              />
+      <div className="w-full flex-1 overflow-hidden">
+        <table className={tableClass}>
+          <SkeletonColGroup />
+          <thead>
+            <tr>
+              {["S.No", "Date", "Supplier", "D/C", "Debit", "Credit", "Narration"].map(
+                (label) => (
+                  <th key={label} className={thClass}>
+                    <div className="h-3 w-3/4 bg-[rgba(47,78,64,0.08)]" />
+                  </th>
+                ),
+              )}
+            </tr>
+          </thead>
+          <tbody>
+            {Array.from({ length: 12 }).map((_, i) => (
+              <tr key={i} className="border-b border-[rgba(47,78,64,0.08)]">
+                {Array.from({ length: 7 }).map((_, j) => (
+                  <td key={j} className="px-5 py-4">
+                    <div
+                      className="h-3 bg-[rgba(47,78,64,0.06)]"
+                      style={{ width: j === 6 ? "85%" : `${55 + (j % 3) * 15}%` }}
+                    />
+                  </td>
+                ))}
+              </tr>
             ))}
-          </div>
-        ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );

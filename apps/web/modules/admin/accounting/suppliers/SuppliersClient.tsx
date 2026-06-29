@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 
+import { AdminPageLayout } from "@/components/admin/admin-page-layout";
+import { adminPrimaryButtonClass } from "@/components/admin/admin-styles";
+import { accountingTableWrapClass } from "../shared/accounting-styles";
 import { SuppliersSkeleton } from "./SuppliersSkeleton";
 import { SuppliersError } from "./SuppliersError";
 import { SuppliersEmpty } from "./SuppliersEmpty";
@@ -48,7 +51,6 @@ export function SuppliersClient() {
   const updateSupplier = useUpdateSupplier();
   const deleteSupplierMutation = useDeleteSupplier();
 
-  // TODO: replace with real mutations
   const handleCreate = async (data: CreateSupplierInput) => {
     await createSupplier.mutateAsync(data);
   };
@@ -68,53 +70,46 @@ export function SuppliersClient() {
   };
 
   return (
-    <div className="flex flex-col gap-7">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="font-[family-name:var(--font-lora)] text-2xl font-bold text-[#1a1a1a] leading-tight mb-1">
-            Suppliers
-          </h1>
-          <p className="text-sm text-stone-500 font-[family-name:var(--font-dm-sans)]">
-            Manage your supplier accounts and contact details.
-          </p>
-        </div>
+    <AdminPageLayout
+      title="Suppliers"
+      description="Manage your supplier accounts and contact details."
+      maxWidth="wide"
+      action={
         <button
+          type="button"
           onClick={() => setCreateOpen(true)}
-          className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-[#2f4e40] text-[#fbfaf7] text-sm font-medium font-[family-name:var(--font-dm-sans)] hover:bg-[#3a5a49] hover:shadow-md transition-all cursor-pointer shrink-0"
+          className={adminPrimaryButtonClass}
         >
           <Plus size={15} strokeWidth={2.5} />
           Add Supplier
         </button>
-      </div>
-
-      {/* Content */}
+      }
+    >
       <div className="min-h-80">
-        {isPending && <SuppliersSkeleton />}
-
-        {isError && (
-          <SuppliersError
-            message={error.response?.data.message ?? "Something went wrong"}
-            onRetry={refetch}
-          />
-        )}
-
-        {!isPending && !isError && data && data.meta.total === 0 && (
-          <SuppliersEmpty onAdd={() => setCreateOpen(true)} />
-        )}
-
-        {!isPending && !isError && data && data.meta.total > 0 && (
+        {isPending ? (
+          <SuppliersSkeleton />
+        ) : isError || error ? (
+          <div className={accountingTableWrapClass}>
+            <SuppliersError
+              message={error?.response?.data.message ?? "Something went wrong"}
+              onRetry={refetch}
+            />
+          </div>
+        ) : data?.meta.total === 0 ? (
+          <div className={accountingTableWrapClass}>
+            <SuppliersEmpty onAdd={() => setCreateOpen(true)} />
+          </div>
+        ) : data ? (
           <SuppliersTable
             suppliers={data.suppliers}
             meta={data.meta}
             onEdit={setEditSupplier}
             onDelete={setDeleteSupplier}
-            onPageChange={(page) => setPage(page)}
+            onPageChange={setPage}
           />
-        )}
+        ) : null}
       </div>
 
-      {/* Dialogs */}
       <SupplierCreateDialog
         open={createOpen}
         loading={createSupplier.isPending}
@@ -133,6 +128,6 @@ export function SuppliersClient() {
         onClose={() => setDeleteSupplier(null)}
         onConfirm={handleDelete}
       />
-    </div>
+    </AdminPageLayout>
   );
 }

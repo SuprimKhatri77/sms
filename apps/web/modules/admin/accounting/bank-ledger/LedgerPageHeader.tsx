@@ -1,7 +1,7 @@
 "use client";
 
-import { PlusCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import { adminPrimaryButtonClass } from "@/components/admin/admin-styles";
 
 interface LedgerPageHeaderProps {
   title: string;
@@ -15,31 +15,28 @@ export function LedgerPageHeader({
   onCreateEntry,
 }: LedgerPageHeaderProps) {
   return (
-    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-      <div>
-        <h1
-          className="text-2xl font-bold tracking-tight"
-          style={{ color: "var(--brand-ink)" }}
-        >
+    <div className="flex flex-col gap-4 border-b border-[rgba(47,78,64,0.12)] pb-6 sm:flex-row sm:items-end sm:justify-between">
+      <div className="space-y-1">
+        <p className="font-[family-name:var(--font-dm-sans)] text-[10px] font-semibold uppercase tracking-[0.14em] text-[rgba(47,78,64,0.45)]">
+          Admin
+        </p>
+        <h1 className="font-[family-name:var(--font-lora)] text-[1.75rem] font-bold tracking-tight text-(--brand-green)">
           {title}
         </h1>
         {subtitle && (
-          <p className="mt-0.5 text-sm" style={{ color: "#6b7280" }}>
+          <p className="max-w-2xl font-[family-name:var(--font-dm-sans)] text-sm text-[rgba(47,78,64,0.55)]">
             {subtitle}
           </p>
         )}
       </div>
-      <Button
+      <button
+        type="button"
         onClick={onCreateEntry}
-        className="mt-3 sm:mt-0 self-start sm:self-auto gap-2 text-sm font-medium"
-        style={{
-          backgroundColor: "var(--brand-green)",
-          color: "var(--brand-cream)",
-        }}
+        className={adminPrimaryButtonClass}
       >
-        <PlusCircle size={15} />
+        <Plus size={15} strokeWidth={2.5} />
         New Entry
-      </Button>
+      </button>
     </div>
   );
 }

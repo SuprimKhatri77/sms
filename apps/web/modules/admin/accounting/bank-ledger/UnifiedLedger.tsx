@@ -3,8 +3,8 @@
 import { useCallback, useRef, useMemo, Suspense, useState } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useInfiniteQuery } from "@tanstack/react-query";
+import { Plus } from "lucide-react";
 import { FilterState, LedgerFilters } from "./LedgerFilters";
-import { LedgerPageHeader } from "./LedgerPageHeader";
 import { LedgerSummaryCards } from "./LedgerSummaryCard";
 import { LedgerTable } from "./LedgerTable";
 import { CreateLedgerEntryForm } from "./CreateLedgerEntryForm";
@@ -15,6 +15,8 @@ import { useBankLedgerSummary } from "@/hooks/queries/admin/banks/bank_ledger/us
 import { useBankAccountsDropdown } from "@/hooks/queries/admin/banks/bank_ledger/useBankAccountsDropdown";
 import { useCreateBankLedgerEntry } from "@/hooks/mutations/admin/bank_ledger/useCreateBankLedgerEntry";
 import { queryKeys } from "@/lib/query-keys";
+import { AdminPageLayout } from "@/components/admin/admin-page-layout";
+import { adminPrimaryButtonClass } from "@/components/admin/admin-styles";
 
 const PARAM_BANK_NAME = "bank_name";
 const PARAM_ACCOUNT_NAME = "account_name";
@@ -56,9 +58,7 @@ function LedgerPageInner() {
       setBankId(next.bankId);
       setAccountId(next.accountId);
       setSearchParams({
-        // [PARAM_BANK]: next.bankId,
         [PARAM_BANK_NAME]: next.bankName,
-        // [PARAM_ACCOUNT]: next.accountId,
         [PARAM_ACCOUNT_NAME]: next.accountName,
       });
     },
@@ -128,17 +128,22 @@ function LedgerPageInner() {
   const summaryLoading = summaryQuery.isPending;
 
   return (
-    <div
-      className="min-h-screen px-4 py-8 sm:px-6 lg:px-8"
-      style={{ backgroundColor: "var(--brand-cream)" }}
+    <AdminPageLayout
+      title="Bank Ledger"
+      description="All financial transactions across every bank account"
+      maxWidth="wide"
+      action={
+        <button
+          type="button"
+          onClick={() => setFormOpen(true)}
+          className={adminPrimaryButtonClass}
+        >
+          <Plus size={15} strokeWidth={2.5} />
+          New Entry
+        </button>
+      }
     >
-      <div className="mx-auto max-w-8xl space-y-6">
-        <LedgerPageHeader
-          title="Bank Ledger"
-          subtitle="All financial transactions across every bank account"
-          onCreateEntry={() => setFormOpen(true)}
-        />
-
+      <div className="space-y-6">
         <LedgerSummaryCards
           summary={summaryLoading ? null : summary}
           loading={summaryLoading}
@@ -173,7 +178,7 @@ function LedgerPageInner() {
       />
 
       <Toaster />
-    </div>
+    </AdminPageLayout>
   );
 }
 

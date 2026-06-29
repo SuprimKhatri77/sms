@@ -1,24 +1,26 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import {
-  DialogWrapper,
-  DialogHeader,
-  DialogFooter,
-  DialogField,
-  GhostButton,
-  PrimaryButton,
-} from "./DialogPrimitives";
-import { Bank } from "@repo/types";
+import { useForm } from "@tanstack/react-form-nextjs";
+import { AxiosError } from "axios";
+import { APIError, Bank } from "@repo/types";
 import {
   UpdateBankInput,
   updateBankInputSchema,
 } from "@repo/types/admin/accounting/bank";
-import { useForm } from "@tanstack/react-form-nextjs";
-import { APIError } from "@repo/types";
 
-import { AxiosError } from "axios";
+import { AdminDrawer } from "@/components/admin/admin-drawer";
+import {
+  adminPrimaryButtonClass,
+  adminSecondaryButtonClass,
+} from "@/components/admin/admin-styles";
 import { mapFieldErrors } from "@/utils/api";
+import { cn } from "@/lib/utils";
+import {
+  AccountingFormField,
+  AccountingFormSection,
+  accountingFieldInputClass,
+} from "../shared/accounting-styles";
 
 interface BankEditDialogProps {
   bank: Bank | null;
@@ -39,12 +41,8 @@ export function BankEditDialog({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm({
-    defaultValues: {
-      name: bank?.name ?? "",
-    },
-    validators: {
-      onSubmit: updateBankInputSchema,
-    },
+    defaultValues: { name: bank?.name ?? "" },
+    validators: { onSubmit: updateBankInputSchema },
     onSubmit: async ({ value, formApi }) => {
       if (!bank) return;
       try {
@@ -52,8 +50,8 @@ export function BankEditDialog({
         formApi.reset();
         onClose();
       } catch (err) {
-        const error = err as AxiosError<APIError>;
-        const data = error.response?.data;
+        const axiosError = err as AxiosError<APIError>;
+        const data = axiosError.response?.data;
         if (data?.errors?.length) {
           setError(mapFieldErrors(data));
         }
@@ -63,67 +61,85 @@ export function BankEditDialog({
 
   useEffect(() => {
     if (bank) {
-      form.reset({
-        name: bank.name,
-      });
-      setTimeout(() => {
-        setError({});
-      }, 0);
+      form.reset({ name: bank.name });
+      setTimeout(() => setError({}), 0);
+      setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [bank]);
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") form.handleSubmit();
-    if (e.key === "Escape") onClose();
+  const handleClose = () => {
+    onClose();
   };
 
   return (
-    <DialogWrapper
+    <AdminDrawer
       open={!!bank}
-      onClose={onClose}
-      ariaLabelledBy="edit-dialog-title"
-    >
-      <DialogHeader
-        id="edit-dialog-title"
-        title="Edit Bank"
-        onClose={onClose}
-      />
-      <form.Field name="name">
-        {(field) => {
-          const fieldError = field.state.meta.errors[0]?.message;
-          const mergedError = fieldError ?? error.name;
-          const unchanged = field.state.value.trim() === bank?.name;
-          return (
-            <>
-              <div className="px-6 py-5">
-                <DialogField
-                  id="edit-bank-name"
-                  label="Bank Name"
-                  value={field.state.value}
-                  onChange={(v) => {
-                    field.handleChange(v);
-                  }}
-                  onKeyDown={handleKeyDown}
-                  disabled={loading}
-                  error={mergedError}
-                  inputRef={inputRef}
-                />
-              </div>
-              <DialogFooter>
-                <GhostButton onClick={onClose} disabled={loading}>
-                  Cancel
-                </GhostButton>
-                <PrimaryButton
-                  onClick={form.handleSubmit}
-                  disabled={loading || unchanged || !field.state.value.trim()}
+      onOpenChange={(next) => !next && handleClose()}
+      title="Edit Bank"
+      description="Update the bank name."
+      footer={
+        <div className="flex items-center justify-end gap-2.5">
+          <button
+            type="button"
+            onClick={handleClose}
+            disabled={loading}
+            className={adminSecondaryButtonClass}
+          >
+            Cancel
+          </button>
+          <form.Subscribe selector={(s) => s.values.name}>
+            {(name) => {
+              const unchanged = name.trim() === bank?.name;
+              return (
+                <button
+                  type="button"
+                  onClick={() => form.handleSubmit()}
+                  disabled={loading || unchanged || !name.trim()}
+                  className={adminPrimaryButtonClass}
                 >
                   {loading ? "Saving…" : "Save Changes"}
-                </PrimaryButton>
-              </DialogFooter>
-            </>
-          );
-        }}
-      </form.Field>
-    </DialogWrapper>
+                </button>
+              );
+            }}
+          </form.Subscribe>
+        </div>
+      }
+    >
+      <div className="flex flex-col gap-8 px-8 py-10">
+        <AccountingFormSection title="Bank details">
+          <form.Field name="name">
+            {(field) => {
+              const fieldError = field.state.meta.errors[0]?.message;
+              const mergedError = fieldError ?? error.name;
+              return (
+                <AccountingFormField
+                  label="Bank Name"
+                  htmlFor="edit-bank-name"
+                  required
+                  error={mergedError}
+                >
+                  <input
+                    id="edit-bank-name"
+                    ref={inputRef}
+                    type="text"
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") form.handleSubmit();
+                      if (e.key === "Escape") handleClose();
+                    }}
+                    disabled={loading}
+                    className={cn(
+                      accountingFieldInputClass,
+                      mergedError && "border-[#9a3412]",
+                    )}
+                  />
+                </AccountingFormField>
+              );
+            }}
+          </form.Field>
+        </AccountingFormSection>
+      </div>
+    </AdminDrawer>
   );
 }

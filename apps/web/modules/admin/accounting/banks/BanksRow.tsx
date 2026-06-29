@@ -1,8 +1,14 @@
 "use client";
 
 import { Pencil, Trash2 } from "lucide-react";
-import { BankDefaultToggle } from "./BankDefaultToggle";
 import { Bank } from "@repo/types";
+import {
+  adminDangerIconButtonClass,
+  adminIconButtonClass,
+} from "@/components/admin/admin-styles";
+import { accountingTdClass } from "../shared/accounting-styles";
+import { BankDefaultToggle } from "./BankDefaultToggle";
+import { cn } from "@/lib/utils";
 
 interface BankRowProps {
   bank: Bank;
@@ -28,62 +34,53 @@ export function BankRow({
   onToggleDefault,
 }: BankRowProps) {
   return (
-    <div
-      className={[
-        "grid grid-cols-[1fr_90px_160px_80px] gap-4 items-center px-5 py-3.5",
-        "border-b border-stone-100 last:border-0 transition-colors",
-        bank.isDefault
-          ? "bg-emerald-50/60 hover:bg-emerald-50"
-          : "hover:bg-stone-50",
-      ].join(" ")}
-      role="row"
+    <tr
+      className={cn(
+        "transition-colors hover:bg-[rgba(47,78,64,0.02)]",
+        bank.isDefault && "bg-[rgba(47,78,64,0.03)]",
+      )}
     >
-      {/* Name + badge */}
-      <div className="flex items-center gap-2.5 min-w-0" role="cell">
-        <span className="text-sm font-medium text-[#1a1a1a] font-[family-name:var(--font-dm-sans)] truncate">
-          {bank.name}
-        </span>
-        {bank.isDefault && (
-          <span className="shrink-0 text-[0.65rem] font-semibold uppercase tracking-wider text-[#2f4e40] bg-[#2f4e40]/10 border border-[#2f4e40]/20 px-2 py-0.5 rounded-full">
-            Default
-          </span>
-        )}
-      </div>
-
-      {/* Toggle */}
-      <div role="cell">
+      <td className={`${accountingTdClass} font-medium`}>
+        <div className="flex min-w-0 items-center gap-2.5">
+          <span>{bank.name}</span>
+          {bank.isDefault ? (
+            <span className="shrink-0 border border-[rgba(47,78,64,0.2)] bg-[rgba(47,78,64,0.06)] px-2 py-0.5 font-[family-name:var(--font-dm-sans)] text-[10px] font-semibold uppercase tracking-[0.08em] text-(--brand-green)">
+              Default
+            </span>
+          ) : null}
+        </div>
+      </td>
+      <td className={accountingTdClass}>
         <BankDefaultToggle
           bankId={bank.id}
           isDefault={bank.isDefault}
           loading={toggleLoadingId === bank.id}
           onToggle={onToggleDefault}
         />
-      </div>
-
-      {/* Date */}
-      <div role="cell">
-        <span className="text-[0.8125rem] text-stone-400 font-[family-name:var(--font-dm-sans)]">
-          {formatDate(bank.createdAt)}
-        </span>
-      </div>
-
-      {/* Actions */}
-      <div className="flex items-center justify-end gap-1.5" role="cell">
-        <button
-          onClick={() => onEdit(bank)}
-          aria-label={`Edit ${bank.name}`}
-          className="w-8 h-8 rounded-md border border-stone-200 flex items-center justify-center text-stone-400 hover:bg-stone-100 hover:text-stone-700 hover:border-stone-300 transition-colors cursor-pointer"
-        >
-          <Pencil size={13} strokeWidth={2} />
-        </button>
-        <button
-          onClick={() => onDelete(bank)}
-          aria-label={`Delete ${bank.name}`}
-          className="w-8 h-8 rounded-md border border-stone-200 flex items-center justify-center text-stone-400 hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-colors cursor-pointer"
-        >
-          <Trash2 size={13} strokeWidth={2} />
-        </button>
-      </div>
-    </div>
+      </td>
+      <td className={`${accountingTdClass} text-[rgba(47,78,64,0.55)]`}>
+        {formatDate(bank.createdAt)}
+      </td>
+      <td className={`${accountingTdClass} text-right`}>
+        <div className="flex items-center justify-end gap-1.5">
+          <button
+            type="button"
+            onClick={() => onEdit(bank)}
+            aria-label={`Edit ${bank.name}`}
+            className={adminIconButtonClass}
+          >
+            <Pencil size={13} strokeWidth={1.75} />
+          </button>
+          <button
+            type="button"
+            onClick={() => onDelete(bank)}
+            aria-label={`Delete ${bank.name}`}
+            className={adminDangerIconButtonClass}
+          >
+            <Trash2 size={13} strokeWidth={1.75} />
+          </button>
+        </div>
+      </td>
+    </tr>
   );
 }

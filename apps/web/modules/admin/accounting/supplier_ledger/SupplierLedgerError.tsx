@@ -1,4 +1,5 @@
-import { AlertCircle, RefreshCw } from "lucide-react";
+import { AlertCircle } from "lucide-react";
+import { adminSecondaryButtonClass } from "@/components/admin/admin-styles";
 
 interface SupplierLedgerErrorProps {
   message: string;
@@ -10,21 +11,23 @@ export function SupplierLedgerError({
   onRetry,
 }: SupplierLedgerErrorProps) {
   return (
-    <div className="rounded-xl border border-red-100 bg-red-50 px-6 py-14 flex flex-col items-center gap-4 text-center">
-      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
-        <AlertCircle size={22} className="text-red-500" />
+    <div className="flex flex-col items-center justify-center gap-4 px-6 py-16 text-center">
+      <div className="flex h-11 w-11 items-center justify-center border border-red-200 bg-red-50 text-red-500">
+        <AlertCircle size={20} strokeWidth={1.75} />
       </div>
       <div>
-        <p className="text-sm font-semibold text-red-700">
+        <p className="font-[family-name:var(--font-lora)] text-base font-semibold text-(--brand-ink)">
           Failed to load ledger
         </p>
-        <p className="mt-1 text-xs text-red-400">{message}</p>
+        <p className="mt-1 font-[family-name:var(--font-dm-sans)] text-sm text-[rgba(47,78,64,0.55)]">
+          {message}
+        </p>
       </div>
       <button
+        type="button"
         onClick={onRetry}
-        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-red-200 bg-white text-sm font-medium text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+        className={adminSecondaryButtonClass}
       >
-        <RefreshCw size={13} />
         Try again
       </button>
     </div>

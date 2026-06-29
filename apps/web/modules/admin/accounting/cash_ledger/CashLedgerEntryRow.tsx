@@ -1,9 +1,9 @@
 import { CashLedger } from "@repo/types";
+import { accountingTdClass } from "../shared/accounting-styles";
 
 interface CashLedgerEntryRowProps {
   entry: CashLedger;
   serialNo: number;
-  striped?: boolean;
 }
 
 function formatRs(paisa: number) {
@@ -16,61 +16,49 @@ function formatRs(paisa: number) {
 export function CashLedgerEntryRow({
   entry,
   serialNo,
-  striped = false,
 }: CashLedgerEntryRowProps) {
   const isDebit = entry.entryType === "dr";
 
   return (
-    <tr
-      className="border-b text-sm transition-colors hover:brightness-[0.97]"
-      style={{
-        borderColor: "#f0ede7",
-        backgroundColor: striped ? "#faf9f6" : "#fff",
-        color: "var(--brand-ink)",
-      }}
-    >
-      {/* S.No */}
+    <tr className="transition-colors hover:bg-[rgba(47,78,64,0.02)]">
       <td
-        className="px-4 py-3 text-center tabular-nums"
-        style={{ color: "#9ca3af" }}
+        className={`${accountingTdClass} text-center tabular-nums text-[rgba(47,78,64,0.45)]`}
       >
         {serialNo}
       </td>
 
-      {/* BS Date */}
-      <td className="px-4 py-3 tabular-nums whitespace-nowrap font-mono text-xs">
+      <td
+        className={`${accountingTdClass} whitespace-nowrap font-mono text-xs tabular-nums`}
+      >
         {entry.bsDate}
       </td>
 
-      {/* D/C badge */}
-      <td className="px-4 py-3 text-center">
+      <td className={`${accountingTdClass} text-center`}>
         <span
-          className="inline-block w-6 text-center text-xs font-bold"
-          style={{ color: isDebit ? "#dc2626" : "#16a34a" }}
+          className={`inline-block w-6 text-center text-xs font-bold ${isDebit ? "text-[#9a3412]" : "text-[#16a34a]"}`}
         >
           {isDebit ? "D" : "C"}
         </span>
       </td>
 
-      {/* Debit */}
       <td
-        className="px-4 py-3 text-right tabular-nums font-mono text-xs whitespace-nowrap"
-        style={{ color: isDebit ? "#dc2626" : "#d1d5db" }}
+        className={`${accountingTdClass} text-right font-mono text-xs tabular-nums whitespace-nowrap ${isDebit ? "text-[#9a3412]" : "text-[rgba(47,78,64,0.2)]"}`}
       >
         {isDebit ? formatRs(entry.amount) : "—"}
       </td>
 
-      {/* Credit */}
       <td
-        className="px-4 py-3 text-right tabular-nums font-mono text-xs whitespace-nowrap"
-        style={{ color: !isDebit ? "#16a34a" : "#d1d5db" }}
+        className={`${accountingTdClass} text-right font-mono text-xs tabular-nums whitespace-nowrap ${!isDebit ? "text-[#16a34a]" : "text-[rgba(47,78,64,0.2)]"}`}
       >
         {!isDebit ? formatRs(entry.amount) : "—"}
       </td>
 
-      {/* Narration */}
-      <td className="px-4 py-3 whitespace-nowrap" style={{ color: "#4b5563" }}>
-        {entry.description ?? <span style={{ color: "#d1d5db" }}>—</span>}
+      <td
+        className={`${accountingTdClass} whitespace-nowrap text-[rgba(47,78,64,0.65)]`}
+      >
+        {entry.description ?? (
+          <span className="text-[rgba(47,78,64,0.2)]">—</span>
+        )}
       </td>
     </tr>
   );

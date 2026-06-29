@@ -1,13 +1,48 @@
 "use client";
 
-import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
-import { toast } from "sonner";
 import { SupplierLedgerEntryRow } from "./SupplierLedgerEntryRow";
 import { SupplierLedger } from "@repo/types";
+import {
+  accountingThClass,
+  accountingTableWrapClass,
+} from "../shared/accounting-styles";
 
-const COL_SPAN_WITH = 8;
-const COL_SPAN_WITHOUT = 7;
+const COL_SPAN_WITH = 7;
+const COL_SPAN_WITHOUT = 6;
+const thSticky = `${accountingThClass} sticky top-0 z-10`;
+const tableClass = "w-full table-fixed border-collapse text-left text-sm";
+
+function LedgerColGroup({
+  showSupplierColumn,
+}: {
+  showSupplierColumn: boolean;
+}) {
+  if (showSupplierColumn) {
+    return (
+      <colgroup>
+        <col style={{ width: "5%" }} />
+        <col style={{ width: "11%" }} />
+        <col style={{ width: "20%" }} />
+        <col style={{ width: "6%" }} />
+        <col style={{ width: "14%" }} />
+        <col style={{ width: "14%" }} />
+        <col style={{ width: "30%" }} />
+      </colgroup>
+    );
+  }
+
+  return (
+    <colgroup>
+      <col style={{ width: "6%" }} />
+      <col style={{ width: "13%" }} />
+      <col style={{ width: "7%" }} />
+      <col style={{ width: "16%" }} />
+      <col style={{ width: "16%" }} />
+      <col style={{ width: "42%" }} />
+    </colgroup>
+  );
+}
 
 interface SupplierLedgerTableProps {
   entries: SupplierLedger[];
@@ -22,7 +57,7 @@ interface SupplierLedgerTableProps {
 export function SupplierLedgerTable({
   entries,
   isFetchingNextPage,
-  hasReachedEnd,
+  hasReachedEnd: _hasReachedEnd,
   totalCount,
   scrollContainerRef,
   onScroll,
@@ -44,17 +79,10 @@ export function SupplierLedgerTable({
       maximumFractionDigits: 2,
     });
 
-  // useEffect(() => {
-  //   if (hasReachedEnd && entries.length > 0) {
-  //     toast.info(`All ${totalCount} entries loaded`);
-  //   }
-  // }, [hasReachedEnd, entries.length, totalCount]);
-
   return (
     <div
-      className="rounded-xl border flex flex-col overflow-hidden"
+      className={`${accountingTableWrapClass} flex w-full flex-col`}
       style={{
-        borderColor: "#e5e0d6",
         height: "calc(100vh - 360px)",
         minHeight: "320px",
       }}
@@ -62,35 +90,19 @@ export function SupplierLedgerTable({
       <div
         ref={scrollContainerRef}
         onScroll={onScroll}
-        className="flex-1 overflow-auto"
+        className="w-full flex-1 overflow-auto"
       >
-        <table
-          className="w-full text-left text-sm border-collapse"
-          style={{ minWidth: showSupplierColumn ? "820px" : "680px" }}
-        >
+        <table className={tableClass}>
+          <LedgerColGroup showSupplierColumn={showSupplierColumn} />
           <thead>
-            <tr
-              className="text-xs font-semibold uppercase tracking-wide"
-              style={{
-                backgroundColor: "var(--brand-green)",
-                color: "var(--brand-cream)",
-                position: "sticky",
-                top: 0,
-                zIndex: 1,
-              }}
-            >
-              <th className="px-4 py-3 w-12 text-center">S.No</th>
-              <th className="px-4 py-3 whitespace-nowrap">Date (BS)</th>
-              {showSupplierColumn && <th className="px-4 py-3">Supplier</th>}
-              <th className="px-4 py-3 w-10 text-center">D/C</th>
-              <th className="px-4 py-3 text-right whitespace-nowrap">
-                Debit (Rs.)
-              </th>
-              <th className="px-4 py-3 text-right whitespace-nowrap">
-                Credit (Rs.)
-              </th>
-              <th className="px-4 py-3">Narration</th>
-              {/* <th className="px-4 py-3 whitespace-nowrap">Stock In Ref</th> */}
+            <tr>
+              <th className={`${thSticky} text-center`}>S.No</th>
+              <th className={thSticky}>Date (BS)</th>
+              {showSupplierColumn && <th className={thSticky}>Supplier</th>}
+              <th className={`${thSticky} text-center`}>D/C</th>
+              <th className={`${thSticky} text-right`}>Debit (Rs.)</th>
+              <th className={`${thSticky} text-right`}>Credit (Rs.)</th>
+              <th className={`${thSticky} whitespace-normal`}>Narration</th>
             </tr>
           </thead>
 
@@ -101,49 +113,34 @@ export function SupplierLedgerTable({
                 entry={entry}
                 serialNo={idx + 1}
                 showSupplierColumn={showSupplierColumn}
-                striped={idx % 2 !== 0}
               />
             ))}
           </tbody>
 
-          <tfoot style={{ position: "sticky", bottom: 0, zIndex: 1 }}>
+          <tfoot className="sticky bottom-0 z-10">
             {isFetchingNextPage && (
-              <tr style={{ backgroundColor: "#faf9f6" }}>
-                <td colSpan={colSpan} className="px-4 py-2 text-center">
-                  <span
-                    className="flex items-center justify-center gap-2 text-xs"
-                    style={{ color: "#9ca3af" }}
-                  >
+              <tr className="bg-[rgba(47,78,64,0.03)]">
+                <td colSpan={colSpan} className="px-5 py-2 text-center">
+                  <span className="flex items-center justify-center gap-2 font-[family-name:var(--font-dm-sans)] text-xs text-[rgba(47,78,64,0.45)]">
                     <Loader2 size={13} className="animate-spin" />
                     Loading more entries...
                   </span>
                 </td>
               </tr>
             )}
-            <tr
-              className="text-xs font-semibold border-t whitespace-nowrap"
-              style={{ backgroundColor: "#f5f3ef", borderColor: "#e5e0d6" }}
-            >
+            <tr className="border-t border-[rgba(47,78,64,0.12)] bg-[rgba(47,78,64,0.03)] text-xs font-semibold">
               <td
                 colSpan={showSupplierColumn ? 4 : 3}
-                className="px-4 py-2 text-right uppercase tracking-wide"
-                style={{ color: "#6b7280" }}
+                className="px-5 py-2 text-right font-[family-name:var(--font-dm-sans)] uppercase tracking-[0.08em] text-[rgba(47,78,64,0.55)]"
               >
                 Loaded Total ({entries.length} of {totalCount})
               </td>
-              <td
-                className="px-4 py-2 text-right font-mono"
-                style={{ color: "#dc2626" }}
-              >
+              <td className="px-5 py-2 text-right font-mono text-[#9a3412]">
                 {fmt(totalDebit)}
               </td>
-              <td
-                className="px-4 py-2 text-right font-mono"
-                style={{ color: "#16a34a" }}
-              >
+              <td className="px-5 py-2 text-right font-mono text-[#16a34a]">
                 {fmt(totalCredit)}
               </td>
-              <td />
               <td />
             </tr>
           </tfoot>

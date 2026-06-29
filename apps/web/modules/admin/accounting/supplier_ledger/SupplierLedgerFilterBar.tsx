@@ -1,8 +1,6 @@
 "use client";
 
-import { SlidersHorizontal, CalendarDays, X } from "lucide-react";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
+import { CalendarDays } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -15,15 +13,18 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { BSToAD } from "bikram-sambat-js";
 import { SupplierForDropdown, SupplierLedgerFilters } from "./types";
+import {
+  AccountingFilterShell,
+  accountingFieldInputClass,
+  accountingLabelClass,
+  accountingSelectTriggerClass,
+} from "../shared/accounting-styles";
 
 interface SupplierLedgerFiltersBarProps {
   suppliers: SupplierForDropdown[];
   filters: SupplierLedgerFilters;
   onChange: (filters: SupplierLedgerFilters) => void;
 }
-
-const inputCls =
-  "h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring";
 
 export function SupplierLedgerFiltersBar({
   suppliers,
@@ -70,43 +71,15 @@ export function SupplierLedgerFiltersBar({
   }
 
   return (
-    <div
-      className="rounded-lg border px-5 py-4"
-      style={{ borderColor: "#e5e0d6", backgroundColor: "#fff" }}
-    >
-      <div className="flex items-center justify-between mb-3">
-        <span
-          className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide"
-          style={{ color: "#6b7280" }}
-        >
-          <SlidersHorizontal size={13} /> Filters
-        </span>
-        {hasFilters && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleClear}
-            className="h-7 px-2 text-xs gap-1"
-            style={{ color: "#9ca3af" }}
-          >
-            <X size={12} /> Clear
-          </Button>
-        )}
-      </div>
-
-      <div className="flex flex-wrap gap-3">
-        <div className="flex flex-col gap-1 flex-1 min-w-[160px]">
-          <Label
-            className="text-xs font-medium uppercase tracking-wide"
-            style={{ color: "#9ca3af" }}
-          >
-            Supplier
-          </Label>
+    <AccountingFilterShell hasActiveFilters={hasFilters} onClear={handleClear}>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="flex flex-col gap-2">
+          <span className={accountingLabelClass}>Supplier</span>
           <Select
             value={filters.supplierId}
             onValueChange={(v) => v && handleSupplierChange(v)}
           >
-            <SelectTrigger className="h-9 text-sm w-full rounded-none shadow-none py-[17px]">
+            <SelectTrigger className={accountingSelectTriggerClass}>
               <SelectValue placeholder="All Suppliers">
                 {filters.supplierId === "all"
                   ? "All Suppliers"
@@ -125,19 +98,14 @@ export function SupplierLedgerFiltersBar({
           </Select>
         </div>
 
-        <div className="flex flex-col gap-1 flex-1 min-w-[160px]">
-          <Label
-            className="text-xs font-medium uppercase tracking-wide"
-            style={{ color: "#9ca3af" }}
-          >
-            From Date (BS)
-          </Label>
+        <div className="flex flex-col gap-2">
+          <span className={accountingLabelClass}>From Date (BS)</span>
           <div className="relative">
-            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 z-10 text-[#2d4a3e]/40">
+            <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-[rgba(47,78,64,0.4)]">
               <CalendarDays className="h-4 w-4" strokeWidth={1.75} />
             </span>
             <NepaliDatePicker
-              inputClassName={cn(inputCls, "pl-9 rounded-none shadow-none")}
+              inputClassName={cn(accountingFieldInputClass, "pl-9")}
               value={filters.fromBsDate ?? ""}
               onChange={(v: string) => {
                 if (v) handleFromDate(v);
@@ -147,19 +115,14 @@ export function SupplierLedgerFiltersBar({
           </div>
         </div>
 
-        <div className="flex flex-col gap-1 flex-1 min-w-[160px]">
-          <Label
-            className="text-xs font-medium uppercase tracking-wide"
-            style={{ color: "#9ca3af" }}
-          >
-            To Date (BS)
-          </Label>
+        <div className="flex flex-col gap-2">
+          <span className={accountingLabelClass}>To Date (BS)</span>
           <div className="relative">
-            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 z-10 text-[#2d4a3e]/40">
+            <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-[rgba(47,78,64,0.4)]">
               <CalendarDays className="h-4 w-4" strokeWidth={1.75} />
             </span>
             <NepaliDatePicker
-              inputClassName={cn(inputCls, "pl-9 rounded-none shadow-none")}
+              inputClassName={cn(accountingFieldInputClass, "pl-9")}
               value={filters.toBsDate ?? ""}
               onChange={(v: string) => {
                 if (v) handleToDate(v);
@@ -169,6 +132,6 @@ export function SupplierLedgerFiltersBar({
           </div>
         </div>
       </div>
-    </div>
+    </AccountingFilterShell>
   );
 }

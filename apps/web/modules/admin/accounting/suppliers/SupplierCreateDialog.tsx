@@ -1,25 +1,23 @@
 "use client";
 
-import { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { CreateSupplierInput } from "./types";
-import { createSupplierSchema } from "@repo/types";
-import z from "zod";
-import { FieldError } from "@/components/ui/field";
-import { APIError } from "@repo/types";
-
+import { useEffect, useRef, useState } from "react";
 import { AxiosError } from "axios";
+import { APIError, createSupplierSchema } from "@repo/types";
+import z from "zod";
+
+import { AdminDrawer } from "@/components/admin/admin-drawer";
+import {
+  adminPrimaryButtonClass,
+  adminSecondaryButtonClass,
+} from "@/components/admin/admin-styles";
 import { mapFieldErrors } from "@/utils/api";
+import { cn } from "@/lib/utils";
+import { CreateSupplierInput } from "./types";
+import {
+  AccountingFormField,
+  AccountingFormSection,
+  accountingFieldInputClass,
+} from "../shared/accounting-styles";
 
 interface SupplierCreateDialogProps {
   open: boolean;
@@ -39,6 +37,17 @@ export function SupplierCreateDialog({
   const [phone, setPhone] = useState("");
   const [errors, setErrors] =
     useState<Partial<Record<keyof CreateSupplierInput, string>>>();
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (open) {
+      setCompanyName("");
+      setVatNo("");
+      setPhone("");
+      setErrors({});
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
+  }, [open]);
 
   const handleSubmit = async () => {
     const validateFields = createSupplierSchema.safeParse({
@@ -86,88 +95,104 @@ export function SupplierCreateDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle style={{ color: "var(--brand-ink)" }}>
-            Add Supplier
-          </DialogTitle>
-          <DialogDescription>
-            Fill in the details to add a new supplier.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-4 py-2">
-          <div className="flex flex-col gap-1.5">
-            <Label className="text-sm font-medium">
-              Company Name <span className="text-red-500">*</span>
-            </Label>
-            <Input
+    <AdminDrawer
+      open={open}
+      onOpenChange={(next) => !next && handleClose()}
+      title="Add Supplier"
+      description="Fill in the details to add a new supplier."
+      footer={
+        <div className="flex items-center justify-end gap-2.5">
+          <button
+            type="button"
+            onClick={handleClose}
+            disabled={loading}
+            className={adminSecondaryButtonClass}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={loading || !companyName.trim()}
+            className={adminPrimaryButtonClass}
+          >
+            {loading ? "Creating…" : "Add Supplier"}
+          </button>
+        </div>
+      }
+    >
+      <div className="flex flex-col gap-8 px-8 py-10">
+        <AccountingFormSection title="Supplier details">
+          <AccountingFormField
+            label="Company Name"
+            htmlFor="create-supplier-company"
+            required
+            error={errors?.companyName}
+          >
+            <input
+              id="create-supplier-company"
+              ref={inputRef}
+              type="text"
               placeholder="e.g. Nepal Trading Co."
-              className="h-9"
               value={companyName}
               onChange={(e) => {
                 setCompanyName(e.target.value);
                 setErrors((prev) => ({ ...prev, companyName: undefined }));
               }}
-              onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSubmit();
+                if (e.key === "Escape") handleClose();
+              }}
+              disabled={loading}
+              className={cn(
+                accountingFieldInputClass,
+                errors?.companyName && "border-[#9a3412]",
+              )}
             />
-            {errors?.companyName && (
-              <FieldError>{errors.companyName}</FieldError>
-            )}
-          </div>
+          </AccountingFormField>
 
-          <div className="flex flex-col gap-1.5">
-            <Label className="text-sm font-medium">
-              VAT No.{" "}
-              <span className="text-xs font-normal text-stone-400">
-                (optional)
-              </span>
-            </Label>
-            <Input
+          <AccountingFormField
+            label="VAT No."
+            htmlFor="create-supplier-vat"
+            optional
+            error={errors?.vatNo}
+          >
+            <input
+              id="create-supplier-vat"
+              type="text"
               placeholder="e.g. 300123456"
-              className="h-9 font-mono"
               value={vatNo}
               onChange={(e) => setVatNo(e.target.value)}
+              disabled={loading}
+              className={cn(
+                accountingFieldInputClass,
+                "font-mono",
+                errors?.vatNo && "border-[#9a3412]",
+              )}
             />
-            {errors?.vatNo && <FieldError>{errors.vatNo}</FieldError>}
-          </div>
+          </AccountingFormField>
 
-          <div className="flex flex-col gap-1.5">
-            <Label className="text-sm font-medium">
-              Phone{" "}
-              <span className="text-xs font-normal text-stone-400">
-                (optional)
-              </span>
-            </Label>
-            <Input
+          <AccountingFormField
+            label="Phone"
+            htmlFor="create-supplier-phone"
+            optional
+            error={errors?.phone}
+          >
+            <input
+              id="create-supplier-phone"
               type="tel"
               placeholder="e.g. 9841000000"
-              className="h-9"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
+              disabled={loading}
+              className={cn(
+                accountingFieldInputClass,
+                errors?.phone && "border-[#9a3412]",
+              )}
             />
-            {errors?.phone && <FieldError>{errors.phone}</FieldError>}
-          </div>
-        </div>
-
-        <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={handleClose} disabled={loading}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={loading}
-            style={{
-              backgroundColor: "var(--brand-green)",
-              color: "var(--brand-cream)",
-            }}
-          >
-            {loading ? "Creating..." : "Add Supplier"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          </AccountingFormField>
+        </AccountingFormSection>
+      </div>
+    </AdminDrawer>
   );
 }

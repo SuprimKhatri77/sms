@@ -3,29 +3,12 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@/components/ui/sheet";
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-  FieldSet,
-} from "@/components/ui/field";
-import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
 import {
   BankAccountForDropdown,
   CreateBankLedgerEntryInput,
@@ -41,6 +24,17 @@ import { AxiosError } from "axios";
 import { APIError } from "@repo/types";
 
 import { mapFieldErrors } from "@/utils/api";
+import { AdminDrawer } from "@/components/admin/admin-drawer";
+import {
+  adminPrimaryButtonClass,
+  adminSecondaryButtonClass,
+} from "@/components/admin/admin-styles";
+import {
+  AccountingFormField,
+  AccountingFormSection,
+  accountingFieldInputClass,
+  accountingSelectTriggerClass,
+} from "../shared/accounting-styles";
 
 interface CreateLedgerEntryFormProps {
   open: boolean;
@@ -52,9 +46,6 @@ interface CreateLedgerEntryFormProps {
   ) => void;
 }
 
-const inputCls =
-  "w-full rounded-xl border border-[#2d4a3e]/15 bg-[#f4f1ec]/60 px-3 py-2 text-[0.88rem] font-medium text-[#2d4a3e] outline-none placeholder:text-[#2d4a3e]/25 transition-colors focus:border-[#2d4a3e]/40 focus:ring-2 focus:ring-[#2d4a3e]/08";
-
 export function CreateLedgerEntryForm({
   open,
   onOpenChange,
@@ -63,7 +54,6 @@ export function CreateLedgerEntryForm({
   createLedgerEntry,
 }: CreateLedgerEntryFormProps) {
   const [bankAccountId, setBankAccountId] = useState(defaultAccountId ?? "");
-
   const [errors, setErrors] = useState<
     Partial<Record<keyof CreateBankLedgerEntryInput, string>>
   >({});
@@ -113,204 +103,22 @@ export function CreateLedgerEntryForm({
     setErrors({});
   }
 
+  const handleClose = () => {
+    form.reset();
+    reset();
+    onOpenChange(false);
+  };
+
   const showAccountSelector = !defaultAccountId;
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-lg overflow-y-auto px-6 py-6">
-        <SheetHeader className="mb-8">
-          <SheetTitle style={{ color: "var(--brand-ink)" }}>
-            New Ledger Entry
-          </SheetTitle>
-          <SheetDescription>
-            Record a manual debit or credit transaction against a bank account.
-          </SheetDescription>
-        </SheetHeader>
-
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            form.handleSubmit();
-          }}
-          className="space-y-4"
-        >
-          <FieldSet>
-            <FieldGroup className="gap-4">
-              {showAccountSelector && (
-                <Field>
-                  <FieldLabel htmlFor="bankAccountId">Bank Account</FieldLabel>
-                  <Select
-                    value={bankAccountId}
-                    onValueChange={(val) => setBankAccountId(val ?? "")}
-                  >
-                    <SelectTrigger id="bankAccountId">
-                      <SelectValue placeholder="Select an account">
-                        {
-                          accounts.find((a) => a.id === bankAccountId)
-                            ?.accountName
-                        }
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {accounts.map((a) => (
-                        <SelectItem key={a.id} value={a.id}>
-                          {a.bankName} — {a.accountName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {/* {errors.bankAccountId && (
-                    <FieldError>{errors.bankAccountId}</FieldError>
-                  )} */}
-                </Field>
-              )}
-
-              <form.Field name="date">
-                {(field) => {
-                  const fieldError = field.state.meta.errors[0]?.message;
-                  const mergedError = fieldError ?? errors.date;
-                  return (
-                    <Field>
-                      <FieldLabel htmlFor="date">Date (AD)</FieldLabel>
-                      <Input
-                        id="date"
-                        type="date"
-                        value={field.state.value}
-                        onChange={(e) => field.handleChange(e.target.value)}
-                      />
-                      {mergedError && <FieldError>{mergedError}</FieldError>}
-                    </Field>
-                  );
-                }}
-              </form.Field>
-
-              <form.Field name="bsDate">
-                {(field) => {
-                  const fieldError = field.state.meta.errors[0]?.message;
-                  const mergedError = fieldError ?? errors.bsDate;
-
-                  return (
-                    <Field>
-                      <FieldLabel htmlFor="bsDate">BS Date</FieldLabel>
-                      <div className="relative">
-                        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 z-10 text-[#2d4a3e]/40">
-                          <CalendarDays
-                            className="h-4 w-4"
-                            strokeWidth={1.75}
-                          />
-                        </span>
-                        <NepaliDatePicker
-                          inputClassName={cn(
-                            inputCls,
-                            "pl-9 rounded-none",
-
-                            mergedError && "border-red-400 ring-2 ring-red-100",
-                          )}
-                          value={field.state.value}
-                          onChange={(bsValue: string) => {
-                            field.handleChange(bsValue);
-                            try {
-                              const adValue = BSToAD(bsValue);
-                              console.log("ad value: ", adValue);
-                              form.setFieldValue("date", adValue);
-                            } catch (err) {
-                              console.log("err: ", err);
-                              toast.error(
-                                err instanceof Error
-                                  ? err.message
-                                  : "Something went wrong while setting date",
-                              );
-                            }
-                          }}
-                          options={{ calenderLocale: "en", valueLocale: "en" }}
-                        />
-                      </div>
-                      {mergedError && <FieldError>{mergedError}</FieldError>}
-                    </Field>
-                  );
-                }}
-              </form.Field>
-
-              <form.Field name="entryType">
-                {(field) => {
-                  const fieldError = field.state.meta.errors[0]?.message;
-                  const mergedError = fieldError ?? errors.entryType;
-
-                  return (
-                    <Field>
-                      <FieldLabel htmlFor="entryType">Entry Type</FieldLabel>
-                      <Select
-                        value={field.state.value}
-                        onValueChange={(val) =>
-                          field.handleChange(val as "cr" | "dr")
-                        }
-                      >
-                        <SelectTrigger id="entryType">
-                          <SelectValue placeholder="Select type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="cr">Credit (CR)</SelectItem>
-                          <SelectItem value="dr">Debit (DR)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      {mergedError && <FieldError>{mergedError}</FieldError>}
-                    </Field>
-                  );
-                }}
-              </form.Field>
-
-              <form.Field name="amount">
-                {(field) => {
-                  const fieldError = field.state.meta.errors[0]?.message;
-                  const mergedError = fieldError ?? errors.amount;
-                  return (
-                    <Field>
-                      <FieldLabel htmlFor="amountRs">Amount (Rs.)</FieldLabel>
-                      <Input
-                        id="amountRs"
-                        type="number"
-                        step="0.01"
-                        min="0.01"
-                        placeholder="0.00"
-                        value={field.state.value}
-                        onChange={(e) => field.handleChange(e.target.value)}
-                      />
-                      {mergedError && <FieldError>{mergedError}</FieldError>}
-                    </Field>
-                  );
-                }}
-              </form.Field>
-
-              <form.Field name="description">
-                {(field) => {
-                  const fieldError = field.state.meta.errors[0]?.message;
-                  const mergedError = fieldError ?? errors.description;
-                  return (
-                    <Field>
-                      <FieldLabel htmlFor="description">
-                        Description{" "}
-                        <span
-                          className="text-xs font-normal"
-                          style={{ color: "#9ca3af" }}
-                        >
-                          (optional)
-                        </span>
-                      </FieldLabel>
-                      <Textarea
-                        id="description"
-                        placeholder="Add a note about this transaction..."
-                        rows={3}
-                        value={field.state.value}
-                        onChange={(e) => field.handleChange(e.target.value)}
-                      />
-                      {mergedError && <FieldError>{mergedError}</FieldError>}
-                    </Field>
-                  );
-                }}
-              </form.Field>
-            </FieldGroup>
-          </FieldSet>
-
+    <AdminDrawer
+      open={open}
+      onOpenChange={(next) => !next && handleClose()}
+      title="New Ledger Entry"
+      description="Record a manual debit or credit transaction against a bank account."
+      footer={
+        <div className="flex justify-end gap-2">
           <form.Subscribe
             selector={(formState) => [
               formState.isSubmitting,
@@ -318,32 +126,217 @@ export function CreateLedgerEntryForm({
             ]}
           >
             {([isSubmitting, canSubmit]) => (
-              <div className="flex gap-3 pt-4">
-                <Button
+              <>
+                <button
                   type="button"
-                  variant="outline"
-                  className="flex-1"
                   disabled={isSubmitting}
-                  onClick={() => onOpenChange(false)}
+                  className={adminSecondaryButtonClass}
+                  onClick={handleClose}
                 >
                   Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  className="flex-1 font-medium"
+                </button>
+                <button
+                  type="button"
                   disabled={!canSubmit || isSubmitting}
-                  style={{
-                    backgroundColor: "var(--brand-green)",
-                    color: "var(--brand-cream)",
-                  }}
+                  className={adminPrimaryButtonClass}
+                  onClick={() => form.handleSubmit()}
                 >
-                  {isSubmitting ? "Saving..." : "Save Entry"}
-                </Button>
-              </div>
+                  {isSubmitting ? "Saving…" : "Save Entry"}
+                </button>
+              </>
             )}
           </form.Subscribe>
-        </form>
-      </SheetContent>
-    </Sheet>
+        </div>
+      }
+    >
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          form.handleSubmit();
+        }}
+        className="flex flex-col gap-8 px-8 py-10"
+      >
+        <AccountingFormSection title="Entry details">
+          {showAccountSelector && (
+            <AccountingFormField label="Bank Account" required>
+              <Select
+                value={bankAccountId}
+                onValueChange={(val) => setBankAccountId(val ?? "")}
+              >
+                <SelectTrigger className={accountingSelectTriggerClass}>
+                  <SelectValue placeholder="Select an account">
+                    {
+                      accounts.find((a) => a.id === bankAccountId)
+                        ?.accountName
+                    }
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {accounts.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>
+                      {a.bankName} — {a.accountName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </AccountingFormField>
+          )}
+
+          <form.Field name="date">
+            {(field) => {
+              const fieldError = field.state.meta.errors[0]?.message;
+              const mergedError = fieldError ?? errors.date;
+              return (
+                <AccountingFormField
+                  label="Date (AD)"
+                  htmlFor="ledger-date"
+                  error={mergedError}
+                >
+                  <input
+                    id="ledger-date"
+                    type="date"
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    className={cn(
+                      accountingFieldInputClass,
+                      mergedError && "border-[#9a3412]",
+                    )}
+                  />
+                </AccountingFormField>
+              );
+            }}
+          </form.Field>
+
+          <form.Field name="bsDate">
+            {(field) => {
+              const fieldError = field.state.meta.errors[0]?.message;
+              const mergedError = fieldError ?? errors.bsDate;
+
+              return (
+                <AccountingFormField
+                  label="BS Date"
+                  error={mergedError}
+                >
+                  <div className="relative">
+                    <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-[rgba(47,78,64,0.4)]">
+                      <CalendarDays className="h-4 w-4" strokeWidth={1.75} />
+                    </span>
+                    <NepaliDatePicker
+                      inputClassName={cn(
+                        accountingFieldInputClass,
+                        "pl-9",
+                        mergedError && "border-[#9a3412]",
+                      )}
+                      value={field.state.value}
+                      onChange={(bsValue: string) => {
+                        field.handleChange(bsValue);
+                        try {
+                          const adValue = BSToAD(bsValue);
+                          form.setFieldValue("date", adValue);
+                        } catch (err) {
+                          toast.error(
+                            err instanceof Error
+                              ? err.message
+                              : "Something went wrong while setting date",
+                          );
+                        }
+                      }}
+                      options={{ calenderLocale: "en", valueLocale: "en" }}
+                    />
+                  </div>
+                </AccountingFormField>
+              );
+            }}
+          </form.Field>
+
+          <form.Field name="entryType">
+            {(field) => {
+              const fieldError = field.state.meta.errors[0]?.message;
+              const mergedError = fieldError ?? errors.entryType;
+
+              return (
+                <AccountingFormField
+                  label="Entry Type"
+                  required
+                  error={mergedError}
+                >
+                  <Select
+                    value={field.state.value}
+                    onValueChange={(val) =>
+                      field.handleChange(val as "cr" | "dr")
+                    }
+                  >
+                    <SelectTrigger className={accountingSelectTriggerClass}>
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="cr">Credit (CR)</SelectItem>
+                      <SelectItem value="dr">Debit (DR)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </AccountingFormField>
+              );
+            }}
+          </form.Field>
+
+          <form.Field name="amount">
+            {(field) => {
+              const fieldError = field.state.meta.errors[0]?.message;
+              const mergedError = fieldError ?? errors.amount;
+              return (
+                <AccountingFormField
+                  label="Amount (Rs.)"
+                  htmlFor="ledger-amount"
+                  required
+                  error={mergedError}
+                >
+                  <input
+                    id="ledger-amount"
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    placeholder="0.00"
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    className={cn(
+                      accountingFieldInputClass,
+                      mergedError && "border-[#9a3412]",
+                    )}
+                  />
+                </AccountingFormField>
+              );
+            }}
+          </form.Field>
+
+          <form.Field name="description">
+            {(field) => {
+              const fieldError = field.state.meta.errors[0]?.message;
+              const mergedError = fieldError ?? errors.description;
+              return (
+                <AccountingFormField
+                  label="Description"
+                  htmlFor="ledger-description"
+                  optional
+                  error={mergedError}
+                >
+                  <textarea
+                    id="ledger-description"
+                    placeholder="Add a note about this transaction..."
+                    rows={3}
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    className={cn(
+                      accountingFieldInputClass,
+                      "resize-none",
+                      mergedError && "border-[#9a3412]",
+                    )}
+                  />
+                </AccountingFormField>
+              );
+            }}
+          </form.Field>
+        </AccountingFormSection>
+      </form>
+    </AdminDrawer>
   );
 }

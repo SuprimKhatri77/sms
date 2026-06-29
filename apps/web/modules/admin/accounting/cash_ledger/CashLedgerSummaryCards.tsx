@@ -1,7 +1,6 @@
 "use client";
 
 import { TrendingUp, TrendingDown, Wallet } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
 import { formatRs } from "../bank-ledger/format";
 import { CashLedgerSummary } from "./types";
 
@@ -20,11 +19,10 @@ export function CashLedgerSummaryCards({
         {[0, 1, 2].map((i) => (
           <div
             key={i}
-            className="rounded-xl border p-5"
-            style={{ borderColor: "#e5e0d6", backgroundColor: "#fff" }}
+            className="animate-pulse border border-[rgba(47,78,64,0.18)] bg-white p-5"
           >
-            <Skeleton className="h-4 w-24 mb-3" />
-            <Skeleton className="h-7 w-36" />
+            <div className="mb-3 h-3 w-24 bg-[rgba(47,78,64,0.08)]" />
+            <div className="h-7 w-36 bg-[rgba(47,78,64,0.08)]" />
           </div>
         ))}
       </div>
@@ -38,28 +36,22 @@ export function CashLedgerSummaryCards({
       label: "Total Credits",
       value: summary ? formatRs(summary.totalCr) : "Rs. 0.00",
       icon: TrendingUp,
-      accent: "#16a34a",
-      bg: "#f0fdf4",
-      border: "#bbf7d0",
-      isNet: false,
+      valueClass: "text-[#16a34a]",
+      iconClass: "text-[#16a34a]",
     },
     {
       label: "Total Debits",
       value: summary ? formatRs(summary.totalDr) : "Rs. 0.00",
       icon: TrendingDown,
-      accent: "#dc2626",
-      bg: "#fef2f2",
-      border: "#fecaca",
-      isNet: false,
+      valueClass: "text-[#9a3412]",
+      iconClass: "text-[#9a3412]",
     },
     {
       label: "Net Balance",
       value: summary ? formatRs(summary.balance) : "Rs. 0.00",
       icon: Wallet,
-      accent: isPositive ? "#16a34a" : "#dc2626",
-      bg: "#fdf6ec",
-      border: "#f0d9b8",
-      isNet: true,
+      valueClass: isPositive ? "text-(--brand-green)" : "text-[#9a3412]",
+      iconClass: isPositive ? "text-(--brand-green)" : "text-[#9a3412]",
     },
   ];
 
@@ -70,28 +62,17 @@ export function CashLedgerSummaryCards({
         return (
           <div
             key={card.label}
-            className="rounded-xl border p-5 flex items-start gap-4"
-            style={{ backgroundColor: card.bg, borderColor: card.border }}
+            className="flex items-start gap-4 border border-[rgba(47,78,64,0.18)] bg-white p-5"
           >
-            <div
-              className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
-              style={{
-                backgroundColor: card.bg,
-                border: `1.5px solid ${card.border}`,
-              }}
-            >
-              <Icon size={18} style={{ color: card.accent }} />
+            <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center border border-[rgba(47,78,64,0.18)] bg-[rgba(47,78,64,0.03)]">
+              <Icon size={18} className={card.iconClass} />
             </div>
             <div>
-              <p
-                className="text-xs font-medium uppercase tracking-wide"
-                style={{ color: "#6b7280" }}
-              >
+              <p className="font-[family-name:var(--font-dm-sans)] text-[10px] font-semibold uppercase tracking-[0.1em] text-[rgba(47,78,64,0.55)]">
                 {card.label}
               </p>
               <p
-                className="mt-1 text-xl font-bold tabular-nums"
-                style={{ color: card.accent }}
+                className={`mt-1 font-[family-name:var(--font-lora)] text-xl font-bold tabular-nums ${card.valueClass}`}
               >
                 {card.value}
               </p>

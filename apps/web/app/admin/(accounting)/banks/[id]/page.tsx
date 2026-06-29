@@ -8,9 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function BankAccountsPage() {
-  return (
-    <main className="max-w-8xl mx-auto px-6 py-8 sm:px-4 sm:py-6">
-      <BankAccountsClient />
-    </main>
-  );
+  return <BankAccountsClient />;
 }

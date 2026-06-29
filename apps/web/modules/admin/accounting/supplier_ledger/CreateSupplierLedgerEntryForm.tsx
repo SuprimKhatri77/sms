@@ -5,17 +5,6 @@ import { CalendarDays } from "lucide-react";
 import { toast } from "sonner";
 import { NepaliDatePicker } from "nepali-datepicker-reactjs";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -30,11 +19,21 @@ import {
   createSupplierLedgerEntryInput,
 } from "@repo/types";
 import z from "zod";
-import { FieldError } from "@/components/ui/field";
 import { AxiosError } from "axios";
 import { APIError } from "@repo/types";
 
 import { mapFieldErrors } from "@/utils/api";
+import { AdminDrawer } from "@/components/admin/admin-drawer";
+import {
+  adminPrimaryButtonClass,
+  adminSecondaryButtonClass,
+} from "@/components/admin/admin-styles";
+import {
+  AccountingFormField,
+  AccountingFormSection,
+  accountingFieldInputClass,
+  accountingSelectTriggerClass,
+} from "../shared/accounting-styles";
 
 interface CreateSupplierLedgerEntryFormProps {
   open: boolean;
@@ -46,9 +45,6 @@ interface CreateSupplierLedgerEntryFormProps {
     data: CreateSupplierLedgerEntryInput & { supplierID: string },
   ) => Promise<void>;
 }
-
-const inputCls =
-  "h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring";
 
 export function CreateSupplierLedgerEntryForm({
   open,
@@ -127,28 +123,45 @@ export function CreateSupplierLedgerEntryForm({
   };
 
   return (
-    <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetContent className="w-full sm:max-w-md overflow-y-auto px-6 py-6">
-        <SheetHeader className="mb-6">
-          <SheetTitle style={{ color: "var(--brand-ink)" }}>
-            New Supplier Entry
-          </SheetTitle>
-          <SheetDescription>
-            Record a purchase (credit) or payment (debit) against a supplier.
-          </SheetDescription>
-        </SheetHeader>
-
-        <form onSubmit={handleSubmit} className="space-y-5">
+    <AdminDrawer
+      open={open}
+      onOpenChange={handleOpenChange}
+      title="New Supplier Entry"
+      description="Record a purchase (credit) or payment (debit) against a supplier."
+      footer={
+        <div className="flex justify-end gap-2">
+          <button
+            type="button"
+            disabled={loading}
+            className={adminSecondaryButtonClass}
+            onClick={() => handleOpenChange(false)}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            form="supplier-ledger-entry-form"
+            disabled={loading}
+            className={adminPrimaryButtonClass}
+          >
+            {loading ? "Saving…" : "Save Entry"}
+          </button>
+        </div>
+      }
+    >
+      <form
+        id="supplier-ledger-entry-form"
+        onSubmit={handleSubmit}
+        className="flex flex-col gap-8 px-8 py-10"
+      >
+        <AccountingFormSection title="Entry details">
           {!defaultSupplierId && (
-            <div className="flex flex-col gap-1.5">
-              <Label className="text-sm font-medium">
-                Supplier <span className="text-red-500">*</span>
-              </Label>
+            <AccountingFormField label="Supplier" required>
               <Select
                 value={supplierId}
                 onValueChange={(v) => v && setSupplierId(v)}
               >
-                <SelectTrigger className="h-9 text-sm w-full">
+                <SelectTrigger className={accountingSelectTriggerClass}>
                   <SelectValue placeholder="Select supplier">
                     {suppliers.find((s) => s.id === supplierId)?.companyName ??
                       "Select supplier"}
@@ -162,19 +175,24 @@ export function CreateSupplierLedgerEntryForm({
                   ))}
                 </SelectContent>
               </Select>
-            </div>
+            </AccountingFormField>
           )}
 
-          <div className="flex flex-col gap-1.5">
-            <Label className="text-sm font-medium">
-              Date (BS) <span className="text-red-500">*</span>
-            </Label>
+          <AccountingFormField
+            label="Date (BS)"
+            required
+            error={errors?.bsDate}
+          >
             <div className="relative">
-              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 z-10 text-[#2d4a3e]/40">
+              <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-[rgba(47,78,64,0.4)]">
                 <CalendarDays className="h-4 w-4" strokeWidth={1.75} />
               </span>
               <NepaliDatePicker
-                inputClassName={cn(inputCls, "pl-9 rounded-none shadow-none")}
+                inputClassName={cn(
+                  accountingFieldInputClass,
+                  "pl-9",
+                  errors?.bsDate && "border-[#9a3412]",
+                )}
                 value={bsDate}
                 onChange={(v: string) => {
                   setBsDate(v);
@@ -189,18 +207,18 @@ export function CreateSupplierLedgerEntryForm({
                 options={{ calenderLocale: "en", valueLocale: "en" }}
               />
             </div>
-            {errors?.bsDate && <FieldError>{errors.bsDate}</FieldError>}
-          </div>
+          </AccountingFormField>
 
-          <div className="flex flex-col gap-1.5">
-            <Label className="text-sm font-medium">
-              Entry Type <span className="text-red-500">*</span>
-            </Label>
+          <AccountingFormField
+            label="Entry Type"
+            required
+            error={errors?.entryType}
+          >
             <Select
               value={entryType}
               onValueChange={(v) => setEntryType(v as "dr" | "cr")}
             >
-              <SelectTrigger className="h-9 text-sm w-full">
+              <SelectTrigger className={accountingSelectTriggerClass}>
                 <SelectValue placeholder="Select type" />
               </SelectTrigger>
               <SelectContent>
@@ -212,76 +230,56 @@ export function CreateSupplierLedgerEntryForm({
                 </SelectItem>
               </SelectContent>
             </Select>
-            {errors?.entryType && <FieldError>{errors.entryType}</FieldError>}
-          </div>
+          </AccountingFormField>
 
-          <div className="flex flex-col gap-1.5">
-            <Label className="text-sm font-medium">
-              Amount (Rs.) <span className="text-red-500">*</span>
-            </Label>
+          <AccountingFormField
+            label="Amount (Rs.)"
+            htmlFor="supplier-amount"
+            required
+            error={errors?.amount}
+          >
             <div className="relative">
-              <span
-                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium"
-                style={{ color: "#9ca3af" }}
-              >
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 font-[family-name:var(--font-dm-sans)] text-sm text-[rgba(47,78,64,0.45)]">
                 Rs.
               </span>
-              <Input
+              <input
+                id="supplier-amount"
                 type="number"
                 min="0.01"
                 step="0.01"
                 placeholder="0.00"
-                className="pl-10 h-9"
                 value={amountRs}
                 onChange={(e) => setAmountRs(e.target.value)}
+                className={cn(
+                  accountingFieldInputClass,
+                  "pl-10",
+                  errors?.amount && "border-[#9a3412]",
+                )}
               />
             </div>
-            {errors?.amount && <FieldError>{errors.amount}</FieldError>}
-          </div>
+          </AccountingFormField>
 
-          <div className="flex flex-col gap-1.5">
-            <Label className="text-sm font-medium">
-              Narration{" "}
-              <span className="text-xs font-normal text-stone-400">
-                (optional)
-              </span>
-            </Label>
-            <Textarea
+          <AccountingFormField
+            label="Narration"
+            htmlFor="supplier-description"
+            optional
+            error={errors?.description}
+          >
+            <textarea
+              id="supplier-description"
               placeholder="e.g. Payment for Invoice #1023"
-              className="resize-none text-sm"
               rows={3}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
+              className={cn(
+                accountingFieldInputClass,
+                "resize-none",
+                errors?.description && "border-[#9a3412]",
+              )}
             />
-            {errors?.description && (
-              <FieldError>{errors.description}</FieldError>
-            )}
-          </div>
-
-          <div className="flex gap-2 pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1"
-              disabled={loading}
-              onClick={() => handleOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={loading}
-              className="flex-1"
-              style={{
-                backgroundColor: "var(--brand-green)",
-                color: "var(--brand-cream)",
-              }}
-            >
-              {loading ? "Saving..." : "Save Entry"}
-            </Button>
-          </div>
-        </form>
-      </SheetContent>
-    </Sheet>
+          </AccountingFormField>
+        </AccountingFormSection>
+      </form>
+    </AdminDrawer>
   );
 }

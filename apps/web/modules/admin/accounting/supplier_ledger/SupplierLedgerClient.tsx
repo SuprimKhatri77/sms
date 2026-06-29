@@ -24,6 +24,9 @@ import { getSupplierLedger } from "@/lib/api/supplier_ledger";
 import { useSupplierLedgerSummary } from "@/hooks/queries/admin/suppliers/ledger/useSupplierLedgerSummary";
 import { useSuppliers } from "@/hooks/queries/admin/suppliers/useSuppliers";
 import { useCreateSupplierLedgerEntry } from "@/hooks/queries/admin/suppliers/ledger/useCreateSupplierLedgerEntry";
+import { AdminPageLayout } from "@/components/admin/admin-page-layout";
+import { adminPrimaryButtonClass } from "@/components/admin/admin-styles";
+import { accountingTableWrapClass } from "../shared/accounting-styles";
 
 const PARAM_SUPPLIER_NAME = "supplier_name";
 const PARAM_FROM_BS = "from_bs";
@@ -124,12 +127,15 @@ function SupplierLedgerInner() {
   const hasReachedEnd = !hasNextPage && !isLoading;
 
   const createSupplierLedgerEntry = useCreateSupplierLedgerEntry();
-  const handleScroll = useCallback((_e: React.UIEvent<HTMLDivElement>) => {
-    if (!hasNextPage || isFetchingNextPage) return;
-    const el = _e.currentTarget;
-    if (el.scrollHeight - el.scrollTop - el.clientHeight < 200)
-      void fetchNextPage();
-  }, []);
+  const handleScroll = useCallback(
+    (e: React.UIEvent<HTMLDivElement>) => {
+      if (!hasNextPage || isFetchingNextPage) return;
+      const el = e.currentTarget;
+      if (el.scrollHeight - el.scrollTop - el.clientHeight < 200)
+        void fetchNextPage();
+    },
+    [hasNextPage, isFetchingNextPage, fetchNextPage],
+  );
 
   const handleCreate = async (
     data: CreateSupplierLedgerEntryInput & { supplierID: string },
@@ -140,68 +146,66 @@ function SupplierLedgerInner() {
   };
 
   return (
-    <div className="flex flex-col gap-7">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="font-[family-name:var(--font-lora)] text-2xl font-bold text-[#1a1a1a] leading-tight mb-1">
-            Supplier Ledger
-          </h1>
-          <p className="text-sm text-stone-500 font-[family-name:var(--font-dm-sans)]">
-            Track purchases and payments across all suppliers.
-          </p>
-        </div>
+    <AdminPageLayout
+      title="Supplier Ledger"
+      description="Track purchases and payments across all suppliers"
+      maxWidth="wide"
+      action={
         <button
+          type="button"
           onClick={() => setCreateOpen(true)}
-          className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-[#2f4e40] text-[#fbfaf7] text-sm font-medium font-[family-name:var(--font-dm-sans)] hover:bg-[#3a5a49] hover:shadow-md transition-all cursor-pointer shrink-0"
+          className={adminPrimaryButtonClass}
         >
           <Plus size={15} strokeWidth={2.5} />
           New Entry
         </button>
-      </div>
+      }
+    >
+      <div className="space-y-6">
+        <SupplierLedgerSummaryCards
+          summary={ledgerSummaryQuery.data ?? null}
+          loading={ledgerSummaryQuery.isPending}
+        />
 
-      {/* Summary cards — always show (skeleton while loading) */}
-      <SupplierLedgerSummaryCards
-        summary={ledgerSummaryQuery.data ?? null}
-        loading={ledgerSummaryQuery.isPending}
-      />
+        <SupplierLedgerFiltersBar
+          suppliers={suppliersQuery.data?.suppliers ?? []}
+          filters={filters}
+          onChange={handleFilterChange}
+        />
 
-      {/* Filters */}
-      <SupplierLedgerFiltersBar
-        suppliers={suppliersQuery.data?.suppliers ?? []}
-        filters={filters}
-        onChange={handleFilterChange}
-      />
+        <div className="min-h-80 w-full">
+          {isLoading && <SupplierLedgerSkeleton />}
 
-      {/* Content */}
-      <div className="min-h-80">
-        {isLoading && <SupplierLedgerSkeleton />}
+          {isError && (
+            <div className={accountingTableWrapClass}>
+              <SupplierLedgerError
+                message={
+                  (error as AxiosError<APIError>)?.response?.data.message ??
+                  "Something went wrong"
+                }
+                onRetry={refetch}
+              />
+            </div>
+          )}
 
-        {isError && (
-          <SupplierLedgerError
-            message={
-              (error as AxiosError<APIError>)?.response?.data.message ??
-              "Something went wrong"
-            }
-            onRetry={refetch}
-          />
-        )}
+          {!isLoading && !isError && entries.length === 0 && (
+            <div className={accountingTableWrapClass}>
+              <SupplierLedgerEmpty onCreateEntry={() => setCreateOpen(true)} />
+            </div>
+          )}
 
-        {!isLoading && !isError && entries.length === 0 && (
-          <SupplierLedgerEmpty onCreateEntry={() => setCreateOpen(true)} />
-        )}
-
-        {!isLoading && !isError && entries.length > 0 && (
-          <SupplierLedgerTable
-            entries={entries}
-            isFetchingNextPage={isFetchingNextPage}
-            hasReachedEnd={hasReachedEnd}
-            totalCount={totalCount}
-            scrollContainerRef={scrollContainerRef}
-            onScroll={handleScroll}
-            showSupplierColumn={showSupplierColumn}
-          />
-        )}
+          {!isLoading && !isError && entries.length > 0 && (
+            <SupplierLedgerTable
+              entries={entries}
+              isFetchingNextPage={isFetchingNextPage}
+              hasReachedEnd={hasReachedEnd}
+              totalCount={totalCount}
+              scrollContainerRef={scrollContainerRef}
+              onScroll={handleScroll}
+              showSupplierColumn={showSupplierColumn}
+            />
+          )}
+        </div>
       </div>
 
       <CreateSupplierLedgerEntryForm
@@ -214,7 +218,7 @@ function SupplierLedgerInner() {
       />
 
       <Toaster />
-    </div>
+    </AdminPageLayout>
   );
 }
 

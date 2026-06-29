@@ -3,17 +3,19 @@
 import { useCallback, useRef, useMemo, Suspense, useState } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useInfiniteQuery } from "@tanstack/react-query";
+import { Plus } from "lucide-react";
 import { Toaster } from "sonner";
 import { CashLedgerTable } from "./CashLedgerTable";
 import { CashLedgerSummaryCards } from "./CashLedgerSummaryCards";
 import { CreateCashLedgerEntryForm } from "./CreateCashLedgerEntryForm";
-import { LedgerPageHeader } from "../bank-ledger/LedgerPageHeader";
 import { CashLedgerData, CreateCashLedgerEntryInput } from "@repo/types";
 import { getCashLedger } from "@/lib/api/cash_ledger";
 import { queryKeys } from "@/lib/query-keys";
 import { CashLedgerFilters } from "./CashLedgerFilter";
 import { useCreateCashLedgerEntry } from "@/hooks/mutations/admin/cash_ledger/useCreateCashLedgerEntry";
 import { useCashLedgerSummary } from "@/hooks/queries/admin/cash_ledger/useCashLedger";
+import { AdminPageLayout } from "@/components/admin/admin-page-layout";
+import { adminPrimaryButtonClass } from "@/components/admin/admin-styles";
 
 const PARAM_FROM_BS = "from_bs";
 const PARAM_TO_BS = "to_bs";
@@ -93,13 +95,16 @@ function CashLedgerPageInner() {
   const totalCount = data?.pages[0]?.meta.total ?? 0;
   const hasReachedEnd = !hasNextPage && !isLoading;
 
-  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
-    if (!hasNextPage || isFetchingNextPage) return;
-    const el = e.currentTarget;
-    if (el.scrollHeight - el.scrollTop - el.clientHeight < 200) {
-      void fetchNextPage();
-    }
-  }, []);
+  const handleScroll = useCallback(
+    (e: React.UIEvent<HTMLDivElement>) => {
+      if (!hasNextPage || isFetchingNextPage) return;
+      const el = e.currentTarget;
+      if (el.scrollHeight - el.scrollTop - el.clientHeight < 200) {
+        void fetchNextPage();
+      }
+    },
+    [hasNextPage, isFetchingNextPage, fetchNextPage],
+  );
 
   const createCashLedgerEntry = useCreateCashLedgerEntry();
   const handleCreateEntry = async (data: CreateCashLedgerEntryInput) => {
@@ -111,17 +116,22 @@ function CashLedgerPageInner() {
   const summaryLoading = summaryQuery.isPending;
 
   return (
-    <div
-      className="min-h-screen px-4 py-8 sm:px-6 lg:px-8"
-      style={{ backgroundColor: "var(--brand-cream)" }}
+    <AdminPageLayout
+      title="Cash Ledger"
+      description="All cash transactions recorded across the academy"
+      maxWidth="wide"
+      action={
+        <button
+          type="button"
+          onClick={() => setFormOpen(true)}
+          className={adminPrimaryButtonClass}
+        >
+          <Plus size={15} strokeWidth={2.5} />
+          New Entry
+        </button>
+      }
     >
-      <div className="mx-auto max-w-8xl space-y-6">
-        <LedgerPageHeader
-          title="Cash Ledger"
-          subtitle="All cash transactions recorded across the academy"
-          onCreateEntry={() => setFormOpen(true)}
-        />
-
+      <div className="space-y-6">
         <CashLedgerSummaryCards
           summary={summaryLoading ? null : summary}
           loading={summaryLoading}
@@ -150,7 +160,7 @@ function CashLedgerPageInner() {
       />
 
       <Toaster />
-    </div>
+    </AdminPageLayout>
   );
 }
 
