@@ -1,10 +1,15 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { X, Briefcase, Sparkles } from "lucide-react";
+import {
+  courseBodyClass,
+  courseEyebrowClass,
+  courseAccentAlpha,
+} from "./course-styles";
+import { cn } from "@/lib/utils";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
 export interface InstructorExperience {
   role: string;
   place: string;
@@ -28,32 +33,28 @@ export interface Instructor {
   profile?: InstructorProfile;
 }
 
-// ─── Drawer ───────────────────────────────────────────────────────────────────
 export function InstructorProfileDrawer({
   instructor,
-  accentColor = "#2f4e40",
+  accent = "var(--brand-brown)",
   onClose,
 }: {
   instructor: Instructor;
-  accentColor?: string;
+  accent?: string;
   onClose: () => void;
 }) {
   const [visible, setVisible] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
 
-  // Trigger enter animation after mount
+  const handleClose = useCallback(() => {
+    setVisible(false);
+    setTimeout(onClose, 300);
+  }, [onClose]);
+
   useEffect(() => {
     const id = requestAnimationFrame(() => setVisible(true));
     return () => cancelAnimationFrame(id);
   }, []);
 
-  // Animate out then call onClose
-  const handleClose = () => {
-    setVisible(false);
-    setTimeout(onClose, 320); // match transition duration
-  };
-
-  // Escape key + body scroll lock
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") handleClose();
@@ -64,7 +65,7 @@ export function InstructorProfileDrawer({
       document.removeEventListener("keydown", handleKey);
       document.body.style.overflow = "";
     };
-  }, []);
+  }, [handleClose]);
 
   const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === overlayRef.current) handleClose();
@@ -73,245 +74,183 @@ export function InstructorProfileDrawer({
   const { profile } = instructor;
 
   return (
-    <>
-      {/* Global transition styles injected once */}
-      <style>{`
-        .drawer-overlay {
-          transition: opacity 320ms cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .drawer-panel {
-          transition: transform 320ms cubic-bezier(0.4, 0, 0.2, 1);
-        }
-      `}</style>
-
-      {/* Backdrop */}
+    <div
+      ref={overlayRef}
+      onClick={handleOverlayClick}
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${instructor.name} profile`}
+      className={cn(
+        "fixed inset-0 z-100 bg-[rgba(47,78,64,0.5)] backdrop-blur-[2px] transition-opacity duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
+        visible ? "opacity-100" : "opacity-0",
+      )}
+    >
       <div
-        ref={overlayRef}
-        onClick={handleOverlayClick}
-        role="dialog"
-        aria-modal="true"
-        aria-label={`${instructor.name} profile`}
-        className="drawer-overlay fixed inset-0 z-[100]"
-        style={{
-          backgroundColor: "rgba(10,10,10,0.55)",
-          backdropFilter: "blur(4px)",
-          opacity: visible ? 1 : 0,
-        }}
+        className={cn(
+          "absolute right-0 top-0 flex h-dvh w-full max-w-md flex-col overflow-hidden border-l border-[rgba(47,78,64,0.12)] bg-(--brand-cream) shadow-[-12px_0_48px_rgba(47,78,64,0.14)] transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
+          visible ? "translate-x-0" : "translate-x-full",
+        )}
+        onClick={(e) => e.stopPropagation()}
       >
-        {/* Drawer panel */}
-        <div
-          className="drawer-panel absolute right-0 top-0 h-full flex flex-col overflow-hidden shadow-2xl w-full sm:w-[480px]"
-          style={{
-            backgroundColor: "#faf9f6",
-            transform: visible ? "translateX(0)" : "translateX(100%)",
-          }}
-          // Stop clicks inside drawer from hitting overlay
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* ── Coloured header ── */}
+        <div className="relative shrink-0 overflow-hidden bg-(--brand-green)">
           <div
-            className="relative flex flex-row items-end flex-shrink-0 overflow-hidden"
-            style={{ backgroundColor: accentColor }}
-          >
-            {/* Decorative blobs */}
-            <div
-              className="pointer-events-none absolute -top-8 -right-8 h-36 w-36 rounded-full opacity-10"
-              style={{ backgroundColor: "#fff" }}
-            />
-            <div
-              className="pointer-events-none absolute bottom-0 right-16 h-20 w-20 rounded-full opacity-10"
-              style={{ backgroundColor: "#fff", transform: "translateY(50%)" }}
-            />
+            className="pointer-events-none absolute inset-0 opacity-40"
+            aria-hidden
+            style={{
+              backgroundImage: `
+                linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)
+              `,
+              backgroundSize: "32px 32px",
+            }}
+          />
+          <div
+            className="pointer-events-none absolute right-0 top-0 h-40 w-40 opacity-20 blur-3xl"
+            style={{ background: "rgba(194,138,79,0.35)" }}
+            aria-hidden
+          />
 
-            {/* Photo */}
-            <div
-              className="relative flex-shrink-0"
-              style={{ width: 120, height: 152 }}
-            >
+          <div className="relative flex items-end gap-4 px-5 pb-5 pt-6 sm:px-6">
+            <div className="relative h-[7.5rem] w-[5.5rem] shrink-0 overflow-hidden border border-[rgba(255,255,255,0.15)]">
               {instructor.image ? (
                 <Image
                   src={instructor.image}
                   alt={`Portrait of ${instructor.name}`}
                   fill
                   className="object-cover object-top"
-                  sizes="120px"
+                  sizes="88px"
                   priority
                 />
               ) : (
                 <div
-                  className="h-full w-full opacity-40"
+                  className="h-full w-full opacity-50"
                   style={{ backgroundColor: instructor.imagePlaceholder }}
+                  aria-hidden
                 />
               )}
             </div>
 
-            {/* Name / title / badge */}
-            <div className="flex flex-1 flex-col justify-end px-5 pb-5 pt-8 min-w-0">
-              {profile?.headline && (
-                <p
-                  className="mb-0.5 text-[0.6rem] font-bold uppercase tracking-[0.2em] truncate"
-                  style={{ color: "rgba(255,255,255,0.6)" }}
-                >
+            <div className="min-w-0 flex-1 pb-1">
+              {profile?.headline ? (
+                <p className="mb-1 truncate font-[family-name:var(--font-dm-sans)] text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-white/55">
                   {profile.headline}
                 </p>
-              )}
-              <h2
-                className="text-[1.15rem] font-bold leading-snug text-white"
-                style={{ fontFamily: "var(--font-playfair, Georgia, serif)" }}
-              >
+              ) : null}
+              <h2 className="font-[family-name:var(--font-playfair)] text-[1.2rem] font-bold leading-snug text-white">
                 {instructor.name}
               </h2>
-              <p
-                className="mt-0.5 text-[0.72rem] leading-snug"
-                style={{ color: "rgba(255,255,255,0.58)" }}
-              >
+              <p className="mt-1 font-[family-name:var(--font-dm-sans)] text-[0.8rem] text-white/55">
                 {instructor.title}
               </p>
-              <div
-                className="mt-3 inline-flex w-fit items-center rounded-full px-2.5 py-1"
-                style={{ backgroundColor: "rgba(255,255,255,0.18)" }}
+              <span
+                className="mt-3 inline-flex border border-[rgba(255,255,255,0.2)] bg-[rgba(255,255,255,0.08)] px-2.5 py-1 font-[family-name:var(--font-dm-sans)] text-[0.68rem] font-semibold uppercase tracking-wide text-white"
               >
-                <span className="text-[0.65rem] font-semibold text-white">
-                  {instructor.yearsExp} yrs experience
-                </span>
-              </div>
+                {instructor.yearsExp} yrs experience
+              </span>
             </div>
 
-            {/* Close button — inside header */}
             <button
+              type="button"
               onClick={handleClose}
-              className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full transition-opacity hover:opacity-70"
-              style={{ backgroundColor: "rgba(0,0,0,0.22)" }}
+              className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center border border-[rgba(255,255,255,0.2)] text-white transition-colors hover:bg-[rgba(255,255,255,0.08)]"
               aria-label="Close profile"
             >
-              <X className="h-4 w-4 text-white" strokeWidth={2.5} />
+              <X className="h-4 w-4" strokeWidth={2} />
             </button>
           </div>
 
-          {/* ── Scrollable body ── */}
-          <div className="flex-1 overflow-y-auto overscroll-contain">
-            {/* Bio */}
-            <div className="px-6 py-6 sm:px-8">
-              <p
-                className="text-[0.9rem] leading-[1.85]"
-                style={{ color: "rgba(0,0,0,0.58)" }}
-              >
-                {instructor.bio}
-              </p>
-            </div>
+          <div className="h-1 w-full" style={{ backgroundColor: accent }} />
+        </div>
 
-            {/* Experience */}
-            {profile?.experience && profile.experience.length > 0 && (
-              <>
-                <div
-                  className="mx-6 h-px sm:mx-8"
-                  style={{ backgroundColor: "rgba(0,0,0,0.07)" }}
-                />
-                <div className="px-6 py-6 sm:px-8">
-                  <div className="mb-4 flex items-center gap-2">
-                    <Briefcase
-                      className="h-3.5 w-3.5 flex-shrink-0"
-                      style={{ color: accentColor }}
-                      strokeWidth={1.75}
-                    />
-                    <p
-                      className="text-[0.62rem] font-bold uppercase tracking-[0.18em]"
-                      style={{ color: "rgba(0,0,0,0.35)" }}
-                    >
-                      Experience
-                    </p>
-                  </div>
+        <div className="flex-1 overflow-y-auto overscroll-contain">
+          <div className="px-5 py-6 sm:px-6">
+            <p className={cn(courseBodyClass, "max-w-prose")}>{instructor.bio}</p>
+          </div>
 
-                  {/* Timeline */}
-                  <div className="relative pl-5">
-                    <div
-                      className="absolute left-[7px] top-2 bottom-2 w-px"
-                      style={{ backgroundColor: `${accentColor}28` }}
-                    />
-                    <div className="flex flex-col gap-5">
-                      {profile.experience.map((exp, i) => (
-                        <div key={i} className="relative">
-                          <div
-                            className="absolute -left-5 top-1.5 h-2.5 w-2.5 rounded-full border-2 border-white"
-                            style={{ backgroundColor: accentColor }}
-                          />
-                          <p
-                            className="text-[0.84rem] font-semibold leading-tight"
-                            style={{ color: "#1a1a1a" }}
-                          >
-                            {exp.role}
-                          </p>
-                          <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                            <span
-                              className="text-[0.76rem]"
-                              style={{ color: "rgba(0,0,0,0.45)" }}
-                            >
-                              {exp.place}
-                            </span>
-                            {exp.period && (
-                              <span
-                                className="rounded px-1.5 py-0.5 text-[0.62rem] font-medium"
-                                style={{
-                                  backgroundColor: `${accentColor}14`,
-                                  color: accentColor,
-                                }}
-                              >
-                                {exp.period}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+          {profile?.experience && profile.experience.length > 0 ? (
+            <>
+              <div className="mx-5 h-px bg-[rgba(47,78,64,0.08)] sm:mx-6" />
+              <div className="px-5 py-6 sm:px-6">
+                <div className="mb-5 flex items-center gap-2">
+                  <Briefcase
+                    className="h-4 w-4 shrink-0 text-(--brand-brown)"
+                    strokeWidth={1.75}
+                  />
+                  <p className={courseEyebrowClass}>Experience</p>
                 </div>
-              </>
-            )}
 
-            {/* Expertise */}
-            {profile?.expertise && profile.expertise.length > 0 && (
-              <>
-                <div
-                  className="mx-6 h-px sm:mx-8"
-                  style={{ backgroundColor: "rgba(0,0,0,0.07)" }}
-                />
-                <div className="px-6 py-6 sm:px-8">
-                  <div className="mb-4 flex items-center gap-2">
-                    <Sparkles
-                      className="h-3.5 w-3.5 flex-shrink-0"
-                      style={{ color: accentColor }}
-                      strokeWidth={1.75}
-                    />
-                    <p
-                      className="text-[0.62rem] font-bold uppercase tracking-[0.18em]"
-                      style={{ color: "rgba(0,0,0,0.35)" }}
-                    >
-                      Core Expertise
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {profile.expertise.map((skill, i) => (
-                      <span
-                        key={i}
-                        className="rounded-full px-3 py-1.5 text-[0.74rem] font-medium"
-                        style={{
-                          backgroundColor: `${accentColor}12`,
-                          color: accentColor,
-                          border: `1px solid ${accentColor}25`,
-                        }}
-                      >
-                        {skill}
-                      </span>
+                <div className="relative pl-5">
+                  <div
+                    className="absolute top-2 bottom-2 left-[7px] w-px"
+                    style={{ backgroundColor: courseAccentAlpha(accent, 35) }}
+                  />
+                  <div className="flex flex-col gap-5">
+                    {profile.experience.map((exp, index) => (
+                      <div key={index} className="relative">
+                        <div
+                          className="absolute top-1.5 -left-5 h-2.5 w-2.5 border-2 border-(--brand-cream)"
+                          style={{ backgroundColor: accent }}
+                        />
+                        <p className="font-[family-name:var(--font-dm-sans)] text-[0.88rem] font-semibold text-(--brand-green)">
+                          {exp.role}
+                        </p>
+                        <div className="mt-1 flex flex-wrap items-center gap-2">
+                          <span className="font-[family-name:var(--font-dm-sans)] text-[0.8rem] text-[rgba(47,78,64,0.55)]">
+                            {exp.place}
+                          </span>
+                          {exp.period ? (
+                            <span
+                              className="border px-2 py-0.5 font-[family-name:var(--font-dm-sans)] text-[0.68rem] font-medium"
+                              style={{
+                                borderColor: courseAccentAlpha(accent, 35),
+                                backgroundColor: courseAccentAlpha(accent, 10),
+                                color: accent,
+                              }}
+                            >
+                              {exp.period}
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
                     ))}
                   </div>
                 </div>
-              </>
-            )}
+              </div>
+            </>
+          ) : null}
 
-            <div className="h-10" />
-          </div>
+          {profile?.expertise && profile.expertise.length > 0 ? (
+            <>
+              <div className="mx-5 h-px bg-[rgba(47,78,64,0.08)] sm:mx-6" />
+              <div className="px-5 py-6 sm:px-6">
+                <div className="mb-5 flex items-center gap-2">
+                  <Sparkles
+                    className="h-4 w-4 shrink-0 text-(--brand-brown)"
+                    strokeWidth={1.75}
+                  />
+                  <p className={courseEyebrowClass}>Core Expertise</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {profile.expertise.map((skill) => (
+                    <span
+                      key={skill}
+                      className="border px-3 py-1.5 font-[family-name:var(--font-dm-sans)] text-[0.78rem] font-medium text-(--brand-green)"
+                      style={{
+                        borderColor: courseAccentAlpha(accent, 30),
+                        backgroundColor: courseAccentAlpha(accent, 8),
+                      }}
+                    >
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </>
+          ) : null}
+
+          <div className="h-8" />
         </div>
       </div>
-    </>
+    </div>
   );
 }

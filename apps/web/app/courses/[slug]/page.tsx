@@ -2,42 +2,22 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
 import {
+  ArrowLeft,
   ArrowRight,
+  Award,
+  BarChart2,
+  Calendar,
   CheckCircle2,
   Clock,
   Users,
-  Calendar,
-  BarChart2,
-  Award,
 } from "lucide-react";
 import { getCourseBySlug, courses } from "@/utils/mock";
-import CourseClientShells from "../../../components/courses/CourseClientShells";
+import CourseClientShells from "@/components/courses/CourseClientShells";
 import { SectionLabel } from "@/components/courses/SectionLabel";
-import { CurriculumAccordion } from "../../../components/courses/CurriculumAccordion";
+import { CurriculumAccordion } from "@/components/courses/CurriculumAccordion";
 import { VideoPlayer } from "@/components/courses/VideoPlayer";
-import { FaqList } from "../../../components/courses/FAQ";
+import { FaqList } from "@/components/courses/FAQ";
 import { getApiUrl } from "@/lib/api-url";
-
-// ─── Static params ────────────────────────────────────────────────────────────
-export function generateStaticParams() {
-  return courses.map((c) => ({ slug: c.slug }));
-}
-
-// ─── Metadata ─────────────────────────────────────────────────────────────────
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}): Promise<Metadata> {
-  const { slug } = await params;
-  const course = getCourseBySlug(slug);
-  if (!course) return { title: "Course Not Found" };
-  return {
-    title: `${course.course} Program — ${siteInfo.company.name}`,
-    description: course.shortDescription,
-  };
-}
-
 import {
   Coffee,
   GlassWater,
@@ -48,6 +28,20 @@ import { siteInfo } from "@/utils/site-info";
 import { CourseDetailResponse } from "@repo/types";
 import { InstructorSection } from "@/components/courses/InstructorSection";
 import { ReadMoreText } from "@/components/courses/ReadMoreText";
+import { CoursePriceVatNote } from "@/components/courses/CoursePriceVatNote";
+import {
+  courseBodyClass,
+  courseContainerClass,
+  courseCreamSection,
+  courseMutedSection,
+  coursePrimaryBtnClass,
+  courseSecondaryBtnClass,
+  courseSectionClass,
+  courseTitleClass,
+  courseTones,
+  type CourseToneKey,
+} from "@/components/courses/course-styles";
+import { cn } from "@/lib/utils";
 
 const iconMap = {
   coffee: Coffee,
@@ -55,9 +49,27 @@ const iconMap = {
   bakery: CroissantIcon,
   sushi: UtensilsCrossed,
 } as const;
+
 export type IconKey = keyof typeof iconMap;
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+export function generateStaticParams() {
+  return courses.map((c) => ({ slug: c.slug }));
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const course = getCourseBySlug(slug);
+  if (!course) return { title: "Course Not Found" };
+  return {
+    title: `${course.course} — ${siteInfo.company.name}`,
+    description: course.shortDescription,
+  };
+}
+
 export default async function CoursePage({
   params,
 }: {
@@ -70,147 +82,105 @@ export default async function CoursePage({
   if (!data.success) throw new Error(data.message);
 
   const courseFee = data.data.fee / 100;
-
   const course = getCourseBySlug(slug);
-
   if (!course) notFound();
 
   const { icon, ...safeCourse } = course;
   const Icon = iconMap[icon];
+  const tone = courseTones[icon as CourseToneKey];
   const formatter = new Intl.NumberFormat("en-NP");
 
+  const metaItems = [
+    { icon: Clock, label: "Duration", value: course.duration },
+    { icon: BarChart2, label: "Level", value: course.difficulty },
+    { icon: Users, label: "Class size", value: `Max ${course.seats}` },
+    { icon: Calendar, label: "Next intake", value: course.startDates[0] },
+  ] as const;
+
   return (
-    <main
-      className="min-h-screen py-10"
-      style={{
-        fontFamily: "var(--font-dm-sans)",
-        backgroundColor: "var(--brand-cream, #fbfaf7)",
-        color: "var(--brand-ink, #1a1a1a)",
-      }}
-    >
-      {/* ── Hero ───────────────────────────────────────────────────────────── */}
-      <section
-        className="relative overflow-hidden px-6 pb-20 pt-30"
-        style={{ backgroundColor: "var(--brand-green, #2f4e40)" }}
-      >
-        {/* Dot texture */}
+    <main className="min-h-screen bg-(--brand-cream) font-[family-name:var(--font-dm-sans)] text-(--brand-ink)">
+      {/* ── Hero ── */}
+      <section className="relative overflow-hidden bg-(--brand-green) px-6 pb-16 pt-28 sm:pb-20 sm:pt-32">
         <div
-          className="pointer-events-none absolute inset-0"
+          className="pointer-events-none absolute inset-0 opacity-50"
+          aria-hidden
           style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.03' fill-rule='evenodd'%3E%3Ccircle cx='20' cy='20' r='1'/%3E%3C/g%3E%3C/svg%3E")`,
+            backgroundImage: `
+              linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)
+            `,
+            backgroundSize: "48px 48px",
           }}
         />
-        {/* Accent glow */}
         <div
-          className="pointer-events-none absolute -right-24 -top-24 h-125 w-125 rounded-full opacity-20"
-          style={{
-            background: `radial-gradient(circle, ${course.color} 0%, transparent 70%)`,
-          }}
+          className="pointer-events-none absolute right-0 top-0 h-80 w-80 rounded-full opacity-25 blur-3xl"
+          style={{ background: "rgba(194,138,79,0.2)" }}
+          aria-hidden
         />
 
-        <div className="relative mx-auto max-w-6xl">
-          {/* Badge */}
-          <div className="mb-6 flex items-center gap-3">
+        <div className={cn(courseContainerClass, "relative")}>
+          <Link
+            href="/#programs"
+            className="mb-8 inline-flex items-center gap-2 font-[family-name:var(--font-dm-sans)] text-[0.82rem] font-medium text-white/55 transition-colors hover:text-white"
+          >
+            <ArrowLeft size={15} strokeWidth={2} />
+            All programs
+          </Link>
+
+          <div className="mb-6 flex flex-wrap items-center gap-3">
             <div
-              className="flex h-10 w-10 items-center justify-center rounded-xl"
-              style={{ backgroundColor: `${course.color}20` }}
+              className="grid h-11 w-11 place-items-center border"
+              style={{
+                borderColor: tone.border,
+                backgroundColor: tone.soft,
+                color: tone.accent,
+              }}
             >
-              <Icon
-                className="h-5 w-5"
-                strokeWidth={1.75}
-                style={{ color: course.color }}
-              />
+              <Icon size={20} strokeWidth={1.75} />
             </div>
             <span
-              className="rounded-full border px-3 py-1 text-[0.75rem] font-semibold tracking-[0.06em] uppercase"
+              className="border px-3 py-1 font-[family-name:var(--font-dm-sans)] text-[0.68rem] font-semibold uppercase tracking-[0.14em]"
               style={{
-                borderColor: `${course.color}50`,
-                backgroundColor: `${course.color}15`,
-                color: course.color,
+                borderColor: tone.border,
+                backgroundColor: tone.soft,
+                color: tone.accent,
               }}
             >
               {course.tagline}
             </span>
           </div>
 
-          <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:items-end">
-            {/* Left: title + description */}
+          <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1fr_340px] lg:items-end lg:gap-12">
             <div>
-              <h1
-                className="mb-5 text-[clamp(2.4rem,5vw,3.8rem)] font-bold leading-[1.1] text-white"
-                style={{ fontFamily: "var(--font-playfair)" }}
-              >
+              <h1 className="mb-4 font-[family-name:var(--font-playfair)] text-[clamp(2.2rem,5vw,3.5rem)] font-bold leading-[1.08] text-white">
                 {course.course}
-                <br />
-                <em
-                  className="font-normal italic"
-                  style={{ color: "var(--brand-brown, #c28a4f)" }}
-                >
-                  {course.tagline}
-                </em>
               </h1>
               <ReadMoreText text={course.longDescription} />
-
-              {/* CTA row */}
               <div className="flex flex-wrap gap-3">
-                <Link
-                  href="/admission"
-                  className="inline-flex items-center gap-2 rounded-xl px-6 py-3.5 text-[0.875rem] font-semibold text-white shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl focus-visible:outline focus-visible:outline-white"
-                  style={{
-                    backgroundColor: course.color,
-                    boxShadow: `0 4px 20px ${course.color}40`,
-                  }}
-                >
+                <Link href="/admission" className={coursePrimaryBtnClass}>
                   Apply Now
-                  <ArrowRight className="h-4 w-4" strokeWidth={2} />
+                  <ArrowRight size={16} strokeWidth={2.5} />
                 </Link>
-                <Link
-                  href="/#inquiry"
-                  className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/8 px-6 py-3.5 text-[0.875rem] font-semibold text-white backdrop-blur-sm transition-all duration-200 hover:border-white/35 hover:bg-white/14 focus-visible:outline focus-visible:outline-white"
-                >
+                <Link href="/#inquiry" className={courseSecondaryBtnClass}>
                   Talk to an Advisor
                 </Link>
               </div>
             </div>
 
-            {/* Right: meta cards */}
-            <div className="grid grid-cols-2 gap-3">
-              {(
-                [
-                  {
-                    icon: Clock,
-                    label: "Duration",
-                    value: course.duration,
-                  },
-                  {
-                    icon: BarChart2,
-                    label: "Level",
-                    value: course.difficulty,
-                  },
-                  {
-                    icon: Users,
-                    label: "Class Size",
-                    value: `Max ${course.seats} students`,
-                  },
-                  {
-                    icon: Calendar,
-                    label: "Next intake",
-                    value: course.startDates[0],
-                  },
-                ] as const
-              ).map(({ icon: MetaIcon, label, value }) => (
+            <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
+              {metaItems.map(({ icon: MetaIcon, label, value }) => (
                 <div
                   key={label}
-                  className="rounded-2xl border border-white/10 bg-white/6 p-4 backdrop-blur-sm"
+                  className="border border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.04)] p-4"
                 >
                   <MetaIcon
                     className="mb-2 h-4 w-4 text-white/40"
                     strokeWidth={1.75}
                   />
-                  <p className="mb-0.5 text-[0.75rem] text-white/40 uppercase tracking-widest">
+                  <p className="mb-0.5 font-[family-name:var(--font-dm-sans)] text-[0.68rem] uppercase tracking-widest text-white/40">
                     {label}
                   </p>
-                  <p className="text-[0.92rem] font-semibold text-white">
+                  <p className="font-[family-name:var(--font-dm-sans)] text-[0.88rem] font-semibold text-white">
                     {value}
                   </p>
                 </div>
@@ -220,310 +190,219 @@ export default async function CoursePage({
         </div>
       </section>
 
-      {/* ── Client shells (sticky nav + interactive sections) ──────────────── */}
-      {/* Separated into a client component to keep this file a Server Component */}
-      <CourseClientShells course={safeCourse} />
+      <CourseClientShells toneKey={icon as CourseToneKey} />
 
-      {/* ── Stats strip ────────────────────────────────────────────────────── */}
-      {/* <section
-        className="border-y px-6 py-12"
-        style={{
-          borderColor: "rgba(0,0,0,0.07)",
-          backgroundColor: "#f3f1eb",
-        }}
+      {/* ── Video (featured) ── */}
+      <section
+        id="video"
+        className={cn(courseSectionClass, courseCreamSection)}
       >
-        <div className="mx-auto grid max-w-5xl grid-cols-2 gap-8 sm:grid-cols-4">
-          {course.stats.map((stat) => (
-            <div key={stat.label} className="text-center">
-              <p
-                className="mb-1 text-[2rem] font-bold leading-none tracking-tight"
-                style={{
-                  color: "var(--brand-green, #2f4e40)",
-                  fontFamily: "var(--font-lora)",
-                }}
-              >
-                {stat.value}
+        <div className={courseContainerClass}>
+          <div className="mb-10 grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-center lg:gap-12">
+            <div>
+              <SectionLabel>Program Preview</SectionLabel>
+              <h2 className={courseTitleClass}>
+                Inside the{" "}
+                <em
+                  className="font-medium text-(--brand-brown)"
+                  style={{ fontStyle: "italic" }}
+                >
+                  Training Lab
+                </em>
+              </h2>
+              <p className={cn(courseBodyClass, "mt-4 max-w-lg")}>
+                See how our {course.course.toLowerCase()} sessions run — real
+                equipment, guided practice, and the pace you can expect in class.
               </p>
-              <p className="text-[0.8rem] text-black/45 uppercase tracking-widest">
-                {stat.label}
-              </p>
+              <ul className="mt-6 flex flex-col gap-3">
+                {[
+                  "Hands-on demonstrations from working professionals",
+                  "Small cohorts with direct instructor feedback",
+                  "Industry-standard tools and workflows",
+                ].map((item) => (
+                  <li
+                    key={item}
+                    className="flex items-start gap-2.5 font-[family-name:var(--font-dm-sans)] text-[0.88rem] text-[rgba(47,78,64,0.65)]"
+                  >
+                    <CheckCircle2
+                      className="mt-0.5 h-4 w-4 shrink-0 text-(--brand-brown)"
+                      strokeWidth={2}
+                    />
+                    {item}
+                  </li>
+                ))}
+              </ul>
             </div>
-          ))}
+            <VideoPlayer course={course} />
+          </div>
         </div>
-      </section> */}
+      </section>
 
-      {/* ── Overview: long description + outcomes ──────────────────────────── */}
+      {/* ── Overview ── */}
       <section
         id="overview"
-        className="scroll-mt-20 px-6 py-20"
-        style={{ backgroundColor: "var(--brand-cream, #fbfaf7)" }}
+        className={cn(courseSectionClass, courseMutedSection)}
       >
-        <div className="mx-auto max-w-6xl">
-          <div className="grid grid-cols-1 gap-16 lg:grid-cols-[1fr_400px]">
-            {/* Description */}
+        <div className={courseContainerClass}>
+          <div className="grid grid-cols-1 gap-12 lg:grid-cols-[1fr_380px] lg:gap-16">
             <div>
               <SectionLabel>About This Program</SectionLabel>
-              <h2
-                className="mb-6 text-[clamp(1.6rem,3vw,2.2rem)] font-bold leading-[1.2]"
-                style={{
-                  fontFamily: "var(--font-lora)",
-                  color: "var(--brand-ink, #1a1a1a)",
-                }}
-              >
+              <h2 className={courseTitleClass}>
                 What You Will{" "}
                 <em
-                  className="font-normal italic"
-                  style={{ color: "var(--brand-brown, #c28a4f)" }}
+                  className="font-medium text-(--brand-brown)"
+                  style={{ fontStyle: "italic" }}
                 >
                   Learn & Become
                 </em>
               </h2>
-              <p
-                className="text-[1rem] leading-[1.85] text-black/60"
-                style={{ maxWidth: "62ch" }}
-              >
+              <p className={cn(courseBodyClass, "mt-5 max-w-prose")}>
                 {course.longDescription}
               </p>
 
-              {/* Tuition callout */}
-              <div className="mt-10 inline-flex flex-col gap-1">
+              <div className="mt-10">
                 <div
-                  className="inline-flex items-baseline gap-3 rounded-2xl border px-6 py-4"
+                  className="inline-flex flex-col gap-1 border px-6 py-4"
                   style={{
-                    borderColor: `${course.color}30`,
-                    backgroundColor: `${course.color}08`,
+                    borderColor: tone.border,
+                    backgroundColor: tone.soft,
                   }}
                 >
-                  <span
-                    className="text-[2rem] font-bold tracking-tight"
-                    style={{
-                      color: "var(--brand-ink, #1a1a1a)",
-                      fontFamily: "var(--font-lora)",
-                    }}
-                  >
-                    NPR {formatter.format(courseFee)}
-                  </span>
-                  <span className="text-[0.85rem] text-black/45">
-                    full program · materials included
+                  <div className="flex items-baseline gap-2">
+                    <span className="font-[family-name:var(--font-dm-sans)] text-sm text-[rgba(47,78,64,0.5)]">
+                      NPR
+                    </span>
+                    <span className="font-[family-name:var(--font-lora)] text-[2rem] font-bold tracking-tight text-(--brand-green)">
+                      {formatter.format(courseFee)}
+                    </span>
+                  </div>
+                  <span className="font-[family-name:var(--font-dm-sans)] text-[0.8rem] text-[rgba(47,78,64,0.5)]">
+                    Full program · materials included
                   </span>
                 </div>
-                {/* VAT notice */}
-                <p
-                  className="pl-1 text-[0.72rem] font-medium tracking-wide text-black/40"
-                  style={{ fontFamily: "var(--font-dm-sans)" }}
-                >
-                  Pricing inclusive of VAT
-                </p>
+                <CoursePriceVatNote className="mt-2" />
               </div>
             </div>
 
-            {/* Outcomes */}
-            <div>
-              <div
-                className="rounded-2xl border p-7"
-                style={{
-                  borderColor: "rgba(0,0,0,0.07)",
-                  backgroundColor: "#f3f1eb",
-                }}
-              >
-                <div className="mb-5 flex items-center gap-2.5">
-                  <Award
-                    className="h-4.5 w-4.5"
-                    style={{ color: "var(--brand-green, #2f4e40)" }}
-                    strokeWidth={1.75}
-                  />
-                  <h3
-                    className="text-[0.95rem] font-semibold"
-                    style={{ color: "var(--brand-ink, #1a1a1a)" }}
+            <div className="border border-[rgba(47,78,64,0.1)] bg-white p-6 sm:p-7">
+              <div className="mb-5 flex items-center gap-2.5">
+                <Award
+                  className="h-4 w-4 text-(--brand-green)"
+                  strokeWidth={1.75}
+                />
+                <h3 className="font-[family-name:var(--font-dm-sans)] text-[0.95rem] font-semibold text-(--brand-green)">
+                  Learning Outcomes
+                </h3>
+              </div>
+              <ul className="flex flex-col gap-3.5">
+                {course.outcomes.map((outcome) => (
+                  <li
+                    key={outcome}
+                    className="flex items-start gap-3 font-[family-name:var(--font-dm-sans)] text-[0.875rem] leading-[1.6] text-[rgba(47,78,64,0.65)]"
                   >
-                    Learning Outcomes
-                  </h3>
-                </div>
-                <ul className="flex flex-col gap-3.5">
-                  {course.outcomes.map((outcome) => (
+                    <CheckCircle2
+                      className="mt-0.5 h-4 w-4 shrink-0"
+                      style={{ color: tone.accent }}
+                      strokeWidth={2}
+                    />
+                    {outcome}
+                  </li>
+                ))}
+              </ul>
+
+              <div className="mt-7 border-t border-[rgba(47,78,64,0.08)] pt-6">
+                <p className="mb-3 font-[family-name:var(--font-dm-sans)] text-[0.72rem] font-semibold uppercase tracking-widest text-[rgba(47,78,64,0.4)]">
+                  Upcoming start dates
+                </p>
+                <ul className="flex flex-col gap-2">
+                  {course.startDates.map((date, i) => (
                     <li
-                      key={outcome}
-                      className="flex items-start gap-3 text-[0.875rem] leading-[1.6] text-black/65"
+                      key={date}
+                      className="flex items-start justify-between gap-3 font-[family-name:var(--font-dm-sans)] text-[0.875rem]"
                     >
-                      <CheckCircle2
-                        className="mt-0.5 h-4 w-4 shrink-0"
-                        style={{ color: course.color }}
-                        strokeWidth={2}
-                      />
-                      {outcome}
+                      <span className="min-w-0 flex-1 leading-snug text-[rgba(47,78,64,0.65)]">
+                        {date}
+                      </span>
+                      {i === 0 ? (
+                        <span
+                          className="shrink-0 whitespace-nowrap border px-2.5 py-0.5 text-[0.68rem] font-semibold uppercase tracking-wide"
+                          style={{
+                            borderColor: tone.border,
+                            color: tone.accent,
+                            backgroundColor: tone.soft,
+                          }}
+                        >
+                          Next intake
+                        </span>
+                      ) : null}
                     </li>
                   ))}
                 </ul>
-
-                {/* Intake dates */}
-                <div
-                  className="mt-7 border-t pt-6"
-                  style={{ borderColor: "rgba(0,0,0,0.07)" }}
-                >
-                  <p className="mb-3 text-[0.75rem] font-semibold uppercase tracking-widest text-black/35">
-                    Upcoming Start Dates
-                  </p>
-                  <ul className="flex flex-col gap-2">
-                    {course.startDates.map((date, i) => (
-                      <li
-                        key={date}
-                        className="flex items-center justify-between text-[0.875rem]"
-                      >
-                        <span className="text-black/65">{date}</span>
-                        {i === 0 && (
-                          <span
-                            className="rounded-full px-2.5 py-0.5 text-[0.7rem] font-semibold"
-                            style={{
-                              backgroundColor: `${course.color}15`,
-                              color: course.color,
-                            }}
-                          >
-                            Next intake
-                          </span>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── Curriculum ─────────────────────────────────────────────────────── */}
+      {/* ── Curriculum ── */}
       <section
         id="curriculum"
-        className="scroll-mt-20 px-6 py-20"
-        style={{ backgroundColor: "#f3f1eb" }}
+        className={cn(courseSectionClass, courseCreamSection)}
       >
-        <div className="mx-auto max-w-4xl">
+        <div className={courseContainerClass}>
           <SectionLabel>Week by Week</SectionLabel>
-          <h2
-            className="mb-12 text-[clamp(1.6rem,3vw,2.2rem)] font-bold leading-[1.2]"
-            style={{
-              fontFamily: "var(--font-playfair)",
-              color: "var(--brand-ink, #1a1a1a)",
-            }}
-          >
-            Full Curriculum
-          </h2>
-
-          <CurriculumAccordion course={course} />
+          <h2 className={cn(courseTitleClass, "mb-10")}>Full Curriculum</h2>
+          <CurriculumAccordion course={course} accent={tone.accent} />
         </div>
       </section>
 
-      {/* ── Video section ──────────────────────────────────────────────────── */}
-      <section
-        id="video"
-        className="scroll-mt-20 px-6 py-20"
-        style={{ backgroundColor: "var(--brand-cream, #fbfaf7)" }}
-      >
-        <div className="mx-auto max-w-5xl">
-          <div className="mb-10 text-center">
-            <SectionLabel centered>See It In Action</SectionLabel>
-            <h2
-              className="text-[clamp(1.6rem,3vw,2.2rem)] font-bold leading-[1.2]"
-              style={{
-                fontFamily: "var(--font-playfair)",
-                color: "var(--brand-ink, #1a1a1a)",
-              }}
-            >
-              Inside the{" "}
-              <em
-                className="font-normal italic"
-                style={{ color: "var(--brand-brown, #c28a4f)" }}
-              >
-                {course.course} Lab
-              </em>
-            </h2>
-          </div>
-
-          <VideoPlayer course={course} />
-        </div>
-      </section>
-
-      {/* ── Instructor ─────────────────────────────────────────────────────── */}
+      {/* ── Instructor ── */}
       <section
         id="instructor"
-        className="scroll-mt-20 px-6 py-20"
-        style={{ backgroundColor: "#f3f1eb" }}
+        className={cn(courseSectionClass, courseMutedSection)}
       >
-        <InstructorSection course={course} />
+        <InstructorSection course={safeCourse} accent={tone.accent} />
       </section>
 
-      {/* ── FAQs ───────────────────────────────────────────────────────────── */}
-      <section
-        id="faq"
-        className="scroll-mt-20 px-6 py-20"
-        style={{ backgroundColor: "var(--brand-cream, #fbfaf7)" }}
-      >
-        <div className="mx-auto max-w-3xl">
-          <SectionLabel centered>Frequently Asked</SectionLabel>
-          <h2
-            className="mb-12 text-center text-[clamp(1.6rem,3vw,2.2rem)] font-bold leading-[1.2]"
-            style={{
-              fontFamily: "var(--font-playfair)",
-              color: "var(--brand-ink, #1a1a1a)",
-            }}
-          >
-            Questions
-          </h2>
-
+      {/* ── FAQ ── */}
+      <section id="faq" className={cn(courseSectionClass, courseCreamSection)}>
+        <div className={courseContainerClass}>
+          <SectionLabel>Common Questions</SectionLabel>
+          <h2 className={cn(courseTitleClass, "mb-10")}>FAQ</h2>
           <FaqList course={course} />
         </div>
       </section>
 
-      {/* ── Bottom CTA ─────────────────────────────────────────────────────── */}
-      <section
-        className="px-6 pb-24 pt-4"
-        style={{ backgroundColor: "var(--brand-cream, #fbfaf7)" }}
-      >
-        <div
-          className="mx-auto max-w-5xl overflow-hidden rounded-3xl"
-          style={{ backgroundColor: "var(--brand-green, #2f4e40)" }}
-        >
-          {/* Accent bar */}
-          <div
-            className="h-1 w-full"
-            style={{ backgroundColor: course.color }}
-          />
-          <div className="px-8 py-12 sm:px-14 sm:py-14">
-            <div className="flex flex-col items-start gap-8 sm:flex-row sm:items-center sm:justify-between">
+      {/* ── CTA ── */}
+      <section className={cn(courseSectionClass, "pb-24 pt-4", courseCreamSection)}>
+        <div className={courseContainerClass}>
+          <div className="overflow-hidden border border-[rgba(47,78,64,0.12)] bg-(--brand-green)">
+            <div
+              className="h-1 w-full"
+              style={{ backgroundColor: tone.accent }}
+            />
+            <div className="flex flex-col items-start justify-between gap-8 px-6 py-10 sm:flex-row sm:items-center sm:px-10 sm:py-12">
               <div>
-                <h2
-                  className="mb-2 text-[1.6rem] font-bold leading-[1.2] text-white sm:text-[2rem]"
-                  style={{ fontFamily: "var(--font-playfair)" }}
-                >
+                <h2 className="font-[family-name:var(--font-playfair)] text-[clamp(1.5rem,3vw,2rem)] font-bold leading-tight text-white">
                   Ready to begin your{" "}
                   <em
-                    className="font-normal italic"
-                    style={{ color: "var(--brand-brown, #c28a4f)" }}
+                    className="font-medium text-(--brand-brown)"
+                    style={{ fontStyle: "italic" }}
                   >
                     {course.course} journey?
                   </em>
                 </h2>
-                <p className="text-[0.9rem] text-white/50">
+                <p className="mt-2 font-[family-name:var(--font-dm-sans)] text-[0.9rem] text-white/55">
                   Next cohort starts {course.startDates[0]} · Only{" "}
                   {course.seats} seats per intake.
                 </p>
               </div>
               <div className="flex shrink-0 flex-col gap-3 sm:flex-row">
-                <Link
-                  href="/admission"
-                  className="inline-flex items-center gap-2 rounded-xl px-6 py-3.5 text-[0.875rem] font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-white"
-                  style={{
-                    backgroundColor: course.color,
-                    boxShadow: `0 4px 20px ${course.color}45`,
-                  }}
-                >
+                <Link href="/admission" className={coursePrimaryBtnClass}>
                   Apply Now
-                  <ArrowRight className="h-4 w-4" strokeWidth={2} />
+                  <ArrowRight size={16} strokeWidth={2.5} />
                 </Link>
-                <Link
-                  href="/#inquiry"
-                  className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/8 px-6 py-3.5 text-[0.875rem] font-semibold text-white transition-all duration-200 hover:border-white/35 hover:bg-white/15 focus-visible:outline  focus-visible:outline-white"
-                >
+                <Link href="/#inquiry" className={courseSecondaryBtnClass}>
                   Ask a Question
                 </Link>
               </div>

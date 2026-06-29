@@ -2,47 +2,51 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { BookOpen } from "lucide-react";
-import { InstructorProfileModal } from "./InstructorProfileModal";
-import { Instructor } from "@/utils/mock";
+import { ArrowRight, BookOpen } from "lucide-react";
 import { InstructorProfileDrawer } from "./InstructorProfileDrawer";
+import { Instructor } from "@/utils/mock";
+import { SectionLabel } from "./SectionLabel";
+import {
+  courseBodyClass,
+  courseCardClass,
+  courseContainerClass,
+  courseTitleClass,
+} from "./course-styles";
+import { cn } from "@/lib/utils";
 
-interface SectionLabelProps {
-  children: React.ReactNode;
-}
-
-// ── SectionLabel (replace with your actual import) ───────────────────────────
-function SectionLabel({ children }: SectionLabelProps) {
-  return (
-    <p className="text-xs font-semibold uppercase tracking-widest text-black/40">
-      {children}
-    </p>
-  );
-}
-
-// ── Main export ───────────────────────────────────────────────────────────────
 export function InstructorSection({
   course,
+  accent,
 }: {
-  course: { instructor: Instructor; color: string };
+  course: { instructor: Instructor };
+  accent: string;
 }) {
   const [showProfile, setShowProfile] = useState(false);
 
   return (
     <>
-      <div className="mx-auto max-w-5xl">
+      <div className={courseContainerClass}>
         <SectionLabel>Your Instructor</SectionLabel>
-        <div className="mt-10 grid grid-cols-1 items-center gap-12 sm:grid-cols-[220px_1fr]">
-          {/* Avatar Container */}
-          <div className="flex flex-col items-center gap-4 text-center sm:items-start sm:text-left">
-            <div className="relative h-36 w-36 overflow-hidden rounded-2xl sm:h-44 sm:w-44">
+        <h2 className={cn(courseTitleClass, "mb-8")}>
+          Meet Your{" "}
+          <em
+            className="font-medium text-(--brand-brown)"
+            style={{ fontStyle: "italic" }}
+          >
+            Mentor
+          </em>
+        </h2>
+
+        <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-[minmax(0,240px)_1fr] lg:gap-12">
+          <div className="flex flex-col items-start gap-4 text-left">
+            <div className="relative h-40 w-40 overflow-hidden border border-[rgba(47,78,64,0.12)] sm:h-44 sm:w-44">
               {course.instructor.image ? (
                 <Image
                   src={course.instructor.image}
                   alt={`Portrait of ${course.instructor.name}`}
                   fill
                   className="object-cover object-top"
-                  sizes="(max-width: 640px) 144px, 176px"
+                  sizes="(max-width: 640px) 160px, 176px"
                   priority
                 />
               ) : (
@@ -50,70 +54,45 @@ export function InstructorSection({
                   className="h-full w-full"
                   style={{
                     backgroundColor: course.instructor.imagePlaceholder,
-                    opacity: 0.25,
+                    opacity: 0.35,
                   }}
                   aria-hidden
                 />
               )}
             </div>
+
             <div>
-              <p
-                className="text-[1.15rem] font-bold"
-                style={{
-                  fontFamily: "var(--font-playfair)",
-                  color: "var(--brand-ink, #1a1a1a)",
-                }}
-              >
+              <p className="font-[family-name:var(--font-playfair)] text-[1.2rem] font-bold text-(--brand-green)">
                 {course.instructor.name}
               </p>
-              <p className="mt-1 text-[0.82rem] text-black/45">
+              <p className="mt-1 font-[family-name:var(--font-dm-sans)] text-[0.85rem] text-[rgba(47,78,64,0.5)]">
                 {course.instructor.title}
               </p>
             </div>
 
-            {/* ── View Profile button ── */}
-            {course.instructor.hasProfileCard && (
+            {course.instructor.hasProfileCard ? (
               <button
+                type="button"
                 onClick={() => setShowProfile(true)}
-                className="group flex items-center gap-2 rounded-full border px-4 py-2 text-[0.8rem] font-medium transition-all duration-200"
-                style={{
-                  borderColor: "var(--brand-green, #2f4e40)",
-                  color: "var(--brand-green, #2f4e40)",
-                  backgroundColor: "transparent",
-                }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.backgroundColor =
-                    "var(--brand-green, #2f4e40)";
-                  (e.currentTarget as HTMLButtonElement).style.color = "#fff";
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.backgroundColor =
-                    "transparent";
-                  (e.currentTarget as HTMLButtonElement).style.color =
-                    "var(--brand-green, #2f4e40)";
-                }}
+                className="inline-flex items-center gap-2 border border-[rgba(47,78,64,0.18)] bg-white px-5 py-2.5 font-[family-name:var(--font-dm-sans)] text-sm font-semibold text-(--brand-green) transition-colors hover:bg-[rgba(47,78,64,0.04)]"
               >
-                View Instructor Profile
+                View full profile
+                <ArrowRight size={15} strokeWidth={2.5} />
               </button>
-            )}
+            ) : null}
           </div>
 
-          {/* Bio */}
-          <div>
-            <p
-              className="mb-6 text-[1rem] leading-[1.85] text-black/60"
-              style={{ maxWidth: "60ch" }}
-            >
+          <div className={cn(courseCardClass, "p-6 sm:p-7")}>
+            <p className={cn(courseBodyClass, "mb-6 max-w-prose")}>
               {course.instructor.bio}
             </p>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 border-t border-[rgba(47,78,64,0.08)] pt-5">
               <BookOpen
-                className="h-4 w-4"
-                style={{ color: "var(--brand-green, #2f4e40)" }}
+                className="h-4 w-4 text-(--brand-brown)"
                 strokeWidth={1.75}
               />
-              <span className="text-[0.875rem] text-black/55">
-                <strong style={{ color: "var(--brand-ink, #1a1a1a)" }}>
+              <span className="font-[family-name:var(--font-dm-sans)] text-[0.875rem] text-[rgba(47,78,64,0.62)]">
+                <strong className="text-(--brand-green)">
                   {course.instructor.yearsExp} years
                 </strong>{" "}
                 of industry experience
@@ -123,14 +102,13 @@ export function InstructorSection({
         </div>
       </div>
 
-      {/* Modal */}
-      {showProfile && (
+      {showProfile ? (
         <InstructorProfileDrawer
           instructor={course.instructor}
-          accentColor={course.color}
+          accent={accent}
           onClose={() => setShowProfile(false)}
         />
-      )}
+      ) : null}
     </>
   );
 }

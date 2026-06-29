@@ -1,63 +1,59 @@
-import { CourseDetail } from "@/utils/mock";
-import { ChevronDown } from "lucide-react";
+"use client";
 
-export function CurriculumAccordion({ course }: { course: CourseDetail }) {
+import { CourseDetail } from "@/utils/mock";
+import { Check } from "lucide-react";
+import { CourseDisclosure } from "./CourseDisclosure";
+import { courseAccentAlpha } from "./course-styles";
+
+export function CurriculumAccordion({
+  course,
+  accent,
+}: {
+  course: CourseDetail;
+  accent: string;
+}) {
   return (
     <div className="flex flex-col gap-3">
-      {course.curriculum.map((mod, i) => (
-        <details
+      {course.curriculum.map((mod, index) => (
+        <CourseDisclosure
           key={mod.week}
-          className="group rounded-2xl border bg-white"
-          style={{ borderColor: "rgba(0,0,0,0.08)" }}
-          open={i === 0}
-        >
-          <summary
-            className="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 select-none"
-            style={{ color: "var(--brand-ink, #1a1a1a)" }}
-          >
-            <div className="flex items-center gap-4">
+          defaultOpen={index === 0}
+          title={
+            <div className="flex min-w-0 items-center gap-3 sm:gap-4">
               <span
-                className="shrink-0 rounded-lg px-2.5 py-1 text-[0.72rem] font-semibold uppercase tracking-widest"
+                className="shrink-0 border px-2.5 py-1 font-[family-name:var(--font-dm-sans)] text-[0.68rem] font-semibold uppercase tracking-widest"
                 style={{
-                  backgroundColor: `${course.color}15`,
-                  color: course.color,
+                  borderColor: courseAccentAlpha(accent, 28),
+                  backgroundColor: courseAccentAlpha(accent, 10),
+                  color: accent,
                 }}
               >
                 {mod.week}
               </span>
-              <span
-                className="text-[1rem] font-semibold"
-                style={{ fontFamily: "var(--font-playfair)" }}
-              >
+              <span className="font-[family-name:var(--font-playfair)] text-[1rem] font-semibold text-(--brand-green)">
                 {mod.title}
               </span>
             </div>
-            <ChevronDown
-              className="h-4.5 w-4.5 shrink-0 text-black/30 transition-transform duration-200 group-open:rotate-180"
-              strokeWidth={1.75}
-            />
-          </summary>
-
-          <div
-            className="border-t px-6 pb-6 pt-5"
-            style={{ borderColor: "rgba(0,0,0,0.06)" }}
-          >
+          }
+        >
+          <div className="px-5 pb-5 pt-4 sm:px-6 sm:pb-6">
             <ul className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
               {mod.topics.map((topic) => (
                 <li
                   key={topic}
-                  className="flex items-start gap-2.5 text-[0.875rem] leading-[1.6] text-black/55"
+                  className="flex items-start gap-2.5 font-[family-name:var(--font-dm-sans)] text-[0.875rem] leading-[1.6] text-[rgba(47,78,64,0.62)]"
                 >
-                  <span
-                    className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full"
-                    style={{ backgroundColor: course.color }}
+                  <Check
+                    className="mt-0.5 h-3.5 w-3.5 shrink-0"
+                    style={{ color: accent }}
+                    strokeWidth={2.5}
                   />
                   {topic}
                 </li>
               ))}
             </ul>
           </div>
-        </details>
+        </CourseDisclosure>
       ))}
     </div>
   );

@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { CourseDetail } from "@/utils/mock";
+import type { CourseToneKey } from "./course-styles";
+import { courseContainerClass, courseTones } from "./course-styles";
 
 const NAV_ITEMS = [
+  { id: "video", label: "Watch" },
   { id: "overview", label: "Overview" },
   { id: "curriculum", label: "Curriculum" },
-  { id: "video", label: "Video" },
   { id: "instructor", label: "Instructor" },
   { id: "faq", label: "FAQ" },
 ] as const;
@@ -14,17 +15,15 @@ const NAV_ITEMS = [
 type NavId = (typeof NAV_ITEMS)[number]["id"];
 
 interface CourseClientShellsProps {
-  course: Omit<CourseDetail, "icon">;
+  toneKey: CourseToneKey;
 }
 
-export default function CourseClientShells({
-  course,
-}: CourseClientShellsProps) {
-  const [activeId, setActiveId] = useState<NavId>("overview");
+export default function CourseClientShells({ toneKey }: CourseClientShellsProps) {
+  const [activeId, setActiveId] = useState<NavId>("video");
   const [stuck, setStuck] = useState(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const tone = courseTones[toneKey];
 
-  // Detect when the nav bar sticks to the top
   useEffect(() => {
     const sentinel = sentinelRef.current;
     if (!sentinel) return;
@@ -37,7 +36,6 @@ export default function CourseClientShells({
     return () => observer.disconnect();
   }, []);
 
-  // Track which section is in view
   useEffect(() => {
     const sections = NAV_ITEMS.map(({ id }) =>
       document.getElementById(id),
@@ -51,7 +49,7 @@ export default function CourseClientShells({
           }
         }
       },
-      { rootMargin: "-20% 0px -70% 0px" },
+      { rootMargin: "-22% 0px -65% 0px" },
     );
 
     sections.forEach((s) => observer.observe(s));
@@ -61,55 +59,61 @@ export default function CourseClientShells({
   const scrollTo = (id: NavId) => {
     const el = document.getElementById(id);
     if (!el) return;
-    const offset = 72; // sticky nav height
+    const offset = 56;
     const top = el.getBoundingClientRect().top + window.scrollY - offset;
     window.scrollTo({ top, behavior: "smooth" });
   };
 
   return (
     <>
-      {/* Sentinel — sits just above the nav in DOM flow */}
       <div ref={sentinelRef} aria-hidden />
 
-      {/* Sticky nav */}
       <nav
         aria-label="Course sections"
-        className="sticky top-0 z-30 transition-shadow duration-200"
+        className="sticky top-0 z-30 border-b border-[rgba(47,78,64,0.1)] bg-(--brand-cream)/95 backdrop-blur-md transition-shadow duration-200"
         style={{
-          backgroundColor: "var(--brand-cream, #fbfaf7)",
-          borderBottom: "1px solid rgba(0,0,0,0.07)",
-          boxShadow: stuck ? "0 2px 16px rgba(0,0,0,0.06)" : "none",
+          boxShadow: stuck ? "0 4px 20px rgba(47,78,64,0.06)" : "none",
         }}
       >
-        <div className="mx-auto flex max-w-6xl items-center overflow-x-auto px-6 scrollbar-none">
-          {NAV_ITEMS.map(({ id, label }) => {
-            const isActive = activeId === id;
-            return (
-              <button
-                key={id}
-                type="button"
-                onClick={() => scrollTo(id)}
-                aria-current={isActive ? "location" : undefined}
-                className="relative shrink-0 px-4 py-4 text-[0.85rem] font-medium transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2"
-                style={{
-                  color: isActive
-                    ? "var(--brand-green, #2f4e40)"
-                    : "rgba(0,0,0,0.4)",
-                  fontFamily: "var(--font-dm-sans)",
-                }}
-              >
-                {label}
-                {/* Active indicator */}
-                <span
-                  className="absolute bottom-0 left-0 h-0.5 w-full rounded-full transition-transform duration-300 origin-left"
+        <div className="relative">
+          <div
+            className="pointer-events-none absolute inset-y-0 left-0 z-10 w-6 bg-linear-to-r from-(--brand-cream) to-transparent sm:w-8"
+            aria-hidden
+          />
+          <div
+            className="pointer-events-none absolute inset-y-0 right-0 z-10 w-6 bg-linear-to-l from-(--brand-cream) to-transparent sm:w-8"
+            aria-hidden
+          />
+          <div
+            className={`${courseContainerClass} flex items-center gap-0.5 overflow-x-auto px-4 scrollbar-none snap-x snap-mandatory sm:gap-1 sm:px-6`}
+          >
+            {NAV_ITEMS.map(({ id, label }) => {
+              const isActive = activeId === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => scrollTo(id)}
+                  aria-current={isActive ? "location" : undefined}
+                  className="relative shrink-0 snap-start px-3.5 py-3 font-[family-name:var(--font-dm-sans)] text-[0.82rem] font-medium transition-colors duration-150 sm:px-4 sm:py-3.5 sm:text-[0.85rem]"
                   style={{
-                    backgroundColor: course.color,
-                    transform: isActive ? "scaleX(1)" : "scaleX(0)",
+                    color: isActive
+                      ? "var(--brand-green)"
+                      : "rgba(47,78,64,0.45)",
                   }}
-                />
-              </button>
-            );
-          })}
+                >
+                  {label}
+                  <span
+                    className="absolute bottom-0 left-3.5 right-3.5 h-0.5 origin-left transition-transform duration-300 sm:left-4 sm:right-4"
+                    style={{
+                      backgroundColor: tone.accent,
+                      transform: isActive ? "scaleX(1)" : "scaleX(0)",
+                    }}
+                  />
+                </button>
+              );
+            })}
+          </div>
         </div>
       </nav>
     </>
