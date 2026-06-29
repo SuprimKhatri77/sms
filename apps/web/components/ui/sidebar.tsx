@@ -187,7 +187,13 @@ function Sidebar({
           data-sidebar="sidebar"
           data-slot="sidebar"
           data-mobile="true"
-          className="w-(--sidebar-width) bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
+          showCloseButton
+          className={cn(
+            "w-(--sidebar-width) max-w-[min(18rem,90vw)] bg-sidebar p-0 text-sidebar-foreground",
+            "data-[side=left]:!w-(--sidebar-width) data-[side=left]:max-w-[min(18rem,90vw)]",
+            "[&_[data-slot=sheet-close]]:top-3.5 [&_[data-slot=sheet-close]]:right-3.5",
+            "[&_[data-slot=sheet-close]]:text-(--brand-green) [&_[data-slot=sheet-close]]:hover:bg-[rgba(47,78,64,0.08)]",
+          )}
           style={
             {
               "--sidebar-width": SIDEBAR_WIDTH_MOBILE,

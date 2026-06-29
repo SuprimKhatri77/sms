@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/sidebar";
 import api from "@/lib/axios";
 import { useAuthStore } from "@/store/auth";
-import { CaretUpDownIcon, SignOutIcon } from "@phosphor-icons/react";
+import { CaretUpDownIcon, SignOutIcon, UserIcon } from "@phosphor-icons/react";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Spinner } from "./ui/spinner";
@@ -87,7 +87,10 @@ export function NavUser() {
               </DropdownMenuLabel>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-
+            <DropdownMenuItem onClick={() => router.push("/admin/profile")}>
+              <UserIcon />
+              Profile
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => mutate()} disabled={isPending}>
               {isPending ? (

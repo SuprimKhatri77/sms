@@ -7,7 +7,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useDebouncedCallback } from "use-debounce";
 
 import { StatsBar } from "./StatsBar";
-import { PAGE_SIZE } from "@/utils/mock";
 import { CreateUserModal } from "./CreateUserModal";
 import { EditUserCard } from "./EditUserCard";
 import { UsersTable } from "./UserTable";
@@ -17,6 +16,11 @@ import { User, UsersList } from "@repo/types";
 import { UsersTableSkeleton } from "./UserTableSkeleton";
 import { UsersErrorState } from "./UserErrorState";
 import { UsersEmptyState } from "./UserEmptyState";
+import { AdminPageLayout } from "@/components/admin/admin-page-layout";
+import {
+  adminInputClass,
+  adminPrimaryButtonClass,
+} from "@/components/admin/admin-styles";
 
 type Role = "admin" | "instructor" | "student" | "all";
 
@@ -31,18 +35,16 @@ export function UsersPageClient() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [isTransitioning, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [roleOpen, setRoleOpen] = useState(false);
 
-  // Read from URL, defaults
   const page = Number(searchParams.get("page") ?? "1");
   const search = searchParams.get("search") ?? "";
   const role = (searchParams.get("role") as Role) ?? "all";
 
-  // Local search input state (debounced into URL)
   const [searchInput, setSearchInput] = useState(search);
 
   function updateParams(updates: Record<string, string | null>) {
@@ -51,7 +53,6 @@ export function UsersPageClient() {
       if (v === null || v === "") params.delete(k);
       else params.set(k, v);
     }
-    // Reset to page 1 on filter change
     if ("search" in updates || "role" in updates) params.set("page", "1");
     startTransition(() => router.push(`${pathname}?${params.toString()}`));
   }
@@ -72,9 +73,7 @@ export function UsersPageClient() {
 
   function handleRoleSelect(value: Role) {
     setRoleOpen(false);
-    updateParams({
-      role: value,
-    });
+    updateParams({ role: value });
   }
 
   function handlePageChange(newPage: number) {
@@ -82,7 +81,6 @@ export function UsersPageClient() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  // Build query string for API
   const queryString = (() => {
     const p = new URLSearchParams();
     p.set("page", String(page));
@@ -91,7 +89,7 @@ export function UsersPageClient() {
     return p.toString();
   })();
 
-  const { data, isFetching, isPending, isError, error } = useQuery({
+  const { data, isFetching, isPending, isError, error, refetch } = useQuery({
     queryKey: ["admin-users", page, search, role],
     queryFn: async () => {
       const res = await api.get<UsersList>(`/admin/users?${queryString}`);
@@ -110,175 +108,168 @@ export function UsersPageClient() {
   const currentRoleLabel = ROLES.find((r) => r.value === role)?.label ?? "All";
   const hasActiveFilters = search || role !== "all";
 
-  if (isError || error) return <UsersErrorState />;
+  if (isError || error) {
+    return <UsersErrorState onRetry={() => refetch()} />;
+  }
 
   return (
-    <div className="min-h-screen bg-(--brand-cream) px-4 py-8 sm:px-6 lg:px-8">
-      {/* Page header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <div>
-          <h1 className="font-mono text-2xl font-bold tracking-tight text-(--brand-green) uppercase">
-            Users
-          </h1>
-          <p className="font-mono text-xs text-[rgba(47,78,64,0.55)] tracking-widest mt-1">
-            {isFetching || isPending ? "Loading..." : `${totalUsers} total`}
-          </p>
-        </div>
+    <AdminPageLayout
+      title="Users"
+      description={
+        isFetching || isPending
+          ? "Loading user accounts…"
+          : `${totalUsers} accounts in the system`
+      }
+      maxWidth="wide"
+      action={
         <button
           onClick={() => setIsCreateOpen(true)}
-          className="inline-flex items-center gap-2 self-start rounded-lg border border-(--brand-brown) bg-(--brand-brown) px-5 py-2.5 font-mono text-xs font-semibold tracking-widest text-white uppercase transition-colors hover:bg-[#ad7843] sm:self-auto"
+          className={adminPrimaryButtonClass}
         >
           <Plus size={14} />
           Create User
         </button>
-      </div>
-
-      {/* Search + Role filter row */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-6">
-        {/* Search */}
-        <div className="relative flex-1">
-          <Search
-            size={14}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgba(47,78,64,0.4)] pointer-events-none"
-          />
-          <input
-            type="text"
-            value={searchInput}
-            onChange={handleSearchChange}
-            placeholder="Search by name or email…"
-            className="w-full border border-[rgba(47,78,64,0.2)] bg-white pl-8 pr-8 py-2.5 font-mono text-xs tracking-wide text-(--brand-green) placeholder:text-[rgba(47,78,64,0.35)] outline-none focus:border-(--brand-green) transition-colors"
-          />
-          {searchInput && (
-            <button
-              onClick={clearSearch}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-[rgba(47,78,64,0.4)] hover:text-(--brand-green) transition-colors"
-            >
-              <X size={13} />
-            </button>
-          )}
-        </div>
-
-        {/* Role filter dropdown */}
-        <div className="relative">
-          <button
-            onClick={() => setRoleOpen((o) => !o)}
-            className="flex items-center gap-2 border border-[rgba(47,78,64,0.2)] bg-white px-4 py-2.5 font-mono text-xs tracking-widest text-(--brand-green) uppercase hover:border-(--brand-green) transition-colors min-w-[140px] justify-between"
-          >
-            <span>{currentRoleLabel}</span>
-            <ChevronDown
-              size={13}
-              className={`transition-transform ${roleOpen ? "rotate-180" : ""}`}
+      }
+    >
+      <div className="space-y-6">
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <div className="relative flex-1">
+            <Search
+              size={14}
+              className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-[rgba(47,78,64,0.4)]"
             />
-          </button>
-
-          {roleOpen && (
-            <>
-              {/* Backdrop */}
-              <div
-                className="fixed inset-0 z-10"
-                onClick={() => setRoleOpen(false)}
-              />
-              <div className="absolute right-0 top-full mt-1 z-20 bg-white border border-[rgba(47,78,64,0.2)] shadow-sm min-w-[140px]">
-                {ROLES.map((r) => (
-                  <button
-                    key={r.value}
-                    onClick={() => handleRoleSelect(r.value)}
-                    className={`w-full text-left px-4 py-2.5 font-mono text-xs tracking-widest uppercase transition-colors hover:bg-[rgba(47,78,64,0.06)] ${
-                      role === r.value
-                        ? "text-(--brand-green) font-semibold bg-[rgba(47,78,64,0.04)]"
-                        : "text-[rgba(47,78,64,0.7)]"
-                    }`}
-                  >
-                    {r.label}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Active filter chips */}
-      {hasActiveFilters && (
-        <div className="flex items-center gap-2 mb-5 flex-wrap">
-          <span className="font-mono text-[10px] tracking-widest text-[rgba(47,78,64,0.4)] uppercase">
-            Filters:
-          </span>
-          {role !== "all" && (
-            <span className="inline-flex items-center gap-1.5 border border-[rgba(47,78,64,0.2)] bg-white px-2.5 py-1 font-mono text-[10px] tracking-widest uppercase text-(--brand-green)">
-              Role: {currentRoleLabel}
-              <button
-                onClick={() => handleRoleSelect("all")}
-                className="text-[rgba(47,78,64,0.4)] hover:text-(--brand-green)"
-              >
-                <X size={10} />
-              </button>
-            </span>
-          )}
-          {search && (
-            <span className="inline-flex items-center gap-1.5 border border-[rgba(47,78,64,0.2)] bg-white px-2.5 py-1 font-mono text-[10px] tracking-widest text-(--brand-green)">
-              &ldquo;{search}&rdquo;
+            <input
+              type="text"
+              value={searchInput}
+              onChange={handleSearchChange}
+              placeholder="Search by name or email…"
+              className={`${adminInputClass} py-2.5 pr-8 pl-8`}
+            />
+            {searchInput && (
               <button
                 onClick={clearSearch}
-                className="text-[rgba(47,78,64,0.4)] hover:text-(--brand-green)"
+                className="absolute top-1/2 right-3 -translate-y-1/2 text-[rgba(47,78,64,0.4)] transition-colors hover:text-(--brand-green)"
               >
-                <X size={10} />
+                <X size={13} />
               </button>
-            </span>
-          )}
-          <button
-            onClick={() => {
-              setSearchInput("");
-              updateParams({ search: null, role: null });
-            }}
-            className="font-mono text-[10px] tracking-widest uppercase text-[rgba(47,78,64,0.4)] hover:text-(--brand-green) underline underline-offset-2 transition-colors"
-          >
-            Clear all
-          </button>
-        </div>
-      )}
-
-      {/* Loading overlay on filter/page change */}
-      {(isFetching && data) || isPending ? (
-        <div className="opacity-60 pointer-events-none">
-          <UsersTableSkeleton />
-        </div>
-      ) : users?.length === 0 ? (
-        <UsersEmptyState
-          role={role === "all" ? "users" : role}
-          onCreateUser={() => setIsCreateOpen(true)}
-        />
-      ) : users && users.length > 0 ? (
-        <>
-          <StatsBar
-            users={users}
-            total={data.meta.total}
-            roleCount={{ ...data.meta.roleCounts }}
-          />
-          <UsersTable users={users} onRowClick={setSelectedUser} />
-
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-6">
-            <p className="font-mono text-xs tracking-wide text-[rgba(47,78,64,0.55)]">
-              Showing {start}&ndash;
-              {end} of {totalUsers} users
-            </p>
-            {totalPages > 1 && (
-              <Pagination
-                currentPage={page}
-                totalPages={totalPages}
-                onPageChange={handlePageChange}
-              />
             )}
           </div>
-        </>
-      ) : null}
 
-      {/* Modals */}
+          <div className="relative">
+            <button
+              onClick={() => setRoleOpen((o) => !o)}
+              className={`${adminInputClass} flex min-w-[160px] items-center justify-between gap-2 py-2.5`}
+            >
+              <span>{currentRoleLabel}</span>
+              <ChevronDown
+                size={13}
+                className={`transition-transform ${roleOpen ? "rotate-180" : ""}`}
+              />
+            </button>
+
+            {roleOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-10"
+                  onClick={() => setRoleOpen(false)}
+                />
+                <div className="absolute right-0 top-full z-20 mt-1 min-w-[160px] border border-[rgba(47,78,64,0.18)] bg-white shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
+                  {ROLES.map((r) => (
+                    <button
+                      key={r.value}
+                      onClick={() => handleRoleSelect(r.value)}
+                      className={`w-full px-4 py-2.5 text-left font-[family-name:var(--font-dm-sans)] text-xs font-semibold uppercase tracking-[0.06em] transition-colors hover:bg-[rgba(47,78,64,0.04)] ${
+                        role === r.value
+                          ? "bg-[rgba(47,78,64,0.06)] text-(--brand-green)"
+                          : "text-[rgba(47,78,64,0.7)]"
+                      }`}
+                    >
+                      {r.label}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {hasActiveFilters && (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-[family-name:var(--font-dm-sans)] text-[10px] font-semibold uppercase tracking-[0.12em] text-[rgba(47,78,64,0.45)]">
+              Filters
+            </span>
+            {role !== "all" && (
+              <span className="inline-flex items-center gap-1.5 border border-[rgba(47,78,64,0.18)] bg-white px-2.5 py-1 font-[family-name:var(--font-dm-sans)] text-[10px] font-semibold uppercase tracking-[0.08em] text-(--brand-green)">
+                Role: {currentRoleLabel}
+                <button
+                  onClick={() => handleRoleSelect("all")}
+                  className="text-[rgba(47,78,64,0.4)] hover:text-(--brand-green)"
+                >
+                  <X size={10} />
+                </button>
+              </span>
+            )}
+            {search && (
+              <span className="inline-flex items-center gap-1.5 border border-[rgba(47,78,64,0.18)] bg-white px-2.5 py-1 font-[family-name:var(--font-dm-sans)] text-[10px] text-(--brand-green)">
+                &ldquo;{search}&rdquo;
+                <button
+                  onClick={clearSearch}
+                  className="text-[rgba(47,78,64,0.4)] hover:text-(--brand-green)"
+                >
+                  <X size={10} />
+                </button>
+              </span>
+            )}
+            <button
+              onClick={() => {
+                setSearchInput("");
+                updateParams({ search: null, role: null });
+              }}
+              className="font-[family-name:var(--font-dm-sans)] text-[10px] font-semibold uppercase tracking-[0.08em] text-[rgba(47,78,64,0.45)] underline underline-offset-2 transition-colors hover:text-(--brand-green)"
+            >
+              Clear all
+            </button>
+          </div>
+        )}
+
+        {(isFetching && data) || isPending ? (
+          <div className="pointer-events-none opacity-60">
+            <UsersTableSkeleton />
+          </div>
+        ) : users?.length === 0 ? (
+          <UsersEmptyState
+            role={role === "all" ? "users" : role}
+            onCreateUser={() => setIsCreateOpen(true)}
+          />
+        ) : users && users.length > 0 ? (
+          <>
+            <StatsBar
+              total={data.meta.total}
+              roleCount={{ ...data.meta.roleCounts }}
+            />
+            <UsersTable users={users} onRowClick={setSelectedUser} />
+
+            <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+              <p className="font-[family-name:var(--font-dm-sans)] text-xs text-[rgba(47,78,64,0.55)]">
+                Showing {start}&ndash;{end} of {totalUsers} users
+              </p>
+              {totalPages > 1 && (
+                <Pagination
+                  currentPage={page}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                />
+              )}
+            </div>
+          </>
+        ) : null}
+      </div>
+
       <CreateUserModal
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
       />
       <EditUserCard user={selectedUser} onClose={() => setSelectedUser(null)} />
-    </div>
+    </AdminPageLayout>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertTriangle, Trash2, X } from "lucide-react";
+import { adminSecondaryButtonClass } from "@/components/admin/admin-styles";
 
 interface DeleteConfirmProps {
   courseName: string;
@@ -15,20 +16,22 @@ export function DeleteConfirmModal({
 }: DeleteConfirmProps) {
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/35 grid place-items-center p-4 animate-fade-in"
+      className="fixed inset-0 z-50 grid animate-[fade-in_0.15s_ease] place-items-center bg-black/35 p-4"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-xl shadow-2xl w-full max-w-[380px] animate-slide-up"
+        className="w-full max-w-[380px] animate-[slide-up_0.18s_ease] border border-[rgba(47,78,64,0.18)] bg-white shadow-[0_12px_40px_rgba(0,0,0,0.12)]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center gap-2 justify-between px-5 py-[1.1rem] border-b border-gray-200">
-          <div className="text-red-600">
+        <div className="flex items-center gap-2 border-b border-[rgba(47,78,64,0.12)] px-5 py-4">
+          <div className="text-[#9a3412]">
             <AlertTriangle size={18} />
           </div>
-          <h2 className="text-base font-bold flex-1">Delete Course</h2>
+          <h2 className="flex-1 font-[family-name:var(--font-lora)] text-base font-bold text-(--brand-green)">
+            Delete Course
+          </h2>
           <button
-            className="w-[30px] h-[30px] rounded-md border border-gray-200 grid place-items-center cursor-pointer text-gray-500 hover:bg-gray-100 transition-colors"
+            className="grid h-8 w-8 cursor-pointer place-items-center border border-[rgba(47,78,64,0.18)] text-[rgba(47,78,64,0.55)] transition-colors hover:bg-[rgba(47,78,64,0.04)]"
             onClick={onClose}
           >
             <X size={16} />
@@ -36,22 +39,19 @@ export function DeleteConfirmModal({
         </div>
 
         <div className="px-5 py-5">
-          <p className="text-sm leading-relaxed text-gray-500">
+          <p className="font-[family-name:var(--font-dm-sans)] text-sm leading-relaxed text-[rgba(47,78,64,0.55)]">
             Are you sure you want to delete{" "}
-            <strong className="text-gray-900">{courseName}</strong>? This action
-            cannot be undone.
+            <strong className="text-(--brand-ink)">{courseName}</strong>? This
+            action cannot be undone.
           </p>
         </div>
 
-        <div className="px-5 py-4 border-t border-gray-200 flex justify-end gap-2">
-          <button
-            className="inline-flex items-center gap-[0.4rem] bg-white text-gray-900 border border-gray-200 rounded-lg px-4 py-2 text-[0.8125rem] font-medium cursor-pointer hover:bg-gray-50 transition-colors"
-            onClick={onClose}
-          >
+        <div className="flex justify-end gap-2 border-t border-[rgba(47,78,64,0.12)] px-5 py-4">
+          <button className={adminSecondaryButtonClass} onClick={onClose}>
             Cancel
           </button>
           <button
-            className="inline-flex items-center gap-[0.4rem] bg-red-600 text-white border-0 rounded-lg px-4 py-2 text-[0.8125rem] font-semibold cursor-pointer hover:bg-red-700 transition-colors"
+            className="inline-flex items-center gap-2 border border-[#9a3412] bg-[#9a3412] px-4 py-2 font-[family-name:var(--font-dm-sans)] text-xs font-semibold uppercase tracking-[0.08em] text-white transition-colors hover:bg-[#7c2d12]"
             onClick={() => {
               onConfirm();
               onClose();
@@ -65,8 +65,6 @@ export function DeleteConfirmModal({
       <style>{`
         @keyframes fade-in { from { opacity: 0 } to { opacity: 1 } }
         @keyframes slide-up { from { transform: translateY(12px); opacity: 0 } to { transform: none; opacity: 1 } }
-        .animate-fade-in { animation: fade-in .15s ease; }
-        .animate-slide-up { animation: slide-up .18s ease; }
       `}</style>
     </div>
   );

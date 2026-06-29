@@ -15,14 +15,114 @@ import {
 } from "@/components/ui/sidebar";
 import { QuestionIcon, StudentIcon } from "@phosphor-icons/react";
 import {
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  BarChart3,
   Book,
   BookOpenCheck,
+  Building2,
+  ClipboardList,
+  LayoutDashboard,
   Package,
+  Receipt,
   Settings,
+  Trash2,
   TrendingUp,
   User,
+  Wallet,
 } from "lucide-react";
 import { siteInfo } from "@/utils/site-info";
+
+const navSections = [
+  {
+    label: "Overview",
+    items: [
+      { title: "Dashboard", url: "/", icon: <LayoutDashboard /> },
+      { title: "Analytics", url: "/analytics", icon: <TrendingUp /> },
+    ],
+  },
+  {
+    label: "School",
+    items: [
+      { title: "Courses", url: "/courses", icon: <Book /> },
+      { title: "Inquiries", url: "/inquiries", icon: <QuestionIcon /> },
+      { title: "Users", url: "/users", icon: <User /> },
+      { title: "Settings", url: "/settings", icon: <Settings /> },
+    ],
+  },
+  {
+    label: "Students",
+    items: [
+      {
+        title: "All Students",
+        url: "/students",
+        icon: <StudentIcon />,
+        excludeUrls: ["/students/outstanding", "/students/sales"],
+      },
+      {
+        title: "Outstanding",
+        url: "/students/outstanding",
+        icon: <Receipt />,
+      },
+      {
+        title: "Sales Revenue",
+        url: "/students/sales",
+        icon: <BarChart3 />,
+      },
+    ],
+  },
+  {
+    label: "Inventory",
+    items: [
+      { title: "Products", url: "/inventory/products", icon: <Package /> },
+      { title: "Stock In", url: "/inventory/stock-in", icon: <ArrowDownToLine /> },
+      { title: "Stock Out", url: "/inventory/stock-out", icon: <ArrowUpFromLine /> },
+      { title: "Wastage", url: "/inventory/wastage", icon: <Trash2 /> },
+      { title: "Summary", url: "/inventory/summary", icon: <ClipboardList /> },
+    ],
+  },
+  {
+    label: "Accounting",
+    items: [
+      {
+        title: "Banks",
+        url: "/banks",
+        icon: <Building2 />,
+        excludeUrls: ["/banks/ledger"],
+      },
+      {
+        title: "Suppliers",
+        url: "/suppliers",
+        icon: <BookOpenCheck />,
+        excludeUrls: ["/suppliers/ledger"],
+      },
+      { title: "Bank Ledger", url: "/banks/ledger", icon: <Wallet /> },
+      { title: "Cash Ledger", url: "/cash-ledger", icon: <Wallet /> },
+      {
+        title: "Supplier Ledger",
+        url: "/suppliers/ledger",
+        icon: <Wallet />,
+      },
+    ],
+  },
+];
+
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  return (
+    <Sidebar collapsible="icon" {...props}>
+      <SidebarHeader>
+        <TeamSwitcher teams={data.teams} />
+      </SidebarHeader>
+      <SidebarContent className="gap-0">
+        <NavMain sections={navSections} />
+      </SidebarContent>
+      <SidebarFooter>
+        <NavUser />
+      </SidebarFooter>
+      <SidebarRail />
+    </Sidebar>
+  );
+}
 
 const data = {
   teams: [
@@ -39,83 +139,4 @@ const data = {
       plan: "Admin Panel",
     },
   ],
-  navMain: [
-    {
-      title: "Analytics",
-      url: "/analytics",
-      icon: <TrendingUp />,
-    },
-    {
-      title: "Settings",
-      url: "/settings",
-      icon: <Settings />,
-    },
-    {
-      title: "Users",
-      url: "/users",
-      icon: <User />,
-    },
-    {
-      title: "Courses",
-      url: "/courses",
-      icon: <Book />,
-    },
-    {
-      title: "Inquiries",
-      url: "/inquiries",
-      icon: <QuestionIcon />,
-    },
-    {
-      title: "Students",
-      url: "#",
-      icon: <StudentIcon />,
-      items: [
-        { title: "List", url: "/students" },
-        { title: "Outstanding", url: "/students/outstanding" },
-        { title: "Sales Revenue", url: "/students/sales" },
-      ],
-    },
-    {
-      title: "Inventory",
-      url: "#",
-      icon: <Package />,
-      items: [
-        { title: "Products", url: "/inventory/products" },
-        { title: "Stock In", url: "/inventory/stock-in" },
-        { title: "Stock Out", url: "/inventory/stock-out" },
-        { title: "Wastage", url: "/inventory/wastage" },
-        { title: "Summary", url: "/inventory/summary" },
-      ],
-    },
-    {
-      title: "Accounting",
-      url: "#",
-      icon: <BookOpenCheck />,
-      items: [
-        { title: "Banks", url: "/banks" },
-        { title: "Bank Account", url: "/banks/accounts" },
-        { title: "Suppliers", url: "/suppliers" },
-        { title: "Bank Ledger", url: "/banks/ledger" },
-        { title: "Cash ledger", url: "/cash-ledger" },
-        { title: "Supplier ledger", url: "/suppliers/ledger" },
-      ],
-    },
-  ],
 };
-
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  return (
-    <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader>
-        <TeamSwitcher teams={data.teams} />
-      </SidebarHeader>
-      <SidebarContent>
-        <NavMain items={data.navMain} />
-      </SidebarContent>
-      <SidebarFooter>
-        <NavUser />
-      </SidebarFooter>
-      <SidebarRail />
-    </Sidebar>
-  );
-}

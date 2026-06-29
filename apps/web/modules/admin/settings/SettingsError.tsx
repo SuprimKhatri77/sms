@@ -2,34 +2,37 @@
 
 import { WifiOff, RotateCcw } from "lucide-react";
 
+import { AdminPageLayout } from "@/components/admin/admin-page-layout";
+import { adminPrimaryButtonClass } from "@/components/admin/admin-styles";
+
 interface SettingsErrorProps {
   onRetry: () => void;
 }
 
 export function SettingsError({ onRetry }: SettingsErrorProps) {
   return (
-    <div className="flex min-h-[300px] flex-col items-center justify-center gap-4 rounded-xl border border-red-100 bg-red-50 p-8 text-center min-h-screen">
-      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 text-red-500">
-        <WifiOff size={22} />
+    <AdminPageLayout
+      title="Site Settings"
+      description="Manage global configuration values"
+    >
+      <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4 border border-[rgba(47,78,64,0.18)] bg-white px-6 py-16 text-center">
+        <div className="flex h-12 w-12 items-center justify-center border border-[rgba(154,52,18,0.25)] bg-[rgba(154,52,18,0.08)] text-[#9a3412]">
+          <WifiOff size={22} />
+        </div>
+        <div className="space-y-1">
+          <h2 className="font-[family-name:var(--font-lora)] text-base font-bold text-(--brand-green)">
+            Unable to reach the server
+          </h2>
+          <p className="max-w-xs font-[family-name:var(--font-dm-sans)] text-sm text-[rgba(47,78,64,0.55)]">
+            Check your internet connection or try again. The server may be
+            temporarily unavailable.
+          </p>
+        </div>
+        <button onClick={onRetry} className={adminPrimaryButtonClass}>
+          <RotateCcw size={14} />
+          Retry
+        </button>
       </div>
-
-      <div className="space-y-1">
-        <h2 className="text-base font-semibold text-red-700">
-          Unable to reach the server
-        </h2>
-        <p className="max-w-xs text-sm text-red-500">
-          Check your internet connection or try again. The server may be
-          temporarily unavailable.
-        </p>
-      </div>
-
-      <button
-        onClick={onRetry}
-        className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700 active:scale-95"
-      >
-        <RotateCcw size={14} />
-        Retry
-      </button>
-    </div>
+    </AdminPageLayout>
   );
 }

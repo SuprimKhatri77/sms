@@ -1,12 +1,12 @@
-import { UserRole } from "@/utils/mock";
+type UserRole = "student" | "admin" | "instructor";
 
 const roleStyles: Record<UserRole, string> = {
-  // superadmin:
-  //   "bg-(--brand-green) text-white border border-(--brand-green) text-xs font-semibold tracking-widest uppercase px-2 py-0.5",
   admin:
-    "bg-(--brand-green-2) text-white border border-(--brand-green-2) text-xs font-semibold tracking-widest uppercase px-2 py-0.5",
+    "inline-flex border border-(--brand-green) bg-(--brand-green) px-2 py-0.5 font-[family-name:var(--font-dm-sans)] text-[10px] font-semibold uppercase tracking-[0.08em] text-white",
+  instructor:
+    "inline-flex border border-[rgba(194,138,79,0.3)] bg-[rgba(194,138,79,0.1)] px-2 py-0.5 font-[family-name:var(--font-dm-sans)] text-[10px] font-semibold uppercase tracking-[0.08em] text-(--brand-brown)",
   student:
-    "bg-white text-(--brand-green) border border-[rgba(47,78,64,0.25)] text-xs font-semibold tracking-widest uppercase px-2 py-0.5",
+    "inline-flex border border-[rgba(47,78,64,0.2)] bg-white px-2 py-0.5 font-[family-name:var(--font-dm-sans)] text-[10px] font-semibold uppercase tracking-[0.08em] text-(--brand-green)",
 };
 
 interface RoleBadgeProps {

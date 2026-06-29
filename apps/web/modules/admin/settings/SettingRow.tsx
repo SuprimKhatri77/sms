@@ -3,6 +3,12 @@
 import { Check, Pencil, X } from "lucide-react";
 import { useState } from "react";
 
+import {
+  adminIconButtonClass,
+  adminDangerIconButtonClass,
+  adminInputClass,
+} from "@/components/admin/admin-styles";
+
 interface Setting {
   key: string;
   value: string;
@@ -42,23 +48,21 @@ export function SettingRow({ setting, onSave }: SettingRowProps) {
   };
 
   return (
-    <div className="flex items-center justify-between gap-4 px-5 py-4 border-b border-stone-200 last:border-b-0 hover:bg-stone-50 transition-colors flex-wrap">
-      {/* Meta */}
-      <div className="flex flex-col gap-1 min-w-0">
-        <span className="text-sm font-semibold text-stone-800">
+    <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[rgba(47,78,64,0.08)] px-5 py-4 transition-colors last:border-b-0 hover:bg-[rgba(47,78,64,0.02)]">
+      <div className="flex min-w-0 flex-col gap-1">
+        <span className="font-[family-name:var(--font-dm-sans)] text-sm font-semibold text-(--brand-ink)">
           {formatKey(setting.key)}
         </span>
-        <span className="font-mono-dm text-[0.7rem] text-stone-400 bg-stone-100 border border-stone-200 rounded px-1.5 py-0.5 w-fit">
+        <span className="w-fit border border-[rgba(47,78,64,0.12)] bg-[rgba(251,250,247,0.9)] px-1.5 py-0.5 font-mono text-[10px] text-[rgba(47,78,64,0.45)]">
           {setting.key}
         </span>
       </div>
 
-      {/* Control */}
-      <div className="flex items-center gap-2 flex-shrink-0">
+      <div className="flex shrink-0 items-center gap-2">
         {editing ? (
           <div className="flex items-center gap-1.5">
             <input
-              className="font-mono-dm border-2 border-blue-500 rounded-lg px-2.5 py-1.5 text-sm outline-none bg-white text-stone-800 w-40 focus:shadow-[0_0_0_3px_rgba(37,99,235,0.15)] transition-shadow"
+              className={`${adminInputClass} w-40`}
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               onKeyDown={(e) => {
@@ -70,21 +74,21 @@ export function SettingRow({ setting, onSave }: SettingRowProps) {
             <button
               onClick={handleSave}
               title="Save"
-              className="w-[30px] h-[30px] rounded-md border-0 grid place-items-center cursor-pointer bg-green-50 text-green-600 hover:bg-green-100 transition-colors flex-shrink-0"
+              className={adminIconButtonClass}
             >
               <Check size={15} />
             </button>
             <button
               onClick={handleCancel}
               title="Cancel"
-              className="w-[30px] h-[30px] rounded-md border-0 grid place-items-center cursor-pointer bg-red-50 text-red-600 hover:bg-red-100 transition-colors flex-shrink-0"
+              className={adminDangerIconButtonClass}
             >
               <X size={15} />
             </button>
           </div>
         ) : (
-          <div className="flex items-center gap-2.5">
-            <span className="font-mono-dm text-sm font-medium text-stone-800 bg-stone-100 border border-stone-200 rounded-lg px-3 py-1.5">
+          <div className="flex items-center gap-2">
+            <span className="border border-[rgba(47,78,64,0.12)] bg-[rgba(251,250,247,0.9)] px-3 py-1.5 font-mono text-sm font-medium text-(--brand-ink)">
               {setting.value}
             </span>
             <button
@@ -93,7 +97,7 @@ export function SettingRow({ setting, onSave }: SettingRowProps) {
                 setEditing(true);
               }}
               title="Edit"
-              className="w-[30px] h-[30px] rounded-md border border-stone-200 bg-white grid place-items-center cursor-pointer text-stone-500 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-500 transition-all flex-shrink-0"
+              className={adminIconButtonClass}
             >
               <Pencil size={14} />
             </button>

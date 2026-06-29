@@ -14,16 +14,37 @@ const LABELS: Record<string, string> = {
   admin: "Admin",
   analytics: "Analytics",
   settings: "Settings",
+  profile: "Profile",
   users: "Users",
   students: "Students",
+  outstanding: "Outstanding",
+  sales: "Sales Revenue",
   inquiries: "Inquiries",
   courses: "Courses",
+  inventory: "Inventory",
+  products: "Products",
+  "stock-in": "Stock In",
+  "stock-out": "Stock Out",
+  wastage: "Wastage",
+  summary: "Summary",
+  banks: "Banks",
+  ledger: "Ledger",
+  suppliers: "Suppliers",
+  "cash-ledger": "Cash Ledger",
   "certificate-preview": "Certificate Preview",
   certificate: "Certificate",
 };
 
 function segmentLabel(segment: string) {
   if (LABELS[segment]) return LABELS[segment];
+  // Hide UUID-like segments in breadcrumbs
+  if (
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      segment,
+    )
+  ) {
+    return "Details";
+  }
   return segment.replace(/[-_]/g, " ").replace(/\b\w/g, (m) => m.toUpperCase());
 }
 

@@ -1,16 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Course } from "./Courses";
-import { Save, X } from "lucide-react";
+import { Save } from "lucide-react";
 import { Toggle } from "./Toggle";
 import { createCourseSchema } from "@repo/types";
 import z from "zod";
+import {
+  adminInputClass,
+  adminPrimaryButtonClass,
+  adminSecondaryButtonClass,
+} from "@/components/admin/admin-styles";
+import {
+  AdminDrawer,
+  adminFieldErrorClass,
+  adminFieldLabelClass,
+} from "@/components/admin/admin-drawer";
+import { cn } from "@/lib/utils";
+import { COURSE_PRICE_VAT_NOTE } from "@/components/courses/course-styles";
 
 interface CourseFormProps {
+  open: boolean;
   initial?: Course;
   onSave: (data: Omit<Course, "id" | "createdAt">) => void;
-  onClose: () => void;
+  onOpenChange: (open: boolean) => void;
 }
 
 type CourseFormErrors = {
@@ -19,13 +32,26 @@ type CourseFormErrors = {
   isActive?: string;
 };
 
-export function CourseFormModal({ initial, onSave, onClose }: CourseFormProps) {
+export function CourseFormModal({
+  open,
+  initial,
+  onSave,
+  onOpenChange,
+}: CourseFormProps) {
   const [name, setName] = useState(initial?.name ?? "");
   const [fee, setFee] = useState(
     initial?.fee != null ? (initial.fee / 100).toString() : "",
   );
   const [isActive, setIsActive] = useState(initial?.isActive ?? true);
   const [errors, setErrors] = useState<CourseFormErrors>({});
+
+  useEffect(() => {
+    if (!open) return;
+    setName(initial?.name ?? "");
+    setFee(initial?.fee != null ? (initial.fee / 100).toString() : "");
+    setIsActive(initial?.isActive ?? true);
+    setErrors({});
+  }, [open, initial]);
 
   const handleSubmit = () => {
     const validateFields = createCourseSchema.safeParse({
@@ -43,107 +69,99 @@ export function CourseFormModal({ initial, onSave, onClose }: CourseFormProps) {
       return;
     }
     onSave({ ...validateFields.data });
-    onClose();
+    onOpenChange(false);
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 bg-black/35 grid place-items-center p-4 animate-fade-in"
-      onClick={onClose}
-    >
-      <div
-        className="bg-white rounded-xl shadow-2xl w-full max-w-110 animate-slide-up"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="flex items-center gap-2 justify-between px-5 py-[1.1rem] border-b border-gray-200">
-          <h2 className="text-base font-bold flex-1">
-            {initial ? "Edit Course" : "Add Course"}
-          </h2>
+    <AdminDrawer
+      open={open}
+      onOpenChange={onOpenChange}
+      title={initial ? "Edit Course" : "Add Course"}
+      description={
+        initial
+          ? "Update course details and fee"
+          : "Create a new course with name and fee"
+      }
+      footer={
+        <div className="flex justify-end gap-2">
           <button
-            className="w-7.5 h-7.5 rounded-md border border-gray-200 grid place-items-center cursor-pointer text-gray-500 hover:bg-gray-100 transition-colors"
-            onClick={onClose}
-          >
-            <X size={16} />
-          </button>
-        </div>
-
-        {/* Body */}
-        <div className="px-5 py-5 flex flex-col gap-4">
-          <label className="flex flex-col gap-[0.35rem] text-[0.8rem] font-semibold text-gray-500">
-            Course Name
-            <input
-              className={`border-[1.5px] rounded-lg px-3 py-2 text-sm outline-none bg-white text-gray-900 transition-all focus:border-blue-600 focus:ring-2 focus:ring-blue-600/10 ${
-                errors.name ? "border-red-500" : "border-gray-200"
-              }`}
-              placeholder="e.g. Bachelor of Science"
-              value={name}
-              onChange={(e) => {
-                setName(e.target.value);
-                setErrors((p) => ({ ...p, name: "" }));
-              }}
-            />
-            {errors.name && (
-              <span className="text-[0.75rem] text-red-600">{errors.name}</span>
-            )}
-          </label>
-
-          <label className="flex flex-col gap-[0.35rem] text-[0.8rem] font-semibold text-gray-500">
-            Fee (NPR)
-            <input
-              className={`border-[1.5px] rounded-lg px-3 py-2 text-sm outline-none bg-white text-gray-900 transition-all focus:border-blue-600 focus:ring-2 focus:ring-blue-600/10 ${
-                errors.fee ? "border-red-500" : "border-gray-200"
-              }`}
-              placeholder="e.g. 45000"
-              type="number"
-              min={0}
-              value={fee}
-              onChange={(e) => {
-                setFee(e.target.value);
-                setErrors((p) => ({ ...p, fee: "" }));
-              }}
-              onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-            />
-            {errors.fee && (
-              <span className="text-[0.75rem] text-red-600">{errors.fee}</span>
-            )}
-          </label>
-
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-sm font-semibold">Active</p>
-              <p className="text-[0.75rem] text-gray-400 mt-[0.15rem]">
-                Inactive courses won&apos;t appear for enrollment
-              </p>
-            </div>
-            <Toggle checked={isActive} onChange={setIsActive} />
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="px-5 py-4 border-t border-gray-200 flex justify-end gap-2">
-          <button
-            className="inline-flex items-center gap-[0.4rem] bg-white text-gray-900 border border-gray-200 rounded-lg px-4 py-2 text-[0.8125rem] font-medium cursor-pointer hover:bg-gray-50 transition-colors"
-            onClick={onClose}
+            type="button"
+            className={adminSecondaryButtonClass}
+            onClick={() => onOpenChange(false)}
           >
             Cancel
           </button>
           <button
-            className="inline-flex items-center gap-[0.4rem] bg-[#2f4e40] text-white border-0 rounded-lg px-4 py-2 text-[0.8125rem] font-semibold cursor-pointer hover:bg-blue-700 transition-colors"
+            type="button"
+            className={adminPrimaryButtonClass}
             onClick={handleSubmit}
           >
             <Save size={15} />
             {initial ? "Update" : "Add Course"}
           </button>
         </div>
-      </div>
+      }
+    >
+      <div className="flex flex-col gap-4 px-5 py-5">
+        <label className={adminFieldLabelClass}>
+          Course Name
+          <input
+            className={cn(
+              adminInputClass,
+              "normal-case tracking-normal",
+              errors.name && "border-[#9a3412]",
+            )}
+            placeholder="e.g. Bachelor of Science"
+            value={name}
+            onChange={(e) => {
+              setName(e.target.value);
+              setErrors((p) => ({ ...p, name: "" }));
+            }}
+          />
+          {errors.name ? (
+            <span className={adminFieldErrorClass}>{errors.name}</span>
+          ) : null}
+        </label>
 
-      <style>{`
-        @keyframes fade-in { from { opacity: 0 } to { opacity: 1 } }
-        @keyframes slide-up { from { transform: translateY(12px); opacity: 0 } to { transform: none; opacity: 1 } }
-        .animate-fade-in { animation: fade-in .15s ease; }
-        .animate-slide-up { animation: slide-up .18s ease; }
-      `}</style>
-    </div>
+        <label className={adminFieldLabelClass}>
+          Fee (NPR)
+          <input
+            className={cn(
+              adminInputClass,
+              "normal-case tracking-normal",
+              errors.fee && "border-[#9a3412]",
+            )}
+            placeholder="e.g. 45000"
+            type="number"
+            min={0}
+            value={fee}
+            onChange={(e) => {
+              setFee(e.target.value);
+              setErrors((p) => ({ ...p, fee: "" }));
+            }}
+            onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+          />
+          {errors.fee ? (
+            <span className={adminFieldErrorClass}>{errors.fee}</span>
+          ) : (
+            <span className="font-[family-name:var(--font-dm-sans)] text-xs text-[rgba(47,78,64,0.45)]">
+              {COURSE_PRICE_VAT_NOTE}
+            </span>
+          )}
+        </label>
+
+        <div className="flex items-center justify-between gap-4 border border-[rgba(47,78,64,0.12)] bg-white px-4 py-3">
+          <div>
+            <p className="font-[family-name:var(--font-dm-sans)] text-sm font-semibold text-(--brand-ink)">
+              Active
+            </p>
+            <p className="mt-0.5 font-[family-name:var(--font-dm-sans)] text-xs text-[rgba(47,78,64,0.5)]">
+              Inactive courses won&apos;t appear for enrollment
+            </p>
+          </div>
+          <Toggle checked={isActive} onChange={setIsActive} />
+        </div>
+      </div>
+    </AdminDrawer>
   );
 }

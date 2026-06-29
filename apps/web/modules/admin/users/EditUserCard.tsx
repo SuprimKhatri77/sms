@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { UserAvatar } from "./UserAvatar";
-import { X } from "lucide-react";
 import {
   APIResponse,
   UpdateUserInput,
@@ -16,6 +15,17 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios";
 import { useForm } from "@tanstack/react-form-nextjs";
 import { Spinner } from "@/components/ui/spinner";
+import {
+  AdminDrawer,
+  adminFieldErrorClass,
+  adminFieldLabelClass,
+} from "@/components/admin/admin-drawer";
+import {
+  adminInputClass,
+  adminPrimaryButtonClass,
+  adminSecondaryButtonClass,
+} from "@/components/admin/admin-styles";
+import { cn } from "@/lib/utils";
 
 interface EditUserCardProps {
   user: User | null;
@@ -29,12 +39,27 @@ const ROLE_OPTIONS: { value: UpdateUserInput["role"]; label: string }[] = [
 ];
 
 export function EditUserCard({ user, onClose }: EditUserCardProps) {
+  return (
+    <AdminDrawer
+      open={!!user}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+      title="Edit User"
+      description="Update user profile and role"
+    >
+      {user ? <EditUserForm key={user.id} user={user} onClose={onClose} /> : null}
+    </AdminDrawer>
+  );
+}
+
+function EditUserForm({ user, onClose }: { user: User; onClose: () => void }) {
   const [errors, setErrors] = useState<Partial<UpdateUserInput>>({});
   const queryClient = useQueryClient();
 
   const { mutate, isPending, reset } = useMutation({
     mutationFn: async (data: UpdateUserInput) => {
-      const res = await api.put<APIResponse>(`/admin/users/${user?.id}`, data);
+      const res = await api.put<APIResponse>(`/admin/users/${user.id}`, data);
       return res.data;
     },
     onSuccess: (result) => {
@@ -62,9 +87,9 @@ export function EditUserCard({ user, onClose }: EditUserCardProps) {
     reset: formReset,
   } = useForm({
     defaultValues: {
-      name: user?.name ?? "",
-      email: user?.email ?? "",
-      role: user?.role as "student" | "admin" | "instructor",
+      name: user.name,
+      email: user.email,
+      role: user.role as "student" | "admin" | "instructor",
     },
     validators: {
       onSubmit: updateUserSchema,
@@ -75,8 +100,6 @@ export function EditUserCard({ user, onClose }: EditUserCardProps) {
     },
   });
 
-  if (!user) return null;
-
   const joinDate = new Date(user.createdAt).toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
@@ -84,193 +107,148 @@ export function EditUserCard({ user, onClose }: EditUserCardProps) {
   });
 
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 z-40 bg-black/40"
-        onClick={onClose}
-        aria-disabled={isPending}
-        aria-hidden="true"
-      />
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="flex flex-col items-center gap-3 border-b border-[rgba(47,78,64,0.12)] bg-white px-5 py-6">
+        <UserAvatar
+          name={user.name}
+          imageUrl={user.imageUrl ?? ""}
+          size="lg"
+        />
+        <div className="text-center">
+          <p className="font-[family-name:var(--font-dm-sans)] text-xs font-semibold uppercase tracking-[0.08em] text-[rgba(47,78,64,0.55)]">
+            ID
+          </p>
+          <p className="mt-0.5 font-[family-name:var(--font-dm-sans)] text-xs break-all text-[rgba(47,78,64,0.45)]">
+            {user.id}
+          </p>
+        </div>
+        <div className="text-center">
+          <p className="font-[family-name:var(--font-dm-sans)] text-xs font-semibold uppercase tracking-[0.08em] text-[rgba(47,78,64,0.55)]">
+            Joined
+          </p>
+          <p className="mt-0.5 font-[family-name:var(--font-dm-sans)] text-xs text-[rgba(47,78,64,0.65)]">
+            {joinDate}
+          </p>
+        </div>
+      </div>
 
-      {/* Panel */}
-      <aside
-        className="fixed right-0 top-0 z-50 flex h-full w-full max-w-sm flex-col overflow-y-auto border-l border-[rgba(47,78,64,0.22)] bg-white"
-        role="complementary"
-        aria-label="Edit user panel"
+      <form
+        className="flex min-h-0 flex-1 flex-col"
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSubmit();
+        }}
       >
-        {/* Header */}
-        <div className="shrink-0 flex items-center justify-between border-b border-[rgba(47,78,64,0.16)] px-6 py-4">
-          <h2 className="font-mono text-sm font-bold tracking-widest text-(--brand-green) uppercase">
-            Edit User
-          </h2>
+        <div className="flex flex-col gap-5 px-5 py-5">
+          <FormField name="name">
+            {(field) => {
+              const fieldError = field.state.meta.errors[0]?.message;
+              const mergedError = fieldError ?? errors.name;
+              return (
+                <label htmlFor="edit-name" className={adminFieldLabelClass}>
+                  Name
+                  <input
+                    id="edit-name"
+                    name="name"
+                    type="text"
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    className={cn(
+                      adminInputClass,
+                      "normal-case tracking-normal",
+                      mergedError && "border-[#9a3412]",
+                    )}
+                  />
+                  {mergedError ? (
+                    <span className={adminFieldErrorClass}>{mergedError}</span>
+                  ) : null}
+                </label>
+              );
+            }}
+          </FormField>
+
+          <FormField name="email">
+            {(field) => {
+              const fieldError = field.state.meta.errors[0]?.message;
+              const mergedError = fieldError ?? errors.email;
+              return (
+                <label htmlFor="edit-email" className={adminFieldLabelClass}>
+                  Email
+                  <input
+                    id="edit-email"
+                    name="email"
+                    type="email"
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    className={cn(
+                      adminInputClass,
+                      "normal-case tracking-normal",
+                      mergedError && "border-[#9a3412]",
+                    )}
+                  />
+                  {mergedError ? (
+                    <span className={adminFieldErrorClass}>{mergedError}</span>
+                  ) : null}
+                </label>
+              );
+            }}
+          </FormField>
+
+          <FormField name="role">
+            {(field) => {
+              const fieldError = field.state.meta.errors[0]?.message;
+              const mergedError = fieldError ?? errors.role;
+              return (
+                <label htmlFor="edit-role" className={adminFieldLabelClass}>
+                  Role
+                  <select
+                    id="edit-role"
+                    name="role"
+                    value={field.state.value}
+                    onChange={(e) => {
+                      field.handleChange(
+                        e.target.value as UpdateUserInput["role"],
+                      );
+                    }}
+                    className={cn(
+                      adminInputClass,
+                      "cursor-pointer normal-case tracking-normal",
+                      mergedError && "border-[#9a3412]",
+                    )}
+                  >
+                    {ROLE_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                  {mergedError ? (
+                    <span className={adminFieldErrorClass}>{mergedError}</span>
+                  ) : null}
+                </label>
+              );
+            }}
+          </FormField>
+        </div>
+
+        <div className="mt-auto flex justify-end gap-2 border-t border-[rgba(47,78,64,0.12)] bg-white px-5 py-4">
           <button
+            type="button"
+            disabled={isPending}
+            className={adminSecondaryButtonClass}
             onClick={onClose}
-            className="p-1 transition-colors hover:bg-[rgba(47,78,64,0.12)] hover:text-(--brand-green)"
-            aria-label="Close panel"
           >
-            <X size={16} />
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={isPending}
+            className={adminPrimaryButtonClass}
+          >
+            {isPending ? <Spinner /> : "Save"}
           </button>
         </div>
-
-        {/* Avatar + meta */}
-        <div className="flex flex-col items-center gap-3 border-b border-[rgba(47,78,64,0.16)] px-6 py-6">
-          <UserAvatar
-            name={user.name}
-            imageUrl={user.imageUrl ?? ""}
-            size="lg"
-          />
-          <div className="text-center">
-            <p className="font-mono text-xs tracking-widest text-[rgba(47,78,64,0.55)] uppercase">
-              ID
-            </p>
-            <p className="font-mono text-xs break-all text-[rgba(47,78,64,0.45)]">
-              {user.id}
-            </p>
-          </div>
-          <div className="text-center">
-            <p className="font-mono text-xs tracking-widest text-[rgba(47,78,64,0.55)] uppercase">
-              Joined
-            </p>
-            <p className="font-mono text-xs text-[rgba(47,78,64,0.65)]">
-              {joinDate}
-            </p>
-          </div>
-        </div>
-
-        {/* Edit form */}
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleSubmit();
-          }}
-          className="flex flex-col flex-1"
-        >
-          <div className="px-6 py-5 space-y-5 flex-1">
-            {/* Name */}
-            <FormField name="name">
-              {(field) => {
-                const fieldError = field.state.meta.errors[0]?.message;
-                const mergedError = fieldError ?? errors.name;
-                return (
-                  <div>
-                    <label
-                      htmlFor="edit-name"
-                      className="block font-mono text-xs font-semibold tracking-widest uppercase mb-1.5"
-                    >
-                      Name
-                    </label>
-                    <input
-                      id="edit-name"
-                      name="name"
-                      type="text"
-                      value={field.state.value}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                      className="w-full rounded-none border border-[rgba(47,78,64,0.24)] px-3 py-2 font-mono text-sm outline-none focus:ring-2 focus:ring-[rgba(47,78,64,0.3)]"
-                    />
-                    {mergedError && (
-                      <p className="mt-1 text-xs font-mono text-red-600">
-                        {mergedError}
-                      </p>
-                    )}
-                  </div>
-                );
-              }}
-            </FormField>
-
-            {/* Email */}
-            <FormField name="email">
-              {(field) => {
-                const fieldError = field.state.meta.errors[0]?.message;
-                const mergedError = fieldError ?? errors.email;
-
-                return (
-                  <div>
-                    <label
-                      htmlFor="edit-email"
-                      className="block font-mono text-xs font-semibold tracking-widest uppercase mb-1.5"
-                    >
-                      Email
-                    </label>
-                    <input
-                      id="edit-email"
-                      name="email"
-                      type="email"
-                      value={field.state.value}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                      className="w-full rounded-none border border-[rgba(47,78,64,0.24)] px-3 py-2 font-mono text-sm outline-none focus:ring-2 focus:ring-[rgba(47,78,64,0.3)]"
-                    />
-                    {mergedError && (
-                      <p className="mt-1 text-xs font-mono text-red-600">
-                        {mergedError}
-                      </p>
-                    )}
-                  </div>
-                );
-              }}
-            </FormField>
-
-            {/* Role */}
-            <FormField name="role">
-              {(field) => {
-                const fieldError = field.state.meta.errors[0]?.message;
-                const mergedError = fieldError ?? errors.role;
-                return (
-                  <div>
-                    <label
-                      htmlFor="edit-role"
-                      className="block font-mono text-xs font-semibold tracking-widest uppercase mb-1.5"
-                    >
-                      Role
-                    </label>
-                    <select
-                      id="edit-role"
-                      name="role"
-                      value={field.state.value}
-                      onChange={(e) => {
-                        field.handleChange(
-                          e.target.value as UpdateUserInput["role"],
-                        );
-                      }}
-                      className="w-full cursor-pointer rounded-none border border-[rgba(47,78,64,0.24)] bg-white px-3 py-2 font-mono text-sm outline-none focus:ring-2 focus:ring-[rgba(47,78,64,0.3)]"
-                    >
-                      {ROLE_OPTIONS.map((opt) => (
-                        <option key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
-                    {mergedError && (
-                      <p className="mt-1 text-xs font-mono text-red-600">
-                        {mergedError}
-                      </p>
-                    )}
-                  </div>
-                );
-              }}
-            </FormField>
-          </div>
-
-          {/* Footer */}
-          <div className="shrink-0 flex border-t border-[rgba(47,78,64,0.16)]">
-            <button
-              type="button"
-              disabled={isPending}
-              onClick={onClose}
-              className="flex-1 border-r border-[rgba(47,78,64,0.16)] py-3 font-mono text-xs font-semibold tracking-widest text-(--brand-green) uppercase transition-colors hover:bg-[rgba(47,78,64,0.06)]"
-            >
-              Cancel
-            </button>
-            <button
-              disabled={isPending}
-              type="submit"
-              className="flex flex-1 items-center justify-center bg-(--brand-green) py-3 font-mono text-xs font-semibold tracking-widest text-white uppercase transition-colors hover:bg-(--brand-green-2)"
-            >
-              {isPending ? <Spinner /> : "Save"}
-            </button>
-          </div>
-        </form>
-      </aside>
-    </>
+      </form>
+    </div>
   );
 }

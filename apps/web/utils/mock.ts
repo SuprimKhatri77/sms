@@ -76,6 +76,7 @@ export interface CourseDetail {
   instructor: Instructor;
   stats: { label: string; value: string }[];
   videoPlaceholder: string;
+  videoSrc?: string;
   faqs: { question: string; answer: string }[];
 }
 
@@ -213,6 +214,8 @@ export const courses: CourseDetail[] = [
     ],
     videoPlaceholder:
       "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=1280&auto=format&fit=crop&q=80",
+    videoSrc:
+      "https://assets.mixkit.co/videos/preview/mixkit-making-a-coffee-with-an-espresso-machine-1216-large.mp4",
     faqs: [
       {
         question: "Do I need any prior experience?",
@@ -326,7 +329,9 @@ export const courses: CourseDetail[] = [
       { label: "Completion rate", value: "96%" },
     ],
     videoPlaceholder:
-      "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=1280&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1555507036-ab1f4038808a?q=80&w=1280&auto=format&fit=crop",
+    videoSrc:
+      "https://assets.mixkit.co/videos/preview/mixkit-baker-kneading-dough-4374-large.mp4",
     faqs: [
       {
         question: "Can I specialise in just bread or just pastry?",
@@ -450,7 +455,9 @@ export const courses: CourseDetail[] = [
       { label: "Completion rate", value: "98%" },
     ],
     videoPlaceholder:
-      "https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=1280&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1470337458703-46ad1756a187?q=80&w=1280&auto=format&fit=crop",
+    videoSrc:
+      "https://assets.mixkit.co/videos/preview/mixkit-bartender-making-a-cocktail-4307-large.mp4",
     faqs: [
       {
         question: "Is alcohol consumed during the course?",
