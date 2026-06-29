@@ -9,6 +9,8 @@ import { DiscountSection } from "./DiscountSection";
 import { ScholarshipSection } from "./ScholarshipSection";
 import { MiddleColumn } from "./MiddleColumn";
 import { RightColumn } from "./RightColumn";
+import { StatusEditor } from "./StatusEditor";
+import type { Status } from "./StudentDetail";
 
 type Student = Extract<StudentDetail, { success: true }>["data"];
 type Course = Extract<
@@ -56,6 +58,8 @@ export function StudentDetailGrid({
   scholarship,
   discounts,
   balanceDue,
+  currentStatus,
+  onUpdateStatus,
 }: {
   student: Student;
   payments: Payment[];
@@ -66,26 +70,38 @@ export function StudentDetailGrid({
   scholarship: Scholarship;
   discounts: Discount[];
   balanceDue: number;
+  currentStatus: Status;
+  onUpdateStatus: (
+    next: Status,
+    rejectionReason?: string,
+  ) => Promise<void> | void;
 }) {
   return (
-    <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_1.5fr_1fr]">
-      {/* LEFT — Discounts + Scholarship */}
-      <div className="flex flex-col gap-5">
-        <DiscountSection discounts={discounts} studentID={student.id} />
-        <ScholarshipSection scholarship={scholarship} studentID={student.id} />
-      </div>
-
-      {/* MIDDLE — Personal Info + Guardian + Payments */}
+    <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1.7fr)_minmax(320px,1fr)]">
       <MiddleColumn
         balanceDue={balanceDue}
         student={student}
         payments={payments}
         setShowPaymentModal={setShowPaymentModal}
         PaymentRow={PaymentRow}
+        currentStatus={currentStatus}
       />
 
-      {/* RIGHT — Courses + Enrollment + Notes */}
-      <RightColumn student={student} courses={courses} totalFee={totalFee} />
+      <div className="flex flex-col gap-5">
+        <StatusEditor current={currentStatus} onUpdate={onUpdateStatus} />
+
+        <RightColumn student={student} courses={courses} totalFee={totalFee} />
+        <DiscountSection
+          discounts={discounts}
+          studentID={student.id}
+          currentStatus={currentStatus}
+        />
+        <ScholarshipSection
+          scholarship={scholarship}
+          studentID={student.id}
+          currentStatus={currentStatus}
+        />
+      </div>
     </div>
   );
 }

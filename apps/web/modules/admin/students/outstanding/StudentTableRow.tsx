@@ -2,39 +2,27 @@
 
 import { useRouter } from "next/navigation";
 import type { OutstandingStudent } from "./types/outstanding";
-
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("en-NP", {
-    style: "currency",
-    currency: "NPR",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
-
-function getInitials(name: string): string {
-  return name
-    .split(" ")
-    .slice(0, 2)
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase();
-}
+import { formatNpr, getPaymentProgressPct } from "../shared/student-utils";
+import { StudentInitialsAvatar } from "../shared/StudentInitialsAvatar";
+import { cn } from "@/lib/utils";
 
 function OutstandingBadge({ amount }: { amount: number }) {
   const level = amount > 50000 ? "high" : amount > 20000 ? "mid" : "low";
 
   const levelClass = {
-    high: "bg-[#fef2f2] text-[#b91c1c]",
-    mid: "bg-[#fffbeb] text-[#92400e]",
-    low: "bg-[#f0fdf4] text-[#166534]",
+    high: "border-red-200 bg-red-50 text-[#9a3412]",
+    mid: "border-amber-200 bg-amber-50 text-amber-900",
+    low: "border-emerald-200 bg-emerald-50 text-emerald-800",
   }[level];
 
   return (
     <span
-      className={`inline-block px-2.5 py-1 rounded-[20px] font-[var(--font-dm-sans)] text-[13px] font-semibold ${levelClass}`}
+      className={cn(
+        "inline-block border px-2.5 py-1 font-[family-name:var(--font-dm-sans)] text-[13px] font-semibold tabular-nums",
+        levelClass,
+      )}
     >
-      {formatCurrency(amount)}
+      {formatNpr(amount)}
     </span>
   );
 }
@@ -44,51 +32,23 @@ export function StudentTableSkeleton() {
     <>
       {Array.from({ length: 6 }).map((_, i) => (
         <tr key={i}>
-          <td className="px-5 py-4 border-b border-[#f0ede8]">
+          <td className="border-b border-[rgba(47,78,64,0.1)] px-5 py-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-[#e8e3da] shrink-0 animate-[shimmer_1.5s_infinite]" />
-              <div className="flex flex-col gap-1.5">
-                <div
-                  className="w-[120px] h-3.5 bg-[#e8e3da] rounded animate-[shimmer_1.5s_infinite]"
-                  style={{ animationDelay: `${i * 0.08}s` }}
-                />
-                <div
-                  className="w-[160px] h-3 bg-[#e8e3da] rounded animate-[shimmer_1.5s_infinite]"
-                  style={{ animationDelay: `${i * 0.08}s` }}
-                />
+              <div className="h-10 w-10 shrink-0 animate-pulse bg-[rgba(47,78,64,0.08)]" />
+              <div className="flex flex-col gap-2">
+                <div className="h-3.5 w-[120px] animate-pulse bg-[rgba(47,78,64,0.08)]" />
+                <div className="h-3 w-[160px] animate-pulse bg-[rgba(47,78,64,0.06)]" />
               </div>
             </div>
           </td>
-          <td className="px-5 py-4 border-b border-[#f0ede8]">
-            <div
-              className="w-20 h-3.5 bg-[#e8e3da] rounded animate-[shimmer_1.5s_infinite]"
-              style={{ animationDelay: `${i * 0.08}s` }}
-            />
-          </td>
-          <td className="px-5 py-4 border-b border-[#f0ede8]">
-            <div
-              className="w-20 h-3.5 bg-[#e8e3da] rounded animate-[shimmer_1.5s_infinite]"
-              style={{ animationDelay: `${i * 0.08}s` }}
-            />
-          </td>
-          <td className="px-5 py-4 border-b border-[#f0ede8]">
-            <div
-              className="w-20 h-3.5 bg-[#e8e3da] rounded animate-[shimmer_1.5s_infinite]"
-              style={{ animationDelay: `${i * 0.08}s` }}
-            />
-          </td>
-          <td className="px-5 py-4 border-b border-[#f0ede8]">
-            <div
-              className="w-20 h-3.5 bg-[#e8e3da] rounded animate-[shimmer_1.5s_infinite]"
-              style={{ animationDelay: `${i * 0.08}s` }}
-            />
-          </td>
-          <td className="px-5 py-4 border-b border-[#f0ede8]">
-            <div
-              className="w-[90px] h-[26px] bg-[#e8e3da] rounded-[20px] animate-[shimmer_1.5s_infinite]"
-              style={{ animationDelay: `${i * 0.08}s` }}
-            />
-          </td>
+          {Array.from({ length: 5 }).map((__, j) => (
+            <td
+              key={j}
+              className="border-b border-[rgba(47,78,64,0.1)] px-5 py-4"
+            >
+              <div className="h-3.5 w-20 animate-pulse bg-[rgba(47,78,64,0.08)]" />
+            </td>
+          ))}
         </tr>
       ))}
     </>
@@ -101,60 +61,55 @@ interface StudentTableRowProps {
 
 export function StudentTableRow({ student }: StudentTableRowProps) {
   const router = useRouter();
-  const progressPct =
-    student.totalCourseFee > 0
-      ? Math.min((student.totalPaid / student.totalCourseFee) * 100, 100)
-      : 0;
+  const progressPct = getPaymentProgressPct(student);
 
   const tdClass =
-    "px-5 py-4 border-b border-[#f0ede8] align-middle group-last:border-b-0";
+    "border-b border-[rgba(47,78,64,0.1)] px-5 py-4 align-middle whitespace-nowrap group-last:border-b-0";
 
   return (
     <tr
       onClick={() => router.push(`/admin/students/${student.studentId}`)}
-      className="group transition-colors duration-[120ms] hover:bg-[#f9f7f3]"
+      className="group cursor-pointer transition-colors hover:bg-[rgba(47,78,64,0.03)]"
     >
       <td className={tdClass}>
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-[#2f4e40] text-[#c28a4f] font-[var(--font-dm-sans)] text-[13px] font-bold flex items-center justify-center shrink-0 tracking-[0.04em]">
-            {getInitials(student.name)}
-          </div>
+          <StudentInitialsAvatar name={student.name} />
           <div className="flex flex-col gap-0.5">
-            <span className="font-[var(--font-dm-sans)] text-sm font-semibold text-[#1a1a1a] whitespace-nowrap">
+            <span className="whitespace-nowrap font-[family-name:var(--font-dm-sans)] text-sm font-semibold text-(--brand-ink)">
               {student.name}
             </span>
-            <span className="font-[var(--font-dm-sans)] text-xs text-[#9e9589]">
+            <span className="font-[family-name:var(--font-dm-sans)] text-xs text-[rgba(47,78,64,0.5)]">
               {student.email}
             </span>
           </div>
         </div>
       </td>
       <td className={tdClass}>
-        <span className="font-[var(--font-dm-sans)] text-sm text-[#4a4540] tabular-nums">
-          {formatCurrency(student.totalCourseFee / 100)}
+        <span className="font-[family-name:var(--font-dm-sans)] text-sm tabular-nums text-[rgba(47,78,64,0.75)]">
+          {formatNpr(student.totalCourseFee / 100)}
         </span>
       </td>
       <td className={tdClass}>
         <div className="flex flex-col gap-1.5">
-          <span className="font-[var(--font-dm-sans)] text-sm font-medium text-[#2f4e40] tabular-nums">
-            {formatCurrency(student.totalPaid / 100)}
+          <span className="font-[family-name:var(--font-dm-sans)] text-sm font-medium tabular-nums text-(--brand-green)">
+            {formatNpr(student.totalPaid / 100)}
           </span>
-          <div className="w-20 h-1 bg-[#e8e3da] rounded-sm overflow-hidden">
+          <div className="h-1 w-20 overflow-hidden bg-[rgba(47,78,64,0.1)]">
             <div
-              className="h-full bg-[#2f4e40] rounded-sm transition-[width] duration-300 ease-in-out"
+              className="h-full bg-(--brand-green) transition-[width] duration-300"
               style={{ width: `${progressPct}%` }}
             />
           </div>
         </div>
       </td>
       <td className={tdClass}>
-        <span className="font-[var(--font-dm-sans)] text-sm text-[#4a4540] tabular-nums">
-          {formatCurrency(student.totalDiscount / 100)}
+        <span className="font-[family-name:var(--font-dm-sans)] text-sm tabular-nums text-[rgba(47,78,64,0.75)]">
+          {formatNpr(student.totalDiscount / 100)}
         </span>
       </td>
       <td className={tdClass}>
-        <span className="font-[var(--font-dm-sans)] text-sm text-[#4a4540] tabular-nums">
-          {formatCurrency(student.totalScholarship / 100)}
+        <span className="font-[family-name:var(--font-dm-sans)] text-sm tabular-nums text-[rgba(47,78,64,0.75)]">
+          {formatNpr(student.totalScholarship / 100)}
         </span>
       </td>
       <td className={tdClass}>

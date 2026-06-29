@@ -1,6 +1,8 @@
 import { StudentDetail, StudentEnrolledCourses } from "@repo/types";
-import { SectionCard } from "./SectionCard";
+import { SectionCard } from "./shared/SectionCard";
 import { AlertCircle, BookOpen, Hash } from "lucide-react";
+import { detailInsetClass, detailLabelClass, detailValueClass } from "./detail-styles";
+import { formatNpr } from "../shared/student-utils";
 
 type Student = Extract<StudentDetail, { success: true }>["data"];
 type Course = Extract<
@@ -19,49 +21,31 @@ export function RightColumn({
 }) {
   return (
     <div className="flex flex-col gap-5">
-      {/* Courses */}
       <SectionCard title="Enrolled Courses" icon={BookOpen}>
-        <div className="flex flex-col gap-3">
-          {courses.map((c) => (
+        <div className="flex flex-col gap-2">
+          {courses.map((course) => (
             <div
-              key={c.id}
-              className="flex items-center justify-between rounded-xl border border-[#2d4a3e]/08 bg-[#f4f1ec]/50 px-4 py-3"
+              key={course.id}
+              className={`flex items-center justify-between px-4 py-3 ${detailInsetClass}`}
             >
               <div className="flex items-center gap-2.5">
-                <div className="h-2 w-2 rounded-full bg-[#e8552a]" />
-                <span
-                  className="text-[0.9rem] font-medium text-[#2d4a3e]"
-                  style={{ fontFamily: "var(--font-dm-sans)" }}
-                >
-                  {c.name}
-                </span>
+                <span className="h-2 w-2 bg-(--brand-brown)" />
+                <span className={detailValueClass}>{course.name}</span>
               </div>
-              <span
-                className="text-[0.82rem] font-semibold text-[#2d4a3e]"
-                style={{ fontFamily: "var(--font-dm-sans)" }}
-              >
-                NPR {(c.feeAtEnrollment / 100).toLocaleString()}
+              <span className="font-[family-name:var(--font-dm-sans)] text-sm font-semibold tabular-nums text-(--brand-green)">
+                {formatNpr(course.feeAtEnrollment / 100)}
               </span>
             </div>
           ))}
-          <div className="mt-1 flex items-center justify-between border-t border-[#2d4a3e]/08 pt-3">
-            <span
-              className="text-[0.78rem] font-semibold uppercase tracking-[0.06em] text-[#2d4a3e]/50"
-              style={{ fontFamily: "var(--font-dm-sans)" }}
-            >
-              Total
-            </span>
-            <span
-              className="text-[0.95rem] font-bold text-[#2d4a3e]"
-              style={{ fontFamily: "var(--font-dm-sans)" }}
-            >
-              NPR {totalFee.toLocaleString()}
+          <div className="mt-1 flex items-center justify-between border-t border-[rgba(47,78,64,0.12)] pt-3">
+            <span className={detailLabelClass}>Total</span>
+            <span className="font-[family-name:var(--font-lora)] text-base font-bold text-(--brand-green)">
+              {formatNpr(totalFee)}
             </span>
           </div>
         </div>
       </SectionCard>
 
-      {/* Enrollment meta */}
       <SectionCard title="Enrollment Details" icon={Hash}>
         <div className="flex flex-col gap-3">
           {[
@@ -76,35 +60,21 @@ export function RightColumn({
               }),
             },
           ].map(({ label, value }) => (
-            <div key={label} className="flex items-center justify-between">
-              <span
-                className="text-[0.78rem] font-semibold uppercase tracking-[0.06em] text-[#2d4a3e]/40"
-                style={{ fontFamily: "var(--font-dm-sans)" }}
-              >
-                {label}
-              </span>
-              <span
-                className="text-[0.88rem] font-medium text-[#2d4a3e]"
-                style={{ fontFamily: "var(--font-dm-sans)" }}
-              >
-                {value}
-              </span>
+            <div key={label} className="flex items-center justify-between gap-3">
+              <span className={detailLabelClass}>{label}</span>
+              <span className={detailValueClass}>{value}</span>
             </div>
           ))}
         </div>
       </SectionCard>
 
-      {/* Notes */}
-      {student.notes && (
+      {student.notes ? (
         <SectionCard title="Admin Notes" icon={AlertCircle}>
-          <p
-            className="rounded-xl bg-amber-50 px-4 py-3 text-[0.85rem] leading-[1.6] text-amber-800"
-            style={{ fontFamily: "var(--font-dm-sans)" }}
-          >
+          <p className="border border-amber-200 bg-amber-50 px-4 py-3 font-[family-name:var(--font-dm-sans)] text-sm leading-relaxed text-amber-900">
             {student.notes}
           </p>
         </SectionCard>
-      )}
+      ) : null}
     </div>
   );
 }

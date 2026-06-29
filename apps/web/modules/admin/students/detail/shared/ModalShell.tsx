@@ -1,4 +1,11 @@
+import type { ElementType, ReactNode } from "react";
+import { X } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
+import {
+  adminPrimaryButtonClass,
+  adminSecondaryButtonClass,
+} from "@/components/admin/admin-styles";
+import { detailPanelClass } from "../detail-styles";
 
 export function ModalShell({
   title,
@@ -10,54 +17,68 @@ export function ModalShell({
   children,
 }: {
   title: string;
-  icon: React.ElementType;
+  icon: ElementType;
   onCancel: () => void;
   onSubmit: () => void;
   submitLabel: string;
   submitting?: boolean;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/25 backdrop-blur-sm">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 supports-backdrop-filter:backdrop-blur-[2px]"
+      onClick={onCancel}
+    >
       <div
-        className="mx-4 w-full max-w-sm rounded-2xl bg-white shadow-2xl"
+        className={`w-full max-w-md ${detailPanelClass} shadow-[0_0_40px_rgba(0,0,0,0.12)]`}
         onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-shell-title"
       >
-        {/* Header */}
-        <div className="flex items-center gap-3 border-b border-[#2d4a3e]/08 px-5 py-4">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#2d4a3e]/08">
-            <Icon className="h-4 w-4 text-[#2d4a3e]" strokeWidth={2} />
+        <div className="flex items-center justify-between gap-3 border-b border-[rgba(47,78,64,0.12)] px-5 py-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="grid h-8 w-8 shrink-0 place-items-center border border-[rgba(47,78,64,0.12)] bg-[rgba(47,78,64,0.03)] text-(--brand-green)">
+              <Icon className="h-4 w-4" strokeWidth={1.75} />
+            </div>
+            <h2
+              id="modal-shell-title"
+              className="font-[family-name:var(--font-lora)] text-base font-bold text-(--brand-green)"
+            >
+              {title}
+            </h2>
           </div>
-          <h2
-            className="text-[0.92rem] font-semibold text-[#2d4a3e]"
-            style={{ fontFamily: "var(--font-dm-sans)" }}
+          <button
+            type="button"
+            onClick={onCancel}
+            className="grid h-8 w-8 place-items-center border border-[rgba(47,78,64,0.18)] text-[rgba(47,78,64,0.55)] transition-colors hover:bg-[rgba(47,78,64,0.04)]"
+            aria-label="Close"
           >
-            {title}
-          </h2>
+            <X size={16} />
+          </button>
         </div>
 
-        {/* Body */}
-        <div className="flex flex-col gap-4 px-5 py-4">{children}</div>
+        <div className="flex flex-col gap-4 px-5 py-5">{children}</div>
 
-        {/* Footer */}
-        <div className="flex justify-end gap-2 border-t border-[#2d4a3e]/08 px-5 py-3">
+        <div className="flex justify-end gap-2 border-t border-[rgba(47,78,64,0.12)] px-5 py-4">
           <button
+            type="button"
             onClick={onCancel}
-            className="rounded-xl border border-[#2d4a3e]/12 px-4 py-2 text-[0.82rem] font-medium text-[#2d4a3e]/60 transition-colors hover:bg-[#f4f1ec]"
-            style={{ fontFamily: "var(--font-dm-sans)" }}
+            disabled={submitting}
+            className={adminSecondaryButtonClass}
           >
             Cancel
           </button>
           <button
+            type="button"
             onClick={onSubmit}
             disabled={submitting}
-            className="rounded-xl bg-[#2d4a3e] px-4 py-2 text-[0.82rem] font-semibold text-white transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 flex items-center gap-2"
-            style={{ fontFamily: "var(--font-dm-sans)" }}
+            className={adminPrimaryButtonClass}
           >
             {submitting ? (
               <>
                 <Spinner />
-                Saving…
+                {submitLabel}
               </>
             ) : (
               submitLabel

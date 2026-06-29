@@ -1,245 +1,227 @@
-// components/admin/student-detail-skeleton.tsx
+import { cn } from "@/lib/utils";
+import { detailPanelClass } from "./detail-styles";
+
+function Skel({ className }: { className?: string }) {
+  return (
+    <div
+      className={cn("animate-pulse bg-[rgba(47,78,64,0.08)]", className)}
+      aria-hidden
+    />
+  );
+}
+
+function SectionCardSkel({
+  titleWidth = "w-28",
+  action,
+  children,
+}: {
+  titleWidth?: string;
+  action?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className={detailPanelClass}>
+      <div className="flex items-center justify-between gap-3 border-b border-[rgba(47,78,64,0.12)] px-4 py-3 sm:px-5 sm:py-4">
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+          <Skel className="h-7 w-7 shrink-0 sm:h-8 sm:w-8" />
+          <Skel className={cn("h-4", titleWidth)} />
+        </div>
+        {action ? <Skel className="h-8 w-24 shrink-0" /> : null}
+      </div>
+      <div className="px-4 py-4 sm:px-5">{children}</div>
+    </section>
+  );
+}
+
+function FieldRowSkel({
+  labelWidth = "w-20",
+  valueWidth = "w-36",
+}: {
+  labelWidth?: string;
+  valueWidth?: string;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+      <Skel className={cn("h-3", labelWidth)} />
+      <Skel className={cn("h-4", valueWidth)} />
+    </div>
+  );
+}
+
+function InsetRowSkel({ valueWidth = "w-32" }: { valueWidth?: string }) {
+  return (
+    <div className="border border-[rgba(47,78,64,0.12)] bg-[rgba(47,78,64,0.02)] px-4 py-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <Skel className="h-2 w-2 shrink-0" />
+          <Skel className="h-4 w-40" />
+        </div>
+        <Skel className={cn("h-4", valueWidth)} />
+      </div>
+    </div>
+  );
+}
+
 export function StudentDetailSkeleton() {
   return (
-    <div className="min-h-screen animate-pulse bg-[#f4f1ec] px-4 py-8 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-8xl">
-        {/* Top bar */}
-        <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-xl bg-[#2d4a3e]/10" />
-            <div className="flex flex-col gap-2">
-              <div className="h-6 w-44 rounded-xl bg-[#2d4a3e]/12" />
-              <div className="h-3.5 w-32 rounded-lg bg-[#2d4a3e]/07" />
+    <div className="min-h-[calc(100vh-4rem)] bg-(--brand-cream) px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-8xl space-y-5">
+        {/* Header */}
+        <div className={detailPanelClass}>
+          <div className="border-b border-[rgba(47,78,64,0.12)] px-4 py-3 sm:px-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <Skel className="h-4 w-28" />
+              <div className="grid w-full grid-cols-2 gap-1.5 sm:flex sm:w-auto sm:gap-2">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skel key={i} className="h-9 w-full sm:w-28" />
+                ))}
+              </div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="h-7 w-20 rounded-full bg-[#2d4a3e]/08" />
-            <div className="h-9 w-32 rounded-xl bg-[#2d4a3e]/12" />
-            <div className="h-9 w-32 rounded-xl bg-[#2d4a3e]/08" />
+
+          <div className="flex flex-col gap-5 px-5 py-5 sm:flex-row sm:items-center">
+            <div className="relative w-fit shrink-0 self-start">
+              <Skel className="h-20 w-20 rounded-full sm:h-24 sm:w-24" />
+              <Skel className="absolute -right-0.5 -bottom-0.5 h-4 w-4 rounded-full border-2 border-white" />
+            </div>
+
+            <div className="min-w-0 flex-1 space-y-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <Skel className="h-8 w-52 max-w-full" />
+                <Skel className="h-6 w-20" />
+              </div>
+              <Skel className="h-4 w-64 max-w-full" />
+              <div className="flex flex-wrap gap-2">
+                <Skel className="h-6 w-24" />
+                <Skel className="h-6 w-20" />
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Stat row */}
-        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div
-              key={i}
-              className="rounded-xl border border-black/[0.06] bg-white p-4 shadow-[0_2px_8px_rgba(0,0,0,0.03)]"
-            >
-              <div className="mb-2 h-2.5 w-16 rounded-md bg-[#2d4a3e]/10" />
-              <div className="mb-1.5 h-5 w-28 rounded-lg bg-[#2d4a3e]/12" />
-              <div className="h-2.5 w-14 rounded-md bg-[#2d4a3e]/07" />
-            </div>
-          ))}
-        </div>
-
-        {/* ── Main grid: 3 equal cols ── */}
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-          {/* LEFT col — Discounts + Scholarship */}
-          <div className="flex flex-col gap-5">
-            {/* Discounts card */}
-            <div className="rounded-2xl border border-black/[0.06] bg-white p-6 shadow-[0_2px_16px_rgba(0,0,0,0.04)]">
-              <div className="mb-5 flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="h-7 w-7 rounded-lg bg-[#2d4a3e]/08" />
-                  <div className="h-3.5 w-24 rounded-lg bg-[#2d4a3e]/10" />
-                </div>
-                <div className="h-7 w-14 rounded-lg bg-[#2d4a3e]/08" />
+        {/* Finance bar */}
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-px border border-[rgba(47,78,64,0.18)] bg-[rgba(47,78,64,0.18)] lg:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="space-y-2 bg-white px-5 py-4">
+                <Skel className="h-3 w-16" />
+                <Skel className="h-7 w-24" />
+                <Skel className="h-3 w-20" />
               </div>
-              {/* Discount rows */}
-              {Array.from({ length: 3 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="mb-2 flex flex-col gap-2 rounded-xl border border-[#2d4a3e]/08 bg-[#f4f1ec]/50 px-4 py-3"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="h-5 w-16 rounded-md bg-[#e8552a]/15" />
-                      <div className="h-4 w-8 rounded-md bg-[#2d4a3e]/10" />
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <div className="h-7 w-7 rounded-lg bg-[#2d4a3e]/07" />
-                      <div className="h-7 w-7 rounded-lg bg-[#2d4a3e]/07" />
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="h-2.5 w-20 rounded-md bg-[#2d4a3e]/08" />
-                    <div className="h-2.5 w-16 rounded-md bg-[#2d4a3e]/06" />
-                  </div>
-                </div>
-              ))}
-              {/* Total saved footer */}
-              <div className="mt-3 flex items-center justify-between border-t border-[#2d4a3e]/08 pt-3">
-                <div className="h-2.5 w-16 rounded-md bg-[#2d4a3e]/08" />
-                <div className="h-4 w-24 rounded-md bg-[#e8552a]/15" />
-              </div>
-            </div>
-
-            {/* Scholarship card */}
-            <div className="rounded-2xl border border-black/[0.06] bg-white p-6 shadow-[0_2px_16px_rgba(0,0,0,0.04)]">
-              <div className="mb-5 flex items-center gap-2.5">
-                <div className="h-7 w-7 rounded-lg bg-[#2d4a3e]/08" />
-                <div className="h-3.5 w-28 rounded-lg bg-[#2d4a3e]/10" />
-              </div>
-              <div className="rounded-xl border border-[#2d4a3e]/08 bg-[#f4f1ec]/50 px-4 py-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex flex-col gap-2">
-                    <div className="h-7 w-16 rounded-lg bg-[#2d4a3e]/12" />
-                    <div className="h-3 w-24 rounded-md bg-[#2d4a3e]/08" />
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <div className="h-7 w-7 rounded-lg bg-[#2d4a3e]/07" />
-                    <div className="h-7 w-7 rounded-lg bg-[#2d4a3e]/07" />
-                  </div>
-                </div>
-                <div className="mt-3 rounded-lg bg-amber-50/60 px-3 py-2">
-                  <div className="h-2.5 w-full rounded-md bg-amber-200/50" />
-                </div>
-                <div className="mt-2 h-2.5 w-32 rounded-md bg-[#2d4a3e]/06" />
-              </div>
-            </div>
+            ))}
           </div>
 
-          {/* MIDDLE col — Personal Info + Guardian + Payments */}
+          <div className="border border-[rgba(47,78,64,0.18)] bg-white px-5 py-4">
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <Skel className="h-3 w-28" />
+              <Skel className="h-3 w-20" />
+            </div>
+            <Skel className="h-2 w-full" />
+          </div>
+        </div>
+
+        {/* Main grid */}
+        <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1.7fr)_minmax(320px,1fr)]">
+          {/* Left column */}
           <div className="flex flex-col gap-5">
-            {/* Personal info card */}
-            <div className="rounded-2xl border border-black/[0.06] bg-white p-6 shadow-[0_2px_16px_rgba(0,0,0,0.04)]">
-              <div className="mb-5 flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="h-7 w-7 rounded-lg bg-[#2d4a3e]/08" />
-                  <div className="h-3.5 w-36 rounded-lg bg-[#2d4a3e]/10" />
-                </div>
-                {/* Edit icon */}
-                <div className="h-7 w-7 rounded-lg bg-[#2d4a3e]/07" />
+            <SectionCardSkel titleWidth="w-32" action>
+              <div className="space-y-4">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <FieldRowSkel
+                    key={i}
+                    labelWidth={i % 2 === 0 ? "w-24" : "w-20"}
+                    valueWidth={i % 2 === 0 ? "w-40" : "w-28"}
+                  />
+                ))}
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                {Array.from({ length: 10 }).map((_, i) => (
+            </SectionCardSkel>
+
+            <SectionCardSkel titleWidth="w-24" action>
+              <div className="space-y-4">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <FieldRowSkel
+                    key={i}
+                    labelWidth="w-24"
+                    valueWidth={i === 1 ? "w-48" : "w-32"}
+                  />
+                ))}
+              </div>
+            </SectionCardSkel>
+
+            <SectionCardSkel titleWidth="w-36" action>
+              <div className="mb-4 flex flex-col items-center gap-3 sm:flex-row sm:justify-between">
+                <Skel className="h-4 w-32" />
+                <Skel className="h-8 w-28" />
+              </div>
+              <div className="space-y-2">
+                {Array.from({ length: 3 }).map((_, i) => (
                   <div
                     key={i}
-                    className={`flex flex-col gap-1.5 ${i === 8 || i === 9 ? "col-span-2" : ""}`}
+                    className="border border-[rgba(47,78,64,0.12)] bg-[rgba(47,78,64,0.02)] px-4 py-3"
                   >
-                    <div className="h-2.5 w-14 rounded-md bg-[#2d4a3e]/08" />
-                    <div className="flex items-center gap-1.5">
-                      <div className="h-3.5 w-3.5 shrink-0 rounded bg-[#2d4a3e]/07" />
-                      <div
-                        className="h-3.5 rounded-md bg-[#2d4a3e]/10"
-                        style={{ width: `${80 + ((i * 29) % 70)}px` }}
-                      />
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="space-y-2">
+                        <Skel className="h-4 w-24" />
+                        <Skel className="h-3 w-36" />
+                      </div>
+                      <Skel className="h-8 w-16 shrink-0" />
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
-
-            {/* Guardian card */}
-            <div className="rounded-2xl border border-black/[0.06] bg-white p-6 shadow-[0_2px_16px_rgba(0,0,0,0.04)]">
-              <div className="mb-5 flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="h-7 w-7 rounded-lg bg-[#2d4a3e]/08" />
-                  <div className="h-3.5 w-36 rounded-lg bg-[#2d4a3e]/10" />
-                </div>
-                <div className="h-7 w-7 rounded-lg bg-[#2d4a3e]/07" />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                {Array.from({ length: 2 }).map((_, i) => (
-                  <div key={i} className="flex flex-col gap-1.5">
-                    <div className="h-2.5 w-20 rounded-md bg-[#2d4a3e]/08" />
-                    <div className="flex items-center gap-1.5">
-                      <div className="h-3.5 w-3.5 shrink-0 rounded bg-[#2d4a3e]/07" />
-                      <div className="h-3.5 w-28 rounded-md bg-[#2d4a3e]/10" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Payments card */}
-            <div className="rounded-2xl border border-black/[0.06] bg-white p-6 shadow-[0_2px_16px_rgba(0,0,0,0.04)]">
-              <div className="mb-5 flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="h-7 w-7 rounded-lg bg-[#2d4a3e]/08" />
-                  <div className="h-3.5 w-32 rounded-lg bg-[#2d4a3e]/10" />
-                </div>
-                <div className="h-7 w-14 rounded-lg bg-[#2d4a3e]/08" />
-              </div>
-              {Array.from({ length: 3 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="mb-2 flex items-center justify-between rounded-xl border border-[#2d4a3e]/08 bg-[#f4f1ec]/50 px-4 py-3"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-lg bg-green-100/70" />
-                    <div className="flex flex-col gap-1.5">
-                      <div className="h-3.5 w-24 rounded-md bg-[#2d4a3e]/10" />
-                      <div className="h-2.5 w-36 rounded-md bg-[#2d4a3e]/07" />
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="h-2.5 w-12 rounded-md bg-[#2d4a3e]/06" />
-                    <div className="h-7 w-7 rounded-lg bg-[#2d4a3e]/07" />
-                  </div>
-                </div>
-              ))}
-            </div>
+            </SectionCardSkel>
           </div>
 
-          {/* RIGHT col — Courses + Enrollment + Notes */}
+          {/* Right column */}
           <div className="flex flex-col gap-5">
-            {/* Courses card */}
-            <div className="rounded-2xl border border-black/[0.06] bg-white p-6 shadow-[0_2px_16px_rgba(0,0,0,0.04)]">
-              <div className="mb-5 flex items-center gap-2.5">
-                <div className="h-7 w-7 rounded-lg bg-[#2d4a3e]/08" />
-                <div className="h-3.5 w-28 rounded-lg bg-[#2d4a3e]/10" />
-              </div>
-              {Array.from({ length: 2 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="mb-2 flex items-center justify-between rounded-xl border border-[#2d4a3e]/08 bg-[#f4f1ec]/50 px-4 py-3"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <div className="h-2 w-2 rounded-full bg-[#e8552a]/30" />
-                    <div className="h-3.5 w-20 rounded-md bg-[#2d4a3e]/10" />
-                  </div>
-                  <div className="h-3.5 w-16 rounded-md bg-[#2d4a3e]/08" />
-                </div>
-              ))}
-              <div className="mt-3 flex items-center justify-between border-t border-[#2d4a3e]/08 pt-3">
-                <div className="h-2.5 w-10 rounded-md bg-[#2d4a3e]/08" />
-                <div className="h-4 w-20 rounded-md bg-[#2d4a3e]/10" />
-              </div>
-            </div>
-
-            {/* Enrollment details card */}
-            <div className="rounded-2xl border border-black/[0.06] bg-white p-6 shadow-[0_2px_16px_rgba(0,0,0,0.04)]">
-              <div className="mb-5 flex items-center gap-2.5">
-                <div className="h-7 w-7 rounded-lg bg-[#2d4a3e]/08" />
-                <div className="h-3.5 w-32 rounded-lg bg-[#2d4a3e]/10" />
-              </div>
-              <div className="flex flex-col gap-3">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="flex items-center justify-between">
-                    <div className="h-2.5 w-20 rounded-md bg-[#2d4a3e]/08" />
-                    <div
-                      className="h-3.5 rounded-md bg-[#2d4a3e]/10"
-                      style={{ width: `${56 + ((i * 23) % 40)}px` }}
-                    />
-                  </div>
+            <SectionCardSkel titleWidth="w-28">
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skel key={i} className="h-10 w-full" />
                 ))}
               </div>
-            </div>
+              <Skel className="mt-4 h-9 w-full sm:ml-auto sm:w-32" />
+            </SectionCardSkel>
 
-            {/* Notes card */}
-            <div className="rounded-2xl border border-black/[0.06] bg-white p-6 shadow-[0_2px_16px_rgba(0,0,0,0.04)]">
-              <div className="mb-5 flex items-center gap-2.5">
-                <div className="h-7 w-7 rounded-lg bg-[#2d4a3e]/08" />
-                <div className="h-3.5 w-24 rounded-lg bg-[#2d4a3e]/10" />
+            <SectionCardSkel titleWidth="w-36">
+              <div className="space-y-2">
+                {Array.from({ length: 2 }).map((_, i) => (
+                  <InsetRowSkel key={i} valueWidth="w-20" />
+                ))}
+                <div className="mt-1 flex items-center justify-between border-t border-[rgba(47,78,64,0.12)] pt-3">
+                  <Skel className="h-3 w-12" />
+                  <Skel className="h-5 w-24" />
+                </div>
               </div>
-              <div className="rounded-xl bg-amber-50/60 px-4 py-3">
-                <div className="mb-2 h-3 w-full rounded-md bg-amber-200/60" />
-                <div className="mb-2 h-3 w-4/5 rounded-md bg-amber-200/60" />
-                <div className="h-3 w-2/3 rounded-md bg-amber-200/60" />
+            </SectionCardSkel>
+
+            <SectionCardSkel titleWidth="w-40">
+              <div className="space-y-4">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <FieldRowSkel
+                    key={i}
+                    labelWidth="w-28"
+                    valueWidth="w-24"
+                  />
+                ))}
               </div>
-            </div>
+            </SectionCardSkel>
+
+            <SectionCardSkel titleWidth="w-24" action>
+              <div className="flex flex-col items-center gap-3 py-2 text-center">
+                <Skel className="h-10 w-10 rounded-full" />
+                <Skel className="h-4 w-40" />
+                <Skel className="h-8 w-28" />
+              </div>
+            </SectionCardSkel>
+
+            <SectionCardSkel titleWidth="w-28" action>
+              <div className="flex flex-col items-center gap-3 py-2 text-center">
+                <Skel className="h-10 w-10 rounded-full" />
+                <Skel className="h-4 w-44" />
+                <Skel className="h-8 w-36" />
+              </div>
+            </SectionCardSkel>
           </div>
         </div>
       </div>

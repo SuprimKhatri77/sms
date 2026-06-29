@@ -5,6 +5,7 @@ import { SectionCard } from "./shared/SectionCard";
 import { EditToolbar } from "./shared/EditToolBar";
 import { EditIconBtn } from "./shared/EditIconButton";
 import { cn } from "@/lib/utils";
+import { detailLabelClass } from "./detail-styles";
 import {
   APIError,
   APIResponse,
@@ -39,6 +40,11 @@ import "nepali-datepicker-reactjs/dist/index.css";
 import { NepaliDatePicker } from "nepali-datepicker-reactjs";
 import { BSToAD } from "bikram-sambat-js";
 import getMonth from "nepali-date-converter";
+import type { Status } from "./StudentDetail";
+import {
+  canPerformStudentActions,
+  STUDENT_STATUS_ACTION_TOOLTIP,
+} from "./student-status-actions";
 
 type Student = Extract<StudentDetail, { success: true }>["data"];
 
@@ -66,10 +72,7 @@ function EditField({
 }) {
   return (
     <div className={cn("flex flex-col gap-1", className)}>
-      <label
-        className="text-[0.72rem] font-semibold uppercase tracking-[0.06em] text-[#2d4a3e]/40"
-        style={{ fontFamily: "var(--font-dm-sans)" }}
-      >
+      <label className={detailLabelClass}>
         {label}
       </label>
       {children}
@@ -83,7 +86,13 @@ const shiftTimeMap: Record<string, string> = {
   evening: "6:00–8:00 PM",
 };
 
-export function PersonalInfoSection({ student }: { student: Student }) {
+export function PersonalInfoSection({
+  student,
+  currentStatus,
+}: {
+  student: Student;
+  currentStatus: Status;
+}) {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<PersonalInfoForm>({
@@ -183,6 +192,8 @@ export function PersonalInfoSection({ student }: { student: Student }) {
     setEditing(false);
   };
 
+  const actionsAllowed = canPerformStudentActions(currentStatus);
+
   return (
     <SectionCard
       title="Personal Information"
@@ -195,7 +206,11 @@ export function PersonalInfoSection({ student }: { student: Student }) {
             saving={saving}
           />
         ) : (
-          <EditIconBtn onClick={() => setEditing(true)} />
+          <EditIconBtn
+            onClick={() => setEditing(true)}
+            disabled={!actionsAllowed}
+            disabledTooltip={STUDENT_STATUS_ACTION_TOOLTIP}
+          />
         )
       }
     >
@@ -288,7 +303,7 @@ export function PersonalInfoSection({ student }: { student: Student }) {
 
           {/* Email */}
           <EditField label="Email">
-            <div className="flex min-w-0 items-center gap-1.5 rounded-xl border border-[#2d4a3e]/08 bg-[#2d4a3e]/04 px-3 py-2 cursor-not-allowed">
+            <div className="flex min-w-0 cursor-not-allowed items-center gap-1.5 border border-[rgba(47,78,64,0.12)] bg-[rgba(47,78,64,0.03)] px-3 py-2">
               <Mail
                 className="h-3.5 w-3.5 flex-shrink-0 text-[#2d4a3e]/25"
                 strokeWidth={2}

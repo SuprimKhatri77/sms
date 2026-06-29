@@ -1,5 +1,8 @@
 import { CheckCircle2, Printer } from "lucide-react";
 import { usePrintReceipt } from "./PrintReceipt";
+import { detailInsetClass } from "./detail-styles";
+import { formatNpr } from "../shared/student-utils";
+import { adminIconButtonClass } from "@/components/admin/admin-styles";
 
 export function PaymentRow({
   payment,
@@ -29,22 +32,18 @@ export function PaymentRow({
   });
 
   return (
-    <div className="flex items-center justify-between rounded-xl border border-[#2d4a3e]/08 bg-[#f4f1ec]/50 px-4 py-3">
-      <div className="flex items-center gap-3">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-50">
-          <CheckCircle2 className="h-4 w-4 text-green-500" strokeWidth={2} />
+    <div
+      className={`flex items-center justify-between gap-3 px-4 py-3 ${detailInsetClass}`}
+    >
+      <div className="flex min-w-0 items-center gap-3">
+        <div className="grid h-8 w-8 shrink-0 place-items-center border border-emerald-200 bg-emerald-50 text-emerald-600">
+          <CheckCircle2 className="h-4 w-4" strokeWidth={2} />
         </div>
-        <div>
-          <p
-            className="text-[0.88rem] font-medium text-[#2d4a3e]"
-            style={{ fontFamily: "var(--font-dm-sans)" }}
-          >
-            NPR {(payment.amount / 100).toLocaleString()}
+        <div className="min-w-0">
+          <p className="font-[family-name:var(--font-dm-sans)] text-sm font-semibold tabular-nums text-(--brand-green)">
+            {formatNpr(payment.amount / 100)}
           </p>
-          <p
-            className="text-[0.75rem] text-[#2d4a3e]/45"
-            style={{ fontFamily: "var(--font-dm-sans)" }}
-          >
+          <p className="truncate font-[family-name:var(--font-dm-sans)] text-xs text-[rgba(47,78,64,0.5)]">
             {payment.remarks ?? "Payment"}
             {payment.paymentMode ? ` · ${payment.paymentMode}` : ""}
             {" · "}
@@ -57,19 +56,15 @@ export function PaymentRow({
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
-        <span
-          className="text-[0.72rem] text-[#2d4a3e]/35"
-          style={{ fontFamily: "var(--font-dm-sans)" }}
-        >
+      <div className="flex shrink-0 items-center gap-2">
+        <span className="hidden font-[family-name:var(--font-dm-sans)] text-[11px] text-[rgba(47,78,64,0.4)] sm:inline">
           by {payment.addedByName}
         </span>
-
-        {/* ── Print Receipt button ── */}
         <button
+          type="button"
           onClick={handlePrintReceipt}
           title="Print receipt"
-          className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#2d4a3e]/12 bg-white text-[#2d4a3e]/50 transition-all hover:border-[#2d4a3e]/25 hover:text-[#2d4a3e]"
+          className={adminIconButtonClass}
         >
           <Printer className="h-3.5 w-3.5" strokeWidth={1.75} />
         </button>

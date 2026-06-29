@@ -25,6 +25,11 @@ import axios from "axios";
 import { mapFieldErrors } from "@/utils/api";
 import { FieldError } from "@/components/ui/field";
 import { useRouter } from "next/navigation";
+import type { Status } from "./StudentDetail";
+import {
+  canPerformStudentActions,
+  STUDENT_STATUS_ACTION_TOOLTIP,
+} from "./student-status-actions";
 
 type Student = Extract<StudentDetail, { success: true }>["data"];
 
@@ -32,7 +37,13 @@ type GuardianForm = {
   guardianName: string;
   guardianPhone: string;
 };
-export function GuardianSection({ student }: { student: Student }) {
+export function GuardianSection({
+  student,
+  currentStatus,
+}: {
+  student: Student;
+  currentStatus: Status;
+}) {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<GuardianForm>({
@@ -99,6 +110,8 @@ export function GuardianSection({ student }: { student: Student }) {
     setEditing(false);
   };
 
+  const actionsAllowed = canPerformStudentActions(currentStatus);
+
   return (
     <SectionCard
       title="Guardian Information"
@@ -111,7 +124,11 @@ export function GuardianSection({ student }: { student: Student }) {
             saving={saving}
           />
         ) : (
-          <EditIconBtn onClick={() => setEditing(true)} />
+          <EditIconBtn
+            onClick={() => setEditing(true)}
+            disabled={!actionsAllowed}
+            disabledTooltip={STUDENT_STATUS_ACTION_TOOLTIP}
+          />
         )
       }
     >

@@ -1,19 +1,24 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Shield } from "lucide-react";
 import { Status } from "./StudentDetail";
+import { SectionCard } from "./shared/SectionCard";
 import { updateStudentStatusSchema } from "@repo/types";
 import z from "zod";
 import { toast } from "sonner";
-
-// ─── Types ────────────────────────────────────────────────────────────────────
+import {
+  adminPrimaryButtonClass,
+  adminInputClass,
+} from "@/components/admin/admin-styles";
+import { detailEmptyActionClass, detailEmptyActionIconClass } from "./detail-styles";
+import { cn } from "@/lib/utils";
 
 interface StatusMeta {
   label: string;
   classes: string;
   dotClass: string;
-  ringClass: string;
+  activeClass: string;
 }
 
 interface StatusEditorProps {
@@ -21,38 +26,34 @@ interface StatusEditorProps {
   onUpdate: (next: Status, rejectionReason?: string) => Promise<void> | void;
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-
 const STATUS_META: Record<Status, StatusMeta> = {
   pending: {
     label: "Pending",
-    classes: "text-amber-700",
+    classes: "text-amber-800",
     dotClass: "bg-amber-400",
-    ringClass: "ring-amber-300",
+    activeClass: "border-amber-300 bg-amber-50",
   },
   active: {
     label: "Active",
-    classes: "text-green-700",
-    dotClass: "bg-green-400",
-    ringClass: "ring-green-300",
+    classes: "text-emerald-800",
+    dotClass: "bg-emerald-500",
+    activeClass: "border-emerald-300 bg-emerald-50",
   },
   completed: {
     label: "Completed",
-    classes: "text-blue-700",
+    classes: "text-blue-800",
     dotClass: "bg-blue-400",
-    ringClass: "ring-blue-300",
+    activeClass: "border-blue-300 bg-blue-50",
   },
   rejected: {
     label: "Rejected",
-    classes: "text-red-700",
+    classes: "text-red-800",
     dotClass: "bg-red-400",
-    ringClass: "ring-red-300",
+    activeClass: "border-red-300 bg-red-50",
   },
 };
 
 const ALL_STATUSES = Object.keys(STATUS_META) as Status[];
-
-// ─── Component ────────────────────────────────────────────────────────────────
 
 export function StatusEditor({ current, onUpdate }: StatusEditorProps) {
   const [selected, setSelected] = useState<Status>(current);
@@ -61,7 +62,6 @@ export function StatusEditor({ current, onUpdate }: StatusEditorProps) {
 
   const isDirty = selected !== current;
   const isRejected = selected === "rejected";
-  // Prevent update if rejected but no reason given
   const isUpdateDisabled =
     loading || (isRejected && rejectionReason.trim() === "");
 
@@ -89,7 +89,6 @@ export function StatusEditor({ current, onUpdate }: StatusEditorProps) {
     }
     try {
       await onUpdate(selected, isRejected ? rejectionReason.trim() : undefined);
-      // Reset reason after successful update
       if (!isRejected) setRejectionReason("");
     } finally {
       setLoading(false);
@@ -98,179 +97,103 @@ export function StatusEditor({ current, onUpdate }: StatusEditorProps) {
 
   const handleSelectStatus = (s: Status) => {
     setSelected(s);
-    // Clear reason if switching away from rejected
     if (s !== "rejected") setRejectionReason("");
   };
 
+  const updateButton =
+    isDirty && !isRejected ? (
+      <button
+        type="button"
+        onClick={handleUpdate}
+        disabled={loading}
+        className={cn(adminPrimaryButtonClass, detailEmptyActionClass)}
+      >
+        <CheckCircle2 className={detailEmptyActionIconClass} strokeWidth={2} />
+        <span className="sm:hidden">{loading ? "Saving…" : "Update"}</span>
+        <span className="hidden sm:inline">
+          {loading ? "Updating…" : "Update Status"}
+        </span>
+      </button>
+    ) : null;
+
   return (
-    <div className="flex flex-col gap-3">
-      {/* ── Pill radio buttons ── */}
-      <div className="flex flex-wrap items-center gap-2">
+    <SectionCard
+      title="Student Status"
+      icon={Shield}
+      action={updateButton}
+      headerClassName="flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-between"
+      actionClassName="sm:shrink-0 [&_button]:w-full [&_button]:justify-center sm:[&_button]:w-auto"
+      contentClassName="px-4 py-3 sm:px-5 sm:py-4"
+    >
+      <div className="flex flex-col gap-3">
+        <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 sm:gap-2">
         {ALL_STATUSES.map((s) => {
           const meta = STATUS_META[s];
           const isSelected = selected === s;
-          const isCurrent = s === current;
 
           return (
             <button
               key={s}
+              type="button"
               onClick={() => handleSelectStatus(s)}
-              className={`
-                inline-flex items-center gap-1.5 rounded-full border px-3 py-1
-                text-[0.75rem] font-semibold transition-all
-                ${meta.classes}
-              `}
-              style={{ fontFamily: "var(--font-dm-sans)" }}
-            >
-              {/* Checkbox indicator */}
-              <span
-                className={`
-                  flex h-3.5 w-3.5 items-center justify-center rounded-full border
-                  ${isSelected ? `${meta.dotClass} border-transparent` : "border-current bg-transparent"}
-                `}
-              >
-                {isSelected && (
-                  <svg viewBox="0 0 10 10" className="h-2 w-2 fill-white">
-                    <path
-                      d="M1.5 5 L4 7.5 L8.5 2.5"
-                      stroke="white"
-                      strokeWidth="1.5"
-                      fill="none"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                )}
-              </span>
-
-              {/* Current status dot */}
-              {isCurrent && !isDirty && (
-                <span className={`h-1.5 w-1.5 rounded-full ${meta.dotClass}`} />
+              className={cn(
+                "flex min-w-0 items-center justify-center gap-1 border px-2 py-1.5 font-[family-name:var(--font-dm-sans)] text-[10px] font-semibold uppercase leading-tight tracking-[0.04em] transition-colors sm:gap-2 sm:px-3 sm:py-2 sm:text-xs sm:tracking-[0.06em]",
+                isSelected
+                  ? meta.activeClass
+                  : "border-[rgba(47,78,64,0.12)] bg-white hover:bg-[rgba(47,78,64,0.03)]",
+                meta.classes,
               )}
-
+            >
+              <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full sm:h-2 sm:w-2", meta.dotClass)} />
               {meta.label}
             </button>
           );
         })}
-
-        {/* ── Update button — slides in when dirty and not rejected (rejected shows below) ── */}
-        <div
-          className={`overflow-hidden transition-all duration-200 ${
-            isDirty && !isRejected
-              ? "max-w-40 opacity-100"
-              : "max-w-0 opacity-0"
-          }`}
-        >
-          <button
-            onClick={handleUpdate}
-            disabled={loading}
-            className="ml-1 inline-flex items-center gap-1.5 rounded-xl bg-[#2d4a3e] px-3 py-1.5
-                       text-[0.78rem] font-semibold text-white whitespace-nowrap
-                       transition-all hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(45,74,62,0.25)]
-                       disabled:cursor-not-allowed disabled:opacity-60"
-            style={{ fontFamily: "var(--font-dm-sans)" }}
-          >
-            {loading ? (
-              <svg
-                className="h-3 w-3 animate-spin"
-                viewBox="0 0 24 24"
-                fill="none"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8v8z"
-                />
-              </svg>
-            ) : (
-              <CheckCircle2 className="h-3 w-3" strokeWidth={2.5} />
-            )}
-            Update Status
-          </button>
         </div>
-      </div>
 
-      {/* ── Rejection reason input — only when rejected is selected and dirty ── */}
-      <div
-        className={`overflow-hidden transition-all duration-300 ${
-          isDirty && isRejected ? "max-h-40 opacity-100" : "max-h-0 opacity-0"
-        }`}
-      >
-        <div className="flex flex-col gap-2 pt-1">
-          <label
-            htmlFor="rejection-reason"
-            className="font-dm-sans text-[11px] font-semibold uppercase tracking-[0.1em] text-red-600/70"
-          >
-            Rejection reason{" "}
-            <span className="normal-case tracking-normal text-red-400">
-              (required)
-            </span>
-          </label>
-
-          <textarea
-            id="rejection-reason"
-            value={rejectionReason}
-            onChange={(e) => setRejectionReason(e.target.value)}
-            placeholder="e.g. Incomplete documentation, did not meet minimum requirements…"
-            rows={3}
-            className="w-full resize-none rounded-xl border border-red-200 bg-red-50/50 px-3.5 py-2.5
-                       font-dm-sans text-sm text-[#1a1a1a] placeholder:text-[#1a1a1a]/30
-                       outline-none transition-all duration-150
-                       focus:border-red-300 focus:ring-2 focus:ring-red-200/60"
-            style={{ fontFamily: "var(--font-dm-sans)" }}
-          />
-
-          {/* Confirm button sits below the textarea for rejected */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleUpdate}
-              disabled={isUpdateDisabled}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-red-600 px-3.5 py-1.5
-                         font-dm-sans text-[0.78rem] font-semibold text-white whitespace-nowrap
-                         transition-all hover:-translate-y-0.5 hover:bg-red-700 hover:shadow-[0_4px_16px_rgba(220,38,38,0.25)]
-                         disabled:cursor-not-allowed disabled:opacity-50"
-              style={{ fontFamily: "var(--font-dm-sans)" }}
+        {isDirty && isRejected ? (
+          <div className="space-y-3 border border-red-200 bg-red-50/40 p-3 sm:p-4">
+            <label
+              htmlFor="rejection-reason"
+              className="font-[family-name:var(--font-dm-sans)] text-[10px] font-semibold uppercase tracking-[0.1em] text-red-700"
             >
-              {loading ? (
-                <svg
-                  className="h-3 w-3 animate-spin"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8v8z"
-                  />
-                </svg>
-              ) : (
-                <CheckCircle2 className="h-3 w-3" strokeWidth={2.5} />
+              Rejection reason (required)
+            </label>
+            <textarea
+              id="rejection-reason"
+              value={rejectionReason}
+              onChange={(e) => setRejectionReason(e.target.value)}
+              placeholder="e.g. Incomplete documentation, did not meet minimum requirements…"
+              rows={3}
+              className={cn(
+                adminInputClass,
+                "resize-none border-red-200 bg-white normal-case tracking-normal focus:border-red-400",
               )}
-              Confirm Rejection
-            </button>
-
-            <p className="font-dm-sans text-[11px] text-[#1a1a1a]/35">
-              This reason will be shown to the student.
-            </p>
+            />
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+              <button
+                type="button"
+                onClick={handleUpdate}
+                disabled={isUpdateDisabled}
+                className={cn(
+                  "inline-flex items-center gap-1.5 border border-red-700 bg-red-700 px-2.5 py-1.5 font-[family-name:var(--font-dm-sans)] text-[10px] font-semibold uppercase tracking-[0.06em] text-white transition-colors hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-50 sm:gap-2 sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.08em]",
+                )}
+              >
+                <CheckCircle2 className="h-3 w-3 sm:h-3.5 sm:w-3.5" strokeWidth={2} />
+                <span className="sm:hidden">
+                  {loading ? "Saving…" : "Confirm"}
+                </span>
+                <span className="hidden sm:inline">
+                  {loading ? "Updating…" : "Confirm Rejection"}
+                </span>
+              </button>
+              <p className="font-[family-name:var(--font-dm-sans)] text-[11px] text-[rgba(47,78,64,0.45)]">
+                This reason will be shown to the student.
+              </p>
+            </div>
           </div>
-        </div>
+        ) : null}
       </div>
-    </div>
+    </SectionCard>
   );
 }

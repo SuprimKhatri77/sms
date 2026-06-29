@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { SectionCard } from "./SectionCard";
+import { SectionCard } from "./shared/SectionCard";
+import { DetailEmptyState } from "./shared/DetailEmptyState";
 import { DeleteDiscountDialog } from "./DeleteDiscountDialog";
 import { AddBtn } from "./AddButton";
 import { DiscountRow } from "./DiscountRow";
@@ -22,6 +23,11 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { APIError } from "@repo/types";
 import axios, { AxiosError } from "axios";
+import type { Status } from "./StudentDetail";
+import {
+  canPerformStudentActions,
+  STUDENT_STATUS_ACTION_TOOLTIP,
+} from "./student-status-actions";
 
 type Discount = Extract<
   StudentDiscountResponse,
@@ -31,6 +37,7 @@ type Discount = Extract<
 type Props = {
   discounts: Extract<StudentDiscountResponse, { success: true }>["data"];
   studentID: string;
+  currentStatus: Status;
 };
 
 type CreateStudentDiscountPayload = StudentDiscountMutationInput & {
@@ -39,7 +46,7 @@ type CreateStudentDiscountPayload = StudentDiscountMutationInput & {
 type UpdateStudentDiscountPayload = StudentDiscountMutationInput & {
   studentID: string;
 };
-export function DiscountSection({ discounts, studentID }: Props) {
+export function DiscountSection({ discounts, studentID, currentStatus }: Props) {
   const [deleteTarget, setDeleteTarget] = useState<Discount | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editTarget, setEditTarget] = useState<Discount | null>(null);
@@ -153,6 +160,18 @@ export function DiscountSection({ discounts, studentID }: Props) {
     await updateDiscount.mutateAsync({ ...data, studentID: studentID });
   };
 
+  const actionsAllowed = canPerformStudentActions(currentStatus);
+
+  const renderAddDiscountButton = (compact = false) => (
+    <AddBtn
+      label="Add"
+      onClick={() => setShowAddModal(true)}
+      disabled={!actionsAllowed}
+      disabledTooltip={STUDENT_STATUS_ACTION_TOOLTIP}
+      compact={compact}
+    />
+  );
+
   return (
     <SectionCard title="Discounts" icon={Percent}>
       {deleteTarget && (
@@ -183,54 +202,50 @@ export function DiscountSection({ discounts, studentID }: Props) {
         />
       )}
 
-      <div className="mb-3 flex items-center justify-between">
-        <p
-          className="text-[0.82rem] text-[#2d4a3e]/50"
-          style={{ fontFamily: "var(--font-dm-sans)" }}
-        >
-          {discounts.length} discount{discounts.length !== 1 ? "s" : ""}
-        </p>
-        <AddBtn label="Add" onClick={() => setShowAddModal(true)} />
-      </div>
-
       {discounts.length === 0 ? (
-        <p
-          className="py-6 text-center text-[0.85rem] text-[#2d4a3e]/35"
-          style={{ fontFamily: "var(--font-dm-sans)" }}
-        >
-          No discounts applied.
-        </p>
+        <DetailEmptyState
+          icon={Percent}
+          message="No discounts applied."
+          action={renderAddDiscountButton(true)}
+        />
       ) : (
-        <div className="flex max-h-80 flex-col gap-2 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-[#2d4a3e]/20 scrollbar-track-transparent">
-          {discounts.map((d) => (
-            <DiscountRow
-              key={d.id}
-              discount={d}
-              onEdit={() => setEditTarget(d)}
-              onDelete={() => setDeleteTarget(d)}
-            />
-          ))}
-        </div>
-      )}
+        <>
+          <div className="mb-3 flex flex-col items-center gap-3 text-center sm:flex-row sm:items-center sm:justify-between sm:text-left">
+            <p className="font-[family-name:var(--font-dm-sans)] text-sm text-[rgba(47,78,64,0.5)]">
+              {discounts.length} discount{discounts.length !== 1 ? "s" : ""}
+            </p>
+            {renderAddDiscountButton()}
+          </div>
 
-      {discounts.length > 0 && (
-        <div className="mt-3 flex items-center justify-between border-t border-[#2d4a3e]/08 pt-3">
-          <span
-            className="text-[0.72rem] font-semibold uppercase tracking-[0.06em] text-[#2d4a3e]/40"
-            style={{ fontFamily: "var(--font-dm-sans)" }}
-          >
-            Total Saved
-          </span>
-          <span
-            className="text-[0.9rem] font-bold text-[#e8552a]"
-            style={{ fontFamily: "var(--font-dm-sans)" }}
-          >
-            − NPR{" "}
-            {discounts
-              .reduce((sum, d) => sum + d.amount / 100, 0)
-              .toLocaleString()}
-          </span>
-        </div>
+          <div className="flex max-h-80 flex-col gap-2 overflow-y-auto pr-1">
+            {discounts.map((d) => (
+              <DiscountRow
+                key={d.id}
+                discount={d}
+                onEdit={() => setEditTarget(d)}
+                onDelete={() => setDeleteTarget(d)}
+                actionsAllowed={actionsAllowed}
+                disabledTooltip={STUDENT_STATUS_ACTION_TOOLTIP}
+              />
+            ))}
+          </div>
+
+          <div className="mt-3 flex items-center justify-between border-t border-[rgba(47,78,64,0.12)] pt-3">
+            <span className="font-[family-name:var(--font-dm-sans)] text-[10px] font-semibold uppercase tracking-[0.1em] text-[rgba(47,78,64,0.45)]">
+              Total Saved
+            </span>
+            <span className="font-[family-name:var(--font-lora)] text-base font-bold text-[#9a3412]">
+              −{" "}
+              {discounts
+                .reduce((sum, d) => sum + d.amount / 100, 0)
+                .toLocaleString("en-NP", {
+                  style: "currency",
+                  currency: "NPR",
+                  minimumFractionDigits: 0,
+                })}
+            </span>
+          </div>
+        </>
       )}
     </SectionCard>
   );

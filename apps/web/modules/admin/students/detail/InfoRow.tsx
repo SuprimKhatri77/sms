@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { detailLabelClass, detailValueClass } from "./detail-styles";
 
 export function InfoRow({
   label,
@@ -14,24 +15,15 @@ export function InfoRow({
   className?: string;
 }) {
   return (
-    <div className={cn("flex min-w-0 flex-col gap-0.5", className)}>
-      <span
-        className="text-[0.7rem] font-semibold uppercase tracking-[0.07em] text-[#2d4a3e]/40"
-        style={{ fontFamily: "var(--font-dm-sans)" }}
-      >
-        {label}
-      </span>
-      <div className="flex min-w-0 items-center gap-1.5">
+    <div className={cn("flex min-w-0 flex-col gap-1.5", className)}>
+      <span className={detailLabelClass}>{label}</span>
+      <div className="flex min-w-0 items-center gap-2">
         <Icon
-          className="h-3.5 w-3.5 shrink-0 text-[#2d4a3e]/30"
+          className="h-3.5 w-3.5 shrink-0 text-[rgba(47,78,64,0.35)]"
           strokeWidth={1.75}
         />
         <span
-          className={cn(
-            "text-[0.88rem] font-medium text-[#2d4a3e]",
-            truncate && "min-w-0 truncate",
-          )}
-          style={{ fontFamily: "var(--font-dm-sans)" }}
+          className={cn(detailValueClass, truncate && "min-w-0 truncate")}
           title={truncate ? value : undefined}
         >
           {value}

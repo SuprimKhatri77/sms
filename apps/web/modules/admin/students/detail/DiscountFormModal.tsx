@@ -12,15 +12,15 @@ import {
 import z from "zod";
 import { FieldError } from "@/components/ui/field";
 import { mapFieldErrors } from "@/utils/api";
-
-const inputCls =
-  "w-full rounded-xl border border-[#2d4a3e]/15 bg-[#f4f1ec]/60 px-3 py-2.5 text-[0.88rem] font-medium text-[#2d4a3e] outline-none placeholder:text-[#2d4a3e]/25 transition-colors focus:border-[#2d4a3e]/40 focus:ring-2 focus:ring-[#2d4a3e]/08";
+import { inputCls } from "./shared/utils";
+import { cn } from "@/lib/utils";
 
 type StudentDiscountFormInput = {
   type: string;
   percent: string;
   note: string;
 };
+
 export function DiscountFormModal({
   initial,
   onSubmit,
@@ -83,22 +83,20 @@ export function DiscountFormModal({
     >
       <FormField label="Discount Type" required>
         <input
-          className={inputCls}
-          style={{ fontFamily: "var(--font-dm-sans)" }}
+          className={cn(inputCls, errors.type && "border-[#9a3412]")}
           placeholder="e.g. Sibling, Early Bird, Referral"
           maxLength={50}
           value={form.type}
           onChange={set("type")}
           autoFocus
         />
-        {errors.type && <FieldError>{errors.type}</FieldError>}
+        {errors.type ? <FieldError>{errors.type}</FieldError> : null}
       </FormField>
 
       <FormField label="Percent" required hint="Must be greater than 0">
         <div className="relative">
           <input
-            className={inputCls + " pr-8"}
-            style={{ fontFamily: "var(--font-dm-sans)" }}
+            className={cn(inputCls, "pr-8", errors.percent && "border-[#9a3412]")}
             placeholder="e.g. 10"
             type="number"
             min={0.01}
@@ -106,24 +104,23 @@ export function DiscountFormModal({
             value={form.percent}
             onChange={set("percent")}
           />
-          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[0.85rem] font-semibold text-[#2d4a3e]/40">
+          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 font-[family-name:var(--font-dm-sans)] text-sm font-semibold text-[rgba(47,78,64,0.4)]">
             %
           </span>
         </div>
-        {errors.percent && <FieldError>{errors.percent}</FieldError>}
+        {errors.percent ? <FieldError>{errors.percent}</FieldError> : null}
       </FormField>
 
       <FormField label="Note" hint="Optional — max 100 characters">
         <textarea
-          className={inputCls + " resize-none"}
-          style={{ fontFamily: "var(--font-dm-sans)" }}
+          className={cn(inputCls, "resize-none", errors.note && "border-[#9a3412]")}
           placeholder="Any additional context…"
           maxLength={100}
           rows={2}
           value={form.note}
           onChange={set("note")}
         />
-        {errors.note && <FieldError>{errors.note}</FieldError>}
+        {errors.note ? <FieldError>{errors.note}</FieldError> : null}
       </FormField>
     </ModalShell>
   );

@@ -1,13 +1,5 @@
 "use client";
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectSeparator,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { mapFieldErrors } from "@/utils/api";
 import { APIResponse } from "@repo/types";
@@ -20,11 +12,19 @@ import {
   CreditCard,
   Plus,
   Smartphone,
-  X,
 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import z from "zod";
+import { AdminDrawer } from "@/components/admin/admin-drawer";
+import { adminFieldLabelClass } from "@/components/admin/admin-drawer";
+import { cn } from "@/lib/utils";
+import {
+  adminPrimaryButtonClass,
+  adminSecondaryButtonClass,
+} from "@/components/admin/admin-styles";
+import { formatNpr } from "../shared/student-utils";
+import { inputCls } from "./shared/utils";
 
 const modalSchema = z.object({
   amount: z.number().gt(0, {
@@ -57,14 +57,41 @@ type AddPaymentModalErrors = {
   bsDate?: string;
 };
 
+type PaymentModeOption = {
+  value: string;
+  label: string;
+  icon: typeof Banknote;
+};
+
+const defaultPaymentModes: PaymentModeOption[] = [
+  { value: "cash", label: "Cash", icon: Banknote },
+  { value: "esewa", label: "eSewa", icon: Smartphone },
+  { value: "fonepay", label: "FonePay", icon: Smartphone },
+  { value: "bank", label: "Bank", icon: Building2 },
+];
+
+function FieldError({ message }: { message?: string }) {
+  if (!message) return null;
+  return (
+    <p className="mt-2 flex items-center gap-1.5 font-[family-name:var(--font-dm-sans)] text-xs text-[#9a3412]">
+      <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+      {message}
+    </p>
+  );
+}
+
 export function AddPaymentModal({
-  onClose,
+  open,
+  onOpenChange,
   onAdd,
   isAdding,
+  balanceDue,
 }: {
-  onClose: () => void;
-  onAdd: (data: AddPaymentModal) => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onAdd: (data: AddPaymentModal) => void | Promise<unknown>;
   isAdding: boolean;
+  balanceDue?: number;
 }) {
   const [amount, setAmount] = useState("");
   const [remarks, setRemarks] = useState("");
@@ -72,22 +99,36 @@ export function AddPaymentModal({
   const [error, setError] = useState<AddPaymentModalErrors>({});
   const [isAddingNewMode, setIsAddingNewMode] = useState(false);
   const [newModeInput, setNewModeInput] = useState("");
-  const [paymentModes, setPaymentModes] = useState([
-    { value: "cash", label: "Cash", icon: Banknote },
-    { value: "esewa", label: "eSewa", icon: Smartphone },
-    { value: "fonepay", label: "FonePay", icon: Smartphone },
-    { value: "bank", label: "Bank Transfer", icon: Building2 },
-  ]);
+  const [paymentModes, setPaymentModes] = useState(defaultPaymentModes);
+
+  const todayAd = useMemo(
+    () => new Date().toISOString().split("T")[0],
+    [],
+  );
+  const todayBs = useMemo(() => ADToBS(todayAd), [todayAd]);
+
+  const resetForm = () => {
+    setAmount("");
+    setRemarks("");
+    setPaymentMode("");
+    setError({});
+    setIsAddingNewMode(false);
+    setNewModeInput("");
+    setPaymentModes(defaultPaymentModes);
+  };
+
+  const handleClose = () => {
+    resetForm();
+    onOpenChange(false);
+  };
 
   const handleSubmit = async () => {
-    const date = new Date().toISOString().split("T")[0];
-    const bsDate = ADToBS(date);
     const result = modalSchema.safeParse({
       amount: Number(amount),
       remarks: remarks || undefined,
       paymentMode: paymentMode || undefined,
-      date: date,
-      bsDate: bsDate,
+      date: todayAd,
+      bsDate: todayBs,
     });
 
     if (!result.success) {
@@ -101,17 +142,18 @@ export function AddPaymentModal({
       });
       return;
     }
+
     try {
       await onAdd(result.data);
-      onClose();
+      handleClose();
     } catch (err) {
-      const error = err as AxiosError<APIResponse>;
-      const data = error.response?.data;
+      const axiosErr = err as AxiosError<APIResponse>;
+      const data = axiosErr.response?.data;
       if (data?.errors?.length) {
         toast.error(data.errors[0].message);
         setError(mapFieldErrors(data));
       } else {
-        toast.error(data?.message);
+        toast.error(data?.message ?? "Failed to add payment");
       }
     }
   };
@@ -119,7 +161,7 @@ export function AddPaymentModal({
   const handleAddNewMode = () => {
     const trimmed = newModeInput.trim();
     if (!trimmed) return;
-    const newEntry = {
+    const newEntry: PaymentModeOption = {
       value: trimmed.toLowerCase().replace(/\s+/g, "_"),
       label: trimmed,
       icon: CreditCard,
@@ -128,240 +170,229 @@ export function AddPaymentModal({
     setPaymentMode(newEntry.value);
     setIsAddingNewMode(false);
     setNewModeInput("");
+    setError((prev) => ({ ...prev, paymentMode: undefined }));
+  };
+
+  const handlePayFullBalance = () => {
+    if (balanceDue === undefined || balanceDue <= 0) return;
+    setAmount(String(balanceDue));
+    setError((prev) => ({ ...prev, amount: undefined }));
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-2xl border border-black/[0.06] bg-white p-6 shadow-2xl">
-        {/* ── Header ── */}
-        <div className="mb-5 flex items-center justify-between">
-          <h3
-            className="text-[1.1rem] font-semibold text-[#2d4a3e]"
-            style={{ fontFamily: "var(--font-playfair)" }}
-          >
-            Add Payment
-          </h3>
+    <AdminDrawer
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) handleClose();
+        else onOpenChange(true);
+      }}
+      title="Record Payment"
+      description="Add a fee payment for this student"
+      className="sm:max-w-md"
+      footer={
+        <div className="flex justify-end gap-3">
           <button
-            onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-[#2d4a3e]/08"
-          >
-            <X className="h-4 w-4 text-[#2d4a3e]/50" strokeWidth={2} />
-          </button>
-        </div>
-
-        <div className="flex flex-col gap-4">
-          {/* ── Amount ── */}
-          <div className="flex flex-col gap-1.5">
-            <label
-              className="text-[0.78rem] font-semibold uppercase tracking-[0.07em] text-[#2d4a3e]"
-              style={{ fontFamily: "var(--font-dm-sans)" }}
-            >
-              Amount (NPR) <span className="text-[#e8552a]">*</span>
-            </label>
-            <div className="relative">
-              <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#2d4a3e]/40">
-                <CreditCard className="h-4 w-4" strokeWidth={1.75} />
-              </span>
-              <input
-                type="number"
-                min="1"
-                placeholder="e.g. 5000"
-                value={amount}
-                onChange={(e) => {
-                  setAmount(e.target.value);
-                  setError({});
-                }}
-                className={`w-full rounded-xl border bg-white py-3 pl-10 pr-4 text-[0.92rem] text-[#2d4a3e] outline-none transition-all placeholder:text-[#2d4a3e]/30 focus:border-[#e8552a] focus:ring-2 focus:ring-[#e8552a]/15 ${
-                  error.amount
-                    ? "border-red-400 ring-2 ring-red-100"
-                    : "border-[#2d4a3e]/15"
-                }`}
-                style={{ fontFamily: "var(--font-dm-sans)" }}
-              />
-            </div>
-            {error.amount && (
-              <p
-                className="flex items-center gap-1.5 text-[0.78rem] text-red-500"
-                style={{ fontFamily: "var(--font-dm-sans)" }}
-              >
-                <AlertCircle className="h-3.5 w-3.5" /> {error.amount}
-              </p>
-            )}
-          </div>
-
-          {/* ── Payment Mode ── */}
-          <div className="flex flex-col gap-1.5">
-            <label
-              className="text-[0.78rem] font-semibold uppercase tracking-[0.07em] text-[#2d4a3e]"
-              style={{ fontFamily: "var(--font-dm-sans)" }}
-            >
-              Payment Mode
-            </label>
-
-            <Select
-              value={paymentMode}
-              onValueChange={(val) => {
-                if (val === "__add_new__") {
-                  setIsAddingNewMode(true);
-                } else {
-                  setPaymentMode(val as string);
-                  setIsAddingNewMode(false);
-                }
-              }}
-            >
-              <SelectTrigger
-                className={`w-full rounded-xl border bg-white py-3 px-4 h-12 text-[0.92rem] text-[#2d4a3e] outline-none transition-all focus:border-[#e8552a] focus:ring-2 focus:ring-[#e8552a]/15 ${
-                  error.paymentMode
-                    ? "border-red-400 ring-2 ring-red-100"
-                    : "border-[#2d4a3e]/15"
-                }`}
-                style={{ fontFamily: "var(--font-dm-sans)" }}
-              >
-                <SelectValue placeholder="Select payment mode" />
-              </SelectTrigger>
-              <SelectContent className="rounded-xl border border-[#2d4a3e]/10 shadow-lg">
-                {paymentModes.map((mode) => (
-                  <SelectItem
-                    key={mode.value}
-                    value={mode.value}
-                    className="text-[0.92rem] text-[#2d4a3e] cursor-pointer focus:bg-[#e8552a]/8 focus:text-[#e8552a] rounded-lg"
-                    style={{ fontFamily: "var(--font-dm-sans)" }}
-                  >
-                    <span className="flex items-center gap-2">
-                      <mode.icon className="h-4 w-4 text-[#2d4a3e]/50" />
-                      <span>{mode.label}</span>
-                    </span>
-                  </SelectItem>
-                ))}
-                <SelectSeparator className="my-1 bg-[#2d4a3e]/10" />
-                <SelectItem
-                  value="__add_new__"
-                  className="text-[0.92rem] text-[#e8552a] font-medium cursor-pointer focus:bg-[#e8552a]/8 rounded-lg"
-                  style={{ fontFamily: "var(--font-dm-sans)" }}
-                >
-                  <span className="flex items-center gap-2">
-                    <Plus className="h-3.5 w-3.5" />
-                    Add new payment mode
-                  </span>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* Inline "add new" input that appears when user picks "+ Add new" */}
-            {isAddingNewMode && (
-              <div className="flex items-center gap-2 mt-1">
-                <input
-                  type="text"
-                  autoFocus
-                  placeholder="e.g. Khalti, Bank Transfer…"
-                  value={newModeInput}
-                  onChange={(e) => setNewModeInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleAddNewMode();
-                    if (e.key === "Escape") {
-                      setIsAddingNewMode(false);
-                      setNewModeInput("");
-                    }
-                  }}
-                  className="flex-1 rounded-xl border border-[#2d4a3e]/15 bg-white py-2.5 px-4 text-[0.92rem] text-[#2d4a3e] outline-none transition-all placeholder:text-[#2d4a3e]/30 focus:border-[#e8552a] focus:ring-2 focus:ring-[#e8552a]/15"
-                  style={{ fontFamily: "var(--font-dm-sans)" }}
-                />
-                <button
-                  type="button"
-                  onClick={handleAddNewMode}
-                  className="rounded-xl bg-[#e8552a] px-4 py-2.5 text-[0.85rem] font-semibold text-white transition-all hover:bg-[#d14b23] active:scale-95"
-                  style={{ fontFamily: "var(--font-dm-sans)" }}
-                >
-                  Add
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsAddingNewMode(false);
-                    setNewModeInput("");
-                  }}
-                  className="rounded-xl border border-[#2d4a3e]/15 px-3 py-2.5 text-[0.85rem] text-[#2d4a3e]/50 transition-all hover:border-[#2d4a3e]/30 hover:text-[#2d4a3e]"
-                  style={{ fontFamily: "var(--font-dm-sans)" }}
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            )}
-
-            {error.paymentMode && (
-              <p
-                className="flex items-center gap-1.5 text-[0.78rem] text-red-500"
-                style={{ fontFamily: "var(--font-dm-sans)" }}
-              >
-                <AlertCircle className="h-3.5 w-3.5" /> {error.paymentMode}
-              </p>
-            )}
-          </div>
-          {/* ── Remarks ── */}
-          <div className="flex flex-col gap-1.5">
-            <label
-              className="text-[0.78rem] font-semibold uppercase tracking-[0.07em] text-[#2d4a3e]"
-              style={{ fontFamily: "var(--font-dm-sans)" }}
-            >
-              Remarks{" "}
-              <span className="font-normal normal-case text-[#2d4a3e]/40">
-                (optional)
-              </span>
-            </label>
-            <input
-              type="text"
-              placeholder="e.g. Second installment"
-              value={remarks}
-              onChange={(e) => setRemarks(e.target.value)}
-              className={`w-full rounded-xl border bg-white py-3 px-4 text-[0.92rem] text-[#2d4a3e] outline-none transition-all placeholder:text-[#2d4a3e]/30 focus:border-[#e8552a] focus:ring-2 focus:ring-[#e8552a]/15 ${
-                error.remarks
-                  ? "border-red-400 ring-2 ring-red-100"
-                  : "border-[#2d4a3e]/15"
-              }`}
-              style={{ fontFamily: "var(--font-dm-sans)" }}
-            />
-            {error.remarks && (
-              <p
-                className="flex items-center gap-1.5 text-[0.78rem] text-red-500"
-                style={{ fontFamily: "var(--font-dm-sans)" }}
-              >
-                <AlertCircle className="h-3.5 w-3.5" /> {error.remarks}
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* ── Actions ── */}
-        <div className="mt-6 flex gap-3">
-          <button
-            onClick={onClose}
+            type="button"
             disabled={isAdding}
-            className={`flex-1 rounded-xl border border-[#2d4a3e]/15 py-3 text-[0.9rem] font-medium text-[#2d4a3e] transition-all hover:bg-[#2d4a3e]/05 ${
-              isAdding ? "opacity-50 cursor-not-allowed" : ""
-            }`}
-            style={{ fontFamily: "var(--font-dm-sans)" }}
+            className={adminSecondaryButtonClass}
+            onClick={handleClose}
           >
             Cancel
           </button>
           <button
-            onClick={handleSubmit}
-            className={`flex-1 rounded-xl bg-[#2d4a3e] py-3 text-[0.9rem] font-semibold text-white transition-all hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(45,74,62,0.25)] ${
-              isAdding ? "opacity-50 cursor-not-allowed" : ""
-            }`}
-            style={{ fontFamily: "var(--font-dm-sans)" }}
+            type="button"
             disabled={isAdding}
+            className={cn(adminPrimaryButtonClass, "min-w-[140px] justify-center")}
+            onClick={handleSubmit}
           >
-            {isAdding ? (
-              <div className="flex items-center justify-center gap-2 text-[0.9rem] font-semibold text-white">
-                <Spinner />
-                Adding...
-              </div>
-            ) : (
-              "Add Payment"
-            )}
+            {isAdding ? <Spinner /> : "Record Payment"}
           </button>
         </div>
+      }
+    >
+      <div className="flex flex-col gap-12 px-8 py-10">
+        <section>
+          <p className={adminFieldLabelClass}>Amount</p>
+          <div
+            className={cn(
+              "mt-5 flex items-baseline gap-3 border-b pb-4 transition-colors",
+              error.amount
+                ? "border-[#9a3412]"
+                : "border-[rgba(47,78,64,0.15)] focus-within:border-(--brand-green)",
+            )}
+          >
+            <span className="font-[family-name:var(--font-lora)] text-lg text-(--brand-brown)">
+              NPR
+            </span>
+            <input
+              type="number"
+              min="1"
+              inputMode="numeric"
+              placeholder="0"
+              autoFocus
+              value={amount}
+              onChange={(e) => {
+                setAmount(e.target.value);
+                setError((prev) => ({ ...prev, amount: undefined }));
+              }}
+              className="min-w-0 flex-1 border-0 bg-transparent font-[family-name:var(--font-lora)] text-3xl font-bold tracking-tight text-(--brand-green) outline-none placeholder:text-[rgba(47,78,64,0.18)] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+            />
+          </div>
+          {balanceDue !== undefined && balanceDue > 0 ? (
+            <button
+              type="button"
+              onClick={handlePayFullBalance}
+              className="mt-4 font-[family-name:var(--font-dm-sans)] text-xs text-(--brand-brown) underline-offset-2 hover:underline"
+            >
+              Use full balance ({formatNpr(balanceDue)})
+            </button>
+          ) : null}
+          <FieldError message={error.amount} />
+        </section>
+
+        <section>
+          <p className={adminFieldLabelClass}>Method</p>
+          <div
+            className={cn(
+              "mt-5 divide-y divide-[rgba(47,78,64,0.12)] border bg-white",
+              error.paymentMode
+                ? "border-[#9a3412]"
+                : "border-[rgba(47,78,64,0.18)]",
+            )}
+          >
+            {paymentModes.map((mode) => {
+              const selected = paymentMode === mode.value;
+              const Icon = mode.icon;
+              return (
+                <button
+                  key={mode.value}
+                  type="button"
+                  onClick={() => {
+                    setPaymentMode(mode.value);
+                    setIsAddingNewMode(false);
+                    setError((prev) => ({ ...prev, paymentMode: undefined }));
+                  }}
+                  className={cn(
+                    "flex w-full items-center gap-4 px-4 py-4 text-left transition-colors",
+                    selected
+                      ? "bg-[rgba(47,78,64,0.04)]"
+                      : "hover:bg-[rgba(47,78,64,0.02)]",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "grid h-9 w-9 shrink-0 place-items-center border",
+                      selected
+                        ? "border-(--brand-green) bg-[rgba(47,78,64,0.06)]"
+                        : "border-[rgba(47,78,64,0.12)] bg-white",
+                    )}
+                  >
+                    <Icon
+                      className={cn(
+                        "h-4 w-4",
+                        selected
+                          ? "text-(--brand-green)"
+                          : "text-[rgba(47,78,64,0.4)]",
+                      )}
+                      strokeWidth={1.75}
+                    />
+                  </span>
+                  <span
+                    className={cn(
+                      "flex-1 font-[family-name:var(--font-dm-sans)] text-sm font-medium",
+                      selected ? "text-(--brand-green)" : "text-(--brand-ink)",
+                    )}
+                  >
+                    {mode.label}
+                  </span>
+                  <span
+                    className={cn(
+                      "grid h-4 w-4 shrink-0 place-items-center rounded-full border-2",
+                      selected
+                        ? "border-(--brand-green)"
+                        : "border-[rgba(47,78,64,0.25)]",
+                    )}
+                  >
+                    {selected ? (
+                      <span className="h-2 w-2 rounded-full bg-(--brand-green)" />
+                    ) : null}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {isAddingNewMode ? (
+            <div className="mt-4 flex gap-2">
+              <input
+                type="text"
+                autoFocus
+                placeholder="Payment method name"
+                value={newModeInput}
+                onChange={(e) => setNewModeInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleAddNewMode();
+                  if (e.key === "Escape") {
+                    setIsAddingNewMode(false);
+                    setNewModeInput("");
+                  }
+                }}
+                className={cn(inputCls, "flex-1")}
+              />
+              <button
+                type="button"
+                onClick={handleAddNewMode}
+                className={adminPrimaryButtonClass}
+              >
+                Add
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsAddingNewMode(false);
+                  setNewModeInput("");
+                }}
+                className={adminSecondaryButtonClass}
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setIsAddingNewMode(true)}
+              className="mt-4 inline-flex items-center gap-1.5 font-[family-name:var(--font-dm-sans)] text-xs text-(--brand-brown) underline-offset-2 hover:underline"
+            >
+              <Plus className="h-3.5 w-3.5" strokeWidth={2} />
+              Add another method
+            </button>
+          )}
+
+          <FieldError message={error.paymentMode} />
+        </section>
+
+        <section>
+          <label className={adminFieldLabelClass} htmlFor="payment-remarks">
+            Remarks
+          </label>
+          <input
+            id="payment-remarks"
+            type="text"
+            placeholder="Optional"
+            value={remarks}
+            onChange={(e) => {
+              setRemarks(e.target.value);
+              setError((prev) => ({ ...prev, remarks: undefined }));
+            }}
+            className={cn(
+              inputCls,
+              "mt-5",
+              error.remarks && "border-[#9a3412]",
+            )}
+          />
+          <FieldError message={error.remarks} />
+        </section>
       </div>
-    </div>
+    </AdminDrawer>
   );
 }

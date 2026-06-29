@@ -12,14 +12,13 @@ import {
 import z from "zod";
 import { mapFieldErrors } from "@/utils/api";
 import { FieldError } from "@/components/ui/field";
+import { inputCls } from "./shared/utils";
+import { cn } from "@/lib/utils";
 
 type ScholarshipFormData = {
   percent: string;
   note: string;
 };
-
-const inputCls =
-  "w-full rounded-xl border border-[#2d4a3e]/15 bg-[#f4f1ec]/60 px-3 py-2.5 text-[0.88rem] font-medium text-[#2d4a3e] outline-none placeholder:text-[#2d4a3e]/25 transition-colors focus:border-[#2d4a3e]/40 focus:ring-2 focus:ring-[#2d4a3e]/08";
 
 export function ScholarshipFormModal({
   initial,
@@ -82,8 +81,7 @@ export function ScholarshipFormModal({
       <FormField label="Percent" required hint="Must be between 0 and 100">
         <div className="relative">
           <input
-            className={inputCls + " pr-8"}
-            style={{ fontFamily: "var(--font-dm-sans)" }}
+            className={cn(inputCls, "pr-8", errors.percent && "border-[#9a3412]")}
             placeholder="e.g. 25"
             type="number"
             min={0.01}
@@ -93,24 +91,23 @@ export function ScholarshipFormModal({
             onChange={set("percent")}
             autoFocus
           />
-          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[0.85rem] font-semibold text-[#2d4a3e]/40">
+          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 font-[family-name:var(--font-dm-sans)] text-sm font-semibold text-[rgba(47,78,64,0.4)]">
             %
           </span>
         </div>
-        {errors.percent && <FieldError>{errors.percent}</FieldError>}
+        {errors.percent ? <FieldError>{errors.percent}</FieldError> : null}
       </FormField>
 
       <FormField label="Note" hint="Optional — max 100 characters">
         <textarea
-          className={inputCls + " resize-none"}
-          style={{ fontFamily: "var(--font-dm-sans)" }}
+          className={cn(inputCls, "resize-none", errors.note && "border-[#9a3412]")}
           placeholder="Reason for awarding scholarship…"
           maxLength={100}
           rows={2}
           value={form.note}
           onChange={set("note")}
         />
-        {errors.note && <FieldError>{errors.note}</FieldError>}
+        {errors.note ? <FieldError>{errors.note}</FieldError> : null}
       </FormField>
     </ModalShell>
   );

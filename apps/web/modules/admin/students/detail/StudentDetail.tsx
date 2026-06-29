@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
-import { ArrowLeft, Plus, Printer } from "lucide-react";
+import { useRef, useState } from "react";
+import { Printer } from "lucide-react";
 import {
   AddPayment,
   AddPaymentResponse,
@@ -14,20 +13,23 @@ import {
   UpdateStudentStatus,
   UpdateStudentStatusResponse,
 } from "@repo/types";
-import { StudentAvatar } from "./StudentAvatar";
 import { AddPaymentModal } from "./AddPaymentModal";
-import { StatusEditor } from "./StatusEditor";
-import { Invoice } from "./Invoice";
 import { useMutation } from "@tanstack/react-query";
 import api from "@/lib/axios";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Certificate } from "@/components/certificate/Certificate";
+import { printCertificateElement } from "@/components/certificate/printCertificate";
 import { siteInfo } from "@/utils/site-info";
 import { usePrintInvoice } from "./PrintInvoice";
 import { PaymentRow } from "./PaymentRow";
 import { WorkshopCertificate } from "@/components/certificate/WorkshopCertificate";
 import StudentDetailGrid from "./StudentDetailGrid";
+import { StudentDetailHeader } from "./StudentDetailHeader";
+import { StudentFinanceBar } from "./StudentFinanceBar";
+import { Invoice } from "./Invoice";
+import { adminPrimaryButtonClass } from "@/components/admin/admin-styles";
+import { detailPanelClass } from "./detail-styles";
 
 type Props = {
   student: Extract<StudentDetail, { success: true }>["data"];
@@ -80,6 +82,8 @@ export default function StudentDetailPage({
   const [showInvoice, setShowInvoice] = useState(false);
   const [showCertificate, setShowCertificate] = useState(false);
   const [showWorkshopCertificate, setShowWorkshopCertificate] = useState(false);
+  const courseCertRef = useRef<HTMLDivElement>(null);
+  const workshopCertRef = useRef<HTMLDivElement>(null);
   const [currentStatus, setCurrentStatus] = useState<Status>(student.status);
   const router = useRouter();
 
@@ -90,7 +94,7 @@ export default function StudentDetailPage({
     ? scholarships.amount / 100
     : 0;
   const balanceDue = totalFee - totalPaid - discountAmount - scholarshipAmount;
-  // const claimedAmount = student.claimedAmount / 100;
+
   const issueDate = new Date().toLocaleDateString("en-NP", {
     year: "numeric",
     month: "long",
@@ -135,233 +139,107 @@ export default function StudentDetailPage({
   const { handlePrint } = usePrintInvoice({ student, courses, payments });
 
   return (
-    <div className="min-h-screen bg-[#f4f1ec] px-4 py-8 sm:px-6 lg:px-8">
-      {showPaymentModal && (
-        <AddPaymentModal
-          onClose={() => setShowPaymentModal(false)}
-          onAdd={(data) => addPayment({ ...data })}
-          isAdding={isAddingPayment}
+    <div className="min-h-[calc(100vh-4rem)] bg-(--brand-cream) px-4 py-8 sm:px-6 lg:px-8">
+      <AddPaymentModal
+        open={showPaymentModal}
+        onOpenChange={setShowPaymentModal}
+        onAdd={(data) => addPayment({ ...data })}
+        isAdding={isAddingPayment}
+        balanceDue={balanceDue}
+      />
+
+      <div className="mx-auto max-w-8xl space-y-5">
+        <StudentDetailHeader
+          fullName={student.fullName}
+          referenceNo={student.referenceNo}
+          email={student.email}
+          batch={student.batch}
+          shift={student.shift}
+          photoUrl={student.photoUrl}
+          status={currentStatus}
+          balanceDue={balanceDue}
+          onAddPayment={() => setShowPaymentModal(true)}
+          showInvoice={showInvoice}
+          onToggleInvoice={() => setShowInvoice((v) => !v)}
+          showCertificate={showCertificate}
+          onToggleCertificate={() => setShowCertificate((v) => !v)}
+          showWorkshopCertificate={showWorkshopCertificate}
+          onToggleWorkshopCertificate={() =>
+            setShowWorkshopCertificate((v) => !v)
+          }
         />
-      )}
 
-      <div className="mx-auto max-w-8xl">
-        {/* ── Top bar ── */}
-        <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
-          {/* LEFT: back + avatar + name */}
-          <div className="flex items-center gap-3">
-            <Link
-              href="/admin/students"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[#2d4a3e]/15 bg-white transition-all hover:border-[#2d4a3e]/30 hover:bg-[#2d4a3e]/5"
-            >
-              <ArrowLeft className="h-4 w-4 text-[#2d4a3e]" strokeWidth={2} />
-            </Link>
+        <StudentFinanceBar
+          totalFee={totalFee}
+          totalPaid={totalPaid}
+          discountAmount={discountAmount}
+          scholarshipAmount={scholarshipAmount}
+          balanceDue={balanceDue}
+          courseCount={courses.length}
+          paymentCount={payments.length}
+        />
 
-            {/* Avatar */}
-            <StudentAvatar
-              imageUrl={student.photoUrl}
-              fullName={student.fullName}
-              status={currentStatus}
-            />
-
-            {/* Name + ref */}
-            <div>
-              <h1
-                className="text-[1.4rem] font-bold leading-tight text-[#2d4a3e]"
-                style={{ fontFamily: "var(--font-lora)" }}
-              >
-                {student.fullName}
-              </h1>
-              <p
-                className="font-mono text-[0.78rem] text-[#2d4a3e]/45"
-                style={{ fontFamily: "var(--font-dm-sans)" }}
-              >
-                {student.referenceNo}
-              </p>
-            </div>
-          </div>
-
-          {/* RIGHT: action buttons */}
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              onClick={() => setShowPaymentModal(true)}
-              disabled={balanceDue <= 0}
-              className="
-    inline-flex items-center gap-1.5 rounded-xl
-    px-4 py-2 text-[0.85rem] font-semibold text-white
-    transition-all
-    bg-[#2d4a3e]
-    hover:-translate-y-0.5
-    hover:shadow-[0_4px_16px_rgba(45,74,62,0.25)]
-
-    disabled:cursor-not-allowed
-    disabled:bg-[#94a39c]
-    disabled:text-white/80
-    disabled:hover:translate-y-0
-    disabled:hover:shadow-none
-    disabled:opacity-70
-  "
-              style={{ fontFamily: "var(--font-dm-sans)" }}
-            >
-              <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
-              {balanceDue <= 0 ? "Balance Cleared" : "Add Payment"}
-            </button>
-            <button
-              onClick={() => setShowInvoice(!showInvoice)}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-[#2d4a3e]/15 bg-white px-4 py-2 text-[0.85rem] font-medium text-[#2d4a3e] transition-all hover:border-[#2d4a3e]/30 hover:bg-[#2d4a3e]/5"
-              style={{ fontFamily: "var(--font-dm-sans)" }}
-            >
-              <Printer className="h-3.5 w-3.5" strokeWidth={1.75} />
-              {showInvoice ? "Hide Invoice" : "View Invoice"}
-            </button>
-            <button
-              onClick={() => setShowCertificate((v) => !v)}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-[#c28a4f]/25 bg-white px-4 py-2 text-[0.85rem] font-medium text-[#7a4e24] transition-all hover:border-[#c28a4f]/40 hover:bg-[#c28a4f]/10"
-              style={{ fontFamily: "var(--font-dm-sans)" }}
-            >
-              <Printer className="h-3.5 w-3.5" strokeWidth={1.75} />
-              {showCertificate ? "Hide Certificate" : "Issue Certificate"}
-            </button>
-            <button
-              onClick={() => setShowWorkshopCertificate((v) => !v)}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-[#c28a4f]/25 bg-white px-4 py-2 text-[0.85rem] font-medium text-[#7a4e24] transition-all hover:border-[#c28a4f]/40 hover:bg-[#c28a4f]/10"
-              style={{ fontFamily: "var(--font-dm-sans)" }}
-            >
-              <Printer className="h-3.5 w-3.5" strokeWidth={1.75} />
-              {showWorkshopCertificate
-                ? "Hide Workshop Certificate"
-                : "Issue Workshop Certificate"}
-            </button>
-          </div>
-        </div>
-
-        {/* ── Status editor card ── */}
-        <div className="mb-6 rounded-2xl border border-black/6 bg-white px-5 py-4 shadow-[0_2px_8px_rgba(0,0,0,0.03)]">
-          <div className="flex flex-wrap items-center gap-3">
-            <span
-              className="shrink-0 text-[0.7rem] font-semibold uppercase tracking-[0.07em] text-[#2d4a3e]/40"
-              style={{ fontFamily: "var(--font-dm-sans)" }}
-            >
-              Student Status
-            </span>
-            <StatusEditor
-              current={currentStatus}
-              onUpdate={(next, rejectionReason) =>
-                updateStatus({ status: next, rejectionReason: rejectionReason })
-              }
-            />
-          </div>
-        </div>
-
-        {/* ── Summary stat row ── */}
-        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {[
-            {
-              label: "Total Fee",
-              value: `NPR ${totalFee.toLocaleString()}`,
-              sub: `${courses.length} course${courses.length !== 1 ? "s" : ""}`,
-            },
-            {
-              label: "Total Paid",
-              value: `NPR ${totalPaid.toLocaleString()}`,
-              sub: `${payments.length} payment${payments.length !== 1 ? "s" : ""}`,
-            },
-            {
-              label: "Balance Due",
-              value: `NPR ${Math.abs(balanceDue).toLocaleString()}`,
-              sub:
-                balanceDue > 0
-                  ? "outstanding"
-                  : balanceDue === 0
-                    ? "cleared"
-                    : "overpaid",
-            },
-            // {
-            //   label: "Claimed",
-            //   value: `NPR ${claimedAmount.toLocaleString()}`,
-            //   sub: "by student",
-            // },
-          ].map(({ label, value, sub }) => (
-            <div
-              key={label}
-              className="rounded-xl border border-black/6 bg-white p-4 shadow-[0_2px_8px_rgba(0,0,0,0.03)]"
-            >
-              <p
-                className="mb-1 text-[0.7rem] font-semibold uppercase tracking-[0.07em] text-[#2d4a3e]/40"
-                style={{ fontFamily: "var(--font-dm-sans)" }}
-              >
-                {label}
-              </p>
-              <p
-                className="text-[1.05rem] font-bold text-[#2d4a3e]"
-                style={{ fontFamily: "var(--font-dm-sans)" }}
-              >
-                {value}
-              </p>
-              <p
-                className="mt-0.5 text-[0.72rem] text-[#2d4a3e]/40"
-                style={{ fontFamily: "var(--font-dm-sans)" }}
-              >
-                {sub}
-              </p>
-            </div>
-          ))}
-        </div>
-
-        {/* ── Invoice preview ── */}
-        {showInvoice && (
-          <div className="mb-6">
-            <div className="mb-3 flex items-center justify-between">
-              <h2
-                className="text-[0.9rem] font-semibold text-[#2d4a3e]"
-                style={{ fontFamily: "var(--font-playfair)" }}
-              >
+        {showInvoice ? (
+          <div className={detailPanelClass}>
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[rgba(47,78,64,0.12)] px-5 py-4">
+              <h2 className="font-[family-name:var(--font-lora)] text-base font-bold text-(--brand-green)">
                 Invoice Preview
               </h2>
               <button
+                type="button"
                 onClick={handlePrint}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-[#e8552a] px-4 py-2 text-[0.82rem] font-semibold text-white shadow-[0_4px_12px_rgba(232,85,42,0.3)] transition-all hover:-translate-y-0.5"
-                style={{ fontFamily: "var(--font-dm-sans)" }}
+                className={adminPrimaryButtonClass}
               >
-                <Printer className="h-3.5 w-3.5" strokeWidth={2} />
+                <Printer size={14} />
                 Print Invoice
               </button>
             </div>
-
-            <Invoice student={student} payments={payments} courses={courses} />
+            <div className="p-5">
+              <Invoice student={student} payments={payments} courses={courses} />
+            </div>
           </div>
-        )}
+        ) : null}
 
-        {/* ── Certificate preview ── */}
-        {showCertificate && (
-          <div className="mb-6">
-            <div className="mb-3 flex items-center justify-between">
-              <h2
-                className="text-[0.9rem] font-semibold text-[#2d4a3e]"
-                style={{ fontFamily: "var(--font-playfair)" }}
-              >
-                Certificate Preview
-              </h2>
+        {showCertificate ? (
+          <div className={detailPanelClass}>
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[rgba(47,78,64,0.12)] px-5 py-4">
+              <div>
+                <h2 className="font-[family-name:var(--font-lora)] text-base font-bold text-(--brand-green)">
+                  Certificate Preview
+                </h2>
+                <p className="mt-1 font-[family-name:var(--font-dm-sans)] text-[0.72rem] text-[rgba(47,78,64,0.45)]">
+                  Print: turn off Headers &amp; footers, turn on Background graphics
+                </p>
+              </div>
               <button
-                onClick={() => window.print()}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-[#c28a4f] px-4 py-2 text-[0.82rem] font-semibold text-white shadow-[0_4px_12px_rgba(194,138,79,0.28)] transition-all hover:-translate-y-0.5"
-                style={{ fontFamily: "var(--font-dm-sans)" }}
+                type="button"
+                onClick={() => {
+                  void printCertificateElement(courseCertRef.current).then(
+                    (ok) => {
+                      if (!ok) {
+                        toast.error(
+                          "Open a certificate preview before printing.",
+                        );
+                      }
+                    },
+                  );
+                }}
+                className={adminPrimaryButtonClass}
               >
-                <Printer className="h-3.5 w-3.5" strokeWidth={2} />
+                <Printer size={14} />
                 Print Certificate
               </button>
             </div>
-
-            <div className="overflow-x-auto">
-              <div style={{ minWidth: 794 }}>
+            <div className="overflow-x-auto p-5">
+              <div style={{ minWidth: 1123 }}>
                 <Certificate
+                  ref={courseCertRef}
                   studentName={student.fullName}
                   referenceNo={student.referenceNo}
                   courses={courses.map((c) => c.name)}
                   issueDate={issueDate}
                   schoolName={siteInfo.company.name}
                   logoUrl="/assets/watermark-no-bg.png"
-                  directorSignatureUrl="/assets/logo.png"
-                  headSignatureUrl="/assets/logo.png"
                   accreditationLogoUrl="/assets/watermark-no-bg.png"
                   footerAddress={siteInfo.contact.address}
                   footerContact={siteInfo.contact.email}
@@ -369,41 +247,48 @@ export default function StudentDetailPage({
               </div>
             </div>
           </div>
-        )}
+        ) : null}
 
-        {/* Workshop Certificate */}
-        {showWorkshopCertificate && (
-          <div className="mb-6">
-            <div className="mb-3 flex items-center justify-between">
-              <h2
-                className="text-[0.9rem] font-semibold text-[#2d4a3e]"
-                style={{ fontFamily: "var(--font-playfair)" }}
-              >
-                Workshop Certificate Preview
-              </h2>
+        {showWorkshopCertificate ? (
+          <div className={detailPanelClass}>
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[rgba(47,78,64,0.12)] px-5 py-4">
+              <div>
+                <h2 className="font-[family-name:var(--font-lora)] text-base font-bold text-(--brand-green)">
+                  Workshop Certificate Preview
+                </h2>
+                <p className="mt-1 font-[family-name:var(--font-dm-sans)] text-[0.72rem] text-[rgba(47,78,64,0.45)]">
+                  Print: turn off Headers &amp; footers, turn on Background graphics
+                </p>
+              </div>
               <button
-                onClick={() => window.print()}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-[#c28a4f] px-4 py-2 text-[0.82rem] font-semibold text-white shadow-[0_4px_12px_rgba(194,138,79,0.28)] transition-all hover:-translate-y-0.5"
-                style={{ fontFamily: "var(--font-dm-sans)" }}
+                type="button"
+                onClick={() => {
+                  void printCertificateElement(workshopCertRef.current).then(
+                    (ok) => {
+                      if (!ok) {
+                        toast.error(
+                          "Open a certificate preview before printing.",
+                        );
+                      }
+                    },
+                  );
+                }}
+                className={adminPrimaryButtonClass}
               >
-                <Printer className="h-3.5 w-3.5" strokeWidth={2} />
+                <Printer size={14} />
                 Print Certificate
               </button>
             </div>
-
-            <div className="overflow-x-auto">
-              <div style={{ minWidth: 794 }}>
+            <div className="overflow-x-auto p-5">
+              <div style={{ minWidth: 1123 }}>
                 <WorkshopCertificate
+                  ref={workshopCertRef}
                   studentName={student.fullName}
                   workshopTitle="Specialty Coffee Brewing"
                   workshopDate="2082-02-01"
                   referenceNo={student.referenceNo}
-                  // courses={courses.map((c) => c.name)}
                   issueDate={issueDate}
-                  // schoolName={siteInfo.company.name}
-                  logoUrl="/assets/logo-white-no-bg.png"
-                  directorSignatureUrl="/assets/logo.png"
-                  headSignatureUrl="/assets/logo.png"
+                  logoUrl={siteInfo.assets.greenBrownNoBG}
                   accreditationLogoUrl="/assets/watermark-no-bg.png"
                   footerAddress={siteInfo.contact.address}
                   footerContact={siteInfo.contact.email}
@@ -411,9 +296,8 @@ export default function StudentDetailPage({
               </div>
             </div>
           </div>
-        )}
+        ) : null}
 
-        {/* ── Main grid ── */}
         <StudentDetailGrid
           balanceDue={balanceDue}
           student={student}
@@ -424,6 +308,10 @@ export default function StudentDetailPage({
           PaymentRow={PaymentRow}
           scholarship={scholarships}
           discounts={discounts}
+          currentStatus={currentStatus}
+          onUpdateStatus={(next, rejectionReason) =>
+            updateStatus({ status: next, rejectionReason })
+          }
         />
       </div>
     </div>
