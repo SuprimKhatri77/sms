@@ -4,6 +4,14 @@ import api from "@/lib/axios";
 import { GetStudentPortalScholarshipResponse } from "@repo/types";
 import { useQuery } from "@tanstack/react-query";
 import { Award, RefreshCw, AlertCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { DashboardSection } from "./DashboardSection";
+import {
+  dashboardBadgeClass,
+  dashboardCardClass,
+  dashboardMoneyClass,
+  dashboardPrimaryBtnClass,
+} from "./dashboard-styles";
 
 interface ScholarshipItem {
   percent: number;
@@ -26,24 +34,9 @@ function formatDate(iso: string): string {
 
 function Shimmer({ className }: { className?: string }) {
   return (
-    <div
-      className={`rounded-lg ${className ?? ""}`}
-      style={{
-        background:
-          "linear-gradient(90deg, rgba(26,26,26,0.06) 0%, rgba(26,26,26,0.1) 50%, rgba(26,26,26,0.06) 100%)",
-        backgroundSize: "200% 100%",
-        animation: "ds-shimmer 1.5s ease-in-out infinite",
-      }}
-    />
+    <div className={cn("animate-pulse bg-[rgba(47,78,64,0.08)]", className)} />
   );
 }
-
-const shimmerKeyframes = `
-  @keyframes ds-shimmer {
-    0%   { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-  }
-`;
 
 function SectionError({
   title,
@@ -55,66 +48,55 @@ function SectionError({
   onRetry: () => void;
 }) {
   return (
-    <div>
-      <p
-        className="text-base font-semibold text-[#1a1a1a] mb-4 tracking-tight"
-        style={{ fontFamily: "var(--font-playfair)" }}
+    <DashboardSection title={title}>
+      <div
+        className={cn(
+          dashboardCardClass,
+          "flex flex-col items-center gap-3 px-5 py-8 text-center",
+        )}
       >
-        {title}
-      </p>
-      <div className="rounded-xl border border-red-100 bg-red-50/60 px-5 py-8 flex flex-col items-center text-center gap-3">
-        <AlertCircle size={20} className="text-red-400" />
+        <AlertCircle className="h-5 w-5 text-red-400" strokeWidth={1.75} />
         <div>
-          <p className="text-sm font-semibold text-[#1a1a1a] mb-1">
+          <p className="font-[family-name:var(--font-dm-sans)] text-[0.9rem] font-semibold text-(--brand-green)">
             Couldn&apos;t load data
           </p>
-          <p className="text-xs text-[#1a1a1a]/45 leading-relaxed max-w-xs">
+          <p className="mx-auto mt-1 max-w-xs font-[family-name:var(--font-dm-sans)] text-[0.8rem] leading-relaxed text-[rgba(47,78,64,0.5)]">
             {message ?? "Something went wrong. Please try again."}
           </p>
         </div>
-        <button
-          onClick={onRetry}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-[#2f4e40] bg-[#2f4e40]/8 border border-[#2f4e40]/20 hover:bg-[#2f4e40]/14 transition-all duration-150 active:scale-95"
-        >
-          <RefreshCw size={13} />
+        <button type="button" onClick={onRetry} className={dashboardPrimaryBtnClass}>
+          <RefreshCw className="h-3.5 w-3.5" strokeWidth={2} />
           Try again
         </button>
       </div>
-    </div>
+    </DashboardSection>
   );
 }
 
 function ScholarshipSkeleton() {
   return (
-    <div>
-      <style>{shimmerKeyframes}</style>
-      <Shimmer className="h-4 w-36 mb-4" />
-      <div className="p-5 rounded-xl border border-[#1a1a1a]/8 bg-white space-y-3">
-        <div className="flex items-center justify-between">
-          <Shimmer className="h-4 w-28" />
-          <Shimmer className="h-7 w-16 rounded-full" />
-        </div>
-        <Shimmer className="h-3 w-full" />
-        <Shimmer className="h-3 w-32" />
-      </div>
-    </div>
+    <DashboardSection title="Scholarship">
+      <Shimmer className="h-[120px]" />
+    </DashboardSection>
   );
 }
 
 function ScholarshipEmpty() {
   return (
-    <div className="rounded-xl border border-[#1a1a1a]/8 bg-white px-5 py-10 flex flex-col items-center text-center gap-3">
-      <div className="w-12 h-12 rounded-2xl bg-[#1a1a1a]/5 flex items-center justify-center">
-        <Award size={22} className="text-[#1a1a1a]/25" />
+    <div
+      className={cn(
+        dashboardCardClass,
+        "flex flex-col items-center gap-3 px-5 py-10 text-center",
+      )}
+    >
+      <div className="flex h-12 w-12 items-center justify-center bg-[#f4f1ec]">
+        <Award className="h-[22px] w-[22px] text-[rgba(47,78,64,0.25)]" strokeWidth={1.75} />
       </div>
       <div>
-        <p
-          className="text-sm font-semibold text-[#1a1a1a]/40 mb-1"
-          style={{ fontFamily: "var(--font-playfair)" }}
-        >
+        <p className="font-[family-name:var(--font-playfair)] text-[0.92rem] font-semibold text-[rgba(47,78,64,0.45)]">
           No scholarship awarded
         </p>
-        <p className="text-xs text-[#1a1a1a]/30 leading-relaxed max-w-[200px]">
+        <p className="mx-auto mt-1 max-w-[200px] font-[family-name:var(--font-dm-sans)] text-[0.75rem] leading-relaxed text-[rgba(47,78,64,0.35)]">
           A scholarship awarded to your account will appear here.
         </p>
       </div>
@@ -124,55 +106,39 @@ function ScholarshipEmpty() {
 
 function ScholarshipCard({ scholarship }: { scholarship: ScholarshipItem }) {
   return (
-    <div
-      className="relative overflow-hidden rounded-xl border p-5"
-      style={{
-        background: "linear-gradient(135deg, #f6f9f7 0%, #eef4f0 100%)",
-        borderColor: "rgba(47,78,64,0.2)",
-        boxShadow: "0 2px 12px rgba(47,78,64,0.08)",
-      }}
-    >
-      {/* Subtle top accent line */}
-      <div
-        className="absolute top-0 left-0 right-0 h-0.5"
-        style={{
-          background:
-            "linear-gradient(to right, transparent, #2f4e40, transparent)",
-          opacity: 0.4,
-        }}
-      />
+    <div className="relative overflow-hidden border border-[rgba(47,78,64,0.16)] bg-[#f6f9f7] p-5 sm:p-6">
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-(--brand-green) to-transparent opacity-40" />
 
       <div className="flex items-start justify-between gap-4">
-        <div className="flex items-start gap-3 min-w-0">
-          <div className="shrink-0 w-10 h-10 rounded-xl bg-[#2f4e40]/12 flex items-center justify-center mt-0.5">
-            <Award size={18} className="text-[#2f4e40]" />
+        <div className="flex min-w-0 items-start gap-3">
+          <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center bg-[rgba(47,78,64,0.1)]">
+            <Award className="h-[18px] w-[18px] text-(--brand-green)" strokeWidth={1.75} />
           </div>
           <div className="min-w-0">
-            <p
-              className="text-sm font-bold text-[#2f4e40] leading-snug"
-              style={{ fontFamily: "var(--font-playfair)" }}
-            >
-              Merit Scholarship
+            <p className="font-[family-name:var(--font-playfair)] text-[0.92rem] font-bold leading-snug text-(--brand-green)">
+              Merit scholarship
             </p>
-            {scholarship.note && (
-              <p className="text-xs text-[#1a1a1a]/50 mt-0.5 leading-snug">
+            {scholarship.note ? (
+              <p className="mt-0.5 font-[family-name:var(--font-dm-sans)] text-[0.75rem] leading-snug text-[rgba(47,78,64,0.5)]">
                 {scholarship.note}
               </p>
-            )}
-            <p className="text-xs text-[#1a1a1a]/35 mt-1.5">
+            ) : null}
+            <p className="mt-1.5 font-[family-name:var(--font-dm-sans)] text-[0.72rem] text-[rgba(47,78,64,0.38)]">
               Awarded {formatDate(scholarship.createdAt)}
             </p>
           </div>
         </div>
 
-        <div className="shrink-0 text-right space-y-1.5">
-          <p
-            className="text-base font-bold text-[#2f4e40]"
-            style={{ fontFamily: "var(--font-lora)" }}
-          >
+        <div className="shrink-0 space-y-1.5 text-right">
+          <p className={cn("text-[1rem] text-(--brand-green)", dashboardMoneyClass)}>
             {formatNPR(scholarship.amount / 100)}
           </p>
-          <span className="inline-block text-xs font-bold text-[#2f4e40] bg-[#2f4e40]/10 px-2.5 py-0.5 rounded-full border border-[#2f4e40]/20">
+          <span
+            className={cn(
+              dashboardBadgeClass,
+              "border border-[rgba(47,78,64,0.18)] bg-[rgba(47,78,64,0.08)] px-2.5 py-0.5 text-(--brand-green)",
+            )}
+          >
             {scholarship.percent}% awarded
           </span>
         </div>
@@ -207,15 +173,8 @@ export function Scholarship() {
   }
 
   return (
-    <section>
-      <h2
-        className="text-base font-semibold text-[#1a1a1a] mb-4 tracking-tight"
-        style={{ fontFamily: "var(--font-playfair)" }}
-      >
-        Scholarship
-      </h2>
-
+    <DashboardSection title="Scholarship">
       {data ? <ScholarshipCard scholarship={data} /> : <ScholarshipEmpty />}
-    </section>
+    </DashboardSection>
   );
 }

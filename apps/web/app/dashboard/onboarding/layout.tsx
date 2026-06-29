@@ -29,7 +29,7 @@ export default async function Dashboard({
             />
           </div>
         </header>
-        <div className="min-h-screen px-4">{children}</div>
+        <div className="min-h-screen bg-(--brand-cream) px-4 py-2 sm:px-6">{children}</div>
       </SidebarInset>
     </SidebarProvider>
   );

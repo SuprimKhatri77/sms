@@ -11,6 +11,13 @@ import { useQuery } from "@tanstack/react-query";
 import { GetStudentCoursesResponse } from "@repo/types";
 import api from "@/lib/axios";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
+import { DashboardSection } from "./DashboardSection";
+import {
+  dashboardCardClass,
+  dashboardLabelClass,
+  dashboardPrimaryBtnClass,
+} from "./dashboard-styles";
 
 type CourseItem = Extract<
   GetStudentCoursesResponse,
@@ -23,19 +30,21 @@ function formatNPR(amount: number): string {
 
 function CourseCard({ course }: { course: CourseItem }) {
   return (
-    <div className="flex items-center justify-between gap-3.5 p-4 rounded-xl border border-[#1a1a1a]/8 bg-white hover:border-[#2f4e40]/25 hover:shadow-sm transition-all duration-200">
-      <div className="flex items-center gap-3.5 min-w-0">
-        <div className="shrink-0 w-10 h-10 rounded-lg bg-[#2f4e40]/8 flex items-center justify-center">
-          <BookOpen size={18} className="text-[#2f4e40]" />
+    <div
+      className={cn(
+        dashboardCardClass,
+        "flex items-center justify-between gap-3.5 p-4 transition-colors duration-200 hover:border-[rgba(47,78,64,0.2)]",
+      )}
+    >
+      <div className="flex min-w-0 items-center gap-3.5">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center bg-[rgba(47,78,64,0.06)]">
+          <BookOpen className="h-[18px] w-[18px] text-(--brand-green)" strokeWidth={1.75} />
         </div>
         <div className="min-w-0">
-          <p
-            className="text-sm font-semibold text-[#1a1a1a] leading-snug truncate"
-            style={{ fontFamily: "var(--font-playfair)" }}
-          >
+          <p className="truncate font-[family-name:var(--font-playfair)] text-[0.92rem] font-semibold leading-snug text-(--brand-green)">
             {course.name}
           </p>
-          <p className="text-xs text-[#1a1a1a]/40 mt-0.5 font-medium">
+          <p className="mt-0.5 font-[family-name:var(--font-dm-sans)] text-[0.75rem] font-medium text-[rgba(47,78,64,0.42)]">
             {formatNPR(course.feeAtEnrollment / 100)} enrolled fee
           </p>
         </div>
@@ -43,10 +52,10 @@ function CourseCard({ course }: { course: CourseItem }) {
 
       <Link
         href={`/courses/${course.slug}`}
-        className="p-1.5 rounded-lg text-[#1a1a1a]/30 hover:text-[#2f4e40] hover:bg-[#2f4e40]/8 transition-all duration-150 shrink-0"
+        className="shrink-0 p-1.5 text-[rgba(47,78,64,0.3)] transition-colors duration-150 hover:bg-[rgba(47,78,64,0.06)] hover:text-(--brand-green)"
         aria-label={`View ${course.name}`}
       >
-        <ChevronRight size={16} />
+        <ChevronRight className="h-4 w-4" strokeWidth={2} />
       </Link>
     </div>
   );
@@ -54,46 +63,19 @@ function CourseCard({ course }: { course: CourseItem }) {
 
 function Shimmer({ className }: { className?: string }) {
   return (
-    <div
-      className={`rounded-lg ${className ?? ""}`}
-      style={{
-        background:
-          "linear-gradient(90deg, rgba(26,26,26,0.06) 0%, rgba(26,26,26,0.1) 50%, rgba(26,26,26,0.06) 100%)",
-        backgroundSize: "200% 100%",
-        animation: "courses-shimmer 1.5s ease-in-out infinite",
-      }}
-    />
+    <div className={cn("animate-pulse bg-[rgba(47,78,64,0.08)]", className)} />
   );
 }
 
 function EnrolledCoursesSkeleton() {
   return (
-    <section>
-      <style>{`
-        @keyframes courses-shimmer {
-          0%   { background-position: 200% 0; }
-          100% { background-position: -200% 0; }
-        }
-      `}</style>
-      <div className="flex items-center justify-between mb-4">
-        <Shimmer className="h-4 w-36" />
-        <Shimmer className="h-6 w-20 rounded-full" />
-      </div>
+    <DashboardSection title="Enrolled courses">
       <div className="flex flex-col gap-2.5">
         {Array.from({ length: 2 }).map((_, i) => (
-          <div
-            key={i}
-            className="flex items-center gap-3.5 p-4 rounded-xl border border-[#1a1a1a]/8 bg-white"
-          >
-            <Shimmer className="w-10 h-10 rounded-lg shrink-0" />
-            <div className="flex-1 space-y-1.5">
-              <Shimmer className="h-4 w-48" />
-              <Shimmer className="h-3 w-32" />
-            </div>
-          </div>
+          <Shimmer key={i} className="h-[72px]" />
         ))}
       </div>
-    </section>
+    </DashboardSection>
   );
 }
 
@@ -105,49 +87,47 @@ function EnrolledCoursesError({
   onRetry: () => void;
 }) {
   return (
-    <section>
-      <h2
-        className="text-base font-semibold text-[#1a1a1a] mb-4 tracking-tight"
-        style={{ fontFamily: "var(--font-playfair)" }}
+    <DashboardSection title="Enrolled courses">
+      <div
+        className={cn(
+          dashboardCardClass,
+          "flex flex-col items-center gap-3 px-5 py-8 text-center",
+        )}
       >
-        Enrolled Courses
-      </h2>
-      <div className="rounded-xl border border-red-100 bg-red-50/60 px-5 py-8 flex flex-col items-center text-center gap-3">
-        <AlertCircle size={20} className="text-red-400" />
+        <AlertCircle className="h-5 w-5 text-red-400" strokeWidth={1.75} />
         <div>
-          <p className="text-sm font-semibold text-[#1a1a1a] mb-1">
+          <p className="font-[family-name:var(--font-dm-sans)] text-[0.9rem] font-semibold text-(--brand-green)">
             Couldn&apos;t load courses
           </p>
-          <p className="text-xs text-[#1a1a1a]/45 leading-relaxed max-w-xs">
+          <p className="mx-auto mt-1 max-w-xs font-[family-name:var(--font-dm-sans)] text-[0.8rem] leading-relaxed text-[rgba(47,78,64,0.5)]">
             {message ?? "Something went wrong fetching your enrolled courses."}
           </p>
         </div>
-        <button
-          onClick={onRetry}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-[#2f4e40] bg-[#2f4e40]/8 border border-[#2f4e40]/20 hover:bg-[#2f4e40]/14 transition-all duration-150 active:scale-95"
-        >
-          <RefreshCw size={13} />
+        <button type="button" onClick={onRetry} className={dashboardPrimaryBtnClass}>
+          <RefreshCw className="h-3.5 w-3.5" strokeWidth={2} />
           Try again
         </button>
       </div>
-    </section>
+    </DashboardSection>
   );
 }
 
 function EnrolledCoursesEmpty() {
   return (
-    <div className="rounded-xl border border-[#1a1a1a]/8 bg-white px-5 py-10 flex flex-col items-center text-center gap-3">
-      <div className="w-12 h-12 rounded-2xl bg-[#1a1a1a]/5 flex items-center justify-center">
-        <GraduationCap size={22} className="text-[#1a1a1a]/25" />
+    <div
+      className={cn(
+        dashboardCardClass,
+        "flex flex-col items-center gap-3 px-5 py-10 text-center",
+      )}
+    >
+      <div className="flex h-12 w-12 items-center justify-center bg-[#f4f1ec]">
+        <GraduationCap className="h-[22px] w-[22px] text-[rgba(47,78,64,0.25)]" strokeWidth={1.75} />
       </div>
       <div>
-        <p
-          className="text-sm font-semibold text-[#1a1a1a]/40 mb-1"
-          style={{ fontFamily: "var(--font-playfair)" }}
-        >
+        <p className="font-[family-name:var(--font-playfair)] text-[0.92rem] font-semibold text-[rgba(47,78,64,0.45)]">
           No courses enrolled
         </p>
-        <p className="text-xs text-[#1a1a1a]/30 leading-relaxed max-w-[200px]">
+        <p className="mx-auto mt-1 max-w-[200px] font-[family-name:var(--font-dm-sans)] text-[0.75rem] leading-relaxed text-[rgba(47,78,64,0.35)]">
           Your enrolled courses will appear here once confirmed.
         </p>
       </div>
@@ -171,7 +151,7 @@ export function EnrolledCourses() {
       return parsed.data;
     },
     retry: 1,
-    staleTime: 1000 * 60 * 10, // 10 min — enrollments rarely change mid-session
+    staleTime: 1000 * 60 * 10,
   });
 
   if (isPending) return <EnrolledCoursesSkeleton />;
@@ -183,28 +163,19 @@ export function EnrolledCourses() {
   }
 
   return (
-    <section>
-      <div className="flex items-center justify-between mb-4">
-        <h2
-          className="text-base font-semibold text-[#1a1a1a] tracking-tight"
-          style={{ fontFamily: "var(--font-playfair)" }}
-        >
-          Enrolled Courses
-        </h2>
-        <span className="text-xs text-[#1a1a1a]/40 font-medium bg-[#1a1a1a]/5 px-2.5 py-1 rounded-full">
-          {data.length} {data.length === 1 ? "course" : "courses"}
-        </span>
-      </div>
-
+    <DashboardSection
+      title="Enrolled courses"
+      badge={`${data.length} ${data.length === 1 ? "course" : "courses"}`}
+    >
       {data.length === 0 ? (
         <EnrolledCoursesEmpty />
       ) : (
         <div className="flex flex-col gap-2.5">
           {data.map((course) => (
-            <CourseCard key={`${course.slug}`} course={course} />
+            <CourseCard key={course.slug} course={course} />
           ))}
         </div>
       )}
-    </section>
+    </DashboardSection>
   );
 }

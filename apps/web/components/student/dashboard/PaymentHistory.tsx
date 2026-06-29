@@ -13,6 +13,13 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { GetStudentPaymentsResponse } from "@repo/types";
 import api from "@/lib/axios";
+import { cn } from "@/lib/utils";
+import { DashboardSection } from "./DashboardSection";
+import {
+  dashboardCardClass,
+  dashboardMoneyClass,
+  dashboardPrimaryBtnClass,
+} from "./dashboard-styles";
 
 type PaymentItem = Extract<
   GetStudentPaymentsResponse,
@@ -23,18 +30,21 @@ const PAYMENT_MODE_META: Record<
   string,
   { label: string; icon: React.ReactNode }
 > = {
-  cash: { label: "Cash", icon: <Banknote size={14} /> },
-  esewa: { label: "eSewa", icon: <Smartphone size={14} /> },
-  khalti: { label: "Khalti", icon: <Smartphone size={14} /> },
-  bank_transfer: { label: "Bank Transfer", icon: <Building2 size={14} /> },
-  cheque: { label: "Cheque", icon: <FileText size={14} /> },
+  cash: { label: "Cash", icon: <Banknote size={14} strokeWidth={1.75} /> },
+  esewa: { label: "eSewa", icon: <Smartphone size={14} strokeWidth={1.75} /> },
+  khalti: { label: "Khalti", icon: <Smartphone size={14} strokeWidth={1.75} /> },
+  bank_transfer: {
+    label: "Bank Transfer",
+    icon: <Building2 size={14} strokeWidth={1.75} />,
+  },
+  cheque: { label: "Cheque", icon: <FileText size={14} strokeWidth={1.75} /> },
 };
 
 function getPaymentModeMeta(mode: string) {
   return (
     PAYMENT_MODE_META[mode] ?? {
       label: mode,
-      icon: <CreditCard size={14} />,
+      icon: <CreditCard size={14} strokeWidth={1.75} />,
     }
   );
 }
@@ -69,37 +79,31 @@ function PaymentRow({
   const mode = getPaymentModeMeta(payment.paymentMode);
 
   return (
-    <div className="grid grid-cols-[auto_1fr_auto] sm:grid-cols-[2.5rem_1fr_auto] items-center gap-4 p-4 hover:bg-[#1a1a1a]/[0.02] transition-colors duration-150">
-      {/* Index badge */}
-      <div className="hidden sm:flex w-8 h-8 rounded-lg bg-[#1a1a1a]/5 items-center justify-center shrink-0">
-        <span className="text-xs font-bold text-[#1a1a1a]/30">
+    <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4 p-4 transition-colors duration-150 hover:bg-[rgba(47,78,64,0.02)] sm:grid-cols-[2.5rem_1fr_auto]">
+      <div className="hidden h-8 w-8 shrink-0 items-center justify-center bg-[#f4f1ec] sm:flex">
+        <span className="font-[family-name:var(--font-dm-sans)] text-[0.68rem] font-bold text-[rgba(47,78,64,0.35)]">
           {String(index + 1).padStart(2, "0")}
         </span>
       </div>
 
-      {/* Details */}
       <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-2 mb-0.5">
-          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-[#1a1a1a]/50 bg-[#1a1a1a]/5 px-2 py-0.5 rounded-full">
+        <div className="mb-0.5 flex flex-wrap items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 border border-[rgba(47,78,64,0.08)] bg-[#f4f1ec] px-2 py-0.5 font-[family-name:var(--font-dm-sans)] text-[0.72rem] font-medium text-[rgba(47,78,64,0.55)]">
             {mode.icon}
             {mode.label}
           </span>
-          {payment.remarks && (
-            <span className="text-xs text-[#1a1a1a]/35 truncate max-w-[160px]">
+          {payment.remarks ? (
+            <span className="max-w-[160px] truncate font-[family-name:var(--font-dm-sans)] text-[0.72rem] text-[rgba(47,78,64,0.38)]">
               {payment.remarks}
             </span>
-          )}
+          ) : null}
         </div>
-        <p className="text-xs text-[#1a1a1a]/35 font-medium">
+        <p className="font-[family-name:var(--font-dm-sans)] text-[0.72rem] font-medium text-[rgba(47,78,64,0.38)]">
           {date}&nbsp;·&nbsp;{time}
         </p>
       </div>
 
-      {/* Amount */}
-      <p
-        className="text-sm font-bold text-[#2f4e40] text-right shrink-0"
-        style={{ fontFamily: "var(--font-lora)" }}
-      >
+      <p className={cn("shrink-0 text-right text-[0.92rem] text-(--brand-green)", dashboardMoneyClass)}>
         {formatNPR(payment.amount / 100)}
       </p>
     </div>
@@ -109,16 +113,13 @@ function PaymentRow({
 function EmptyPayments() {
   return (
     <div className="flex flex-col items-center justify-center py-14 text-center">
-      <div className="w-14 h-14 rounded-2xl bg-[#1a1a1a]/5 flex items-center justify-center mb-4">
-        <Wallet size={24} className="text-[#1a1a1a]/25" />
+      <div className="mb-4 flex h-14 w-14 items-center justify-center bg-[#f4f1ec]">
+        <Wallet className="h-6 w-6 text-[rgba(47,78,64,0.25)]" strokeWidth={1.75} />
       </div>
-      <p
-        className="text-sm font-semibold text-[#1a1a1a]/40 mb-1"
-        style={{ fontFamily: "var(--font-playfair)" }}
-      >
+      <p className="font-[family-name:var(--font-playfair)] text-[0.92rem] font-semibold text-[rgba(47,78,64,0.45)]">
         No payments recorded
       </p>
-      <p className="text-xs text-[#1a1a1a]/30 max-w-[220px] leading-relaxed">
+      <p className="mt-1 max-w-[220px] font-[family-name:var(--font-dm-sans)] text-[0.75rem] leading-relaxed text-[rgba(47,78,64,0.35)]">
         Payments added by the administration will appear here once processed.
       </p>
     </div>
@@ -127,47 +128,29 @@ function EmptyPayments() {
 
 function Shimmer({ className }: { className?: string }) {
   return (
-    <div
-      className={`rounded-lg ${className ?? ""}`}
-      style={{
-        background:
-          "linear-gradient(90deg, rgba(26,26,26,0.06) 0%, rgba(26,26,26,0.1) 50%, rgba(26,26,26,0.06) 100%)",
-        backgroundSize: "200% 100%",
-        animation: "payments-shimmer 1.5s ease-in-out infinite",
-      }}
-    />
+    <div className={cn("animate-pulse bg-[rgba(47,78,64,0.08)]", className)} />
   );
 }
 
 function PaymentHistorySkeleton() {
   return (
-    <section className="my-7">
-      <style>{`
-        @keyframes payments-shimmer {
-          0%   { background-position: 200% 0; }
-          100% { background-position: -200% 0; }
-        }
-      `}</style>
-      <div className="flex items-center justify-between mb-4">
-        <Shimmer className="h-4 w-36" />
-        <Shimmer className="h-6 w-28 rounded-full" />
-      </div>
-      <div className="rounded-xl border border-[#1a1a1a]/8 bg-white overflow-hidden divide-y divide-[#1a1a1a]/5">
+    <DashboardSection title="Payment history">
+      <div className={cn(dashboardCardClass, "overflow-hidden divide-y divide-[rgba(47,78,64,0.06)]")}>
         {Array.from({ length: 3 }).map((_, i) => (
           <div
             key={i}
             className="grid grid-cols-[2.5rem_1fr_auto] items-center gap-4 p-4"
           >
-            <Shimmer className="w-8 h-8 rounded-lg hidden sm:block" />
+            <Shimmer className="hidden h-8 w-8 sm:block" />
             <div className="space-y-1.5">
-              <Shimmer className="h-5 w-24 rounded-full" />
+              <Shimmer className="h-5 w-24" />
               <Shimmer className="h-3 w-40" />
             </div>
             <Shimmer className="h-4 w-24" />
           </div>
         ))}
       </div>
-    </section>
+    </DashboardSection>
   );
 }
 
@@ -179,32 +162,28 @@ function PaymentHistoryError({
   onRetry: () => void;
 }) {
   return (
-    <section className="my-7">
-      <h2
-        className="text-base font-semibold text-[#1a1a1a] mb-4 tracking-tight"
-        style={{ fontFamily: "var(--font-playfair)" }}
+    <DashboardSection title="Payment history">
+      <div
+        className={cn(
+          dashboardCardClass,
+          "flex flex-col items-center gap-3 px-5 py-8 text-center",
+        )}
       >
-        Payment History
-      </h2>
-      <div className="rounded-xl border border-red-100 bg-red-50/60 px-5 py-8 flex flex-col items-center text-center gap-3">
-        <AlertCircle size={20} className="text-red-400" />
+        <AlertCircle className="h-5 w-5 text-red-400" strokeWidth={1.75} />
         <div>
-          <p className="text-sm font-semibold text-[#1a1a1a] mb-1">
+          <p className="font-[family-name:var(--font-dm-sans)] text-[0.9rem] font-semibold text-(--brand-green)">
             Couldn&apos;t load payment history
           </p>
-          <p className="text-xs text-[#1a1a1a]/45 leading-relaxed max-w-xs">
+          <p className="mx-auto mt-1 max-w-xs font-[family-name:var(--font-dm-sans)] text-[0.8rem] leading-relaxed text-[rgba(47,78,64,0.5)]">
             {message ?? "Something went wrong fetching your payments."}
           </p>
         </div>
-        <button
-          onClick={onRetry}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-[#2f4e40] bg-[#2f4e40]/8 border border-[#2f4e40]/20 hover:bg-[#2f4e40]/14 transition-all duration-150 active:scale-95"
-        >
-          <RefreshCw size={13} />
+        <button type="button" onClick={onRetry} className={dashboardPrimaryBtnClass}>
+          <RefreshCw className="h-3.5 w-3.5" strokeWidth={2} />
           Try again
         </button>
       </div>
-    </section>
+    </DashboardSection>
   );
 }
 
@@ -241,32 +220,21 @@ export function PaymentHistory() {
   const total = data.reduce((sum, p) => sum + p.amount, 0);
 
   return (
-    <section className="my-7">
-      <div className="flex items-center justify-between mb-4">
-        <h2
-          className="text-base font-semibold text-[#1a1a1a] tracking-tight"
-          style={{ fontFamily: "var(--font-playfair)" }}
-        >
-          Payment History
-        </h2>
-        {data.length > 0 && (
-          <span className="text-xs font-semibold text-[#2f4e40] bg-[#2f4e40]/8 px-2.5 py-1 rounded-full border border-[#2f4e40]/15">
-            {formatNPR(total / 100)} total
-          </span>
-        )}
-      </div>
-
-      <div className="rounded-xl border border-[#1a1a1a]/8 bg-white overflow-hidden">
+    <DashboardSection
+      title="Payment history"
+      badge={data.length > 0 ? `${formatNPR(total / 100)} total` : undefined}
+    >
+      <div className={cn(dashboardCardClass, "overflow-hidden")}>
         {data.length === 0 ? (
           <EmptyPayments />
         ) : (
-          <div className="divide-y divide-[#1a1a1a]/5">
+          <div className="divide-y divide-[rgba(47,78,64,0.06)]">
             {sorted.map((payment, i) => (
               <PaymentRow key={payment.id} payment={payment} index={i} />
             ))}
           </div>
         )}
       </div>
-    </section>
+    </DashboardSection>
   );
 }
