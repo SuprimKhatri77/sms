@@ -1,16 +1,6 @@
 "use client";
 
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -20,6 +10,19 @@ import {
 import { CalendarDays } from "lucide-react";
 import { NepaliDatePicker } from "nepali-datepicker-reactjs";
 import { cn } from "@/lib/utils";
+import { AdminDrawer } from "@/components/admin/admin-drawer";
+import {
+  adminPrimaryButtonClass,
+  adminSecondaryButtonClass,
+} from "@/components/admin/admin-styles";
+import { Spinner } from "@/components/ui/spinner";
+import { inputCls } from "../../students/detail/shared/utils";
+import {
+  InventoryFormField,
+  InventoryFormSection,
+  inventoryFieldInputClass,
+  inventorySelectTriggerClass,
+} from "../shared/InventoryFormField";
 import {
   CreateWastageInput,
   CreateWastageResponse,
@@ -49,8 +52,7 @@ type Props = {
   initialData?: Wastage | null;
 };
 
-const inputCls =
-  "h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring";
+const fieldInputClass = inventoryFieldInputClass;
 
 const EMPTY_FORM = {
   reason: "",
@@ -146,40 +148,56 @@ export function WastageDialog({
     return products.find((p) => p.id === formData.productID);
   }, [products, formData.productID]);
 
-  return (
-    <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetContent className="w-full sm:max-w-md overflow-y-auto px-6 py-6">
-        <SheetHeader className="mb-6">
-          <SheetTitle
-            className="font-[family-name:var(--font-playfair)] text-xl"
-            style={{ color: "var(--brand-ink)" }}
-          >
-            {isEdit ? "Edit Wastage" : "Log Wastage"}
-          </SheetTitle>
-          <SheetDescription className="font-[family-name:var(--font-dm-sans)]">
-            {isEdit
-              ? "Update a wastage record."
-              : "Record damaged or lost inventory."}
-          </SheetDescription>
-        </SheetHeader>
+  const selectTriggerClass = inventorySelectTriggerClass;
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div className="space-y-1.5">
-            <Label className="font-[family-name:var(--font-dm-sans)] text-[var(--brand-ink)]">
-              Product <span className="text-red-500">*</span>
-            </Label>
+  return (
+    <AdminDrawer
+      open={open}
+      onOpenChange={handleOpenChange}
+      title={isEdit ? "Edit Wastage" : "Log Wastage"}
+      description={
+        isEdit ? "Update a wastage record" : "Record damaged or lost inventory"
+      }
+      footer={
+        <div className="flex justify-end gap-2">
+          <button
+            type="button"
+            disabled={isSubmitting}
+            className={adminSecondaryButtonClass}
+            onClick={() => handleOpenChange(false)}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            form="wastage-form"
+            disabled={isSubmitting}
+            className={adminPrimaryButtonClass}
+          >
+            {isSubmitting ? <Spinner /> : isEdit ? "Update" : "Log Wastage"}
+          </button>
+        </div>
+      }
+    >
+      <form
+        id="wastage-form"
+        onSubmit={handleSubmit}
+        className="flex flex-col gap-10 px-8 py-10"
+      >
+        <InventoryFormSection title="Item details">
+          <InventoryFormField label="Product" required error={errors?.productID}>
             <Select
               value={formData.productID}
               onValueChange={(v) =>
                 setFormData((prev) => ({ ...prev, productID: v ?? "" }))
               }
             >
-              <SelectTrigger className="w-full border-[var(--brand-green)]/30 focus:ring-[var(--brand-green)]">
+              <SelectTrigger className={selectTriggerClass}>
                 <SelectValue placeholder="Select product">
                   {selectedProduct?.name}
                 </SelectValue>
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="rounded-none border border-[rgba(47,78,64,0.18)] bg-white">
                 {products.map((p) => (
                   <SelectItem key={p.id} value={p.id}>
                     {p.name}
@@ -187,24 +205,16 @@ export function WastageDialog({
                 ))}
               </SelectContent>
             </Select>
-            {errors?.productID && (
-              <p className="text-xs text-red-500">{errors.productID}</p>
-            )}
-          </div>
+          </InventoryFormField>
 
-          <div className="space-y-1.5">
-            <Label className="font-[family-name:var(--font-dm-sans)] text-[var(--brand-ink)]">
-              Date (BS) <span className="text-red-500">*</span>
-            </Label>
+          <InventoryFormField label="Date (BS)" required error={errors?.date}>
             <div className="relative">
-              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 z-10 text-[#2d4a3e]/40">
-                <CalendarDays className="h-4 w-4" strokeWidth={1.75} />
-              </span>
+              <CalendarDays
+                className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-[rgba(47,78,64,0.35)]"
+                strokeWidth={1.75}
+              />
               <NepaliDatePicker
-                inputClassName={cn(
-                  inputCls,
-                  "pl-9 border-[var(--brand-green)]/30 rounded-none shadow-none",
-                )}
+                inputClassName={cn(inputCls, "rounded-none pl-9")}
                 value={formData.date}
                 onChange={(v: string) =>
                   setFormData((prev) => ({ ...prev, date: v }))
@@ -212,35 +222,24 @@ export function WastageDialog({
                 options={{ calenderLocale: "en", valueLocale: "en" }}
               />
             </div>
-            {errors?.date && (
-              <p className="text-xs text-red-500">{errors.date}</p>
-            )}
-          </div>
+          </InventoryFormField>
+        </InventoryFormSection>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label className="font-[family-name:var(--font-dm-sans)] text-[var(--brand-ink)]">
-                Qty <span className="text-red-500">*</span>
-              </Label>
-              <Input
+        <InventoryFormSection title="Quantity & pricing">
+          <div className="grid grid-cols-2 gap-4">
+            <InventoryFormField label="Qty" required error={errors?.quantity}>
+              <input
                 type="number"
                 min={1}
                 value={formData.quantity}
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, quantity: e.target.value }))
                 }
-                className="border-[var(--brand-green)]/30 focus-visible:ring-[var(--brand-green)]"
+                className={fieldInputClass}
               />
-              {errors?.quantity && (
-                <p className="text-xs text-red-500">{errors.quantity}</p>
-              )}
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="font-[family-name:var(--font-dm-sans)] text-[var(--brand-ink)]">
-                Rate (Rs.) <span className="text-red-500">*</span>
-              </Label>
-              <Input
+            </InventoryFormField>
+            <InventoryFormField label="Rate (Rs.)" required error={errors?.rate}>
+              <input
                 type="number"
                 min={0.01}
                 step={0.01}
@@ -248,52 +247,26 @@ export function WastageDialog({
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, rate: e.target.value }))
                 }
-                className="border-[var(--brand-green)]/30 focus-visible:ring-[var(--brand-green)]"
+                className={fieldInputClass}
               />
-              {errors?.rate && (
-                <p className="text-xs text-red-500">{errors.rate}</p>
-              )}
-            </div>
+            </InventoryFormField>
           </div>
+        </InventoryFormSection>
 
-          <div className="space-y-1.5">
-            <Label className="font-[family-name:var(--font-dm-sans)] text-[var(--brand-ink)]">
-              Reason{" "}
-              <span className="text-[var(--brand-brown)] text-xs">
-                (optional)
-              </span>
-            </Label>
+        <InventoryFormSection title="Additional">
+          <InventoryFormField label="Reason" optional>
             <textarea
               value={formData.reason}
               onChange={(e) =>
                 setFormData((prev) => ({ ...prev, reason: e.target.value }))
               }
-              rows={2}
-              className="w-full rounded-md border border-[var(--brand-green)]/30 bg-white px-3 py-2 text-sm font-[family-name:var(--font-dm-sans)] focus:outline-none focus:ring-1 focus:ring-[var(--brand-green)]"
-              placeholder="e.g. Damaged in transit..."
+              rows={3}
+              className={cn(fieldInputClass, "resize-none")}
+              placeholder="e.g. Damaged in transit…"
             />
-          </div>
-
-          <div className="flex gap-2 pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1 border-[var(--brand-green)]/30 text-[var(--brand-ink)]"
-              disabled={isSubmitting}
-              onClick={() => handleOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="flex-1 bg-[var(--brand-green)] hover:bg-[var(--brand-green-2)] text-white font-[family-name:var(--font-dm-sans)]"
-            >
-              {isSubmitting ? "Saving..." : isEdit ? "Update" : "Log Wastage"}
-            </Button>
-          </div>
-        </form>
-      </SheetContent>
-    </Sheet>
+          </InventoryFormField>
+        </InventoryFormSection>
+      </form>
+    </AdminDrawer>
   );
 }

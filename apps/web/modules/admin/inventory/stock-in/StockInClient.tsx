@@ -2,11 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { InventoryPageHeader } from "../shared/InventoryPageHeader";
+import { Plus } from "lucide-react";
 import { StockInDialog } from "./StockInDialog";
 import { ConfirmDialog } from "../shared/ConfirmDialog";
-import { Button } from "@/components/ui/button";
-import { CalendarDays, Plus, Search, SlidersHorizontal, X } from "lucide-react";
 import { StockInTable } from "./StockInTable";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -20,19 +18,10 @@ import StockInLoading from "./StockInLoadingSkeleton";
 import StockInError from "./StockInError";
 import axios from "axios";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { NepaliDatePicker } from "nepali-datepicker-reactjs";
-import { inputCls } from "../../students/detail/shared/utils";
-import { cn } from "@/lib/utils";
 import { useDebounce } from "../../analytics/hooks/useDebounce";
+import { AdminPageLayout } from "@/components/admin/admin-page-layout";
+import { adminPrimaryButtonClass } from "@/components/admin/admin-styles";
+import { InventoryTransactionFilters } from "../shared/InventoryTransactionFilters";
 
 type StockIn = Extract<ListStockInResponse, { success: true }>["data"][number];
 type StockInFormData = Omit<
@@ -223,150 +212,43 @@ export function StockInClient() {
   };
 
   return (
-    <div className="space-y-4 min-h-screen bg-(--brand-cream) px-4 py-8 sm:px-6 lg:px-8 mx-auto max-w-8xl">
-      <InventoryPageHeader
-        title="Stock In"
-        description="Track all incoming inventory and purchase records."
-        action={
-          <Button
-            onClick={() => {
-              setEditTarget(null);
-              setDialogOpen(true);
-            }}
-            className="bg-(--brand-green) hover:bg-(--brand-green-2) text-white font-(--font-dm-sans) gap-2"
-          >
-            <Plus size={16} /> Add Stock In
-          </Button>
-        }
+    <AdminPageLayout
+      title="Stock In"
+      description="Track all incoming inventory and purchase records."
+      maxWidth="wide"
+      action={
+        <button
+          type="button"
+          onClick={() => {
+            setEditTarget(null);
+            setDialogOpen(true);
+          }}
+          className={adminPrimaryButtonClass}
+        >
+          <Plus size={16} />
+          Add Stock In
+        </button>
+      }
+    >
+      <InventoryTransactionFilters
+        search={search}
+        onSearchChange={(v) => {
+          setSearch(v);
+          setCurrentPage(1);
+        }}
+        searchPlaceholder="Product name or invoice no…"
+        priceSort={priceSort}
+        onPriceSortChange={handlePriceSort}
+        pendingFrom={pendingFrom}
+        pendingTo={pendingTo}
+        onPendingFromChange={setPendingFrom}
+        onPendingToChange={setPendingTo}
+        hasPendingDateChange={hasPendingDateChange}
+        onApplyDates={handleApplyDates}
+        hasActiveFilters={hasActiveFilters}
+        onClear={handleClear}
       />
 
-      {/* ── Filters ── */}
-      <div
-        className="rounded-lg border border-stone-200 bg-white px-4 py-4 sm:px-5"
-        style={{ fontFamily: "var(--font-dm-sans)" }}
-      >
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-stone-500">
-            <SlidersHorizontal size={13} />
-            Filters
-          </span>
-          <div className="flex items-center gap-3">
-            {data?.success && hasActiveFilters && (
-              <p className="text-sm text-stone-500">
-                {data?.meta.total ?? 0} of {data?.meta.total ?? 0} record
-                {(data?.meta.total ?? 0) !== 1 ? "s" : ""}
-              </p>
-            )}
-            {hasActiveFilters && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleClear}
-                className="h-7 gap-1 px-2 text-xs text-stone-500 hover:text-stone-800"
-              >
-                <X className="h-3.5 w-3.5" />
-                Clear
-              </Button>
-            )}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 items-end gap-3 md:grid-cols-12">
-          {/* Search */}
-          <div className="flex min-w-0 flex-col gap-1 md:col-span-4">
-            <Label className="text-xs font-medium uppercase tracking-wide text-stone-400">
-              Search
-            </Label>
-            <div className="relative w-full">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Product name or invoice no…"
-                value={search}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  if (!v.startsWith(" ")) {
-                    setSearch(v);
-                    setCurrentPage(1);
-                  }
-                }}
-                className="h-9 w-full pl-9"
-              />
-            </div>
-          </div>
-
-          {/* Sort */}
-          <div className="flex min-w-0 flex-col gap-1 md:col-span-2">
-            <Label className="text-xs font-medium uppercase tracking-wide text-stone-400">
-              Sort
-            </Label>
-            <Select
-              value={priceSort}
-              onValueChange={(v) => handlePriceSort(v as "asc" | "desc" | "")}
-            >
-              <SelectTrigger className="h-9 w-full rounded-none py-4">
-                <SelectValue placeholder="Default" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">Default</SelectItem>
-                <SelectItem value="asc">Rate: Low → High</SelectItem>
-                <SelectItem value="desc">Rate: High → Low</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Date range */}
-          <div className="flex min-w-0 flex-col gap-1 md:col-span-6">
-            <Label className="text-xs font-medium uppercase tracking-wide text-stone-400">
-              Date range (BS)
-            </Label>
-            <div className="flex w-full flex-wrap items-center gap-2">
-              <div className="relative min-w-[7.5rem] flex-1">
-                <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-[#2d4a3e]/40">
-                  <CalendarDays className="h-4 w-4" strokeWidth={1.75} />
-                </span>
-                <NepaliDatePicker
-                  inputClassName={cn(
-                    inputCls,
-                    "h-9 w-full pl-9 rounded-none shadow-none",
-                  )}
-                  value={pendingFrom}
-                  onChange={(v: string) => setPendingFrom(v)}
-                  options={{ calenderLocale: "en", valueLocale: "en" }}
-                />
-              </div>
-
-              <span className="shrink-0 text-sm text-stone-500">to</span>
-
-              <div className="relative min-w-[7.5rem] flex-1">
-                <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-[#2d4a3e]/40">
-                  <CalendarDays className="h-4 w-4" strokeWidth={1.75} />
-                </span>
-                <NepaliDatePicker
-                  inputClassName={cn(
-                    inputCls,
-                    "h-9 w-full pl-9 rounded-none shadow-none",
-                  )}
-                  value={pendingTo}
-                  onChange={(v: string) => setPendingTo(v)}
-                  options={{ calenderLocale: "en", valueLocale: "en" }}
-                />
-              </div>
-
-              {hasPendingDateChange && (
-                <Button
-                  size="sm"
-                  onClick={handleApplyDates}
-                  className="shrink-0 bg-(--brand-green) text-white hover:bg-(--brand-green-2)"
-                >
-                  Apply dates
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Table area ── */}
       {isPending || productsPending ? (
         <StockInLoading />
       ) : isError || !data || !productsData ? (
@@ -420,6 +302,6 @@ export function StockInClient() {
           onCancel={() => setDeleteTarget(null)}
         />
       )}
-    </div>
+    </AdminPageLayout>
   );
 }

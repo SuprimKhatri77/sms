@@ -91,11 +91,10 @@ export function UnitCombobox({ value, onChange, onBlur }: UnitComboboxProps) {
             : handleOpen
         }
         className={cn(
-          "flex w-full items-center justify-between rounded-md border bg-white px-3 py-2 text-sm",
-          "border-[var(--brand-ink)]/20 focus:outline-none focus:ring-2 focus:ring-[var(--brand-green)]",
-          !value && "text-muted-foreground",
+          "flex w-full items-center justify-between rounded-none border bg-white px-3 py-2 text-sm normal-case tracking-normal",
+          "border-[rgba(47,78,64,0.18)] focus:outline-none focus:border-(--brand-green)",
+          !value && "text-[rgba(47,78,64,0.45)]",
         )}
-        style={{ fontFamily: "var(--font-dm-sans)" }}
       >
         <span className={cn("truncate", isCustomValue && "italic")}>
           {displayLabel}
@@ -117,23 +116,18 @@ export function UnitCombobox({ value, onChange, onBlur }: UnitComboboxProps) {
       {open && (
         <div
           className={cn(
-            "absolute z-50 mt-1 w-full rounded-md border border-[var(--brand-ink)]/10",
-            "bg-white shadow-lg",
+            "absolute z-50 mt-1 w-full border border-[rgba(47,78,64,0.18)]",
+            "bg-white shadow-[0_8px_24px_rgba(0,0,0,0.08)]",
           )}
         >
-          {/* Search / custom input */}
-          <div className="flex items-center gap-1 border-b border-[var(--brand-ink)]/10 px-2 py-1.5">
+          <div className="flex items-center gap-1 border-b border-[rgba(47,78,64,0.12)] px-2 py-1.5">
             <input
               ref={inputRef}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Search or type custom unit…"
-              className={cn(
-                "flex-1 bg-transparent py-0.5 text-sm outline-none placeholder:text-[var(--brand-ink)]/30",
-                "text-[var(--brand-ink)]",
-              )}
-              style={{ fontFamily: "var(--font-dm-sans)" }}
+              className="flex-1 bg-transparent py-0.5 text-sm text-(--brand-ink) outline-none placeholder:text-[rgba(47,78,64,0.35)]"
             />
           </div>
 
@@ -146,11 +140,9 @@ export function UnitCombobox({ value, onChange, onBlur }: UnitComboboxProps) {
                     type="button"
                     onClick={() => handleSelect(u)}
                     className={cn(
-                      "flex w-full items-center gap-2 px-3 py-1.5 text-sm text-[var(--brand-ink)]",
-                      "hover:bg-[var(--brand-green)]/10 transition-colors",
+                      "flex w-full items-center gap-2 px-3 py-1.5 text-sm text-(--brand-ink) transition-colors hover:bg-[rgba(47,78,64,0.04)]",
                       value === u && "font-medium",
                     )}
-                    style={{ fontFamily: "var(--font-dm-sans)" }}
                   >
                     <Check
                       className={cn(

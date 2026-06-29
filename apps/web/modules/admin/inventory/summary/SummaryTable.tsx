@@ -1,18 +1,16 @@
 "use client";
 
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-  TableFooter,
-} from "@/components/ui/table";
 import { AmountCell } from "../shared/AmountCell";
 import { EmptyState } from "../shared/EmptyState";
 import { formatAmount } from "../lib/utils";
 import { InventorySummaryResponse } from "@repo/types";
+import {
+  inventoryTableClass,
+  inventoryTableScrollClass,
+  inventoryTableWrapClass,
+  inventoryTdClass,
+  inventoryThClass,
+} from "../shared/inventory-styles";
 
 type InventorySummaryRow = Extract<
   InventorySummaryResponse,
@@ -21,12 +19,14 @@ type InventorySummaryRow = Extract<
 type Props = { data: InventorySummaryRow[] };
 
 export function SummaryTable({ data }: Props) {
-  if (data.length === 0)
+  if (data.length === 0) {
     return (
-      <EmptyState message="No summary data available for the selected period." />
+      <div className={inventoryTableWrapClass}>
+        <EmptyState message="No summary data available for the selected period." />
+      </div>
     );
+  }
 
-  // Totals row — sum all amount columns
   const totals = data.reduce(
     (acc, row) => ({
       stock_in_amount: acc.stock_in_amount + row.stockInAmount,
@@ -42,94 +42,89 @@ export function SummaryTable({ data }: Props) {
     },
   );
 
+  const headers = [
+    "Product",
+    "Unit",
+    "Stock In (qty)",
+    "Stock Out (qty)",
+    "Wastage (qty)",
+    "Closing (qty)",
+    "Stock In Amt",
+    "Stock Out Amt",
+    "Wastage Amt",
+    "Closing Amt",
+  ];
+
   return (
-    <div className="rounded-lg border border-[var(--brand-green)]/15 overflow-hidden">
-      <Table>
-        <TableHeader>
-          <TableRow className="bg-[var(--brand-green)]/5 hover:bg-[var(--brand-green)]/5">
-            {[
-              "Product",
-              "Unit",
-              "Stock In (qty)",
-              "Stock Out (qty)",
-              "Wastage (qty)",
-              "Closing Stock (qty)",
-              "Stock In Amt",
-              "Stock Out Amt",
-              "Wastage Amt",
-              "Closing Amt",
-            ].map((h) => (
-              <TableHead
-                key={h}
-                className="font-[var(--font-dm-sans)] font-semibold text-[var(--brand-green)] text-xs uppercase tracking-wide whitespace-nowrap"
+    <div className={inventoryTableWrapClass}>
+      <div className={inventoryTableScrollClass}>
+        <table className={inventoryTableClass}>
+          <thead>
+            <tr>
+              {headers.map((h) => (
+                <th key={h} className={inventoryThClass}>
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((row) => (
+              <tr
+                key={row.productId}
+                className="transition-colors hover:bg-[rgba(47,78,64,0.02)]"
               >
-                {h}
-              </TableHead>
+                <td className={`${inventoryTdClass} font-medium`}>
+                  {row.productName}
+                </td>
+                <td className={`${inventoryTdClass} text-xs text-[rgba(47,78,64,0.55)]`}>
+                  {row.productUnit}
+                </td>
+                <td className={inventoryTdClass}>{row.stockInQty}</td>
+                <td className={inventoryTdClass}>{row.stockOutQty}</td>
+                <td className={inventoryTdClass}>{row.wastageQty}</td>
+                <td className={`${inventoryTdClass} font-semibold text-(--brand-green)`}>
+                  {row.closingQty}
+                </td>
+                <td className={inventoryTdClass}>
+                  <AmountCell cents={row.stockInAmount} />
+                </td>
+                <td className={inventoryTdClass}>
+                  <AmountCell cents={row.stockOutAmount} />
+                </td>
+                <td className={inventoryTdClass}>
+                  <AmountCell cents={row.wastageAmount} />
+                </td>
+                <td className={`${inventoryTdClass} font-semibold`}>
+                  <AmountCell cents={row.closingAmount} />
+                </td>
+              </tr>
             ))}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {data.map((row) => (
-            <TableRow
-              key={row.productId}
-              className="border-[var(--brand-green)]/10 hover:bg-[var(--brand-green)]/3 font-[var(--font-dm-sans)]"
-            >
-              <TableCell className="font-medium text-[var(--brand-ink)]">
-                {row.productName}
-              </TableCell>
-              <TableCell className="text-[var(--brand-ink)]/60 text-xs">
-                {row.productUnit}
-              </TableCell>
-              <TableCell className="text-[var(--brand-ink)]">
-                {row.stockInQty}
-              </TableCell>
-              <TableCell className="text-[var(--brand-ink)]">
-                {row.stockOutQty}
-              </TableCell>
-              <TableCell className="text-[var(--brand-ink)]">
-                {row.wastageQty}
-              </TableCell>
-              <TableCell className="font-semibold text-[var(--brand-green)]">
-                {row.closingQty}
-              </TableCell>
-              <TableCell>
-                <AmountCell cents={row.stockInAmount} />
-              </TableCell>
-              <TableCell>
-                <AmountCell cents={row.stockOutAmount} />
-              </TableCell>
-              <TableCell>
-                <AmountCell cents={row.wastageAmount} />
-              </TableCell>
-              <TableCell className="font-semibold">
-                <AmountCell cents={row.closingAmount} />
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-        <TableFooter>
-          <TableRow className="bg-[var(--brand-green)]/10 font-[var(--font-dm-sans)] font-bold">
-            <TableCell
-              colSpan={6}
-              className="text-[var(--brand-green)] text-sm font-bold"
-            >
-              Totals
-            </TableCell>
-            <TableCell className="text-[var(--brand-green)]">
-              {formatAmount(totals.stock_in_amount)}
-            </TableCell>
-            <TableCell className="text-[var(--brand-green)]">
-              {formatAmount(totals.stock_out_amount)}
-            </TableCell>
-            <TableCell className="text-[var(--brand-green)]">
-              {formatAmount(totals.wastage_amount)}
-            </TableCell>
-            <TableCell className="text-[var(--brand-green)]">
-              {formatAmount(totals.closing_amount)}
-            </TableCell>
-          </TableRow>
-        </TableFooter>
-      </Table>
+          </tbody>
+          <tfoot>
+            <tr className="bg-[rgba(47,78,64,0.04)]">
+              <td
+                colSpan={6}
+                className="px-5 py-4 font-[family-name:var(--font-dm-sans)] text-xs font-bold uppercase tracking-[0.08em] text-(--brand-green)"
+              >
+                Totals
+              </td>
+              <td className={`${inventoryTdClass} font-bold text-(--brand-green)`}>
+                {formatAmount(totals.stock_in_amount)}
+              </td>
+              <td className={`${inventoryTdClass} font-bold text-(--brand-green)`}>
+                {formatAmount(totals.stock_out_amount)}
+              </td>
+              <td className={`${inventoryTdClass} font-bold text-(--brand-green)`}>
+                {formatAmount(totals.wastage_amount)}
+              </td>
+              <td className={`${inventoryTdClass} font-bold text-(--brand-green)`}>
+                {formatAmount(totals.closing_amount)}
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
     </div>
   );
 }

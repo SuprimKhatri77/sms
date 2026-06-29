@@ -1,6 +1,7 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { adminSecondaryButtonClass } from "@/components/admin/admin-styles";
 
 type PaginationProps = {
   page: number;
@@ -12,10 +13,14 @@ type PaginationProps = {
   onPageChange: (page: number) => void;
 };
 
+const pageBtnClass = cn(
+  adminSecondaryButtonClass,
+  "h-8 min-w-8 justify-center px-2.5 py-1.5 text-[11px] disabled:cursor-not-allowed disabled:opacity-40",
+);
+
 export function Pagination({ page, meta, onPageChange }: PaginationProps) {
   const { total, totalPages, limit } = meta;
 
-  // 🚫 Hide pagination when not needed
   if (totalPages <= 1 || total <= limit) {
     return null;
   }
@@ -24,62 +29,49 @@ export function Pagination({ page, meta, onPageChange }: PaginationProps) {
   const to = Math.min(page * limit, total);
 
   return (
-    <div
-      className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 text-sm text-[var(--brand-ink)]/60"
-      style={{ fontFamily: "var(--font-dm-sans)" }}
-    >
-      <span>
-        {total === 0
-          ? "No records"
-          : `Showing ${from}–${to} of ${total} records`}
+    <div className="flex flex-col items-center justify-between gap-3 border-t border-[rgba(47,78,64,0.12)] px-5 py-4 sm:flex-row">
+      <span className="font-[family-name:var(--font-dm-sans)] text-xs text-[rgba(47,78,64,0.5)]">
+        {total === 0 ? "No records" : `Showing ${from}–${to} of ${total}`}
       </span>
 
-      <div className="flex items-center gap-1">
-        <Button
-          variant="outline"
-          size="sm"
+      <div className="flex items-center gap-1.5">
+        <button
+          type="button"
           onClick={() => onPageChange(1)}
           disabled={page === 1}
-          className="border-[var(--brand-ink)]/20 h-8 px-2"
+          className={pageBtnClass}
           aria-label="First page"
         >
           «
-        </Button>
-
-        <Button
-          variant="outline"
-          size="sm"
+        </button>
+        <button
+          type="button"
           onClick={() => onPageChange(page - 1)}
           disabled={page === 1}
-          className="border-[var(--brand-ink)]/20 h-8 px-3"
+          className={pageBtnClass}
         >
           Prev
-        </Button>
-
-        <span className="px-3 py-1 text-[var(--brand-ink)] font-medium">
+        </button>
+        <span className="px-2 font-[family-name:var(--font-dm-sans)] text-xs font-semibold tabular-nums text-(--brand-green)">
           {page} / {totalPages}
         </span>
-
-        <Button
-          variant="outline"
-          size="sm"
+        <button
+          type="button"
           onClick={() => onPageChange(page + 1)}
           disabled={page === totalPages}
-          className="border-[var(--brand-ink)]/20 h-8 px-3"
+          className={pageBtnClass}
         >
           Next
-        </Button>
-
-        <Button
-          variant="outline"
-          size="sm"
+        </button>
+        <button
+          type="button"
           onClick={() => onPageChange(totalPages)}
           disabled={page === totalPages}
-          className="border-[var(--brand-ink)]/20 h-8 px-2"
+          className={pageBtnClass}
           aria-label="Last page"
         >
           »
-        </Button>
+        </button>
       </div>
     </div>
   );

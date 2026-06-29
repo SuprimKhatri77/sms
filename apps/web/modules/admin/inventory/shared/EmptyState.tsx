@@ -1,29 +1,17 @@
+import { PackageOpen } from "lucide-react";
+
 type EmptyStateProps = {
   message: string;
 };
 
 export function EmptyState({ message }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center py-20 gap-4 text-[var(--brand-ink)]/40">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="48"
-        height="48"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="opacity-50"
-      >
-        <rect x="2" y="5" width="20" height="14" rx="2" />
-        <path d="M2 10h20" />
-      </svg>
-      <p
-        className="text-base text-center max-w-xs"
-        style={{ fontFamily: "var(--font-lora)" }}
-      >
+    <div className="flex flex-col items-center justify-center gap-3 px-6 py-20 text-center">
+      <PackageOpen
+        className="h-10 w-10 text-[rgba(47,78,64,0.2)]"
+        strokeWidth={1.25}
+      />
+      <p className="max-w-sm font-[family-name:var(--font-dm-sans)] text-sm text-[rgba(47,78,64,0.45)]">
         {message}
       </p>
     </div>

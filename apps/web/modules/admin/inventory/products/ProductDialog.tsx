@@ -1,16 +1,6 @@
 "use client";
 
 import { useForm } from "@tanstack/react-form-nextjs";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { UnitCombobox } from "./UnitComboBox";
 import {
   type CreateProductInput,
@@ -20,6 +10,17 @@ import {
 } from "@repo/types/inventory";
 import { toast } from "sonner";
 import { useState } from "react";
+import { AdminDrawer } from "@/components/admin/admin-drawer";
+import {
+  adminPrimaryButtonClass,
+  adminSecondaryButtonClass,
+} from "@/components/admin/admin-styles";
+import { Spinner } from "@/components/ui/spinner";
+import { cn } from "@/lib/utils";
+import {
+  InventoryFormField,
+  inventoryFieldInputClass,
+} from "../shared/InventoryFormField";
 
 type Product = Extract<GetProductResponse, { success: true }>["data"][number];
 type BackendError = Extract<CreateProductResponse, { success: false }>;
@@ -47,7 +48,6 @@ export function ProductDialog({
       name: editingProduct?.name ?? "",
       unit: editingProduct?.unit ?? "pieces",
     },
-
     validators: {
       onSubmit: createProductSchema,
     },
@@ -68,8 +68,6 @@ export function ProductDialog({
             mapped[fieldErr.field as ProductFields] = fieldErr.message;
           }
           setBackendErrors(mapped);
-        } else {
-          toast.error(error?.message ?? "Something went wrong");
         }
       }
     },
@@ -81,133 +79,99 @@ export function ProductDialog({
     onClose();
   };
 
+  const isEdit = !!editingProduct;
+
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
-      <DialogContent className="bg-[var(--brand-cream)] border border-[var(--brand-ink)]/10 max-w-md">
-        <DialogHeader>
-          <DialogTitle
-            className="text-[var(--brand-ink)] text-xl"
-            style={{ fontFamily: "var(--font-playfair)" }}
+    <AdminDrawer
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) handleClose();
+      }}
+      title={isEdit ? "Edit Product" : "New Product"}
+      description="Add or update a product in your catalogue"
+      footer={
+        <div className="flex justify-end gap-2">
+          <button
+            type="button"
+            disabled={form.state.isSubmitting}
+            className={adminSecondaryButtonClass}
+            onClick={handleClose}
           >
-            {editingProduct ? "Edit Product" : "New Product"}
-          </DialogTitle>
-        </DialogHeader>
-
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            void form.handleSubmit();
+            Cancel
+          </button>
+          <button
+            type="submit"
+            form="product-form"
+            disabled={form.state.isSubmitting || !form.state.canSubmit}
+            className={adminPrimaryButtonClass}
+          >
+            {form.state.isSubmitting ? (
+              <Spinner />
+            ) : isEdit ? (
+              "Save Changes"
+            ) : (
+              "Create Product"
+            )}
+          </button>
+        </div>
+      }
+    >
+      <form
+        id="product-form"
+        onSubmit={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          void form.handleSubmit();
+        }}
+        className="flex flex-col gap-8 px-8 py-10"
+      >
+        <form.Field name="name">
+          {(field) => {
+            const mergedError =
+              field.state.meta.errors[0]?.message ?? backendErrors.name;
+            return (
+              <InventoryFormField
+                label="Product Name"
+                required
+                error={mergedError}
+              >
+                <input
+                  value={field.state.value}
+                  onChange={(e) => {
+                    field.handleChange(e.target.value);
+                    setBackendErrors((prev) => ({ ...prev, name: undefined }));
+                  }}
+                  onBlur={field.handleBlur}
+                  placeholder="e.g. All-purpose flour"
+                  className={cn(
+                    inventoryFieldInputClass,
+                    mergedError && "border-[#9a3412]",
+                  )}
+                />
+              </InventoryFormField>
+            );
           }}
-          className="space-y-4 pt-2"
-        >
-          {/* Name field */}
-          <form.Field name="name">
-            {(field) => {
-              const fieldError = field.state.meta.errors[0]?.message;
-              const mergedError = fieldError ?? backendErrors.name;
+        </form.Field>
 
-              return (
-                <div className="space-y-1.5">
-                  <Label
-                    className="text-sm font-medium text-[var(--brand-ink)]"
-                    style={{ fontFamily: "var(--font-dm-sans)" }}
-                  >
-                    Product Name
-                    <span className="text-red-500 ml-0.5">*</span>
-                  </Label>
-                  <Input
-                    value={field.state.value}
-                    onChange={(e) => {
-                      field.handleChange(e.target.value);
-                      setBackendErrors((prev) => ({
-                        ...prev,
-                        name: undefined,
-                      }));
-                    }}
-                    onBlur={field.handleBlur}
-                    placeholder="e.g. T-Shirt"
-                    className="border-[var(--brand-ink)]/20 bg-white focus-visible:ring-[var(--brand-green)]"
-                    style={{ fontFamily: "var(--font-dm-sans)" }}
-                  />
-                  {mergedError && (
-                    <p
-                      className="text-xs text-red-500"
-                      style={{ fontFamily: "var(--font-dm-sans)" }}
-                    >
-                      {mergedError}
-                    </p>
-                  )}
-                </div>
-              );
-            }}
-          </form.Field>
-
-          {/* Unit field */}
-          <form.Field name="unit">
-            {(field) => {
-              const fieldError = field.state.meta.errors[0]?.message;
-              const mergedError = fieldError ?? backendErrors.unit;
-
-              return (
-                <div className="space-y-1.5">
-                  <Label
-                    className="text-sm font-medium text-[var(--brand-ink)]"
-                    style={{ fontFamily: "var(--font-dm-sans)" }}
-                  >
-                    Unit
-                    <span className="text-red-500 ml-0.5">*</span>
-                  </Label>
-                  <UnitCombobox
-                    value={field.state.value}
-                    onChange={(v) => {
-                      field.handleChange(v);
-                      setBackendErrors((prev) => ({
-                        ...prev,
-                        unit: undefined,
-                      }));
-                    }}
-                    onBlur={field.handleBlur}
-                  />
-                  {mergedError && (
-                    <p
-                      className="text-xs text-red-500"
-                      style={{ fontFamily: "var(--font-dm-sans)" }}
-                    >
-                      {mergedError}
-                    </p>
-                  )}
-                </div>
-              );
-            }}
-          </form.Field>
-
-          <DialogFooter className="pt-2 gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              disabled={form.state.isSubmitting}
-              className="border-[var(--brand-ink)]/20 text-[var(--brand-ink)]"
-              style={{ fontFamily: "var(--font-dm-sans)" }}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={form.state.isSubmitting || !form.state.canSubmit}
-              className="bg-[var(--brand-green)] hover:bg-[var(--brand-green-2)] text-white"
-              style={{ fontFamily: "var(--font-dm-sans)" }}
-            >
-              {form.state.isSubmitting
-                ? "Saving…"
-                : editingProduct
-                  ? "Save Changes"
-                  : "Create Product"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+        <form.Field name="unit">
+          {(field) => {
+            const mergedError =
+              field.state.meta.errors[0]?.message ?? backendErrors.unit;
+            return (
+              <InventoryFormField label="Unit" required error={mergedError}>
+                <UnitCombobox
+                  value={field.state.value}
+                  onChange={(v) => {
+                    field.handleChange(v);
+                    setBackendErrors((prev) => ({ ...prev, unit: undefined }));
+                  }}
+                  onBlur={field.handleBlur}
+                />
+              </InventoryFormField>
+            );
+          }}
+        </form.Field>
+      </form>
+    </AdminDrawer>
   );
 }

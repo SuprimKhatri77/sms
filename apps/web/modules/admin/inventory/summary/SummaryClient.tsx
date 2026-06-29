@@ -1,11 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { InventoryPageHeader } from "../shared/InventoryPageHeader";
 import { SummaryTable } from "./SummaryTable";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { CalendarDays, Filter, X } from "lucide-react";
+import { CalendarDays } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { InventorySummaryResponse } from "@repo/types";
 import api from "@/lib/axios";
@@ -14,6 +11,10 @@ import SummaryError from "./SummaryError";
 import { NepaliDatePicker } from "nepali-datepicker-reactjs";
 import { inputCls } from "../../students/detail/shared/utils";
 import { cn } from "@/lib/utils";
+import { AdminPageLayout } from "@/components/admin/admin-page-layout";
+import { adminPrimaryButtonClass } from "@/components/admin/admin-styles";
+import { InventoryFilterShell } from "../shared/InventoryFilterShell";
+import { inventoryLabelClass } from "../shared/inventory-styles";
 
 export function SummaryClient() {
   const [pendingFrom, setPendingFrom] = useState("");
@@ -53,83 +54,41 @@ export function SummaryClient() {
   };
 
   return (
-    <div className="space-y-6 min-h-screen bg-(--brand-cream) px-4 py-8 sm:px-6 lg:px-8 mx-auto">
-      <InventoryPageHeader
-        title="Inventory Summary"
-        description="Overview of stock levels and valuations across all products."
-      />
-
-      {/* Date filter */}
-      <div
-        className="rounded-lg border border-stone-200 bg-white px-4 py-4 sm:px-5"
-        style={{ fontFamily: "var(--font-dm-sans)" }}
+    <AdminPageLayout
+      title="Inventory Summary"
+      description="Overview of stock levels and valuations across all products."
+      maxWidth="wide"
+    >
+      <InventoryFilterShell
+        title="Date Range (BS)"
+        hasActiveFilters={hasActiveFilter}
+        onClear={handleClear}
       >
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-stone-500">
-            <CalendarDays size={13} />
-            Date Range (BS)
-          </span>
-          <div className="flex items-center gap-2">
-            {hasActiveFilter && (
-              <p className="text-sm text-stone-500">Filtered results</p>
-            )}
-            {hasPendingChange && (
-              <Button
-                size="sm"
-                onClick={handleApply}
-                className="h-7 bg-[var(--brand-green)] hover:bg-[var(--brand-green-2)] text-white gap-1.5 px-3 text-xs"
-              >
-                <Filter size={12} /> Apply
-              </Button>
-            )}
-            {hasActiveFilter && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleClear}
-                className="h-7 gap-1 px-2 text-xs text-stone-500 hover:text-stone-800"
-              >
-                <X className="h-3.5 w-3.5" />
-                Clear
-              </Button>
-            )}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div className="flex flex-col gap-1">
-            <Label className="text-xs font-medium uppercase tracking-wide text-stone-400">
-              From
-            </Label>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="flex flex-col gap-1.5">
+            <span className={inventoryLabelClass}>From</span>
             <div className="relative w-full">
-              <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-[#2d4a3e]/40">
-                <CalendarDays className="h-4 w-4" strokeWidth={1.75} />
-              </span>
+              <CalendarDays
+                className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-[rgba(47,78,64,0.35)]"
+                strokeWidth={1.75}
+              />
               <NepaliDatePicker
-                inputClassName={cn(
-                  inputCls,
-                  "h-9 w-full pl-9 rounded-none shadow-none",
-                )}
+                inputClassName={cn(inputCls, "rounded-none pl-9")}
                 value={pendingFrom}
                 onChange={(v: string) => setPendingFrom(v)}
                 options={{ calenderLocale: "en", valueLocale: "en" }}
               />
             </div>
           </div>
-
-          <div className="flex flex-col gap-1">
-            <Label className="text-xs font-medium uppercase tracking-wide text-stone-400">
-              To
-            </Label>
+          <div className="flex flex-col gap-1.5">
+            <span className={inventoryLabelClass}>To</span>
             <div className="relative w-full">
-              <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-[#2d4a3e]/40">
-                <CalendarDays className="h-4 w-4" strokeWidth={1.75} />
-              </span>
+              <CalendarDays
+                className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-[rgba(47,78,64,0.35)]"
+                strokeWidth={1.75}
+              />
               <NepaliDatePicker
-                inputClassName={cn(
-                  inputCls,
-                  "h-9 w-full pl-9 rounded-none shadow-none",
-                )}
+                inputClassName={cn(inputCls, "rounded-none pl-9")}
                 value={pendingTo}
                 onChange={(v: string) => setPendingTo(v)}
                 options={{ calenderLocale: "en", valueLocale: "en" }}
@@ -137,9 +96,17 @@ export function SummaryClient() {
             </div>
           </div>
         </div>
-      </div>
+        {hasPendingChange ? (
+          <button
+            type="button"
+            onClick={handleApply}
+            className={cn(adminPrimaryButtonClass, "mt-4")}
+          >
+            Apply dates
+          </button>
+        ) : null}
+      </InventoryFilterShell>
 
-      {/* Table area */}
       {isPending || !data ? (
         <SummaryLoading />
       ) : isError ? (
@@ -152,6 +119,6 @@ export function SummaryClient() {
       ) : (
         <SummaryTable data={data.data} />
       )}
-    </div>
+    </AdminPageLayout>
   );
 }

@@ -3,12 +3,16 @@
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import {
+  adminPrimaryButtonClass,
+  adminSecondaryButtonClass,
+} from "@/components/admin/admin-styles";
+import { cn } from "@/lib/utils";
 
 type ConfirmDialogProps = {
   open: boolean;
@@ -27,40 +31,35 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onCancel()}>
-      <DialogContent className="bg-[var(--brand-cream)] border border-[var(--brand-ink)]/10 max-w-sm">
-        <DialogHeader>
-          <DialogTitle
-            className="text-[var(--brand-ink)]"
-            style={{ fontFamily: "var(--font-lora)" }}
-          >
+      <DialogContent className="max-w-sm gap-0 border border-[rgba(47,78,64,0.18)] bg-(--brand-cream) p-0">
+        <DialogHeader className="border-b border-[rgba(47,78,64,0.12)] px-5 py-4 text-left">
+          <DialogTitle className="font-[family-name:var(--font-lora)] text-base font-bold text-(--brand-green)">
             Delete {itemName}?
           </DialogTitle>
-          <DialogDescription
-            className="text-[var(--brand-ink)]/60 text-sm"
-            style={{ fontFamily: "var(--font-dm-sans)" }}
-          >
-            This action cannot be undone. The record will be permanently
-            removed.
+          <DialogDescription className="font-[family-name:var(--font-dm-sans)] text-sm text-[rgba(47,78,64,0.55)]">
+            This action cannot be undone. The record will be permanently removed.
           </DialogDescription>
         </DialogHeader>
-        <DialogFooter className="gap-2 pt-2">
-          <Button
-            variant="outline"
+        <DialogFooter className="gap-2 px-5 py-4 sm:justify-end">
+          <button
+            type="button"
             onClick={onCancel}
             disabled={isLoading}
-            className="border-[var(--brand-ink)]/20 text-[var(--brand-ink)] hover:bg-[var(--brand-ink)]/5"
-            style={{ fontFamily: "var(--font-dm-sans)" }}
+            className={adminSecondaryButtonClass}
           >
             Cancel
-          </Button>
-          <Button
+          </button>
+          <button
+            type="button"
             onClick={onConfirm}
             disabled={isLoading}
-            className="bg-red-600 hover:bg-red-700 text-white"
-            style={{ fontFamily: "var(--font-dm-sans)" }}
+            className={cn(
+              adminPrimaryButtonClass,
+              "border-[#9a3412] bg-[#9a3412] hover:bg-[#7c2d12]",
+            )}
           >
             {isLoading ? "Deleting…" : "Delete"}
-          </Button>
+          </button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

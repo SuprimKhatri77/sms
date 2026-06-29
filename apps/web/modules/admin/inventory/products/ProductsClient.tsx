@@ -2,15 +2,18 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { CalendarDays, Plus, Search, SlidersHorizontal, X } from "lucide-react";
+import { CalendarDays, Plus, Search } from "lucide-react";
 import { useDebounce } from "@/modules/admin/analytics/hooks/useDebounce";
 import { NepaliDatePicker } from "nepali-datepicker-reactjs";
-import { Label } from "@/components/ui/label";
 import { inputCls } from "../../students/detail/shared/utils";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-
-import { InventoryPageHeader } from "../shared/InventoryPageHeader";
+import { AdminPageLayout } from "@/components/admin/admin-page-layout";
+import {
+  adminInputClass,
+  adminPrimaryButtonClass,
+} from "@/components/admin/admin-styles";
+import { InventoryFilterShell } from "../shared/InventoryFilterShell";
+import { inventoryLabelClass, inventoryTableWrapClass } from "../shared/inventory-styles";
 import { ConfirmDialog } from "../shared/ConfirmDialog";
 import { Pagination } from "../shared/Pagination";
 import { ProductsTable } from "./ProductsTable";
@@ -29,7 +32,6 @@ import ProductsLoading from "./ProductsLoading";
 import { ProductsError } from "./ProductsError";
 import api from "@/lib/axios";
 import axios from "axios";
-import { Input } from "@/components/ui/input";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { BSToAD } from "bikram-sambat-js";
 
@@ -328,123 +330,70 @@ export function ProductsClient() {
   const hasActiveFilters = !!search || !!dateFrom || !!dateTo;
   const hasPendingDateChange = pendingFrom !== dateFrom || pendingTo !== dateTo;
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-8xl mx-auto space-y-4">
-      <InventoryPageHeader
-        title="Products"
-        description="Manage your product catalogue — add, edit, or remove products."
-        action={
-          <Button
-            onClick={handleCreate}
-            className="bg-(--brand-green) hover:bg-(--brand-green-2) text-white gap-2"
-            style={{ fontFamily: "var(--font-dm-sans)" }}
-          >
-            <Plus className="h-4 w-4" />
-            Add Product
-          </Button>
-        }
-      />
-
-      {/* ── Filters ── */}
-      <div
-        className="rounded-lg border border-stone-200 bg-white px-4 py-4 sm:px-5"
-        style={{ fontFamily: "var(--font-dm-sans)" }}
+    <AdminPageLayout
+      title="Products"
+      description="Manage your product catalogue — add, edit, or remove products."
+      maxWidth="wide"
+      action={
+        <button type="button" onClick={handleCreate} className={adminPrimaryButtonClass}>
+          <Plus className="h-4 w-4" />
+          Add Product
+        </button>
+      }
+    >
+      <InventoryFilterShell
+        hasActiveFilters={hasActiveFilters}
+        onClear={handleClear}
       >
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-stone-500">
-            <SlidersHorizontal size={13} />
-            Filters
-          </span>
-          <div className="flex items-center gap-3">
-            {data?.success && hasActiveFilters && (
-              <p className="text-sm text-stone-500">
-                {data.meta.total} of {data.meta.total} product
-                {data.meta.total !== 1 ? "s" : ""}
-              </p>
-            )}
-            {hasActiveFilters && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleClear}
-                className="h-7 gap-1 px-2 text-xs text-stone-500 hover:text-stone-800"
-              >
-                <X className="h-3.5 w-3.5" />
-                Clear
-              </Button>
-            )}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 items-end gap-3 md:grid-cols-12">
-          {/* Name search */}
-          <div className="flex min-w-0 flex-col gap-1 md:col-span-6">
-            <Label className="text-xs font-medium uppercase tracking-wide text-stone-400">
+        <div className="grid grid-cols-1 items-end gap-4 md:grid-cols-12">
+          <div className="flex min-w-0 flex-col gap-1.5 md:col-span-5">
+            <label className={inventoryLabelClass} htmlFor="product-search">
               Name
-            </Label>
+            </label>
             <div className="relative w-full">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[rgba(47,78,64,0.35)]" />
+              <input
+                id="product-search"
                 placeholder="Search by product name…"
                 value={search}
                 onChange={(e) => handleSearchChange(e.target.value)}
-                className="h-9 w-full pl-9"
+                className={cn(adminInputClass, "rounded-none pl-9 normal-case tracking-normal")}
               />
             </div>
           </div>
 
-          {/* Date range */}
-          <div className="flex min-w-0 flex-col gap-1 md:col-span-6">
-            <Label className="text-xs font-medium uppercase tracking-wide text-stone-400">
-              Created date range
-            </Label>
+          <div className="flex min-w-0 flex-col gap-1.5 md:col-span-7">
+            <span className={inventoryLabelClass}>Created date range (BS)</span>
             <div className="flex w-full flex-wrap items-center gap-2">
-              <div className="relative min-w-[7.5rem] flex-1">
-                <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-[#2d4a3e]/40">
-                  <CalendarDays className="h-4 w-4" strokeWidth={1.75} />
-                </span>
+              <div className="relative min-w-[9rem] flex-1">
+                <CalendarDays className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-[rgba(47,78,64,0.35)]" strokeWidth={1.75} />
                 <NepaliDatePicker
-                  inputClassName={cn(
-                    inputCls,
-                    "h-9 w-full pl-9 rounded-none shadow-none",
-                  )}
+                  inputClassName={cn(inputCls, "rounded-none pl-9")}
                   value={pendingFrom}
                   onChange={(v: string) => setPendingFrom(v)}
                   options={{ calenderLocale: "en", valueLocale: "en" }}
                 />
               </div>
-
-              <span className="shrink-0 text-sm text-stone-500">to</span>
-
-              <div className="relative min-w-[7.5rem] flex-1">
-                <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-[#2d4a3e]/40">
-                  <CalendarDays className="h-4 w-4" strokeWidth={1.75} />
-                </span>
+              <span className="shrink-0 text-sm text-[rgba(47,78,64,0.45)]">to</span>
+              <div className="relative min-w-[9rem] flex-1">
+                <CalendarDays className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-[rgba(47,78,64,0.35)]" strokeWidth={1.75} />
                 <NepaliDatePicker
-                  inputClassName={cn(
-                    inputCls,
-                    "h-9 w-full pl-9 rounded-none shadow-none",
-                  )}
+                  inputClassName={cn(inputCls, "rounded-none pl-9")}
                   value={pendingTo}
                   onChange={(v: string) => setPendingTo(v)}
                   options={{ calenderLocale: "en", valueLocale: "en" }}
                 />
               </div>
-
-              {hasPendingDateChange && (
-                <Button
-                  size="sm"
-                  onClick={handleApplyDates}
-                  className="shrink-0 bg-(--brand-green) text-white hover:bg-(--brand-green-2)"
-                >
+              {hasPendingDateChange ? (
+                <button type="button" onClick={handleApplyDates} className={adminPrimaryButtonClass}>
                   Apply dates
-                </Button>
-              )}
+                </button>
+              ) : null}
             </div>
           </div>
         </div>
-      </div>
+      </InventoryFilterShell>
 
-      {/* ── Table area ── */}
       {isPending ? (
         <ProductsLoading />
       ) : isError || !data ? (
@@ -452,9 +401,13 @@ export function ProductsClient() {
       ) : !data.success ? (
         <ProductsError error={data} reset={refetch} />
       ) : data.data.length === 0 && !hasActiveFilters ? (
-        <EmptyState message="No products yet. Create your first product to get started." />
+        <div className={inventoryTableWrapClass}>
+          <EmptyState message="No products yet. Create your first product to get started." />
+        </div>
       ) : data.data.length === 0 && hasActiveFilters ? (
-        <EmptyState message="No products match your current filters." />
+        <div className={inventoryTableWrapClass}>
+          <EmptyState message="No products match your current filters." />
+        </div>
       ) : (
         <>
           <ProductsTable
@@ -488,6 +441,6 @@ export function ProductsClient() {
         onCancel={() => setDeletingProduct(null)}
         isLoading={isDeleting}
       />
-    </div>
+    </AdminPageLayout>
   );
 }

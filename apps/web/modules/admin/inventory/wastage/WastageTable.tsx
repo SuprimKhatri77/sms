@@ -1,19 +1,21 @@
 "use client";
 
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
 import { Pencil, Trash2 } from "lucide-react";
 import { AmountCell } from "../shared/AmountCell";
 import { EmptyState } from "../shared/EmptyState";
 import { Pagination } from "../shared/Pagination";
 import { ListWastageResponse } from "@repo/types/inventory";
+import {
+  adminDangerIconButtonClass,
+  adminIconButtonClass,
+} from "@/components/admin/admin-styles";
+import {
+  inventoryTableClass,
+  inventoryTableScrollClass,
+  inventoryTableWrapClass,
+  inventoryTdClass,
+  inventoryThClass,
+} from "../shared/inventory-styles";
 
 type Wastage = Extract<ListWastageResponse, { success: true }>["data"][number];
 
@@ -28,6 +30,16 @@ type Props = {
   onDelete: (item: Wastage) => void;
 };
 
+const headers = [
+  "Product",
+  "Date (BS)",
+  "Qty",
+  "Rate",
+  "Amount",
+  "Reason",
+  "Actions",
+];
+
 export function WastageTable({
   data,
   currentPage,
@@ -38,86 +50,81 @@ export function WastageTable({
   onEdit,
   onDelete,
 }: Props) {
-  if (data.length === 0)
+  if (data.length === 0) {
     return (
-      <EmptyState message="No wastage recorded. Hopefully it stays that way." />
+      <div className={inventoryTableWrapClass}>
+        <EmptyState message="No wastage recorded. Hopefully it stays that way." />
+      </div>
     );
+  }
 
   return (
-    <div className="space-y-4">
-      <div className="rounded-lg border border-[var(--brand-green)]/15 overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-[var(--brand-green)]/5 hover:bg-[var(--brand-green)]/5">
-              {[
-                "Product",
-                "Date (BS)",
-                "Qty",
-                "Rate",
-                "Amount",
-                "Reason",
-                "Actions",
-              ].map((h) => (
-                <TableHead
+    <div className={inventoryTableWrapClass}>
+      <div className={inventoryTableScrollClass}>
+        <table className={inventoryTableClass}>
+          <thead>
+            <tr>
+              {headers.map((h) => (
+                <th
                   key={h}
-                  className="font-[var(--font-dm-sans)] font-semibold text-[var(--brand-green)] text-xs uppercase tracking-wide"
+                  className={`${inventoryThClass} ${h === "Actions" ? "text-right" : ""}`}
                 >
                   {h}
-                </TableHead>
+                </th>
               ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+            </tr>
+          </thead>
+          <tbody>
             {data.map((row) => (
-              <TableRow
+              <tr
                 key={row.id}
-                className="border-[var(--brand-green)]/10 hover:bg-[var(--brand-green)]/3 font-[var(--font-dm-sans)]"
+                className="transition-colors hover:bg-[rgba(47,78,64,0.02)]"
               >
-                <TableCell className="font-medium text-[var(--brand-ink)]">
+                <td className={`${inventoryTdClass} font-medium`}>
                   {row.productName}
-                </TableCell>
-                <TableCell className="text-[var(--brand-ink)]/70">
+                </td>
+                <td className={`${inventoryTdClass} text-[rgba(47,78,64,0.6)]`}>
                   {row.date}
-                </TableCell>
-                <TableCell>
+                </td>
+                <td className={inventoryTdClass}>
                   {row.qty}{" "}
-                  <span className="text-xs text-[var(--brand-ink)]/50">
+                  <span className="text-xs text-[rgba(47,78,64,0.45)]">
                     {row.productUnit}
                   </span>
-                </TableCell>
-                <TableCell>
+                </td>
+                <td className={inventoryTdClass}>
                   <AmountCell cents={row.rate} />
-                </TableCell>
-                <TableCell>
+                </td>
+                <td className={inventoryTdClass}>
                   <AmountCell cents={row.qty * row.rate} />
-                </TableCell>
-                <TableCell className="text-[var(--brand-ink)]/60 max-w-[140px] truncate">
+                </td>
+                <td className={`${inventoryTdClass} max-w-[140px] truncate text-[rgba(47,78,64,0.55)]`}>
                   {row.reason ?? "—"}
-                </TableCell>
-                <TableCell>
-                  <div className="flex gap-1">
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-7 w-7 text-[var(--brand-green)] hover:bg-[var(--brand-green)]/10"
+                </td>
+                <td className={`${inventoryTdClass} text-right`}>
+                  <div className="flex items-center justify-end gap-1.5">
+                    <button
+                      type="button"
                       onClick={() => onEdit(row)}
+                      className={adminIconButtonClass}
+                      aria-label="Edit"
                     >
-                      <Pencil size={13} />
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-7 w-7 text-red-400 hover:bg-red-50"
+                      <Pencil className="h-3.5 w-3.5" strokeWidth={1.75} />
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => onDelete(row)}
+                      className={adminDangerIconButtonClass}
+                      aria-label="Delete"
                     >
-                      <Trash2 size={13} />
-                    </Button>
+                      <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} />
+                    </button>
                   </div>
-                </TableCell>
-              </TableRow>
+                </td>
+              </tr>
             ))}
-          </TableBody>
-        </Table>
+          </tbody>
+        </table>
       </div>
       <Pagination
         meta={{ totalPages, total, limit }}
