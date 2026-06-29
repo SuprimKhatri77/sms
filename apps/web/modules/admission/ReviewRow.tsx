@@ -1,16 +1,10 @@
 export function ReviewRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-start justify-between gap-4 border-b border-[#2d4a3e]/08 py-3 last:border-0">
-      <span
-        className="text-[0.8rem] font-semibold uppercase tracking-[0.07em] text-[#2d4a3e]/50"
-        style={{ fontFamily: "var(--font-dm-sans)" }}
-      >
+    <div className="flex items-start justify-between gap-4 border-b border-[rgba(47,78,64,0.08)] py-3 last:border-0">
+      <span className="font-[family-name:var(--font-dm-sans)] text-[0.72rem] font-semibold uppercase tracking-[0.1em] text-[rgba(47,78,64,0.45)]">
         {label}
       </span>
-      <span
-        className="text-right text-[0.92rem] font-medium text-[#2d4a3e]"
-        style={{ fontFamily: "var(--font-dm-sans)" }}
-      >
+      <span className="max-w-[58%] text-right font-[family-name:var(--font-dm-sans)] text-[0.9rem] font-medium text-(--brand-green)">
         {value || "—"}
       </span>
     </div>

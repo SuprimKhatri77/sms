@@ -17,6 +17,10 @@ import {
   Clock,
 } from "lucide-react";
 import { StepTitle } from "./StepTile";
+import { AdmissionStepNav } from "./AdmissionStepNav";
+import { AdmissionSidePanel } from "./AdmissionSidePanel";
+import { AdmissionHero } from "./AdmissionHero";
+import { ADMISSION_STEPS } from "./admission-constants";
 import { InputField } from "./InputField";
 import { TileGroup } from "./TileGroup";
 import { MultiTileGroup } from "./MultiTileGroup";
@@ -37,13 +41,26 @@ import { toast } from "sonner";
 import axios from "axios";
 import { mapFieldErrors } from "@/utils/api";
 import { cn } from "@/lib/utils";
-import { siteInfo } from "@/utils/site-info";
 import { useAuthStore } from "@/store/auth";
 import { useAdmissionStore } from "@/store/useAdmissionStore";
 import { useRouter } from "next/navigation";
 import { NepaliDatePicker } from "nepali-datepicker-reactjs";
 import "nepali-datepicker-reactjs/dist/index.css";
 import { BSToAD } from "bikram-sambat-js";
+import {
+  admissionBoxInputClass,
+  admissionCalloutClass,
+  admissionErrorClass,
+  admissionPhotoDropClass,
+  admissionWizardShellClass,
+  admissionInputClass,
+  admissionInputErrorBorder,
+  admissionInputNormalBorder,
+  admissionLabelClass,
+  admissionPrimaryBtnClass,
+  admissionSecondaryBtnClass,
+} from "./admission-styles";
+import { landingContainerClass } from "@/components/landing/landing-styles";
 
 interface FieldError {
   fullName?: string;
@@ -96,8 +113,6 @@ const GENDERS = [
   { value: "female", label: "Female" },
   { value: "other", label: "Other" },
 ] as const;
-
-const STEPS = ["Personal", "Guardian", "Course", "Review"] as const;
 
 type ValidateStepData = Omit<CreateStudentAdmission, "dobBS"> & {
   dobBS: string;
@@ -341,8 +356,6 @@ export default function AdmissionPage({ courses }: Props) {
       shift: getFieldValue("shift"),
       shiftTime: getFieldValue("shiftTime"),
     });
-    console.log("step errors: ", stepErrors);
-
     if (Object.keys(stepErrors).length > 0) {
       setErrors(stepErrors);
       return;
@@ -369,99 +382,42 @@ export default function AdmissionPage({ courses }: Props) {
 
   // ── Form ──
   return (
-    <main className="min-h-screen bg-(--brand-cream) px-6 pb-24 pt-32">
-      <div className="mx-auto max-w-2xl">
-        {/* Header */}
-        <div className="mb-10">
-          <span
-            className="mb-2 inline-block text-[0.78rem] font-semibold uppercase tracking-widest text-(--brand-brown)"
-            style={{ fontFamily: "var(--font-dm-sans)" }}
-          >
-            {siteInfo.admission.cycleLabel}
-          </span>
-          <h1
-            className="text-[clamp(1.9rem,4vw,2.6rem)] font-bold leading-[1.15] text-(--brand-green)"
-            style={{ fontFamily: "var(--font-playfair)" }}
-          >
-            Apply to{" "}
-            <em
-              className="font-medium text-(--brand-brown)"
-              style={{ fontStyle: "italic" }}
+    <main className="min-h-screen bg-(--brand-cream) pb-16 pt-24">
+      <div className={cn(landingContainerClass, "px-4 sm:px-6")}>
+        <div className="mx-auto w-full max-w-6xl">
+          <AdmissionHero />
+
+          <p className="mb-5 font-[family-name:var(--font-dm-sans)] text-[0.72rem] font-bold uppercase tracking-[0.16em] text-[rgba(47,78,64,0.42)]">
+            Application form
+          </p>
+
+          <div className={admissionWizardShellClass}>
+          <AdmissionSidePanel currentStep={currentStep} />
+
+          <div className="flex min-w-0 flex-1 flex-col bg-white">
+            <AdmissionStepNav currentStep={currentStep} />
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+
+                if (currentStep !== ADMISSION_STEPS.length - 1) {
+                  return;
+                }
+
+                handleSubmit();
+              }}
+              onKeyDown={(e) => {
+                if (
+                  e.key === "Enter" &&
+                  currentStep !== ADMISSION_STEPS.length - 1
+                ) {
+                  e.preventDefault();
+                }
+              }}
+              className="flex flex-1 flex-col"
             >
-              {siteInfo.company.shortName}
-            </em>
-          </h1>
-        </div>
-
-        {/* Step indicator */}
-        <div className="mb-10">
-          <div className="flex items-center gap-0">
-            {STEPS.map((label, idx) => {
-              const done = idx < currentStep;
-              const active = idx === currentStep;
-              return (
-                <div key={label} className="flex flex-1 items-center">
-                  <div className="flex flex-col items-center gap-1.5">
-                    <div
-                      className={`flex h-8 w-8 items-center justify-center rounded-full text-[0.75rem] font-bold transition-all duration-300 ${
-                        done
-                          ? "bg-[#2d4a3e] text-white"
-                          : active
-                            ? "bg-(--brand-brown) text-white shadow-[0_2px_12px_rgba(194,138,79,0.35)]"
-                            : "bg-[#2d4a3e]/10 text-[#2d4a3e]/40"
-                      }`}
-                      style={{ fontFamily: "var(--font-dm-sans)" }}
-                    >
-                      {done ? (
-                        <CheckCircle2 className="h-4 w-4" strokeWidth={2.5} />
-                      ) : (
-                        idx + 1
-                      )}
-                    </div>
-                    <span
-                      className={`hidden text-[0.72rem] font-semibold uppercase tracking-[0.06em] sm:block ${
-                        active
-                          ? "text-(--brand-brown)"
-                          : done
-                            ? "text-[#2d4a3e]"
-                            : "text-[#2d4a3e]/35"
-                      }`}
-                      style={{ fontFamily: "var(--font-dm-sans)" }}
-                    >
-                      {label}
-                    </span>
-                  </div>
-                  {idx < STEPS.length - 1 && (
-                    <div
-                      className={`mx-1 h-0.5 flex-1 rounded-full transition-all duration-500 sm:mx-2 ${
-                        idx < currentStep ? "bg-[#2d4a3e]" : "bg-[#2d4a3e]/10"
-                      }`}
-                    />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Card */}
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-
-            if (currentStep !== STEPS.length - 1) {
-              return;
-            }
-
-            handleSubmit();
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && currentStep !== STEPS.length - 1) {
-              e.preventDefault();
-            }
-          }}
-          className="rounded-2xl border border-black/6 bg-white p-6 shadow-[0_4px_32px_rgba(0,0,0,0.05)] sm:p-10"
-        >
+              <div className="flex-1 p-6 sm:p-8 lg:p-10">
           {/* Step 0 — Personal */}
           <div
             className={cn(
@@ -469,7 +425,11 @@ export default function AdmissionPage({ courses }: Props) {
               currentStep === 0 ? "" : "hidden",
             )}
           >
-            <StepTitle icon={User} title="Personal Information" />
+            <StepTitle
+              icon={User}
+              title="Personal Information"
+              description="Tell us who you are — this helps us prepare your student record."
+            />
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <FormField name="fullName">
                 {(field) => {
@@ -499,23 +459,22 @@ export default function AdmissionPage({ courses }: Props) {
 
                     return (
                       <div className="flex flex-col gap-1.5">
-                        <label
-                          className="text-[0.8rem] font-semibold uppercase tracking-[0.07em] text-[#2d4a3e]"
-                          style={{ fontFamily: "var(--font-dm-sans)" }}
-                        >
+                        <label className={admissionLabelClass}>
                           Date of Birth (BS){" "}
-                          <span className="ml-1 text-[#e8552a]">*</span>
+                          <span className="text-(--brand-brown)">*</span>
                         </label>
                         <div className="relative">
-                          <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 z-10 text-[#2d4a3e]/40">
+                          <span className="pointer-events-none absolute left-3.5 top-1/2 z-10 -translate-y-1/2 text-[rgba(47,78,64,0.38)]">
                             <Calendar className="h-4 w-4" strokeWidth={1.75} />
                           </span>
                           <NepaliDatePicker
-                            inputClassName={`w-full border rounded-xl px-3 py-2.5 pl-9 text-[0.92rem] bg-white text-[#2d4a3e] outline-none transition-all duration-200 focus:border-[#e8552a] focus:ring-2 focus:ring-[#e8552a]/15 placeholder:text-[#2d4a3e]/30 ${
+                            inputClassName={cn(
+                              admissionBoxInputClass,
+                              "py-2.5 pl-9",
                               mergedError
-                                ? "border-red-400 ring-2 ring-red-100"
-                                : "border-[#2d4a3e]/15"
-                            }`}
+                                ? admissionInputErrorBorder
+                                : admissionInputNormalBorder,
+                            )}
                             value={field.state.value}
                             onChange={(bsValue: string) => {
                               field.handleChange(bsValue);
@@ -534,14 +493,9 @@ export default function AdmissionPage({ courses }: Props) {
                             }}
                           />
                         </div>
-                        {mergedError && (
-                          <p
-                            className="text-[0.78rem] text-red-500"
-                            style={{ fontFamily: "var(--font-dm-sans)" }}
-                          >
-                            {mergedError}
-                          </p>
-                        )}
+                        {mergedError ? (
+                          <p className={admissionErrorClass}>{mergedError}</p>
+                        ) : null}
                       </div>
                     );
                   }}
@@ -553,17 +507,14 @@ export default function AdmissionPage({ courses }: Props) {
                     const mergedError = fieldError ?? errors.dobBS;
                     return (
                       <div className="flex flex-col gap-1.5">
-                        <label
-                          className="text-[0.75rem] font-semibold uppercase tracking-[0.07em] text-[#2d4a3e]/60"
-                          style={{ fontFamily: "var(--font-dm-sans)" }}
-                        >
+                        <label className="font-[family-name:var(--font-dm-sans)] text-[0.72rem] font-semibold uppercase tracking-[0.1em] text-[rgba(47,78,64,0.45)]">
                           Date of Birth (AD)
-                          <span className="ml-1 font-normal normal-case text-[#2d4a3e]/40">
+                          <span className="ml-1 font-normal normal-case tracking-normal text-[rgba(47,78,64,0.4)]">
                             (auto-converted)
                           </span>
                         </label>
                         <div className="relative">
-                          <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#2d4a3e]/40">
+                          <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[rgba(47,78,64,0.38)]">
                             <Calendar className="h-4 w-4" strokeWidth={1.75} />
                           </span>
                           <input
@@ -574,18 +525,16 @@ export default function AdmissionPage({ courses }: Props) {
                               setDobAD(e.target.value);
                               field.handleChange(e.target.value);
                             }}
-                            className="w-full rounded-xl border border-[#2d4a3e]/15 bg-white py-2.5 pl-10 pr-4 text-[0.92rem] text-[#2d4a3e] outline-none transition-all duration-200 focus:border-[#e8552a] focus:ring-2 focus:ring-[#e8552a]/15 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed disabled:opacity-70 disabled:border-[#2d4a3e]/10"
-                            style={{ fontFamily: "var(--font-dm-sans)" }}
+                            className={cn(
+                              admissionBoxInputClass,
+                              admissionInputNormalBorder,
+                              "disabled:cursor-not-allowed",
+                            )}
                           />
                         </div>
-                        {mergedError && (
-                          <p
-                            className="text-[0.78rem] text-red-500"
-                            style={{ fontFamily: "var(--font-dm-sans)" }}
-                          >
-                            {mergedError}
-                          </p>
-                        )}
+                        {mergedError ? (
+                          <p className={admissionErrorClass}>{mergedError}</p>
+                        ) : null}
                       </div>
                     );
                   }}
@@ -597,7 +546,8 @@ export default function AdmissionPage({ courses }: Props) {
                   const fieldError = field.state.meta.errors[0]?.message;
                   const mergedError = fieldError ?? errors.gender;
                   return (
-                    <TileGroup
+                    <div className="sm:col-span-2">
+                      <TileGroup
                       label="Gender"
                       options={GENDERS}
                       value={field.state.value}
@@ -609,6 +559,7 @@ export default function AdmissionPage({ courses }: Props) {
                       error={mergedError}
                       required
                     />
+                    </div>
                   );
                 }}
               </FormField>
@@ -638,7 +589,7 @@ export default function AdmissionPage({ courses }: Props) {
                 placeholder="optional"
                 value={user?.email ?? ""}
                 disabled
-                className="bg-gray-100 text-gray-500 cursor-not-allowed opacity-70 border-gray-200"
+                className="border-[rgba(47,78,64,0.14)] bg-[#f4f1ec] text-[rgba(47,78,64,0.5)]"
               />
               <FormField name="address">
                 {(field) => {
@@ -647,15 +598,12 @@ export default function AdmissionPage({ courses }: Props) {
                   return (
                     <div className="sm:col-span-2">
                       <div className="flex flex-col gap-1.5">
-                        <label
-                          className="text-[0.8rem] font-semibold uppercase tracking-[0.07em] text-(--brand-green)"
-                          style={{ fontFamily: "var(--font-dm-sans)" }}
-                        >
+                        <label className={admissionLabelClass}>
                           Address{" "}
                           <span className="text-(--brand-brown)">*</span>
                         </label>
                         <div className="relative">
-                          <span className="pointer-events-none absolute left-3.5 top-3.5 text-[rgba(47,78,64,0.4)]">
+                          <span className="pointer-events-none absolute left-3.5 top-3.5 text-[rgba(47,78,64,0.38)]">
                             <MapPin className="h-4 w-4" strokeWidth={1.75} />
                           </span>
                           <textarea
@@ -663,22 +611,18 @@ export default function AdmissionPage({ courses }: Props) {
                             placeholder="Street, City, District"
                             value={field.state.value}
                             onChange={(e) => field.handleChange(e.target.value)}
-                            className={`w-full resize-none rounded-xl border bg-white py-3 pl-10 pr-4 text-[0.92rem] text-(--brand-green) outline-none transition-all duration-200 placeholder:text-[rgba(47,78,64,0.3)] focus:border-(--brand-brown) focus:ring-2 focus:ring-[rgba(194,138,79,0.15)] ${
+                            className={cn(
+                              admissionBoxInputClass,
+                              "resize-none",
                               mergedError
-                                ? "border-red-400 ring-2 ring-red-100"
-                                : "border-[#2d4a3e]/15"
-                            }`}
-                            style={{ fontFamily: "var(--font-dm-sans)" }}
+                                ? admissionInputErrorBorder
+                                : admissionInputNormalBorder,
+                            )}
                           />
                         </div>
-                        {mergedError && (
-                          <p
-                            className="text-[0.78rem] text-red-500"
-                            style={{ fontFamily: "var(--font-dm-sans)" }}
-                          >
-                            {mergedError}
-                          </p>
-                        )}
+                        {mergedError ? (
+                          <p className={admissionErrorClass}>{mergedError}</p>
+                        ) : null}
                       </div>
                     </div>
                   );
@@ -692,47 +636,43 @@ export default function AdmissionPage({ courses }: Props) {
                   const mergedError = fieldError ?? errors.photoUrl;
                   return (
                     <div className="sm:col-span-2">
-                      <label
-                        className="mb-1.5 block text-[0.8rem] font-semibold uppercase tracking-[0.07em] text-[#2d4a3e]"
-                        style={{ fontFamily: "var(--font-dm-sans)" }}
-                      >
-                        Photo {/*<span className="text-[#e8552a]">*</span> */}{" "}
-                        <span className="text-[10px]">(optional)</span>
-                        {/* <span className="font-normal normal-case text-[#2d4a3e]/40">
+                      <label className={admissionLabelClass}>
+                        Photo{" "}
+                        <span className="font-normal normal-case tracking-normal text-[rgba(47,78,64,0.4)]">
                           (optional)
-                        </span> */}
+                        </span>
                       </label>
-                      <label className="flex cursor-pointer items-center gap-4 rounded-xl border border-dashed border-[rgba(47,78,64,0.2)] bg-[rgba(47,78,64,0.04)] p-4 transition-colors hover:border-[rgba(194,138,79,0.5)] hover:bg-[rgba(194,138,79,0.06)]">
+                      <label className={admissionPhotoDropClass}>
                         {isUploadingImage ? (
-                          <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-[#2d4a3e]/08">
-                            <Loader2 className="h-5 w-5 animate-spin text-[#2d4a3e]/40" />
+                          <div className="flex h-14 w-14 shrink-0 items-center justify-center border border-[rgba(47,78,64,0.1)] bg-white">
+                            <Loader2 className="h-5 w-5 animate-spin text-[rgba(47,78,64,0.4)]" />
                           </div>
                         ) : photo?.url ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
                             src={photo?.url}
                             alt="Preview"
-                            className="h-14 w-14 rounded-xl object-cover"
+                            className="h-14 w-14 shrink-0 object-cover"
                           />
                         ) : (
-                          <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-[#2d4a3e]/08">
+                          <div className="flex h-14 w-14 shrink-0 items-center justify-center border border-[rgba(47,78,64,0.1)] bg-white">
                             <Upload
-                              className="h-5 w-5 text-[#2d4a3e]/40"
+                              className="h-5 w-5 text-[rgba(47,78,64,0.38)]"
                               strokeWidth={1.75}
                             />
                           </div>
                         )}
 
-                        <div>
-                          <p className="text-[0.88rem] font-medium text-[#2d4a3e]">
+                        <div className="min-w-0">
+                          <p className="font-[family-name:var(--font-dm-sans)] text-[0.88rem] font-medium text-(--brand-green)">
                             {isUploadingImage
                               ? "Uploading..."
                               : photo?.url
                                 ? photo.fileName
                                 : "Upload a passport photo"}
                           </p>
-                          <p className="text-[0.78rem] text-[#2d4a3e]/40">
-                            JPG, PNG — max 5MB
+                          <p className="font-[family-name:var(--font-dm-sans)] text-[0.78rem] text-[rgba(47,78,64,0.42)]">
+                            JPG or PNG · max 5MB · optional
                           </p>
                         </div>
                         <input
@@ -743,14 +683,9 @@ export default function AdmissionPage({ courses }: Props) {
                           disabled={isUploadingImage}
                         />
                       </label>
-                      {mergedError && (
-                        <p
-                          className="text-[0.78rem] text-red-500"
-                          style={{ fontFamily: "var(--font-dm-sans)" }}
-                        >
-                          {mergedError}
-                        </p>
-                      )}
+                      {mergedError ? (
+                        <p className={admissionErrorClass}>{mergedError}</p>
+                      ) : null}
                     </div>
                   );
                 }}
@@ -765,7 +700,11 @@ export default function AdmissionPage({ courses }: Props) {
               currentStep === 1 ? "" : "hidden",
             )}
           >
-            <StepTitle icon={Users} title="Guardian Information" />
+            <StepTitle
+              icon={Users}
+              title="Guardian Information"
+              description="Someone we can reach in case of an emergency."
+            />
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <FormField name="guardianName">
                 {(field) => {
@@ -817,7 +756,11 @@ export default function AdmissionPage({ courses }: Props) {
               currentStep === 2 ? "" : "hidden",
             )}
           >
-            <StepTitle icon={BookOpen} title="Course & Details" />
+            <StepTitle
+              icon={BookOpen}
+              title="Course & Details"
+              description="Choose your program, schedule, and how you found us."
+            />
             <FormField name="courses">
               {(field) => {
                 const fieldError = field.state.meta.errors[0]?.message;
@@ -920,7 +863,11 @@ export default function AdmissionPage({ courses }: Props) {
               currentStep === 3 ? "" : "hidden",
             )}
           >
-            <StepTitle icon={CheckCircle2} title="Review & Submit" />
+            <StepTitle
+              icon={CheckCircle2}
+              title="Review & Submit"
+              description="Double-check everything before you send your application."
+            />
 
             <div className="space-y-4">
               <ReviewSection title="Personal">
@@ -939,17 +886,14 @@ export default function AdmissionPage({ courses }: Props) {
                 <ReviewRow label="Address" value={getFieldValue("address")} />
                 {photo?.url && (
                   <div className="flex items-center justify-between py-3">
-                    <span
-                      className="text-[0.8rem] font-semibold uppercase tracking-[0.07em] text-[#2d4a3e]/50"
-                      style={{ fontFamily: "var(--font-dm-sans)" }}
-                    >
+                    <span className="font-[family-name:var(--font-dm-sans)] text-[0.72rem] font-semibold uppercase tracking-[0.1em] text-[rgba(47,78,64,0.45)]">
                       Photo
                     </span>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={photo.url}
                       alt="Preview"
-                      className="h-10 w-10 rounded-lg object-cover"
+                      className="h-10 w-10 object-cover border border-[rgba(47,78,64,0.1)]"
                     />
                   </div>
                 )}
@@ -984,58 +928,65 @@ export default function AdmissionPage({ courses }: Props) {
                 /> */}
               </ReviewSection>
             </div>
-            <p
-              className="rounded-xl bg-[#2d4a3e]/05 px-4 py-3 text-[0.82rem] leading-[1.6] text-[#2d4a3e]/60"
-              style={{ fontFamily: "var(--font-dm-sans)" }}
-            >
-              By isPending, you confirm that all information provided is
-              accurate. Our team will contact you within 24-48 hours.
+            <p className={admissionCalloutClass}>
+              By submitting, you confirm that all information provided is
+              accurate. Our team will contact you within 24–48 hours.
             </p>
           </div>
 
-          {/* Navigation */}
-          <div
-            className={`mt-8 flex ${currentStep > 0 ? "justify-between" : "justify-end"}`}
-          >
-            {currentStep > 0 && (
-              <button
-                type="button"
-                onClick={goBack}
-                className="inline-flex items-center gap-2 rounded-xl border border-[#2d4a3e]/15 bg-white px-5 py-3 text-[0.9rem] font-medium text-[#2d4a3e] transition-all duration-200 hover:border-[#2d4a3e]/30 hover:bg-[#2d4a3e]/05"
-                style={{ fontFamily: "var(--font-dm-sans)" }}
+            </div>
+
+              <div
+                className={cn(
+                  "flex border-t border-[rgba(47,78,64,0.08)] px-6 py-5 sm:px-8 lg:px-10",
+                  currentStep > 0 ? "justify-between gap-3" : "justify-end",
+                )}
               >
-                <ChevronLeft className="h-4 w-4" />
-                Back
+              {currentStep > 0 ? (
+                <button
+                  type="button"
+                  onClick={goBack}
+                  className={cn(admissionSecondaryBtnClass, "px-5 py-3")}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Back
+                </button>
+              ) : null}
+              <button
+                type={
+                  currentStep === ADMISSION_STEPS.length - 1 ? "submit" : "button"
+                }
+                onClick={
+                  currentStep === ADMISSION_STEPS.length - 1 ? undefined : goNext
+                }
+                disabled={
+                  currentStep === ADMISSION_STEPS.length - 1 &&
+                  (isPending || isUploadingImage)
+                }
+                className={cn(
+                  admissionPrimaryBtnClass,
+                  "px-6 py-3 disabled:cursor-not-allowed disabled:opacity-60",
+                )}
+              >
+                {currentStep === ADMISSION_STEPS.length - 1 ? (
+                  <>
+                    {isPending ? "Submitting…" : "Submit Application"}
+                    {!isPending ? (
+                      <CheckCircle2 className="h-4 w-4" strokeWidth={2.5} />
+                    ) : null}
+                  </>
+                ) : (
+                  <>
+                    Continue
+                    <ChevronRight className="h-4 w-4" strokeWidth={2.5} />
+                  </>
+                )}
               </button>
-            )}
-            <button
-              type={currentStep === STEPS.length - 1 ? "submit" : "button"}
-              onClick={currentStep === STEPS.length - 1 ? undefined : goNext}
-              disabled={
-                currentStep === STEPS.length - 1 &&
-                (isPending || isUploadingImage)
-              }
-              className={`inline-flex items-center gap-2 rounded-xl px-6 py-3 text-[0.9rem] font-semibold text-white transition-all duration-200 ${
-                currentStep === STEPS.length - 1
-                  ? "bg-[#2d4a3e] shadow-[0_4px_16px_rgba(45,74,62,0.25)] hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(45,74,62,0.35)] disabled:cursor-not-allowed disabled:opacity-60"
-                  : "bg-(--brand-brown) shadow-[0_4px_16px_rgba(194,138,79,0.3)] hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(194,138,79,0.4)]"
-              }`}
-              style={{ fontFamily: "var(--font-dm-sans)" }}
-            >
-              {currentStep === STEPS.length - 1 ? (
-                <>
-                  {isPending ? "Submitting…" : "Submit Application"}
-                  {!isPending && <CheckCircle2 className="h-4 w-4" />}
-                </>
-              ) : (
-                <>
-                  Continue
-                  <ChevronRight className="h-4 w-4" />
-                </>
-              )}
-            </button>
+              </div>
+            </form>
           </div>
-        </form>
+        </div>
+        </div>
       </div>
     </main>
   );

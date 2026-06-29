@@ -1,4 +1,13 @@
-import { CheckCircle2 } from "lucide-react";
+import { Check } from "lucide-react";
+import { cn } from "@/lib/utils";
+import {
+  admissionCourseCardActiveClass,
+  admissionCourseCardBaseClass,
+  admissionCourseCardInactiveClass,
+  admissionErrorClass,
+  admissionHintClass,
+  admissionLabelClass,
+} from "./admission-styles";
 
 export function MultiTileGroup({
   label,
@@ -22,18 +31,19 @@ export function MultiTileGroup({
   };
 
   return (
-    <div className="flex flex-col gap-2">
-      <label
-        className="text-[0.8rem] font-semibold uppercase tracking-[0.07em] text-[#2d4a3e]"
-        style={{ fontFamily: "var(--font-dm-sans)" }}
-      >
+    <div className="flex flex-col gap-3">
+      <label className={admissionLabelClass}>
         {label}
-        {required && <span className="ml-1 text-[#e8552a]">*</span>}
-        <span className="ml-2 font-normal normal-case tracking-normal text-[#2d4a3e]/40">
-          — select all that apply
+        {required ? (
+          <span className="ml-1 text-(--brand-brown)">*</span>
+        ) : null}
+        <span
+          className={`${admissionHintClass} ml-2 normal-case tracking-normal`}
+        >
+          — tap all that apply
         </span>
       </label>
-      <div className="flex flex-wrap gap-2">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {options.map((o) => {
           const selected = value.includes(o.value);
           return (
@@ -41,32 +51,36 @@ export function MultiTileGroup({
               key={o.value}
               type="button"
               onClick={() => toggle(o.value)}
-              className={`inline-flex items-center gap-1.5 rounded-xl border px-4 py-2.5 text-[0.88rem] font-medium transition-all duration-150 capitalize ${
+              className={cn(
+                admissionCourseCardBaseClass,
                 selected
-                  ? "border-[#e8552a] bg-[#e8552a] text-white shadow-[0_2px_12px_rgba(232,85,42,0.3)]"
-                  : "border-[#2d4a3e]/15 bg-white text-[#2d4a3e]/70 hover:border-[#e8552a]/40 hover:text-[#2d4a3e]"
-              }`}
-              style={{ fontFamily: "var(--font-dm-sans)" }}
-            >
-              {selected && (
-                <CheckCircle2
-                  className="h-3.5 w-3.5 shrink-0"
-                  strokeWidth={2.5}
-                />
+                  ? admissionCourseCardActiveClass
+                  : admissionCourseCardInactiveClass,
               )}
-              {o.label}
+            >
+              <span
+                className={cn(
+                  "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center border transition-colors",
+                  selected
+                    ? "border-(--brand-brown) bg-(--brand-brown) text-white"
+                    : "border-[rgba(47,78,64,0.2)] bg-white text-transparent group-hover:border-[rgba(194,138,79,0.45)]",
+                )}
+              >
+                <Check className="h-3 w-3" strokeWidth={2.5} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block font-[family-name:var(--font-dm-sans)] text-[0.92rem] font-semibold capitalize text-(--brand-green)">
+                  {o.label}
+                </span>
+                <span className="mt-0.5 block font-[family-name:var(--font-dm-sans)] text-[0.76rem] text-[rgba(47,78,64,0.45)]">
+                  {selected ? "Selected" : "Tap to select"}
+                </span>
+              </span>
             </button>
           );
         })}
       </div>
-      {error && (
-        <p
-          className="text-[0.78rem] text-red-500"
-          style={{ fontFamily: "var(--font-dm-sans)" }}
-        >
-          {error}
-        </p>
-      )}
+      {error ? <p className={admissionErrorClass}>{error}</p> : null}
     </div>
   );
 }

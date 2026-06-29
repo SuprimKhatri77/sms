@@ -3,19 +3,34 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 import {
-  CheckCircle,
-  Printer,
-  ArrowLeft,
-  Clock,
   AlertTriangle,
-  User,
+  ArrowLeft,
   BookOpen,
+  Check,
+  CheckCircle2,
+  Clock,
+  Copy,
   Hash,
+  Phone,
+  Printer,
+  User,
 } from "lucide-react";
 import PrintAdmissionForm, { PrintAdmissionData } from "../PrintAdmissionForm";
 import { siteInfo } from "@/utils/site-info";
 import { useAdmissionStore } from "@/store/useAdmissionStore";
+import { cn } from "@/lib/utils";
+import {
+  landingContainerClass,
+  landingEyebrowClass,
+  landingSectionBodyClass,
+  landingSectionTitleClass,
+} from "@/components/landing/landing-styles";
+import {
+  admissionCalloutClass,
+  admissionPrimaryBtnClass,
+} from "../admission-styles";
 
 export interface SubmittedAdmission {
   referenceNo: string;
@@ -68,54 +83,48 @@ function buildPrintData(student: SubmittedAdmission): PrintAdmissionData {
   };
 }
 
-function InfoRow({
-  label,
-  value,
-  icon: Icon,
-}: {
-  label: string;
-  value: string;
-  icon?: React.ElementType;
-}) {
+function SummaryRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-start gap-3 py-3 border-b border-[#2f4e40]/08 last:border-0">
-      {Icon && (
-        <Icon
-          size={14}
-          className="mt-0.5 flex-shrink-0 text-[#c28a4f]"
-          strokeWidth={2}
-        />
-      )}
-      <div className="flex-1 min-w-0">
-        <p
-          className="text-[0.68rem] font-bold uppercase tracking-[0.1em] text-[#2f4e40]/40 mb-0.5"
-          style={{ fontFamily: "var(--font-dm-sans)" }}
-        >
-          {label}
-        </p>
-        <p
-          className="text-[0.92rem] text-[#1a1a1a] font-medium break-words"
-          style={{ fontFamily: "var(--font-dm-sans)" }}
-        >
-          {value}
-        </p>
-      </div>
+    <div className="flex items-start justify-between gap-4 border-b border-[rgba(47,78,64,0.08)] py-3 last:border-0">
+      <span className="font-[family-name:var(--font-dm-sans)] text-[0.68rem] font-bold uppercase tracking-[0.12em] text-[rgba(47,78,64,0.42)]">
+        {label}
+      </span>
+      <span className="max-w-[58%] text-right font-[family-name:var(--font-dm-sans)] text-[0.88rem] font-medium leading-snug text-(--brand-green)">
+        {value || "—"}
+      </span>
     </div>
   );
 }
 
+const NEXT_STEPS = [
+  {
+    icon: Clock,
+    title: "We reach out in 24–48 hours",
+    body: "Our admissions team will call or message you to confirm enrollment and share batch details.",
+  },
+  {
+    icon: Hash,
+    title: "Keep your reference number",
+    body: "Use it for any communication with our office.",
+  },
+  {
+    icon: BookOpen,
+    title: "Student dashboard",
+    body: "Once activated, log in to track status and re-print your form anytime.",
+  },
+] as const;
+
 export default function AdmissionSuccessPage() {
   const router = useRouter();
-  const { submittedStudent, clearSubmittedStudent } = useAdmissionStore();
+  const { submittedStudent } = useAdmissionStore();
 
   const [showPrint, setShowPrint] = useState(false);
   const [hasPrinted, setHasPrinted] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    setTimeout(() => {
-      setMounted(true);
-    }, 0);
+    setTimeout(() => setMounted(true), 0);
   }, []);
 
   useEffect(() => {
@@ -125,28 +134,37 @@ export default function AdmissionSuccessPage() {
     }
   }, [submittedStudent, router, mounted]);
 
-  //   useEffect(() => {
-  //     return () => {
-  //       clearSubmittedStudent();
-  //     };
-  //   }, [clearSubmittedStudent]);
-
   if (!mounted || !submittedStudent) return null;
 
   const student = submittedStudent;
   const printData = buildPrintData(student);
+  const firstName = student.fullName.split(" ")[0] ?? "there";
 
   function handlePrintOpen() {
     setShowPrint(true);
     setHasPrinted(true);
   }
 
+  async function handleCopyRef() {
+    try {
+      await navigator.clipboard.writeText(student.referenceNo);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* clipboard unavailable */
+    }
+  }
+
   return (
     <>
-      <main className="min-h-screen bg-[#fbfaf7] flex flex-col">
-        {/* ── Top bar ── */}
-        <header className="w-full border-b border-[#2f4e40]/10 bg-white/80 backdrop-blur-sm sticky top-0 z-20">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
+      <main className="min-h-screen bg-(--brand-cream)">
+        <header className="sticky top-0 z-20 border-b border-[rgba(47,78,64,0.1)] bg-(--brand-cream)/95 backdrop-blur-sm">
+          <div
+            className={cn(
+              landingContainerClass,
+              "flex h-14 items-center justify-between gap-4 px-4 sm:px-6",
+            )}
+          >
             <Image
               src={siteInfo.assets.noBGLogo}
               alt={siteInfo.company.name}
@@ -155,306 +173,255 @@ export default function AdmissionSuccessPage() {
               className="h-7 w-auto object-contain"
               priority
             />
-            <button
-              onClick={() => router.push("/")}
-              className="inline-flex items-center gap-1.5 text-[0.8rem] font-semibold text-[#2f4e40]/60 hover:text-[#2f4e40] transition-colors"
-              style={{ fontFamily: "var(--font-dm-sans)" }}
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 font-[family-name:var(--font-dm-sans)] text-[0.82rem] font-semibold text-[rgba(47,78,64,0.55)] transition-colors hover:text-(--brand-green)"
             >
-              <ArrowLeft size={13} strokeWidth={2.5} />
-              Back to Home
-            </button>
+              <ArrowLeft className="h-3.5 w-3.5" strokeWidth={2.5} />
+              Back to home
+            </Link>
           </div>
         </header>
 
-        <div className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8 items-start">
-            {/* ── Left: confirmation ── */}
-            <div className="flex flex-col gap-6">
-              {/* Hero confirmation card */}
-              <div className="bg-white rounded-2xl border border-[#2f4e40]/10 shadow-sm overflow-hidden">
-                {/* Green accent strip */}
-                <div className="h-1.5 w-full bg-gradient-to-r from-[#2f4e40] to-[#c28a4f]" />
-
-                <div className="px-6 sm:px-8 pt-8 pb-6">
-                  <div className="flex items-start gap-4">
-                    <div className="flex-shrink-0 w-11 h-11 rounded-full bg-[#2f4e40]/08 flex items-center justify-center">
-                      <CheckCircle
-                        size={22}
-                        className="text-[#2f4e40]"
-                        strokeWidth={1.75}
-                      />
-                    </div>
-                    <div>
-                      <h1
-                        className="text-[1.55rem] sm:text-[1.85rem] font-bold text-[#1a1a1a] leading-tight tracking-tight"
-                        style={{
-                          fontFamily: "var(--font-playfair, Georgia, serif)",
-                        }}
-                      >
-                        Application Received
-                      </h1>
-                      <p
-                        className="mt-1.5 text-[0.9rem] text-[#2f4e40]/60 leading-relaxed"
-                        style={{ fontFamily: "var(--font-dm-sans)" }}
-                      >
-                        Thank you,{" "}
-                        <span className="font-semibold text-[#2f4e40]">
-                          {student.fullName.split(" ")[0]}
-                        </span>
-                        . Your admission form has been successfully submitted to{" "}
-                        {siteInfo.company.shortName}.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Reference pill */}
-                  <div className="mt-6 inline-flex items-center gap-2.5 bg-[#2f4e40]/05 border border-[#2f4e40]/12 rounded-lg px-4 py-2.5">
-                    <Hash
-                      size={13}
-                      className="text-[#c28a4f]"
-                      strokeWidth={2.5}
-                    />
-                    <div>
-                      <p
-                        className="text-[0.65rem] font-bold uppercase tracking-[0.12em] text-[#2f4e40]/40"
-                        style={{ fontFamily: "var(--font-dm-sans)" }}
-                      >
-                        Reference Number
-                      </p>
-                      <p
-                        className="text-[0.95rem] font-bold text-[#2f4e40] tracking-wide mt-0.5"
-                        style={{ fontFamily: "var(--font-dm-sans)" }}
-                      >
-                        {student.referenceNo}
-                      </p>
-                    </div>
-                  </div>
-                </div>
+        <div className={cn(landingContainerClass, "px-4 pb-16 pt-10 sm:px-6 sm:pt-14")}>
+          <div className="mx-auto max-w-6xl">
+            {/* Hero */}
+            <div className="mb-10 max-w-2xl lg:mb-12">
+              <div className="mb-5 inline-flex items-center gap-2 border border-[rgba(194,138,79,0.28)] bg-[rgba(194,138,79,0.08)] px-3 py-1.5 font-[family-name:var(--font-dm-sans)] text-[0.68rem] font-bold uppercase tracking-[0.14em] text-(--brand-brown)">
+                <CheckCircle2 className="h-3.5 w-3.5" strokeWidth={2.5} />
+                Application received
               </div>
-
-              {/* Next steps */}
-              <div className="bg-white rounded-2xl border border-[#2f4e40]/10 shadow-sm px-6 sm:px-8 py-6">
-                <h2
-                  className="text-[0.75rem] font-bold uppercase tracking-[0.12em] text-[#2f4e40]/40 mb-4"
-                  style={{ fontFamily: "var(--font-dm-sans)" }}
+              <h1 className={landingSectionTitleClass}>
+                You&apos;re in the queue,{" "}
+                <em
+                  className="font-medium text-(--brand-brown)"
+                  style={{ fontStyle: "italic" }}
                 >
-                  What Happens Next
-                </h2>
-                <div className="flex flex-col gap-4">
-                  {[
-                    {
-                      icon: Clock,
-                      title: "We will reach out within 24–48 hours",
-                      body: "Our admissions team will call or message you to confirm enrollment and share batch details.",
-                    },
-                    {
-                      icon: BookOpen,
-                      title: "Keep your reference number safe",
-                      body: `Use ${student.referenceNo} for any communication with our office.`,
-                    },
-                    {
-                      icon: User,
-                      title: "Student dashboard coming soon",
-                      body: "Once your account is activated, you can log in to track your admission status and re-print your form.",
-                    },
-                  ].map(({ icon: Icon, title, body }) => (
-                    <div key={title} className="flex gap-3.5 items-start">
-                      <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-[#2f4e40]/06 flex items-center justify-center mt-0.5">
-                        <Icon
-                          size={14}
-                          className="text-[#2f4e40]"
-                          strokeWidth={2}
-                        />
-                      </div>
-                      <div>
-                        <p
-                          className="text-[0.87rem] font-semibold text-[#1a1a1a]"
-                          style={{ fontFamily: "var(--font-dm-sans)" }}
-                        >
-                          {title}
-                        </p>
-                        <p
-                          className="text-[0.82rem] text-[#1a1a1a]/50 mt-0.5 leading-relaxed"
-                          style={{ fontFamily: "var(--font-dm-sans)" }}
-                        >
-                          {body}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+                  {firstName}.
+                </em>
+              </h1>
+              <p className={cn(landingSectionBodyClass, "mt-4 max-w-xl")}>
+                Your admission form was submitted to {siteInfo.company.shortName}.
+                Save your reference number and print a copy before you leave this
+                page.
+              </p>
 
-              {/* Print CTA */}
-              <div className="bg-white rounded-2xl border border-[#2f4e40]/10 shadow-sm px-6 sm:px-8 py-6">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <div>
-                    <h2
-                      className="text-[0.87rem] font-semibold text-[#1a1a1a]"
-                      style={{ fontFamily: "var(--font-dm-sans)" }}
-                    >
-                      Save a copy of your form
-                    </h2>
-                    <p
-                      className="text-[0.8rem] text-[#1a1a1a]/50 mt-0.5 leading-relaxed max-w-sm"
-                      style={{ fontFamily: "var(--font-dm-sans)" }}
-                    >
-                      Print or save as PDF now. Once you leave this page, this
-                      option will not be available until your student dashboard
-                      is activated.
-                    </p>
-                  </div>
-
-                  <div className="flex flex-col gap-2 flex-shrink-0">
-                    <button
-                      onClick={handlePrintOpen}
-                      disabled={hasPrinted}
-                      className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#2f4e40] text-white text-[0.85rem] font-semibold transition-all hover:bg-[#3a5a49] disabled:opacity-40 disabled:cursor-not-allowed"
-                      style={{ fontFamily: "var(--font-dm-sans)" }}
-                    >
-                      <Printer size={14} strokeWidth={2} />
-                      {hasPrinted ? "Form Opened" : "Print / Save PDF"}
-                    </button>
-
-                    {hasPrinted && (
-                      <button
-                        onClick={handlePrintOpen}
-                        className="inline-flex items-center justify-center gap-1.5 text-[0.75rem] text-[#2f4e40]/50 hover:text-[#2f4e40] transition-colors"
-                        style={{ fontFamily: "var(--font-dm-sans)" }}
-                      >
-                        Open again
-                      </button>
+              <div className="mt-8 w-full max-w-md border border-[rgba(47,78,64,0.12)] bg-white px-6 py-5 shadow-[0_12px_40px_rgba(47,78,64,0.07)] sm:px-8">
+                <p className="font-[family-name:var(--font-dm-sans)] text-[0.65rem] font-bold uppercase tracking-[0.16em] text-[rgba(47,78,64,0.42)]">
+                  Your reference number
+                </p>
+                <div className="mt-2 flex items-center gap-3">
+                  <p className="font-[family-name:var(--font-dm-sans)] text-[1.35rem] font-bold tracking-wide text-(--brand-green) sm:text-[1.5rem]">
+                    {student.referenceNo}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleCopyRef}
+                    className="flex h-9 w-9 shrink-0 items-center justify-center border border-[rgba(47,78,64,0.12)] text-[rgba(47,78,64,0.45)] transition-colors hover:border-(--brand-brown) hover:text-(--brand-brown)"
+                    aria-label="Copy reference number"
+                  >
+                    {copied ? (
+                      <Check className="h-4 w-4" strokeWidth={2.5} />
+                    ) : (
+                      <Copy className="h-4 w-4" strokeWidth={2} />
                     )}
-                  </div>
+                  </button>
                 </div>
-
-                {hasPrinted && (
-                  <div className="mt-4 flex items-start gap-2.5 rounded-lg bg-amber-50 border border-amber-200 px-3.5 py-3">
-                    <AlertTriangle
-                      size={13}
-                      className="text-amber-500 mt-0.5 flex-shrink-0"
-                      strokeWidth={2}
-                    />
-                    <p
-                      className="text-[0.78rem] text-amber-700 leading-relaxed"
-                      style={{ fontFamily: "var(--font-dm-sans)" }}
-                    >
-                      You have already opened the print dialog. If you need
-                      another copy later, visit your student dashboard once it
-                      is activated.
-                    </p>
-                  </div>
-                )}
+                <p className="mt-2 font-[family-name:var(--font-dm-sans)] text-[0.78rem] text-[rgba(47,78,64,0.45)]">
+                  Submitted {formatDate(student.createdAt)} · FY{" "}
+                  {student.fiscalYear}
+                </p>
               </div>
             </div>
 
-            {/* ── Right: applicant summary ── */}
-            <aside className="bg-white rounded-2xl border border-[#2f4e40]/10 shadow-sm overflow-hidden">
-              {/* Photo header */}
-              <div className="bg-[#2f4e40] px-6 py-5 flex items-center gap-4">
-                {student.photoURL ? (
-                  <Image
-                    src={student.photoURL}
-                    alt={student.fullName}
-                    width={48}
-                    height={48}
-                    className="w-12 h-12 rounded-full object-cover border-2 border-white/20 flex-shrink-0"
-                    unoptimized
+            <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
+              {/* Left column */}
+              <div className="flex flex-col gap-6">
+                {/* Print CTA — prominent, logic unchanged */}
+                <div className="relative overflow-hidden border border-[rgba(47,78,64,0.12)] bg-white p-6 shadow-[0_12px_40px_rgba(47,78,64,0.06)] sm:p-8">
+                  <div
+                    className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-linear-to-r from-(--brand-green) via-(--brand-brown) to-(--brand-green)"
+                    aria-hidden
                   />
-                ) : (
-                  <div className="w-12 h-12 rounded-full bg-white/10 border border-white/20 flex items-center justify-center flex-shrink-0">
-                    <User
-                      size={20}
-                      className="text-white/60"
-                      strokeWidth={1.5}
-                    />
+                  <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex gap-4">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center bg-[rgba(47,78,64,0.08)] text-(--brand-green)">
+                        <Printer className="h-5 w-5" strokeWidth={1.75} />
+                      </div>
+                      <div>
+                        <h2 className="font-[family-name:var(--font-playfair)] text-[1.2rem] font-semibold text-(--brand-green)">
+                          Print or save as PDF
+                        </h2>
+                        <p className="mt-1 max-w-md font-[family-name:var(--font-dm-sans)] text-[0.86rem] leading-relaxed text-[rgba(47,78,64,0.55)]">
+                          Download a copy now. Once you leave this page, printing
+                          won&apos;t be available until your student dashboard is
+                          activated.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex shrink-0 flex-col gap-2">
+                      <button
+                        type="button"
+                        onClick={handlePrintOpen}
+                        disabled={hasPrinted}
+                        className={cn(
+                          admissionPrimaryBtnClass,
+                          "disabled:cursor-not-allowed disabled:opacity-50",
+                        )}
+                      >
+                        <Printer className="h-4 w-4" strokeWidth={2} />
+                        {hasPrinted ? "Form opened" : "Print / save PDF"}
+                      </button>
+                      {hasPrinted ? (
+                        <button
+                          type="button"
+                          onClick={handlePrintOpen}
+                          className="font-[family-name:var(--font-dm-sans)] text-[0.78rem] font-semibold text-[rgba(47,78,64,0.45)] underline-offset-2 hover:text-(--brand-green) hover:underline"
+                        >
+                          Open print dialog again
+                        </button>
+                      ) : null}
+                    </div>
                   </div>
-                )}
-                <div>
-                  <p
-                    className="text-white font-semibold text-[0.95rem] leading-tight"
-                    style={{ fontFamily: "var(--font-dm-sans)" }}
-                  >
-                    {student.fullName}
-                  </p>
-                  <p
-                    className="text-white/50 text-[0.75rem] mt-0.5"
-                    style={{ fontFamily: "var(--font-dm-sans)" }}
-                  >
-                    {capitalize(student.status)} · {capitalize(student.shift)}
-                  </p>
+
+                  {hasPrinted ? (
+                    <div className="mt-5 flex items-start gap-3 border border-amber-200/80 bg-amber-50/80 px-4 py-3">
+                      <AlertTriangle
+                        className="mt-0.5 h-4 w-4 shrink-0 text-amber-600"
+                        strokeWidth={2}
+                      />
+                      <p className="font-[family-name:var(--font-dm-sans)] text-[0.8rem] leading-relaxed text-amber-800">
+                        You&apos;ve opened the print dialog. Need another copy
+                        later? Visit your student dashboard once it&apos;s
+                        activated.
+                      </p>
+                    </div>
+                  ) : null}
                 </div>
-              </div>
 
-              {/* Fields */}
-              <div className="px-5 py-2">
-                <InfoRow
-                  label="Date of Birth"
-                  value={student.dob}
-                  icon={User}
-                />
-                <InfoRow label="Phone" value={student.phone} icon={User} />
-                <InfoRow label="Address" value={student.address} icon={User} />
-                <InfoRow
-                  label="Guardian"
-                  value={`${student.guardianName} · ${student.guardianPhone}`}
-                  icon={User}
-                />
-                <InfoRow
-                  label="Shift"
-                  value={`${capitalize(student.shift)} · ${student.shiftTime}`}
-                  icon={Clock}
-                />
-                <InfoRow
-                  label="Submitted"
-                  value={formatDate(student.createdAt)}
-                  icon={CheckCircle}
-                />
-              </div>
+                {/* Next steps */}
+                <div className="border border-[rgba(47,78,64,0.1)] bg-white p-6 sm:p-8">
+                  <p className={cn(landingEyebrowClass, "mb-5")}>
+                    What happens next
+                  </p>
+                  <ul className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                    {NEXT_STEPS.map(({ icon: Icon, title, body }, index) => (
+                      <li
+                        key={title}
+                        className="border border-[rgba(47,78,64,0.08)] bg-[#faf9f6] p-4"
+                      >
+                        <div className="mb-3 flex h-9 w-9 items-center justify-center bg-[rgba(47,78,64,0.08)] text-(--brand-green)">
+                          <Icon className="h-4 w-4" strokeWidth={1.75} />
+                        </div>
+                        <p className="font-[family-name:var(--font-dm-sans)] text-[0.88rem] font-semibold text-(--brand-green)">
+                          {title}
+                        </p>
+                        <p className="mt-1.5 font-[family-name:var(--font-dm-sans)] text-[0.8rem] leading-relaxed text-[rgba(47,78,64,0.52)]">
+                          {index === 1
+                            ? `Use ${student.referenceNo} for any communication with our office.`
+                            : body}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
 
-              {/* Fiscal year badge */}
-              <div className="px-5 pb-5 pt-1">
-                <div className="rounded-lg bg-[#2f4e40]/05 border border-[#2f4e40]/08 px-3.5 py-2.5 flex items-center justify-between">
-                  <span
-                    className="text-[0.72rem] font-bold uppercase tracking-[0.1em] text-[#2f4e40]/40"
-                    style={{ fontFamily: "var(--font-dm-sans)" }}
+                <p className={admissionCalloutClass}>
+                  Questions about your application? Call{" "}
+                  <a
+                    href={`tel:${siteInfo.contact.phone.replace(/\s/g, "")}`}
+                    className="inline-flex items-center gap-1 font-semibold text-(--brand-green) hover:text-(--brand-brown)"
                   >
-                    Fiscal Year
+                    <Phone className="h-3.5 w-3.5" />
+                    {siteInfo.contact.phone}
+                  </a>
+                </p>
+              </div>
+
+              {/* Receipt summary */}
+              <aside className="overflow-hidden border border-[rgba(47,78,64,0.12)] bg-white shadow-[0_12px_40px_rgba(47,78,64,0.06)] lg:sticky lg:top-20">
+                <div className="flex items-center gap-4 bg-(--brand-green) px-5 py-5">
+                  {student.photoURL ? (
+                    <Image
+                      src={student.photoURL}
+                      alt={student.fullName}
+                      width={52}
+                      height={52}
+                      className="h-[52px] w-[52px] shrink-0 object-cover ring-2 ring-white/20"
+                      unoptimized
+                    />
+                  ) : (
+                    <div className="flex h-[52px] w-[52px] shrink-0 items-center justify-center border border-white/20 bg-white/10">
+                      <User className="h-5 w-5 text-white/60" strokeWidth={1.5} />
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <p className="truncate font-[family-name:var(--font-dm-sans)] text-[0.95rem] font-semibold text-white">
+                      {student.fullName}
+                    </p>
+                    <p className="mt-0.5 font-[family-name:var(--font-dm-sans)] text-[0.75rem] text-white/55">
+                      {capitalize(student.status)} · {capitalize(student.shift)}{" "}
+                      shift
+                    </p>
+                  </div>
+                </div>
+
+                <div className="px-5 py-2">
+                  <SummaryRow label="Date of birth" value={student.dob} />
+                  <SummaryRow label="Phone" value={student.phone} />
+                  <SummaryRow label="Email" value={student.email} />
+                  <SummaryRow label="Address" value={student.address} />
+                  <SummaryRow
+                    label="Guardian"
+                    value={`${student.guardianName} · ${student.guardianPhone}`}
+                  />
+                  <SummaryRow
+                    label="Courses"
+                    value={student.courses.join(", ")}
+                  />
+                  <SummaryRow
+                    label="Shift"
+                    value={`${capitalize(student.shift)} · ${student.shiftTime}`}
+                  />
+                  <SummaryRow
+                    label="Submitted"
+                    value={formatDate(student.createdAt)}
+                  />
+                </div>
+
+                <div className="mx-5 mb-5 flex items-center justify-between border border-[rgba(47,78,64,0.1)] bg-[#faf9f6] px-4 py-3">
+                  <span className="font-[family-name:var(--font-dm-sans)] text-[0.68rem] font-bold uppercase tracking-[0.12em] text-[rgba(47,78,64,0.42)]">
+                    Fiscal year
                   </span>
-                  <span
-                    className="text-[0.82rem] font-semibold text-[#2f4e40]"
-                    style={{ fontFamily: "var(--font-dm-sans)" }}
-                  >
+                  <span className="font-[family-name:var(--font-dm-sans)] text-[0.88rem] font-semibold text-(--brand-green)">
                     {student.fiscalYear}
                   </span>
                 </div>
-              </div>
-            </aside>
+              </aside>
+            </div>
           </div>
         </div>
 
-        {/* ── Footer ── */}
-        <footer className="border-t border-[#2f4e40]/08 bg-white/60 mt-auto">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-2 text-[0.75rem] text-[#1a1a1a]/35">
-            <span style={{ fontFamily: "var(--font-dm-sans)" }}>
-              {siteInfo.company.name} &nbsp;·&nbsp; PAN {siteInfo.company.panNo}
+        <footer className="border-t border-[rgba(47,78,64,0.08)] bg-white/70">
+          <div
+            className={cn(
+              landingContainerClass,
+              "flex flex-col items-center justify-between gap-2 px-4 py-5 font-[family-name:var(--font-dm-sans)] text-[0.75rem] text-[rgba(47,78,64,0.4)] sm:flex-row sm:px-6",
+            )}
+          >
+            <span>
+              {siteInfo.company.name} · PAN {siteInfo.company.panNo}
             </span>
-            <span style={{ fontFamily: "var(--font-dm-sans)" }}>
-              {siteInfo.contact.address} &nbsp;·&nbsp; {siteInfo.contact.phone}
+            <span>
+              {siteInfo.contact.address} · {siteInfo.contact.phone}
             </span>
           </div>
         </footer>
       </main>
 
-      {/* ── Print modal (outside main to avoid stacking-context issues) ── */}
-      {showPrint && (
-        <PrintAdmissionForm
-          data={{
-            ...printData,
-          }}
-          onClose={() => setShowPrint(false)}
-        />
-      )}
+      {showPrint ? (
+        <PrintAdmissionForm data={{ ...printData }} onClose={() => setShowPrint(false)} />
+      ) : null}
     </>
   );
 }
