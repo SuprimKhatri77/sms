@@ -9,6 +9,12 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+import { AdminPageLayout } from "@/components/admin/admin-page-layout";
+import {
+  adminPrimaryButtonClass,
+  adminSecondaryButtonClass,
+} from "@/components/admin/admin-styles";
+
 interface Props {
   success: false;
   message?: string;
@@ -30,123 +36,69 @@ export default function InquiryError({ message, code, onRetry }: Props) {
   const hint = code ? (CODE_HINTS[code] ?? null) : null;
 
   return (
-    <div className="flex flex-col items-center justify-center w-full min-h-[480px] py-16 px-4">
-      {/* Decorative ring */}
-      <div className="relative mb-8">
-        <div
-          className="absolute inset-0 rounded-full blur-2xl opacity-20"
-          style={{ backgroundColor: "#e8552a", transform: "scale(1.4)" }}
-        />
-        <div
-          className="relative w-24 h-24 rounded-full flex items-center justify-center border-2"
-          style={{ backgroundColor: "#fff7f5", borderColor: "#e8552a33" }}
-        >
-          <AlertTriangle
-            className="w-10 h-10"
-            style={{ color: "#e8552a" }}
-            strokeWidth={1.5}
-          />
+    <AdminPageLayout
+      title="Inquiries"
+      description="Manage and respond to visitor submissions"
+      maxWidth="wide"
+    >
+      <div className="flex min-h-[50vh] flex-col items-center justify-center border border-[rgba(47,78,64,0.18)] bg-white px-6 py-16 text-center">
+        <div className="mb-6 flex h-14 w-14 items-center justify-center border border-[rgba(194,138,79,0.3)] bg-[rgba(194,138,79,0.08)]">
+          <AlertTriangle className="h-7 w-7 text-(--brand-brown)" strokeWidth={1.5} />
         </div>
-      </div>
 
-      {/* Code badge */}
-      {code && (
-        <span
-          className="inline-flex items-center gap-1.5 text-xs font-mono font-semibold tracking-widest uppercase px-3 py-1 rounded-full mb-4 border"
-          style={{
-            backgroundColor: "#e8552a11",
-            borderColor: "#e8552a33",
-            color: "#e8552a",
-          }}
-        >
-          ERR · {code}
-        </span>
-      )}
-
-      <h2
-        className="text-2xl font-bold text-center mb-2"
-        style={{ color: "#2d4a3e", fontFamily: "Georgia, serif" }}
-      >
-        Something went wrong
-      </h2>
-
-      <p
-        className="text-center max-w-md text-sm leading-relaxed mb-2"
-        style={{ color: "#6b9e6b" }}
-      >
-        {message ?? "An unexpected error occurred while fetching inquiries."}
-      </p>
-
-      {hint && (
-        <p
-          className="text-center max-w-sm text-xs leading-relaxed mb-6 px-4 py-2 rounded-xl border"
-          style={{
-            color: "#7d6b8a",
-            borderColor: "#7d6b8a22",
-            backgroundColor: "#7d6b8a0a",
-          }}
-        >
-          <Lightbulb /> {hint}
-        </p>
-      )}
-
-      {!hint && <div className="mb-6" />}
-
-      <div className="flex flex-wrap items-center justify-center gap-3">
-        {onRetry && (
-          <button
-            onClick={onRetry}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 hover:opacity-90 active:scale-95"
-            style={{ backgroundColor: "#e8552a", color: "#fff" }}
-          >
-            <RefreshCw className="w-4 h-4" />
-            Try Again
-          </button>
+        {code && (
+          <span className="mb-4 inline-flex items-center gap-1.5 border border-[rgba(194,138,79,0.3)] bg-[rgba(194,138,79,0.08)] px-3 py-1 font-mono text-[10px] font-semibold tracking-widest text-(--brand-brown) uppercase">
+            ERR · {code}
+          </span>
         )}
 
-        <button
-          onClick={() => router.back()}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 border hover:opacity-80 active:scale-95"
-          style={{
-            borderColor: "#d6cbb8",
-            color: "#2d4a3e",
-            backgroundColor: "#fff",
-          }}
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Go Back
-        </button>
+        <h2 className="font-[family-name:var(--font-lora)] text-xl font-bold text-(--brand-green)">
+          Something went wrong
+        </h2>
 
-        <button
-          onClick={() => router.push("/admin")}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 border hover:opacity-80 active:scale-95"
-          style={{
-            borderColor: "#d6cbb8",
-            color: "#2d4a3e",
-            backgroundColor: "#fff",
-          }}
-        >
-          <Home className="w-4 h-4" />
-          Dashboard
-        </button>
-      </div>
+        <p className="mt-2 max-w-md font-[family-name:var(--font-dm-sans)] text-sm leading-relaxed text-[rgba(47,78,64,0.55)]">
+          {message ?? "An unexpected error occurred while fetching inquiries."}
+        </p>
 
-      {/* Dev-only debug strip */}
-      {process.env.NODE_ENV === "development" && (code ?? message) && (
-        <div
-          className="mt-10 w-full max-w-lg rounded-xl p-4 font-mono text-xs leading-relaxed border"
-          style={{
-            backgroundColor: "#1a1a1a",
-            borderColor: "#333",
-            color: "#e8552a",
-          }}
-        >
-          <p className="text-gray-500 mb-1">{"// dev mode"}</p>
-          {code && <p>code: &quot;{code}&quot;</p>}
-          {message && <p>message: &quot;{message}&quot;</p>}
-          <p>success: false</p>
+        {hint && (
+          <p className="mt-4 max-w-sm border border-[rgba(47,78,64,0.12)] bg-[rgba(251,250,247,0.9)] px-4 py-2 font-[family-name:var(--font-dm-sans)] text-xs leading-relaxed text-[rgba(47,78,64,0.55)]">
+            <Lightbulb className="mr-1 inline h-3.5 w-3.5" />
+            {hint}
+          </p>
+        )}
+
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          {onRetry && (
+            <button onClick={onRetry} className={adminPrimaryButtonClass}>
+              <RefreshCw className="h-4 w-4" />
+              Try Again
+            </button>
+          )}
+          <button
+            onClick={() => router.back()}
+            className={adminSecondaryButtonClass}
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Go Back
+          </button>
+          <button
+            onClick={() => router.push("/admin")}
+            className={adminSecondaryButtonClass}
+          >
+            <Home className="h-4 w-4" />
+            Dashboard
+          </button>
         </div>
-      )}
-    </div>
+
+        {process.env.NODE_ENV === "development" && (code ?? message) && (
+          <div className="mt-10 w-full max-w-lg border border-[#333] bg-[#1a1a1a] p-4 text-left font-mono text-xs leading-relaxed text-(--brand-brown)">
+            <p className="mb-1 text-gray-500">{"// dev mode"}</p>
+            {code && <p>code: &quot;{code}&quot;</p>}
+            {message && <p>message: &quot;{message}&quot;</p>}
+            <p>success: false</p>
+          </div>
+        )}
+      </div>
+    </AdminPageLayout>
   );
 }

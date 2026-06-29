@@ -11,30 +11,48 @@ import {
 } from "recharts";
 import type { MonthlyAdmission } from "../types";
 import { CHART_COLORS } from "../types";
+import { AnalyticsPanel } from "./AnalyticsPanel";
+import { AnalyticsEmptyState } from "./AnalyticsEmptyState";
+import { hasAdmissionData } from "./analytics-empty";
+import { UserPlus } from "lucide-react";
+import {
+  ANALYTICS_GRID_STROKE,
+  ANALYTICS_TICK_FILL,
+  CHART_TOOLTIP_LABEL_STYLE,
+  CHART_TOOLTIP_STYLE,
+} from "./analytics-styles";
 
 interface AdmissionsChartProps {
   data: MonthlyAdmission[];
+  embedded?: boolean;
 }
 
-export function AdmissionsChart({ data }: AdmissionsChartProps) {
+export function AdmissionsChart({
+  data,
+  embedded = false,
+}: AdmissionsChartProps) {
   const total = data.reduce((sum, item) => sum + item.count, 0);
+  const isEmpty = !hasAdmissionData(data);
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200/70 bg-white p-5 shadow-sm">
-      <div className="mb-5 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h3 className="text-[0.95rem] font-semibold text-slate-800">
-            Monthly Admissions
-          </h3>
-          <p className="text-[0.75rem] text-slate-400">
-            New student enrollments per month
-          </p>
-        </div>
-        <span className="text-[0.8rem] font-medium text-slate-500">
-          Total: {total}
+    <AnalyticsPanel
+      embedded={embedded}
+      title="Monthly Admissions"
+      description="New student enrollments per month"
+      action={
+        isEmpty ? undefined : (
+        <span className="font-[family-name:var(--font-dm-sans)] text-xs font-semibold uppercase tracking-[0.08em] text-[rgba(47,78,64,0.55)]">
+          Total {total}
         </span>
-      </div>
-
+        )
+      }
+    >
+      {isEmpty ? (
+        <AnalyticsEmptyState
+          icon={UserPlus}
+          message="No admissions recorded this fiscal year. Monthly enrollments will show here as students join."
+        />
+      ) : (
       <div className="h-[280px] w-full min-w-0">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
@@ -43,57 +61,52 @@ export function AdmissionsChart({ data }: AdmissionsChartProps) {
           >
             <CartesianGrid
               strokeDasharray="3 3"
-              stroke="#f1f5f9"
+              stroke={ANALYTICS_GRID_STROKE}
               vertical={false}
             />
             <XAxis
               dataKey="month"
               tickFormatter={(value: string) => value.slice(0, 3)}
-              tick={{ fontSize: 12, fill: "#94a3b8" }}
+              tick={{ fontSize: 12, fill: ANALYTICS_TICK_FILL }}
               axisLine={false}
               tickLine={false}
             />
             <YAxis
-              tick={{ fontSize: 12, fill: "#94a3b8" }}
+              tick={{ fontSize: 12, fill: ANALYTICS_TICK_FILL }}
               axisLine={false}
               tickLine={false}
             />
             <Tooltip
               formatter={(value) => [Number(value), "Admissions"]}
-              labelStyle={{ color: "#334155", fontWeight: 600, fontSize: 13 }}
-              contentStyle={{
-                borderRadius: 10,
-                border: "1px solid #e2e8f0",
-                boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
-                fontSize: 13,
-              }}
+              labelStyle={CHART_TOOLTIP_LABEL_STYLE}
+              contentStyle={CHART_TOOLTIP_STYLE}
             />
             <Bar
               dataKey="count"
               fill={CHART_COLORS.primary}
-              radius={[6, 6, 0, 0]}
-              maxBarSize={48}
+              radius={[0, 0, 0, 0]}
+              maxBarSize={40}
             />
           </BarChart>
         </ResponsiveContainer>
       </div>
-    </div>
+      )}
+    </AnalyticsPanel>
   );
 }
 
-// ─── Skeleton ─────────────────────────────────────────────────────────────────
-
-export function AdmissionsChartSkeleton() {
+export function AdmissionsChartSkeleton({
+  embedded = false,
+}: {
+  embedded?: boolean;
+}) {
   return (
-    <div className="rounded-xl border border-slate-200/70 bg-white p-5">
-      <div className="mb-5 flex items-center justify-between">
-        <div>
-          <div className="h-4 w-36 animate-pulse rounded bg-slate-100" />
-          <div className="mt-1.5 h-3 w-48 animate-pulse rounded bg-slate-100" />
-        </div>
-        <div className="h-4 w-16 animate-pulse rounded bg-slate-100" />
-      </div>
-      <div className="h-[280px] w-full animate-pulse rounded-lg bg-slate-50" />
-    </div>
+    <AnalyticsPanel
+      embedded={embedded}
+      title="Monthly Admissions"
+      description="New student enrollments per month"
+    >
+      <div className="h-[280px] w-full animate-pulse bg-[rgba(47,78,64,0.04)]" />
+    </AnalyticsPanel>
   );
 }

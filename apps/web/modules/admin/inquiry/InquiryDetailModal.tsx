@@ -12,6 +12,10 @@ import {
 } from "lucide-react";
 import { useEffect } from "react";
 import { Inquiry } from "./Inquiry";
+import {
+  adminPrimaryButtonClass,
+  adminSecondaryButtonClass,
+} from "@/components/admin/admin-styles";
 
 interface Props {
   inquiry: Inquiry | null;
@@ -26,11 +30,11 @@ interface SourceColor {
 }
 
 const SOURCE_COLORS: Record<string, SourceColor> = {
-  website: { bg: "#2d4a3e11", text: "#2d4a3e", border: "#2d4a3e22" },
-  facebook: { bg: "#6b9e6b11", text: "#4a7a60", border: "#6b9e6b33" },
-  instagram: { bg: "#7d6b8a11", text: "#7d6b8a", border: "#7d6b8a33" },
-  referral: { bg: "#e8552a11", text: "#e8552a", border: "#e8552a33" },
-  other: { bg: "#d6cbb833", text: "#7d6b8a", border: "#d6cbb8" },
+  website: { bg: "rgba(47,78,64,0.08)", text: "#2f4e40", border: "rgba(47,78,64,0.2)" },
+  facebook: { bg: "rgba(58,90,73,0.08)", text: "#3a5a49", border: "rgba(58,90,73,0.2)" },
+  instagram: { bg: "rgba(194,138,79,0.1)", text: "#a06d3a", border: "rgba(194,138,79,0.25)" },
+  referral: { bg: "rgba(194,138,79,0.14)", text: "#8f5f31", border: "rgba(194,138,79,0.3)" },
+  other: { bg: "rgba(251,250,247,0.9)", text: "#7a5a38", border: "rgba(47,78,64,0.15)" },
 };
 
 function formatDate(iso: string): string {
@@ -72,54 +76,29 @@ export default function InquiryDetailModal({
 
   return (
     <>
-      {/* Backdrop */}
       <div
-        className="fixed inset-0 z-40 transition-opacity duration-300"
-        style={{
-          backgroundColor: "rgba(45,74,62,0.45)",
-          backdropFilter: "blur(4px)",
-        }}
+        className="fixed inset-0 z-40 bg-[rgba(26,26,26,0.45)] backdrop-blur-[2px]"
         onClick={onClose}
       />
 
-      {/* Slide-in panel */}
-      <div
-        className="fixed inset-y-0 right-0 z-50 w-full sm:w-[480px] shadow-2xl flex flex-col"
-        style={{ backgroundColor: "#faf9f7" }}
-      >
-        {/* Header */}
-        <div
-          className="flex items-center justify-between px-6 py-5 border-b"
-          style={{ borderColor: "#d6cbb8", backgroundColor: "#fff" }}
-        >
+      <div className="fixed inset-y-0 right-0 z-50 flex w-full flex-col border-l border-[rgba(47,78,64,0.18)] bg-(--brand-cream) shadow-[0_0_40px_rgba(0,0,0,0.12)] sm:w-[480px]">
+        <div className="flex items-center justify-between border-b border-[rgba(47,78,64,0.12)] bg-white px-6 py-5">
           <div className="flex items-center gap-3">
-            <div
-              className="w-10 h-10 rounded-full flex items-center justify-center text-base font-bold"
-              style={{ backgroundColor: "#2d4a3e", color: "#fff" }}
-            >
+            <div className="flex h-10 w-10 items-center justify-center bg-(--brand-green) font-[family-name:var(--font-dm-sans)] text-base font-bold text-white">
               {inquiry.fullName[0]?.toUpperCase() ?? "?"}
             </div>
             <div>
-              <h2
-                className="text-base font-bold leading-tight"
-                style={{ color: "#2d4a3e", fontFamily: "Georgia, serif" }}
-              >
+              <h2 className="font-[family-name:var(--font-lora)] text-base font-bold leading-tight text-(--brand-green)">
                 {inquiry.fullName}
               </h2>
-              <div className="flex items-center gap-1.5 mt-0.5">
+              <div className="mt-0.5 flex items-center gap-1.5">
                 {inquiry.isRead ? (
-                  <span
-                    className="flex items-center gap-1 text-xs"
-                    style={{ color: "#6b9e6b" }}
-                  >
-                    <CheckCircle2 className="w-3 h-3" /> Read
+                  <span className="flex items-center gap-1 font-[family-name:var(--font-dm-sans)] text-xs text-[#3a5a49]">
+                    <CheckCircle2 className="h-3 w-3" /> Read
                   </span>
                 ) : (
-                  <span
-                    className="flex items-center gap-1 text-xs font-semibold"
-                    style={{ color: "#e8552a" }}
-                  >
-                    <Clock className="w-3 h-3" /> Unread
+                  <span className="flex items-center gap-1 font-[family-name:var(--font-dm-sans)] text-xs font-semibold text-(--brand-brown)">
+                    <Clock className="h-3 w-3" /> Unread
                   </span>
                 )}
               </div>
@@ -128,23 +107,20 @@ export default function InquiryDetailModal({
 
           <button
             onClick={onClose}
-            className="w-9 h-9 rounded-xl flex items-center justify-center transition-colors hover:opacity-70"
-            style={{ backgroundColor: "#d6cbb8" }}
+            className="flex h-9 w-9 items-center justify-center border border-[rgba(47,78,64,0.18)] transition-colors hover:bg-[rgba(47,78,64,0.04)]"
           >
-            <X className="w-4 h-4" style={{ color: "#2d4a3e" }} />
+            <X className="h-4 w-4 text-(--brand-green)" />
           </button>
         </div>
 
-        {/* Scrollable body */}
-        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-5">
-          {/* Source */}
+        <div className="flex-1 space-y-5 overflow-y-auto px-6 py-6">
           <div className="flex items-center gap-2">
-            <Globe className="w-3.5 h-3.5" style={{ color: "#7d6b8a" }} />
-            <span className="text-xs font-medium" style={{ color: "#7d6b8a" }}>
+            <Globe className="h-3.5 w-3.5 text-[rgba(47,78,64,0.45)]" />
+            <span className="font-[family-name:var(--font-dm-sans)] text-xs font-medium text-[rgba(47,78,64,0.45)]">
               Source
             </span>
             <span
-              className="ml-auto text-xs font-semibold px-3 py-1 rounded-full border capitalize"
+              className="ml-auto border px-3 py-1 font-[family-name:var(--font-dm-sans)] text-xs font-semibold capitalize"
               style={{
                 backgroundColor: sc.bg,
                 color: sc.text,
@@ -155,35 +131,24 @@ export default function InquiryDetailModal({
             </span>
           </div>
 
-          <hr style={{ borderColor: "#d6cbb8" }} />
+          <hr className="border-[rgba(47,78,64,0.12)]" />
 
-          {/* Contact details */}
           <div className="space-y-3">
-            <p
-              className="text-xs font-semibold uppercase tracking-wider"
-              style={{ color: "#7d6b8a" }}
-            >
+            <p className="font-[family-name:var(--font-dm-sans)] text-[10px] font-semibold tracking-[0.12em] text-[rgba(47,78,64,0.45)] uppercase">
               Contact Details
             </p>
-            <div
-              className="rounded-2xl p-4 space-y-3 border"
-              style={{ backgroundColor: "#fff", borderColor: "#d6cbb8" }}
-            >
+            <div className="space-y-3 border border-[rgba(47,78,64,0.12)] bg-white p-4">
               <div className="flex items-center gap-3">
-                <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                  style={{ backgroundColor: "#2d4a3e11" }}
-                >
-                  <Phone className="w-3.5 h-3.5" style={{ color: "#2d4a3e" }} />
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center border border-[rgba(47,78,64,0.12)] bg-[rgba(47,78,64,0.04)]">
+                  <Phone className="h-3.5 w-3.5 text-(--brand-green)" />
                 </div>
                 <div>
-                  <p className="text-xs" style={{ color: "#7d6b8a" }}>
+                  <p className="font-[family-name:var(--font-dm-sans)] text-xs text-[rgba(47,78,64,0.45)]">
                     Phone
                   </p>
                   <a
                     href={`tel:${inquiry.phone}`}
-                    className="text-sm font-semibold hover:underline"
-                    style={{ color: "#2d4a3e" }}
+                    className="font-[family-name:var(--font-dm-sans)] text-sm font-semibold text-(--brand-green) hover:underline"
                   >
                     {inquiry.phone}
                   </a>
@@ -192,23 +157,16 @@ export default function InquiryDetailModal({
 
               {inquiry.email && (
                 <div className="flex items-center gap-3">
-                  <div
-                    className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                    style={{ backgroundColor: "#6b9e6b11" }}
-                  >
-                    <Mail
-                      className="w-3.5 h-3.5"
-                      style={{ color: "#6b9e6b" }}
-                    />
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center border border-[rgba(47,78,64,0.12)] bg-[rgba(47,78,64,0.04)]">
+                    <Mail className="h-3.5 w-3.5 text-(--brand-green)" />
                   </div>
                   <div>
-                    <p className="text-xs" style={{ color: "#7d6b8a" }}>
+                    <p className="font-[family-name:var(--font-dm-sans)] text-xs text-[rgba(47,78,64,0.45)]">
                       Email
                     </p>
                     <a
                       href={`mailto:${inquiry.email}`}
-                      className="text-sm font-semibold hover:underline"
-                      style={{ color: "#2d4a3e" }}
+                      className="font-[family-name:var(--font-dm-sans)] text-sm font-semibold text-(--brand-green) hover:underline"
                     >
                       {inquiry.email}
                     </a>
@@ -218,72 +176,46 @@ export default function InquiryDetailModal({
             </div>
           </div>
 
-          {/* Message */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <MessageSquare
-                className="w-3.5 h-3.5"
-                style={{ color: "#7d6b8a" }}
-              />
-              <p
-                className="text-xs font-semibold uppercase tracking-wider"
-                style={{ color: "#7d6b8a" }}
-              >
+              <MessageSquare className="h-3.5 w-3.5 text-[rgba(47,78,64,0.45)]" />
+              <p className="font-[family-name:var(--font-dm-sans)] text-[10px] font-semibold tracking-[0.12em] text-[rgba(47,78,64,0.45)] uppercase">
                 Message
               </p>
             </div>
-            <div
-              className="rounded-2xl p-5 border leading-relaxed text-sm"
-              style={{
-                backgroundColor: "#fff",
-                borderColor: "#d6cbb8",
-                color: "#2d4a3e",
-                whiteSpace: "pre-wrap",
-              }}
-            >
+            <div className="border border-[rgba(47,78,64,0.12)] bg-white p-5 font-[family-name:var(--font-dm-sans)] text-sm leading-relaxed whitespace-pre-wrap text-(--brand-ink)">
               {inquiry.message}
             </div>
           </div>
 
-          {/* Timestamp */}
           <div className="flex items-center gap-2 pt-1">
-            <Calendar className="w-3.5 h-3.5" style={{ color: "#7d6b8a" }} />
-            <p className="text-xs" style={{ color: "#7d6b8a" }}>
+            <Calendar className="h-3.5 w-3.5 text-[rgba(47,78,64,0.45)]" />
+            <p className="font-[family-name:var(--font-dm-sans)] text-xs text-[rgba(47,78,64,0.45)]">
               Received: {formatDate(String(inquiry.createdAt))}
             </p>
           </div>
 
-          {/* ID reference */}
-          <div
-            className="rounded-xl px-4 py-2.5 border"
-            style={{ backgroundColor: "#f4f1ec", borderColor: "#d6cbb8" }}
-          >
-            <p className="text-xs font-mono" style={{ color: "#7d6b8a" }}>
+          <div className="border border-[rgba(47,78,64,0.12)] bg-[rgba(251,250,247,0.9)] px-4 py-2.5">
+            <p className="font-mono text-xs text-[rgba(47,78,64,0.45)]">
               ID: {inquiry.id}
             </p>
           </div>
         </div>
 
-        {/* Footer */}
-        <div
-          className="px-6 py-4 border-t flex gap-3"
-          style={{ borderColor: "#d6cbb8", backgroundColor: "#fff" }}
-        >
+        <div className="flex gap-3 border-t border-[rgba(47,78,64,0.12)] bg-white px-6 py-4">
           {!inquiry.isRead && (
             <button
               onClick={() => {
                 onMarkRead(inquiry.id);
               }}
-              className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 hover:opacity-90 active:scale-95"
-              style={{ backgroundColor: "#2d4a3e", color: "#fff" }}
+              className={`${adminPrimaryButtonClass} flex-1 justify-center`}
             >
               Mark as Read
             </button>
           )}
           <button
             onClick={onClose}
-            className="flex-1 py-2.5 rounded-xl text-sm font-semibold border transition-all duration-200 hover:opacity-80"
-            style={{ borderColor: "#d6cbb8", color: "#2d4a3e" }}
+            className={`${adminSecondaryButtonClass} flex-1 justify-center`}
           >
             Close
           </button>

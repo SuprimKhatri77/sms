@@ -79,11 +79,22 @@ func (q *Queries) DeleteInquiry(ctx context.Context, id pgtype.UUID) (pgconn.Com
 }
 
 const getInquiriesCount = `-- name: GetInquiriesCount :one
-SELECT COUNT(*)::INTEGER AS count FROM inquiries
+SELECT COUNT(*)::INTEGER AS count FROM inquiries WHERE ($1::TEXT IS NULL OR (
+    full_name ILIKE '%' || $1::TEXT || '%'
+    OR phone ILIKE '%' || $1::TEXT || '%'
+    OR email ILIKE '%' || $1::TEXT || '%'
+)) AND ($2::BOOLEAN IS NULL OR is_read = $2::BOOLEAN)
+AND ($3::TEXT IS NULL OR source = $3::TEXT)
 `
 
-func (q *Queries) GetInquiriesCount(ctx context.Context) (int32, error) {
-	row := q.db.QueryRow(ctx, getInquiriesCount)
+type GetInquiriesCountParams struct {
+	Search pgtype.Text `json:"search"`
+	IsRead pgtype.Bool `json:"isRead"`
+	Source pgtype.Text `json:"source"`
+}
+
+func (q *Queries) GetInquiriesCount(ctx context.Context, arg GetInquiriesCountParams) (int32, error) {
+	row := q.db.QueryRow(ctx, getInquiriesCount, arg.Search, arg.IsRead, arg.Source)
 	var count int32
 	err := row.Scan(&count)
 	return count, err
@@ -110,16 +121,32 @@ func (q *Queries) GetInquiryByID(ctx context.Context, id pgtype.UUID) (Inquiry, 
 }
 
 const listInquiries = `-- name: ListInquiries :many
-SELECT id, full_name, phone, email, message, source, is_read, created_at FROM inquiries ORDER BY created_at DESC LIMIT $1 OFFSET $2
+SELECT id, full_name, phone, email, message, source, is_read, created_at FROM inquiries WHERE ($3::TEXT IS NULL OR (
+    full_name ILIKE '%' || $3::TEXT || '%'
+    OR phone ILIKE '%' || $3::TEXT || '%'
+    OR email ILIKE '%' || $3::TEXT || '%'
+)) AND ($4::BOOLEAN IS NULL OR is_read = $4::BOOLEAN)
+AND ($5::TEXT IS NULL OR source = $5::TEXT)
+ORDER BY created_at DESC
+LIMIT $1 OFFSET $2
 `
 
 type ListInquiriesParams struct {
-	Limit  int32 `json:"limit"`
-	Offset int32 `json:"offset"`
+	Limit  int32       `json:"limit"`
+	Offset int32       `json:"offset"`
+	Search pgtype.Text `json:"search"`
+	IsRead pgtype.Bool `json:"isRead"`
+	Source pgtype.Text `json:"source"`
 }
 
 func (q *Queries) ListInquiries(ctx context.Context, arg ListInquiriesParams) ([]Inquiry, error) {
-	rows, err := q.db.Query(ctx, listInquiries, arg.Limit, arg.Offset)
+	rows, err := q.db.Query(ctx, listInquiries,
+		arg.Limit,
+		arg.Offset,
+		arg.Search,
+		arg.IsRead,
+		arg.Source,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -140,6 +167,30 @@ func (q *Queries) ListInquiries(ctx context.Context, arg ListInquiriesParams) ([
 			return nil, err
 		}
 		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listInquirySources = `-- name: ListInquirySources :many
+SELECT DISTINCT source FROM inquiries ORDER BY source
+`
+
+func (q *Queries) ListInquirySources(ctx context.Context) ([]string, error) {
+	rows, err := q.db.Query(ctx, listInquirySources)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var source string
+		if err := rows.Scan(&source); err != nil {
+			return nil, err
+		}
+		items = append(items, source)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err

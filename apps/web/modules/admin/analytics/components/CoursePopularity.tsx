@@ -11,30 +11,46 @@ import {
 } from "recharts";
 import type { CourseEntry } from "../types";
 import { CHART_COLORS } from "../types";
+import { AnalyticsPanel } from "./AnalyticsPanel";
+import { AnalyticsEmptyState } from "./AnalyticsEmptyState";
+import { hasCourseData } from "./analytics-empty";
+import { BookOpen } from "lucide-react";
+import {
+  ANALYTICS_TICK_FILL,
+  CHART_TOOLTIP_STYLE,
+} from "./analytics-styles";
 
 interface CoursePopularityProps {
   data: CourseEntry[];
+  embedded?: boolean;
 }
 
 const BAR_COLORS = [
   CHART_COLORS.primary,
-  "#3b82f6", // blue-500
-  "#60a5fa", // blue-400
-  "#93c5fd", // blue-300
+  CHART_COLORS.green,
+  CHART_COLORS.amber,
+  "rgba(47,78,64,0.35)",
 ];
 
-export function CoursePopularity({ data }: CoursePopularityProps) {
-  const maxCount = Math.max(...data.map((d) => d.count));
+export function CoursePopularity({
+  data,
+  embedded = false,
+}: CoursePopularityProps) {
+  const isEmpty = !hasCourseData(data);
+  const maxCount = isEmpty ? 0 : Math.max(...data.map((d) => d.count));
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200/70 bg-white p-5 shadow-sm">
-      <div className="mb-5">
-        <h3 className="text-[0.95rem] font-semibold text-slate-800">
-          Course Popularity
-        </h3>
-        <p className="text-[0.75rem] text-slate-400">Most enrolled courses</p>
-      </div>
-
+    <AnalyticsPanel
+      embedded={embedded}
+      title="Course Popularity"
+      description="Most enrolled courses"
+    >
+      {isEmpty ? (
+        <AnalyticsEmptyState
+          icon={BookOpen}
+          message="No course enrollments yet. The most popular programs will rank here as students enroll."
+        />
+      ) : (
       <div className="h-[240px] w-full min-w-0">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
@@ -44,7 +60,7 @@ export function CoursePopularity({ data }: CoursePopularityProps) {
           >
             <XAxis
               type="number"
-              tick={{ fontSize: 12, fill: "#94a3b8" }}
+              tick={{ fontSize: 12, fill: ANALYTICS_TICK_FILL }}
               axisLine={false}
               tickLine={false}
               domain={[0, maxCount + 10]}
@@ -52,21 +68,16 @@ export function CoursePopularity({ data }: CoursePopularityProps) {
             <YAxis
               type="category"
               dataKey="course"
-              tick={{ fontSize: 12, fill: "#64748b" }}
+              tick={{ fontSize: 12, fill: ANALYTICS_TICK_FILL }}
               axisLine={false}
               tickLine={false}
               width={120}
             />
             <Tooltip
               formatter={(value) => [Number(value), "Students"]}
-              contentStyle={{
-                borderRadius: 10,
-                border: "1px solid #e2e8f0",
-                boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
-                fontSize: 13,
-              }}
+              contentStyle={CHART_TOOLTIP_STYLE}
             />
-            <Bar dataKey="count" radius={[0, 6, 6, 0]} maxBarSize={32}>
+            <Bar dataKey="count" radius={[0, 0, 0, 0]} maxBarSize={28}>
               {data.map((_, index) => (
                 <Cell
                   key={index}
@@ -77,30 +88,33 @@ export function CoursePopularity({ data }: CoursePopularityProps) {
           </BarChart>
         </ResponsiveContainer>
       </div>
-    </div>
+      )}
+    </AnalyticsPanel>
   );
 }
 
-// ─── Skeleton ─────────────────────────────────────────────────────────────────
-
-export function CoursePopularitySkeleton() {
+export function CoursePopularitySkeleton({
+  embedded = false,
+}: {
+  embedded?: boolean;
+}) {
   return (
-    <div className="rounded-xl border border-slate-200/70 bg-white p-5">
-      <div className="mb-5">
-        <div className="h-4 w-32 animate-pulse rounded bg-slate-100" />
-        <div className="mt-1.5 h-3 w-36 animate-pulse rounded bg-slate-100" />
-      </div>
-      <div className="space-y-4">
+    <AnalyticsPanel
+      embedded={embedded}
+      title="Course Popularity"
+      description="Most enrolled courses"
+    >
+      <div className="space-y-3">
         {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="flex items-center gap-3">
-            <div className="h-3 w-24 animate-pulse rounded bg-slate-100" />
+            <div className="h-3 w-24 animate-pulse bg-[rgba(47,78,64,0.08)]" />
             <div
-              className="h-7 animate-pulse rounded bg-slate-50"
+              className="h-7 animate-pulse bg-[rgba(47,78,64,0.04)]"
               style={{ width: `${80 - i * 15}%` }}
             />
           </div>
         ))}
       </div>
-    </div>
+    </AnalyticsPanel>
   );
 }

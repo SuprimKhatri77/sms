@@ -111,6 +111,7 @@ func GetAnalytics(queries repository.AnalyticsRepository) gin.HandlerFunc {
 		monthlyAdmissionsRes.data = utils.EnsureSlice(monthlyAdmissionsRes.data)
 		sourceBreakdownRes.data = utils.EnsureSlice(sourceBreakdownRes.data)
 		monthlyInquiriesRes.data = utils.EnsureSlice(monthlyInquiriesRes.data)
+		coursePopularityRes.data = utils.EnsureSlice(coursePopularityRes.data)
 
 		c.JSON(http.StatusOK, types.APIResponse{
 			Success: true,

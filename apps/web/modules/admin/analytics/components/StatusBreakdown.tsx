@@ -3,9 +3,15 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import type { StatusBreakdownData } from "../types";
 import { STATUS_COLORS } from "../types";
+import { AnalyticsPanel } from "./AnalyticsPanel";
+import { AnalyticsEmptyState } from "./AnalyticsEmptyState";
+import { hasStatusData } from "./analytics-empty";
+import { ClipboardList } from "lucide-react";
+import { CHART_TOOLTIP_STYLE } from "./analytics-styles";
 
 interface StatusBreakdownProps {
   data: StatusBreakdownData;
+  embedded?: boolean;
 }
 
 interface StatusSlice {
@@ -14,8 +20,12 @@ interface StatusSlice {
   color: string;
 }
 
-export function StatusBreakdown({ data }: StatusBreakdownProps) {
+export function StatusBreakdown({
+  data,
+  embedded = false,
+}: StatusBreakdownProps) {
   const total = data.active + data.completed + data.pending + data.rejected;
+  const isEmpty = !hasStatusData(data);
 
   const slices: StatusSlice[] = [
     { name: "Active", value: data.active, color: STATUS_COLORS.active },
@@ -29,18 +39,20 @@ export function StatusBreakdown({ data }: StatusBreakdownProps) {
   ];
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200/70 bg-white p-5 shadow-sm">
-      <div className="mb-4">
-        <h3 className="text-[0.95rem] font-semibold text-slate-800">
-          Application Status
-        </h3>
-        <p className="text-[0.75rem] text-slate-400">
-          {total} total applications
-        </p>
-      </div>
-
-      <div className="flex flex-col items-center gap-4 sm:flex-row">
-        {/* Donut Chart */}
+    <AnalyticsPanel
+      embedded={embedded}
+      title="Application Status"
+      description={
+        isEmpty ? "Student status overview" : `${total} total applications`
+      }
+    >
+      {isEmpty ? (
+        <AnalyticsEmptyState
+          icon={ClipboardList}
+          message="No students enrolled yet. Application status counts will appear here once students are added."
+        />
+      ) : (
+      <div className="flex flex-col items-center gap-6 sm:flex-row">
         <div className="relative h-[180px] w-[180px] shrink-0">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
@@ -50,7 +62,7 @@ export function StatusBreakdown({ data }: StatusBreakdownProps) {
                 cy="50%"
                 innerRadius={52}
                 outerRadius={80}
-                paddingAngle={3}
+                paddingAngle={2}
                 dataKey="value"
                 nameKey="name"
                 stroke="none"
@@ -61,26 +73,23 @@ export function StatusBreakdown({ data }: StatusBreakdownProps) {
               </Pie>
               <Tooltip
                 formatter={(value) => [Number(value), "Students"]}
-                contentStyle={{
-                  borderRadius: 10,
-                  border: "1px solid #e2e8f0",
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
-                  fontSize: 13,
-                }}
+                contentStyle={CHART_TOOLTIP_STYLE}
               />
             </PieChart>
           </ResponsiveContainer>
-          {/* Center label — z-0 so recharts tooltip (z-10) renders above */}
           <div className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center">
             <div className="text-center">
-              <p className="text-xl font-bold text-slate-800">{total}</p>
-              <p className="text-[0.65rem] text-slate-400">Total</p>
+              <p className="font-[family-name:var(--font-lora)] text-xl font-bold text-(--brand-ink)">
+                {total}
+              </p>
+              <p className="font-[family-name:var(--font-dm-sans)] text-[10px] uppercase tracking-[0.1em] text-[rgba(47,78,64,0.45)]">
+                Total
+              </p>
             </div>
           </div>
         </div>
 
-        {/* Legend */}
-        <div className="flex-1 space-y-3">
+        <div className="w-full flex-1 divide-y divide-[rgba(47,78,64,0.08)] border border-[rgba(47,78,64,0.12)]">
           {slices.map((slice) => {
             const percentage =
               total > 0 ? ((slice.value / total) * 100).toFixed(0) : "0";
@@ -88,22 +97,22 @@ export function StatusBreakdown({ data }: StatusBreakdownProps) {
             return (
               <div
                 key={slice.name}
-                className="flex items-center justify-between gap-3"
+                className="flex items-center justify-between gap-3 px-3 py-2.5"
               >
                 <div className="flex items-center gap-2.5">
                   <div
-                    className="h-3 w-3 shrink-0 rounded-full"
+                    className="h-2.5 w-2.5 shrink-0"
                     style={{ backgroundColor: slice.color }}
                   />
-                  <span className="text-[0.82rem] text-slate-600">
+                  <span className="font-[family-name:var(--font-dm-sans)] text-sm text-[rgba(47,78,64,0.7)]">
                     {slice.name}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[0.82rem] font-semibold text-slate-800">
+                  <span className="font-[family-name:var(--font-dm-sans)] text-sm font-semibold text-(--brand-ink)">
                     {slice.value}
                   </span>
-                  <span className="text-[0.72rem] text-slate-400">
+                  <span className="w-8 text-right font-[family-name:var(--font-dm-sans)] text-xs text-[rgba(47,78,64,0.45)]">
                     {percentage}%
                   </span>
                 </div>
@@ -112,33 +121,33 @@ export function StatusBreakdown({ data }: StatusBreakdownProps) {
           })}
         </div>
       </div>
-    </div>
+      )}
+    </AnalyticsPanel>
   );
 }
 
-// ─── Skeleton ─────────────────────────────────────────────────────────────────
-
-export function StatusBreakdownSkeleton() {
+export function StatusBreakdownSkeleton({
+  embedded = false,
+}: {
+  embedded?: boolean;
+}) {
   return (
-    <div className="rounded-xl border border-slate-200/70 bg-white p-5">
-      <div className="mb-4">
-        <div className="h-4 w-32 animate-pulse rounded bg-slate-100" />
-        <div className="mt-1.5 h-3 w-36 animate-pulse rounded bg-slate-100" />
-      </div>
-      <div className="flex flex-col items-center gap-4 sm:flex-row">
-        <div className="h-[180px] w-[180px] animate-pulse rounded-full bg-slate-50" />
-        <div className="flex-1 space-y-3">
+    <AnalyticsPanel
+      embedded={embedded}
+      title="Application Status"
+      description="Loading application breakdown"
+    >
+      <div className="flex flex-col items-center gap-6 sm:flex-row">
+        <div className="h-[180px] w-[180px] animate-pulse bg-[rgba(47,78,64,0.04)]" />
+        <div className="w-full flex-1 space-y-2">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="h-3 w-3 animate-pulse rounded-full bg-slate-100" />
-                <div className="h-3 w-16 animate-pulse rounded bg-slate-100" />
-              </div>
-              <div className="h-3 w-12 animate-pulse rounded bg-slate-100" />
-            </div>
+            <div
+              key={i}
+              className="h-10 animate-pulse border border-[rgba(47,78,64,0.08)] bg-[rgba(47,78,64,0.03)]"
+            />
           ))}
         </div>
       </div>
-    </div>
+    </AnalyticsPanel>
   );
 }

@@ -336,6 +336,15 @@ export const inquiriesListResponseSchema = z.discriminatedUnion("success", [
       ),
       unreadCount: z.number(),
       readCount: z.number(),
+      sources: z.array(
+        z.enum([
+          "facebook",
+          "tiktok",
+          "instagram",
+          "referral",
+          "inperson",
+        ]),
+      ),
     }),
     meta: z.object({
       total: z.number(),

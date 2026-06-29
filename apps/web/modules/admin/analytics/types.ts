@@ -70,27 +70,27 @@ export const PAISA_TO_RUPEES = 100;
 
 /** Colors used across analytics charts and cards */
 export const CHART_COLORS = {
-  primary: "#2563eb", // blue-600
-  primaryLight: "#dbeafe", // blue-100
-  green: "#22c55e", // green-500
-  amber: "#f59e0b", // amber-500
-  red: "#ef4444", // red-500
-  slate: "#64748b", // slate-500
+  primary: "#2f4e40",
+  primaryLight: "rgba(47,78,64,0.12)",
+  green: "#3a5a49",
+  amber: "#c28a4f",
+  red: "#9a3412",
+  slate: "rgba(47,78,64,0.45)",
 } as const;
 
 export const SOURCE_COLORS: Record<string, string> = {
-  facebook: "#2563eb",
-  instagram: "#D21F3C",
-  tiktok: "#0f172a",
-  referral: "#22c55e",
-  inperson: "#f59e0b",
+  facebook: "#2f4e40",
+  instagram: "#9a3412",
+  tiktok: "#1a1a1a",
+  referral: "#3a5a49",
+  inperson: "#c28a4f",
 } as const;
 
 export const STATUS_COLORS: Record<string, string> = {
-  active: "#22c55e",
-  completed: "#2563eb",
-  pending: "#f59e0b",
-  rejected: "#ef4444",
+  active: "#3a5a49",
+  completed: "#2f4e40",
+  pending: "#c28a4f",
+  rejected: "#9a3412",
 } as const;
 
 // ─── Utilities ────────────────────────────────────────────────────────────────

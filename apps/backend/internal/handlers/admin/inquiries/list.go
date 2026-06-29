@@ -9,9 +9,16 @@ import (
 	db "github.com/suprimkhatri77/sms/backend/internal/database/generated"
 	"github.com/suprimkhatri77/sms/backend/internal/repository"
 	"github.com/suprimkhatri77/sms/backend/internal/types"
+	"github.com/suprimkhatri77/sms/backend/internal/utils"
 )
 
 const PAGE_LIMIT = 20
+
+type ListInquiriesParams struct {
+	Search string `form:"search" binding:"omitempty,min=1,max=100"`
+	IsRead *bool  `form:"is_read" binding:"omitempty"`
+	Source string `form:"source" binding:"omitempty,oneof=facebook tiktok instagram referral inperson"`
+}
 
 func ListInquiries(queries repository.AdminRepository) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -36,7 +43,37 @@ func ListInquiries(queries repository.AdminRepository) gin.HandlerFunc {
 			return
 		}
 
-		total, err := queries.GetInquiriesCount(ctx)
+		var filter ListInquiriesParams
+		if err := c.ShouldBindQuery(&filter); err != nil {
+			c.JSON(http.StatusBadRequest, types.APIResponse{
+				Success: false,
+				Message: "Invalid query parameters",
+				Code:    constants.InvalidQueryParam,
+			})
+			return
+		}
+
+		sources, err := queries.ListInquirySources(ctx)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, types.APIResponse{
+				Success: false,
+				Message: "Failed to process request",
+				Code:    constants.InternalServerError,
+			})
+			return
+		}
+
+		if sources == nil {
+			sources = []string{}
+		}
+
+		sourceFilter := utils.ToNullableText(filter.Source)
+
+		total, err := queries.GetInquiriesCount(ctx, db.GetInquiriesCountParams{
+			Search: utils.ToNullableText(filter.Search),
+			IsRead: utils.ToNullableBool(filter.IsRead),
+			Source: sourceFilter,
+		})
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, types.APIResponse{
 				Success: false,
@@ -52,6 +89,7 @@ func ListInquiries(queries repository.AdminRepository) gin.HandlerFunc {
 				Success: true,
 				Data: types.InquiriesResponse{
 					Inquiries:   []db.Inquiry{},
+					Sources:     sources,
 					UnreadCount: 0,
 					ReadCount:   0,
 				},
@@ -80,6 +118,9 @@ func ListInquiries(queries repository.AdminRepository) gin.HandlerFunc {
 		inquiries, err := queries.ListInquiries(ctx, db.ListInquiriesParams{
 			Limit:  PAGE_LIMIT,
 			Offset: int32(offset),
+			Search: utils.ToNullableText(filter.Search),
+			IsRead: utils.ToNullableBool(filter.IsRead),
+			Source: sourceFilter,
 		})
 
 		if err != nil {
@@ -117,6 +158,7 @@ func ListInquiries(queries repository.AdminRepository) gin.HandlerFunc {
 			Success: true,
 			Data: types.InquiriesResponse{
 				Inquiries:   inquiries,
+				Sources:     sources,
 				UnreadCount: int(unreadInquiriesCount),
 				ReadCount:   int(readInquiriesCount),
 			},

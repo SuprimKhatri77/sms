@@ -1,48 +1,65 @@
-import { OverviewCardsSkeleton } from "./OverviewCards";
+import { AdminPageLayout } from "@/components/admin/admin-page-layout";
+import { DashboardStatsSkeleton } from "@/modules/admin/dashboard/DashboardStats";
 import { RevenueChartSkeleton } from "./RevenueChart";
 import { AdmissionsChartSkeleton } from "./AdmissionsChart";
 import { SourceBreakdownSkeleton } from "./SourceBreakdown";
 import { StatusBreakdownSkeleton } from "./StatusBreakdown";
 import { CoursePopularitySkeleton } from "./CoursePopularity";
 import { InquiryStatsSkeleton } from "./InquiryStats";
+import { AnalyticsGrid, AnalyticsSection } from "./AnalyticsPanel";
+import { FISCAL_YEAR } from "../types";
 
-/**
- * Full-page skeleton that mirrors the exact layout
- * of the analytics dashboard while data is loading.
- */
 export function AnalyticsSkeleton() {
   return (
-    <div className="min-h-screen bg-slate-50 px-4 py-8 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-8xl">
-        {/* Header skeleton */}
-        <div className="mb-8">
-          <div className="h-7 w-48 animate-pulse rounded bg-slate-100" />
-          <div className="mt-2 h-4 w-32 animate-pulse rounded bg-slate-100" />
-        </div>
+    <AdminPageLayout
+      title="Analytics"
+      description="Overview of your school's performance and metrics"
+      maxWidth="wide"
+      action={
+        <span className="inline-flex items-center border border-[rgba(194,138,79,0.3)] bg-[rgba(194,138,79,0.08)] px-3 py-1.5 font-[family-name:var(--font-dm-sans)] text-[10px] font-semibold uppercase tracking-[0.12em] text-(--brand-brown)">
+          FY {FISCAL_YEAR}
+        </span>
+      }
+    >
+      <div className="space-y-10">
+        <section>
+          <div className="mb-4">
+            <div className="h-5 w-28 animate-pulse bg-[rgba(47,78,64,0.08)]" />
+            <div className="mt-2 h-3 w-56 animate-pulse bg-[rgba(47,78,64,0.06)]" />
+          </div>
+          <DashboardStatsSkeleton />
+        </section>
 
-        {/* Overview cards */}
-        <div className="mb-6">
-          <OverviewCardsSkeleton />
-        </div>
+        <AnalyticsSection
+          title="Performance"
+          description="Revenue trends and monthly admissions"
+        >
+          <AnalyticsGrid>
+            <RevenueChartSkeleton embedded />
+            <AdmissionsChartSkeleton embedded />
+          </AnalyticsGrid>
+        </AnalyticsSection>
 
-        {/* Charts row 1 */}
-        <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <RevenueChartSkeleton />
-          <AdmissionsChartSkeleton />
-        </div>
+        <AnalyticsSection
+          title="Breakdown"
+          description="Admission sources and application status"
+        >
+          <AnalyticsGrid>
+            <SourceBreakdownSkeleton embedded />
+            <StatusBreakdownSkeleton embedded />
+          </AnalyticsGrid>
+        </AnalyticsSection>
 
-        {/* Charts row 2 */}
-        <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <SourceBreakdownSkeleton />
-          <StatusBreakdownSkeleton />
-        </div>
-
-        {/* Charts row 3 */}
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <CoursePopularitySkeleton />
-          <InquiryStatsSkeleton />
-        </div>
+        <AnalyticsSection
+          title="Engagement"
+          description="Course demand and inquiry activity"
+        >
+          <AnalyticsGrid>
+            <CoursePopularitySkeleton embedded />
+            <InquiryStatsSkeleton embedded />
+          </AnalyticsGrid>
+        </AnalyticsSection>
       </div>
-    </div>
+    </AdminPageLayout>
   );
 }

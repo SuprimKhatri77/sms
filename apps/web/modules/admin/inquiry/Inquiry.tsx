@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useTransition, useCallback } from "react";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { useDebouncedCallback } from "use-debounce";
 import {
   Search,
   Eye,
@@ -28,6 +30,15 @@ import {
   MarkInquiryReadResponse,
 } from "@repo/types";
 import { toast } from "sonner";
+import { AdminPageLayout } from "@/components/admin/admin-page-layout";
+import {
+  adminIconButtonClass,
+  adminDangerIconButtonClass,
+  adminInputClass,
+  adminSegmentActiveClass,
+  adminSegmentInactiveClass,
+  adminTableClass,
+} from "@/components/admin/admin-styles";
 
 export type Inquiry = Extract<
   InquiriesList,
@@ -47,6 +58,18 @@ export type SortableField = keyof Pick<
   "fullName" | "phone" | "email" | "source" | "isRead" | "createdAt"
 >;
 
+function readFilterFromParam(isRead: string | null): ReadFilter {
+  if (isRead === "true") return "read";
+  if (isRead === "false") return "unread";
+  return "all";
+}
+
+function readFilterToParam(filter: ReadFilter): string | null {
+  if (filter === "read") return "true";
+  if (filter === "unread") return "false";
+  return null;
+}
+
 export interface SourceColorConfig {
   bg: string;
   text: string;
@@ -56,11 +79,11 @@ export interface SourceColorConfig {
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const SOURCE_COLORS: Record<string, SourceColorConfig> = {
-  website: { bg: "#2f4e4011", text: "#2f4e40", border: "#2f4e4033" },
-  facebook: { bg: "#3a5a4911", text: "#3a5a49", border: "#3a5a4933" },
-  instagram: { bg: "#c28a4f11", text: "#a06d3a", border: "#c28a4f33" },
-  referral: { bg: "#c28a4f22", text: "#8f5f31", border: "#c28a4f44" },
-  other: { bg: "#fbf4ea", text: "#7a5a38", border: "#ead6bc" },
+  website: { bg: "rgba(47,78,64,0.08)", text: "#2f4e40", border: "rgba(47,78,64,0.2)" },
+  facebook: { bg: "rgba(58,90,73,0.08)", text: "#3a5a49", border: "rgba(58,90,73,0.2)" },
+  instagram: { bg: "rgba(194,138,79,0.1)", text: "#a06d3a", border: "rgba(194,138,79,0.25)" },
+  referral: { bg: "rgba(194,138,79,0.14)", text: "#8f5f31", border: "rgba(194,138,79,0.3)" },
+  other: { bg: "rgba(251,250,247,0.9)", text: "#7a5a38", border: "rgba(47,78,64,0.15)" },
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -84,11 +107,13 @@ interface SortIconProps {
 }
 
 function SortIcon({ field, sortField, sortDir }: SortIconProps) {
-  if (sortField !== field) return <SortAsc className="w-3 h-3 opacity-30" />;
+  if (sortField !== field) {
+    return <SortAsc className="h-3 w-3 opacity-30 text-[rgba(47,78,64,0.45)]" />;
+  }
   return sortDir === "asc" ? (
-    <SortAsc className="w-3 h-3" style={{ color: "#e8552a" }} />
+    <SortAsc className="h-3 w-3 text-(--brand-brown)" />
   ) : (
-    <SortDesc className="w-3 h-3" style={{ color: "#e8552a" }} />
+    <SortDesc className="h-3 w-3 text-(--brand-brown)" />
   );
 }
 
@@ -103,25 +128,87 @@ interface StatCard {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function AdminInquiryPage() {
-  const [search, setSearch] = useState<string>("");
-  const [filter, setFilter] = useState<ReadFilter>("all");
-  const [sourceFilter, setSourceFilter] = useState<string>("all");
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [, startTransition] = useTransition();
+
+  const page = Number(searchParams.get("page") ?? "1");
+  const search = searchParams.get("search") ?? "";
+  const isReadParam = searchParams.get("is_read");
+  const filter = readFilterFromParam(isReadParam);
+  const sourceFilter = searchParams.get("source") ?? "all";
+
+  const [searchInput, setSearchInput] = useState(search);
   const [sortField, setSortField] = useState<SortableField>("createdAt");
   const [sortDir, setSortDir] = useState<SortDirection>("desc");
-  const [page, setPage] = useState<number>(1);
   const [selected, setSelected] = useState<Inquiry | null>(null);
   const [deletingId, setDeletingID] = useState<string>("");
   const queryClient = useQueryClient();
 
+  useEffect(() => {
+    setSearchInput(search);
+  }, [search]);
+
+  const updateParams = useCallback(
+    (updates: Record<string, string | null>) => {
+      const params = new URLSearchParams(searchParams.toString());
+      for (const [key, value] of Object.entries(updates)) {
+        if (
+          value === null ||
+          value === "" ||
+          (key === "page" && value === "1")
+        ) {
+          params.delete(key);
+        } else {
+          params.set(key, value);
+        }
+      }
+      if ("search" in updates || "is_read" in updates || "source" in updates) {
+        params.delete("page");
+      }
+      const qs = params.toString();
+      startTransition(() => {
+        router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+      });
+    },
+    [pathname, router, searchParams],
+  );
+
+  const debouncedSearch = useDebouncedCallback((value: string) => {
+    updateParams({ search: value || null });
+  }, 400);
+
+  const queryString = useMemo(() => {
+    const params = new URLSearchParams();
+    params.set("page", String(page));
+    if (search) params.set("search", search);
+    if (isReadParam === "true" || isReadParam === "false") {
+      params.set("is_read", isReadParam);
+    }
+    if (sourceFilter !== "all") {
+      params.set("source", sourceFilter);
+    }
+    return params.toString();
+  }, [page, search, isReadParam, sourceFilter]);
+
   const { data, isPending, isError, refetch } = useQuery({
-    queryKey: ["admin-inquiries", page],
+    queryKey: ["admin-inquiries", page, search, isReadParam, sourceFilter],
     queryFn: async () => {
-      const res = await api.get<InquiriesList>(`/admin/inquiries?page=${page}`);
+      const res = await api.get<InquiriesList>(`/admin/inquiries?${queryString}`);
       return res.data;
     },
     staleTime: 30 * 1000,
     gcTime: 5 * 60 * 1000,
   });
+
+  const inquiryQueryKey = [
+    "admin-inquiries",
+    page,
+    search,
+    isReadParam,
+    sourceFilter,
+  ] as const;
 
   const { mutate: markInquiryRead } = useMutation({
     mutationFn: async (id: string) => {
@@ -133,11 +220,11 @@ export default function AdminInquiryPage() {
     },
 
     onMutate: async (id: string) => {
-      await queryClient.cancelQueries({ queryKey: ["admin-inquiries"] });
+      await queryClient.cancelQueries({ queryKey: inquiryQueryKey });
 
-      const previousInquiries = queryClient.getQueryData(["admin-inquiries"]);
+      const previousInquiries = queryClient.getQueryData(inquiryQueryKey);
 
-      queryClient.setQueryData<InquiriesList>(["admin-inquiries"], (old) => {
+      queryClient.setQueryData<InquiriesList>(inquiryQueryKey, (old) => {
         if (!old || !old.success) return old;
         return {
           ...old,
@@ -157,10 +244,7 @@ export default function AdminInquiryPage() {
     },
     onError: (error, _, context) => {
       if (context?.previousInquiries) {
-        queryClient.setQueryData(
-          ["admin-inquiries"],
-          context.previousInquiries,
-        );
+        queryClient.setQueryData(inquiryQueryKey, context.previousInquiries);
       }
       toast.error(error.message);
     },
@@ -178,12 +262,12 @@ export default function AdminInquiryPage() {
     },
 
     onMutate: async (id: string) => {
-      await queryClient.cancelQueries({ queryKey: ["admin-inquiries"] });
+      await queryClient.cancelQueries({ queryKey: inquiryQueryKey });
       setDeletingID(id);
 
-      const previousInquiries = queryClient.getQueryData(["admin-inquiries"]);
+      const previousInquiries = queryClient.getQueryData(inquiryQueryKey);
 
-      queryClient.setQueryData<InquiriesList>(["admin-inquiries"], (old) => {
+      queryClient.setQueryData<InquiriesList>(inquiryQueryKey, (old) => {
         if (!old || !old.success) return old;
         return {
           ...old,
@@ -202,10 +286,7 @@ export default function AdminInquiryPage() {
     onError: (error, _, context) => {
       setDeletingID("");
       if (context?.previousInquiries) {
-        queryClient.setQueryData(
-          ["admin-inquiries"],
-          context.previousInquiries,
-        );
+        queryClient.setQueryData(inquiryQueryKey, context.previousInquiries);
       }
       toast.error(error.message);
     },
@@ -214,29 +295,13 @@ export default function AdminInquiryPage() {
     },
   });
 
-  const filtered = useMemo<Inquiry[]>(() => {
+  const sorted = useMemo<Inquiry[]>(() => {
     if (!data || !data.success) return [];
 
     const { inquiries } = data.data;
     if (inquiries.length === 0) return [];
-    let list = [...inquiries];
 
-    if (filter === "unread") list = list.filter((i) => !i.isRead);
-    if (filter === "read") list = list.filter((i) => i.isRead);
-    if (sourceFilter !== "all")
-      list = list.filter((i) => i.source === sourceFilter);
-
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      list = list.filter(
-        (i) =>
-          i.fullName.toLowerCase().includes(q) ||
-          i.phone.includes(q) ||
-          i.email?.toLowerCase().includes(q) ||
-          i.message.toLowerCase().includes(q) ||
-          i.source.toLowerCase().includes(q),
-      );
-    }
+    const list = [...inquiries];
 
     list.sort((a, b) => {
       const av = (a[sortField] ?? "").toString().toLowerCase();
@@ -247,81 +312,39 @@ export default function AdminInquiryPage() {
     });
 
     return list;
-  }, [filter, sourceFilter, search, sortField, sortDir, data]);
+  }, [sortField, sortDir, data]);
 
-  if (isPending)
-    return (
-      <div
-        className="min-h-screen p-6 md:p-10"
-        style={{ backgroundColor: "#faf9f7" }}
-      >
-        <InquirySkeleton />
-      </div>
-    );
+  if (isPending) return <InquirySkeleton />;
 
   if (isError)
     return (
-      <div
-        className="min-h-screen p-6 md:p-10 flex items-center justify-center"
-        style={{ backgroundColor: "#faf9f7" }}
-      >
-        <InquiryError
-          success={false}
-          message={"Unable to reach the server"}
-          onRetry={refetch}
-        />
-      </div>
+      <InquiryError
+        success={false}
+        message={"Unable to reach the server"}
+        onRetry={refetch}
+      />
     );
 
   if (!data.success)
     return (
-      <div
-        className="min-h-screen p-6 md:p-10 flex items-center justify-center"
-        style={{ backgroundColor: "#faf9f7" }}
-      >
-        <InquiryError
-          success={false}
-          message={data.message}
-          code={data.code}
-          onRetry={refetch}
-        />
-      </div>
+      <InquiryError
+        success={false}
+        message={data.message}
+        code={data.code}
+        onRetry={refetch}
+      />
     );
 
-  const { inquiries, unreadCount, readCount } = data.data;
+  const { unreadCount, readCount, sources } = data.data;
   const { limit, total, totalPages } = data.meta;
-  const paged = filtered;
-  const allSources = [...new Set(inquiries.map((i) => i.source))];
+  const paged = sorted;
+  const allSources = sources;
 
   const statCards: StatCard[] = [
-    {
-      label: "Total",
-      value: total,
-      icon: Users,
-      color: "#2d4a3e",
-      bg: "#2d4a3e0d",
-    },
-    {
-      label: "Unread",
-      value: unreadCount,
-      icon: Mail,
-      color: "#e8552a",
-      bg: "#e8552a0d",
-    },
-    {
-      label: "Read",
-      value: readCount,
-      icon: MailOpen,
-      color: "#6b9e6b",
-      bg: "#6b9e6b0d",
-    },
-    {
-      label: "Sources",
-      value: allSources.length,
-      icon: Filter,
-      color: "#7d6b8a",
-      bg: "#7d6b8a0d",
-    },
+    { label: "Total", value: total, icon: Users, color: "#2f4e40", bg: "rgba(47,78,64,0.08)" },
+    { label: "Unread", value: unreadCount, icon: Mail, color: "#c28a4f", bg: "rgba(194,138,79,0.1)" },
+    { label: "Read", value: readCount, icon: MailOpen, color: "#3a5a49", bg: "rgba(58,90,73,0.08)" },
+    { label: "Sources", value: allSources.length, icon: Filter, color: "#1a1a1a", bg: "rgba(47,78,64,0.06)" },
   ];
 
   // ── Handlers ──────────────────────────────────────────────────────────────
@@ -334,10 +357,13 @@ export default function AdminInquiryPage() {
   };
 
   const clearAllFilters = () => {
-    setFilter("all");
-    setSourceFilter("all");
-    setSearch("");
-    setPage(1);
+    setSearchInput("");
+    updateParams({
+      is_read: null,
+      source: null,
+      search: null,
+      page: null,
+    });
   };
 
   // ── Table column definitions ───────────────────────────────────────────────
@@ -358,81 +384,35 @@ export default function AdminInquiryPage() {
 
   // ── Main render ───────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "#fbfaf7" }}>
-      <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-10 py-8 md:py-10">
-        {/* ── Header ── */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span
-                className="text-xs font-semibold tracking-widest uppercase px-2.5 py-1 rounded-full"
-                style={{ backgroundColor: "#2f4e4011", color: "#2f4e40" }}
-              >
-                Admin
-              </span>
-            </div>
-            <h1
-              className="text-3xl font-bold"
-              style={{ color: "#2f4e40", fontFamily: "Georgia, serif" }}
-            >
-              Inquiries
-            </h1>
-            <p
-              className="text-sm mt-1"
-              style={{ color: "rgba(47,78,64,0.58)" }}
-            >
-              Manage and respond to visitor submissions
-            </p>
-          </div>
-
-          {/* <div className="flex items-center gap-3">
-            <button
-              onClick={fetchInquiries}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border transition-all hover:opacity-80 active:scale-95"
-              style={{
-                borderColor: "#d6cbb8",
-                color: "#2d4a3e",
-                backgroundColor: "#fff",
-              }}
-            >
-              <RefreshCw className="w-4 h-4" />
-              <span className="hidden sm:inline">Refresh</span>
-            </button>
-            <button
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all hover:opacity-90 active:scale-95"
-              style={{ backgroundColor: "#2d4a3e", color: "#fff" }}
-            >
-              <Download className="w-4 h-4" />
-              <span className="hidden sm:inline">Export CSV</span>
-            </button>Export CS
-          </div> */}
-        </div>
-
-        {/* ── Stat Cards ── */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <AdminPageLayout
+      title="Inquiries"
+      description="Manage and respond to visitor submissions"
+      maxWidth="wide"
+    >
+      <div className="space-y-6">
+        <div className="grid grid-cols-2 divide-x divide-y divide-[rgba(47,78,64,0.12)] border border-[rgba(47,78,64,0.18)] lg:grid-cols-4">
           {statCards.map((s) => (
             <div
               key={s.label}
-              className="rounded-2xl p-5 border flex items-start justify-between"
-              style={{ backgroundColor: "#fff", borderColor: "#d6cbb8" }}
+              className="flex items-start justify-between bg-white p-5"
             >
               <div>
-                <p
-                  className="text-xs font-medium mb-1.5"
-                  style={{ color: "#7d6b8a" }}
-                >
+                <p className="font-[family-name:var(--font-dm-sans)] text-[10px] font-semibold uppercase tracking-[0.12em] text-[rgba(47,78,64,0.45)]">
                   {s.label}
                 </p>
-                <p className="text-3xl font-bold" style={{ color: s.color }}>
+                <p
+                  className="mt-2 font-[family-name:var(--font-lora)] text-2xl font-bold"
+                  style={{ color: s.color }}
+                >
                   {s.value}
                 </p>
               </div>
               <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center"
+                className="flex h-9 w-9 items-center justify-center border border-[rgba(47,78,64,0.12)]"
                 style={{ backgroundColor: s.bg }}
               >
                 <s.icon
-                  className="w-5 h-5"
+                  className="h-4 w-4"
                   style={{ color: s.color }}
                   strokeWidth={1.75}
                 />
@@ -441,69 +421,50 @@ export default function AdminInquiryPage() {
           ))}
         </div>
 
-        {/* ── Filters ── */}
-        <div className="flex flex-col sm:flex-row gap-3 mb-6 flex-wrap">
-          {/* Read filter */}
-          <div
-            className="flex items-center rounded-xl border p-1 gap-1"
-            style={{ backgroundColor: "#fff", borderColor: "#d6cbb8" }}
-          >
+        <div className="flex flex-col flex-wrap gap-3 sm:flex-row">
+          <div className="flex gap-px border border-[rgba(47,78,64,0.18)] bg-[rgba(47,78,64,0.08)] p-px">
             {(["all", "unread", "read"] as ReadFilter[]).map((f) => (
               <button
                 key={f}
-                onClick={() => {
-                  setFilter(f);
-                  setPage(1);
-                }}
-                className="px-3.5 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all duration-150"
-                style={
-                  filter === f
-                    ? { backgroundColor: "#2d4a3e", color: "#fff" }
-                    : { color: "#7d6b8a" }
+                onClick={() =>
+                  updateParams({ is_read: readFilterToParam(f) })
                 }
+                className={`px-3.5 py-2 font-[family-name:var(--font-dm-sans)] text-xs font-semibold capitalize transition-colors ${
+                  filter === f
+                    ? adminSegmentActiveClass
+                    : adminSegmentInactiveClass
+                }`}
               >
                 {f === "all"
                   ? "All"
                   : f === "unread"
-                    ? `Unread (${inquiries.filter((i) => !i.isRead).length})`
-                    : `Read (${inquiries.filter((i) => i.isRead).length})`}
+                    ? `Unread (${unreadCount})`
+                    : `Read (${readCount})`}
               </button>
             ))}
           </div>
 
-          {/* Source filter */}
           {allSources.length > 0 && (
-            <div
-              className="flex items-center rounded-xl border p-1 gap-1 flex-wrap"
-              style={{ backgroundColor: "#fff", borderColor: "#d6cbb8" }}
-            >
+            <div className="flex flex-wrap gap-px border border-[rgba(47,78,64,0.18)] bg-[rgba(47,78,64,0.08)] p-px">
               <button
-                onClick={() => {
-                  setSourceFilter("all");
-                  setPage(1);
-                }}
-                className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150"
-                style={
+                onClick={() => updateParams({ source: null })}
+                className={`px-3 py-2 font-[family-name:var(--font-dm-sans)] text-xs font-semibold transition-colors ${
                   sourceFilter === "all"
-                    ? { backgroundColor: "#6b9e6b", color: "#fff" }
-                    : { color: "#7d6b8a" }
-                }
+                    ? adminSegmentActiveClass
+                    : adminSegmentInactiveClass
+                }`}
               >
                 All Sources
               </button>
               {allSources.map((src) => (
                 <button
                   key={src}
-                  onClick={() => {
-                    setSourceFilter(src);
-                    setPage(1);
-                  }}
-                  className="px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all duration-150"
-                  style={
+                  onClick={() => updateParams({ source: src })}
+                  className={`px-3 py-2 font-[family-name:var(--font-dm-sans)] text-xs font-semibold capitalize transition-colors ${
                     sourceFilter === src
-                      ? { backgroundColor: "#6b9e6b", color: "#fff" }
-                      : { color: "#7d6b8a" }
-                  }
+                      ? adminSegmentActiveClass
+                      : adminSegmentInactiveClass
+                  }`}
                 >
                   {src}
                 </button>
@@ -511,36 +472,23 @@ export default function AdminInquiryPage() {
             </div>
           )}
 
-          {/* Search */}
-          <div className="sm:ml-auto relative">
-            <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none"
-              style={{ color: "#7d6b8a" }}
-            />
+          <div className="relative sm:ml-auto">
+            <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-[rgba(47,78,64,0.4)]" />
             <input
               type="text"
               placeholder="Search inquiries…"
-              value={search}
+              value={searchInput}
               onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
+                setSearchInput(e.target.value);
+                debouncedSearch(e.target.value);
               }}
-              className="pl-9 pr-4 py-2.5 rounded-xl border text-sm outline-none w-full sm:w-64"
-              style={{
-                borderColor: "#d6cbb8",
-                backgroundColor: "#fff",
-                color: "#2d4a3e",
-              }}
+              className={`${adminInputClass} w-full py-2.5 pr-4 pl-9 sm:w-64`}
             />
           </div>
         </div>
 
-        {/* ── Table or Empty ── */}
         {paged.length === 0 ? (
-          <div
-            className="rounded-2xl border"
-            style={{ backgroundColor: "#fff", borderColor: "#d6cbb8" }}
-          >
+          <div className="border border-[rgba(47,78,64,0.18)] bg-white">
             <InquiryEmpty
               message={search ? `No results for "${search}"` : undefined}
               activeFilter={
@@ -556,19 +504,14 @@ export default function AdminInquiryPage() {
           </div>
         ) : (
           <>
-            {/* ── Desktop Table ── */}
-            <div
-              className="hidden lg:block rounded-2xl border overflow-hidden"
-              style={{ backgroundColor: "#fff", borderColor: "#d6cbb8" }}
-            >
-              <table className="w-full text-sm border-collapse">
+            <div className="hidden overflow-hidden border border-[rgba(47,78,64,0.18)] bg-white lg:block">
+              <table className={`${adminTableClass} text-sm`}>
                 <thead>
-                  <tr style={{ backgroundColor: "#2d4a3e08" }}>
+                  <tr className="border-b border-[rgba(47,78,64,0.12)] bg-[rgba(47,78,64,0.04)]">
                     {tableColumns.map((col) => (
                       <th
                         key={col.label}
-                        className={`${col.width} px-4 py-3.5 text-left font-semibold text-xs tracking-wide select-none ${col.field ? "cursor-pointer hover:opacity-70" : ""}`}
-                        style={{ color: "#7d6b8a" }}
+                        className={`${col.width} whitespace-nowrap px-4 py-3 text-left font-[family-name:var(--font-dm-sans)] text-[10px] font-bold tracking-[0.1em] text-[rgba(47,78,64,0.45)] uppercase select-none ${col.field ? "cursor-pointer hover:text-(--brand-green)" : ""}`}
                         onClick={
                           col.field
                             ? () => handleSort(col.field as SortableField)
@@ -598,65 +541,42 @@ export default function AdminInquiryPage() {
                     return (
                       <tr
                         key={inq.id}
-                        className="border-t cursor-pointer"
-                        style={{
-                          borderColor: "#d6cbb8",
-                          backgroundColor: isDeleting
-                            ? "#e8552a08"
+                        className={`cursor-pointer border-t border-[rgba(47,78,64,0.08)] transition-colors hover:bg-[rgba(47,78,64,0.02)] ${
+                          isDeleting
+                            ? "opacity-40"
                             : !inq.isRead
-                              ? "#2d4a3e04"
-                              : idx % 2 === 0
-                                ? "transparent"
-                                : "#faf9f7",
-                          opacity: isDeleting ? 0.4 : 1,
-                          transition: "opacity 0.4s, background-color 0.15s",
-                        }}
+                              ? "bg-[rgba(47,78,64,0.03)]"
+                              : idx % 2 === 1
+                                ? "bg-[rgba(251,250,247,0.6)]"
+                                : ""
+                        }`}
                         onClick={() => setSelected(inq)}
                       >
-                        {/* Name */}
-                        <td className="px-4 py-4">
+                        <td className="whitespace-nowrap px-4 py-4">
                           <div className="flex items-center gap-2.5">
-                            <div
-                              className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-                              style={{
-                                backgroundColor: "#2d4a3e",
-                                color: "#fff",
-                              }}
-                            >
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center bg-(--brand-green) font-[family-name:var(--font-dm-sans)] text-xs font-bold text-white">
                               {inq.fullName[0].toUpperCase()}
                             </div>
-                            <span
-                              className="font-semibold truncate max-w-[120px]"
-                              style={{ color: "#2d4a3e" }}
-                            >
+                            <span className="max-w-[120px] truncate font-[family-name:var(--font-dm-sans)] text-sm font-semibold text-(--brand-green)">
                               {inq.fullName}
                             </span>
                           </div>
                         </td>
-                        {/* Phone */}
-                        <td className="px-4 py-4">
-                          <span
-                            className="text-xs"
-                            style={{ color: "#2d4a3e" }}
-                          >
+                        <td className="whitespace-nowrap px-4 py-4">
+                          <span className="font-[family-name:var(--font-dm-sans)] text-xs text-(--brand-ink)">
                             {inq.phone}
                           </span>
                         </td>
-                        {/* Email */}
-                        <td className="px-4 py-4">
-                          <span
-                            className="text-xs truncate block max-w-[140px]"
-                            style={{ color: "#7d6b8a" }}
-                          >
+                        <td className="whitespace-nowrap px-4 py-4">
+                          <span className="block max-w-[140px] truncate font-[family-name:var(--font-dm-sans)] text-xs text-[rgba(47,78,64,0.55)]">
                             {inq.email ?? (
                               <span className="italic opacity-50">—</span>
                             )}
                           </span>
                         </td>
-                        {/* Source */}
-                        <td className="px-4 py-4">
+                        <td className="whitespace-nowrap px-4 py-4">
                           <span
-                            className="px-2.5 py-1 rounded-full text-xs font-semibold capitalize border"
+                            className="border px-2.5 py-1 font-[family-name:var(--font-dm-sans)] text-xs font-semibold capitalize"
                             style={{
                               backgroundColor: sc.bg,
                               color: sc.text,
@@ -666,88 +586,54 @@ export default function AdminInquiryPage() {
                             {inq.source}
                           </span>
                         </td>
-                        {/* Message snippet */}
-                        <td className="px-4 py-4">
-                          <p
-                            className="text-xs truncate max-w-[160px]"
-                            style={{ color: "#7d6b8a" }}
-                          >
+                        <td className="whitespace-nowrap px-4 py-4">
+                          <p className="max-w-[160px] truncate font-[family-name:var(--font-dm-sans)] text-xs text-[rgba(47,78,64,0.55)]">
                             {inq.message}
                           </p>
                         </td>
-                        {/* Status */}
-                        <td className="px-4 py-4">
+                        <td className="whitespace-nowrap px-4 py-4">
                           {inq.isRead ? (
-                            <span
-                              className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full"
-                              style={{
-                                backgroundColor: "#6b9e6b11",
-                                color: "#4a7a60",
-                              }}
-                            >
-                              <CheckCircle2 className="w-3 h-3" /> Read
+                            <span className="inline-flex items-center gap-1 border border-[rgba(58,90,73,0.2)] bg-[rgba(58,90,73,0.08)] px-2 py-0.5 font-[family-name:var(--font-dm-sans)] text-xs font-medium text-[#3a5a49]">
+                              <CheckCircle2 className="h-3 w-3" /> Read
                             </span>
                           ) : (
-                            <span
-                              className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full"
-                              style={{
-                                backgroundColor: "#e8552a11",
-                                color: "#e8552a",
-                              }}
-                            >
-                              <Clock className="w-3 h-3" /> New
+                            <span className="inline-flex items-center gap-1 border border-[rgba(194,138,79,0.25)] bg-[rgba(194,138,79,0.1)] px-2 py-0.5 font-[family-name:var(--font-dm-sans)] text-xs font-semibold text-(--brand-brown)">
+                              <Clock className="h-3 w-3" /> New
                             </span>
                           )}
                         </td>
-                        {/* Received */}
-                        <td className="px-4 py-4">
-                          <span
-                            className="text-xs"
-                            style={{ color: "#7d6b8a" }}
-                          >
+                        <td className="whitespace-nowrap px-4 py-4">
+                          <span className="font-[family-name:var(--font-dm-sans)] text-xs text-[rgba(47,78,64,0.55)]">
                             {timeAgo(String(inq.createdAt))}
                           </span>
                         </td>
-                        {/* Actions */}
                         <td
-                          className="px-4 py-4"
+                          className="whitespace-nowrap px-4 py-4"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <div className="flex items-center gap-1.5">
                             <button
                               title="View"
                               onClick={() => setSelected(inq)}
-                              className="w-8 h-8 rounded-lg flex items-center justify-center hover:opacity-70 transition-opacity"
-                              style={{ backgroundColor: "#2d4a3e11" }}
+                              className={adminIconButtonClass}
                             >
-                              <Eye
-                                className="w-3.5 h-3.5"
-                                style={{ color: "#2d4a3e" }}
-                              />
+                              <Eye className="h-3.5 w-3.5" />
                             </button>
                             {!inq.isRead && (
                               <button
                                 title="Mark as read"
                                 onClick={() => markInquiryRead(inq.id)}
-                                className="w-8 h-8 rounded-lg flex items-center justify-center hover:opacity-70 transition-opacity"
-                                style={{ backgroundColor: "#6b9e6b11" }}
+                                className={adminIconButtonClass}
                               >
-                                <CheckCircle2
-                                  className="w-3.5 h-3.5"
-                                  style={{ color: "#6b9e6b" }}
-                                />
+                                <CheckCircle2 className="h-3.5 w-3.5" />
                               </button>
                             )}
                             <button
                               title="Delete"
                               onClick={() => deleteInquiry(inq.id)}
-                              className="w-8 h-8 rounded-lg flex items-center justify-center hover:opacity-70 transition-opacity"
-                              style={{ backgroundColor: "#e8552a11" }}
+                              className={adminDangerIconButtonClass}
                             >
-                              <Trash2
-                                className="w-3.5 h-3.5"
-                                style={{ color: "#e8552a" }}
-                              />
+                              <Trash2 className="h-3.5 w-3.5" />
                             </button>
                           </div>
                         </td>
@@ -758,46 +644,37 @@ export default function AdminInquiryPage() {
               </table>
             </div>
 
-            {/* ── Mobile Cards ── */}
-            <div className="lg:hidden space-y-3">
+            <div className="space-y-3 lg:hidden">
               {paged.map((inq) => {
                 const sc: SourceColorConfig =
                   SOURCE_COLORS[inq.source] ?? SOURCE_COLORS.other;
                 return (
                   <div
                     key={inq.id}
-                    className="rounded-2xl border p-4 cursor-pointer active:scale-[0.99] transition-all duration-150"
-                    style={{
-                      backgroundColor: "#fff",
-                      borderColor: !inq.isRead ? "#e8552a44" : "#d6cbb8",
-                      borderLeftWidth: !inq.isRead ? "3px" : "1px",
-                      borderLeftColor: !inq.isRead ? "#e8552a" : "#d6cbb8",
-                    }}
+                    className={`cursor-pointer border bg-white p-4 transition-colors hover:bg-[rgba(47,78,64,0.02)] ${
+                      !inq.isRead
+                        ? "border-l-[3px] border-l-(--brand-brown) border-[rgba(47,78,64,0.18)]"
+                        : "border-[rgba(47,78,64,0.18)]"
+                    }`}
                     onClick={() => setSelected(inq)}
                   >
-                    <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="mb-3 flex items-start justify-between gap-3">
                       <div className="flex items-center gap-2.5">
-                        <div
-                          className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
-                          style={{ backgroundColor: "#2d4a3e", color: "#fff" }}
-                        >
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center bg-(--brand-green) font-[family-name:var(--font-dm-sans)] text-sm font-bold text-white">
                           {inq.fullName[0].toUpperCase()}
                         </div>
                         <div>
-                          <p
-                            className="font-semibold text-sm"
-                            style={{ color: "#2d4a3e" }}
-                          >
+                          <p className="font-[family-name:var(--font-dm-sans)] text-sm font-semibold text-(--brand-green)">
                             {inq.fullName}
                           </p>
-                          <p className="text-xs" style={{ color: "#7d6b8a" }}>
+                          <p className="font-[family-name:var(--font-dm-sans)] text-xs text-[rgba(47,78,64,0.55)]">
                             {inq.phone}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                      <div className="flex shrink-0 items-center gap-1.5">
                         <span
-                          className="px-2 py-0.5 rounded-full text-xs font-semibold border capitalize"
+                          className="border px-2 py-0.5 font-[family-name:var(--font-dm-sans)] text-xs font-semibold capitalize"
                           style={{
                             backgroundColor: sc.bg,
                             color: sc.text,
@@ -807,23 +684,17 @@ export default function AdminInquiryPage() {
                           {inq.source}
                         </span>
                         {!inq.isRead && (
-                          <span
-                            className="w-2 h-2 rounded-full"
-                            style={{ backgroundColor: "#e8552a" }}
-                          />
+                          <span className="h-2 w-2 bg-(--brand-brown)" />
                         )}
                       </div>
                     </div>
 
-                    <p
-                      className="text-xs line-clamp-2 mb-3"
-                      style={{ color: "#7d6b8a" }}
-                    >
+                    <p className="mb-3 line-clamp-2 font-[family-name:var(--font-dm-sans)] text-xs text-[rgba(47,78,64,0.55)]">
                       {inq.message}
                     </p>
 
                     <div className="flex items-center justify-between">
-                      <span className="text-xs" style={{ color: "#7d6b8a" }}>
+                      <span className="font-[family-name:var(--font-dm-sans)] text-xs text-[rgba(47,78,64,0.55)]">
                         {timeAgo(String(inq.createdAt))}
                       </span>
                       <div
@@ -832,35 +703,23 @@ export default function AdminInquiryPage() {
                       >
                         <button
                           onClick={() => setSelected(inq)}
-                          className="w-8 h-8 rounded-lg flex items-center justify-center"
-                          style={{ backgroundColor: "#2d4a3e11" }}
+                          className={adminIconButtonClass}
                         >
-                          <Eye
-                            className="w-3.5 h-3.5"
-                            style={{ color: "#2d4a3e" }}
-                          />
+                          <Eye className="h-3.5 w-3.5" />
                         </button>
                         {!inq.isRead && (
                           <button
                             onClick={() => markInquiryRead(inq.id)}
-                            className="w-8 h-8 rounded-lg flex items-center justify-center"
-                            style={{ backgroundColor: "#6b9e6b11" }}
+                            className={adminIconButtonClass}
                           >
-                            <CheckCircle2
-                              className="w-3.5 h-3.5"
-                              style={{ color: "#6b9e6b" }}
-                            />
+                            <CheckCircle2 className="h-3.5 w-3.5" />
                           </button>
                         )}
                         <button
                           onClick={() => deleteInquiry(inq.id)}
-                          className="w-8 h-8 rounded-lg flex items-center justify-center"
-                          style={{ backgroundColor: "#e8552a11" }}
+                          className={adminDangerIconButtonClass}
                         >
-                          <Trash2
-                            className="w-3.5 h-3.5"
-                            style={{ color: "#e8552a" }}
-                          />
+                          <Trash2 className="h-3.5 w-3.5" />
                         </button>
                       </div>
                     </div>
@@ -871,73 +730,57 @@ export default function AdminInquiryPage() {
           </>
         )}
 
-        {/* ── Pagination ── */}
         {totalPages > 1 && (
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-6">
-            <p className="text-sm" style={{ color: "#7d6b8a" }}>
+          <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+            <p className="font-[family-name:var(--font-dm-sans)] text-sm text-[rgba(47,78,64,0.55)]">
               Showing {(page - 1) * limit + 1}–
-              {Math.min(page * limit, filtered.length)} of {total} results
+              {Math.min((page - 1) * limit + paged.length, total)} of {total}{" "}
+              results
             </p>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1">
               <button
                 disabled={page === 1}
-                onClick={() => setPage((p) => p - 1)}
-                className="w-9 h-9 rounded-xl flex items-center justify-center border transition-all disabled:opacity-30"
-                style={{ borderColor: "#d6cbb8", backgroundColor: "#fff" }}
+                onClick={() => updateParams({ page: String(page - 1) })}
+                className="flex h-9 w-9 items-center justify-center border border-[rgba(47,78,64,0.18)] bg-white transition-colors disabled:opacity-30 hover:border-(--brand-green)"
               >
-                <ChevronLeft className="w-4 h-4" style={{ color: "#2d4a3e" }} />
+                <ChevronLeft className="h-4 w-4 text-(--brand-green)" />
               </button>
               {[...Array(totalPages)].map((_, i) => (
                 <button
                   key={i}
-                  onClick={() => setPage(i + 1)}
-                  className="w-9 h-9 rounded-xl text-sm font-semibold border transition-all"
-                  style={
+                  onClick={() => updateParams({ page: String(i + 1) })}
+                  className={`h-9 w-9 border font-[family-name:var(--font-dm-sans)] text-sm font-semibold transition-colors ${
                     page === i + 1
-                      ? {
-                          backgroundColor: "#2d4a3e",
-                          color: "#fff",
-                          borderColor: "#2d4a3e",
-                        }
-                      : {
-                          borderColor: "#d6cbb8",
-                          backgroundColor: "#fff",
-                          color: "#2d4a3e",
-                        }
-                  }
+                      ? "border-(--brand-green) bg-(--brand-green) text-white"
+                      : "border-[rgba(47,78,64,0.18)] bg-white text-(--brand-green) hover:border-(--brand-green)"
+                  }`}
                 >
                   {i + 1}
                 </button>
               ))}
               <button
                 disabled={page === totalPages}
-                onClick={() => setPage((p) => p + 1)}
-                className="w-9 h-9 rounded-xl flex items-center justify-center border transition-all disabled:opacity-30"
-                style={{ borderColor: "#d6cbb8", backgroundColor: "#fff" }}
+                onClick={() => updateParams({ page: String(page + 1) })}
+                className="flex h-9 w-9 items-center justify-center border border-[rgba(47,78,64,0.18)] bg-white transition-colors disabled:opacity-30 hover:border-(--brand-green)"
               >
-                <ChevronRight
-                  className="w-4 h-4"
-                  style={{ color: "#2d4a3e" }}
-                />
+                <ChevronRight className="h-4 w-4 text-(--brand-green)" />
               </button>
             </div>
           </div>
         )}
 
-        {totalPages <= 1 && filtered.length > 0 && (
-          <p className="text-xs mt-4" style={{ color: "#7d6b8a" }}>
-            {filtered.length} {filtered.length === 1 ? "inquiry" : "inquiries"}{" "}
-            found
+        {totalPages <= 1 && paged.length > 0 && (
+          <p className="font-[family-name:var(--font-dm-sans)] text-xs text-[rgba(47,78,64,0.55)]">
+            {total} {total === 1 ? "inquiry" : "inquiries"} found
           </p>
         )}
       </div>
 
-      {/* ── Detail Modal ── */}
       <InquiryDetailModal
         inquiry={selected}
         onClose={() => setSelected(null)}
         onMarkRead={markInquiryRead}
       />
-    </div>
+    </AdminPageLayout>
   );
 }
