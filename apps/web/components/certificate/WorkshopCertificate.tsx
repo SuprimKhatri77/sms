@@ -1,21 +1,22 @@
 "use client";
 
+import { forwardRef } from "react";
 import Image, { type ImageLoader } from "next/image";
-import styles from "./WorkshopCertificate.module.css";
 import { siteInfo } from "@/utils/site-info";
+import { CertificateBrandText } from "./CertificateBrandText";
+import { CertificateFrame } from "./CertificateFrame";
+import { CertificateSignatureSlot } from "./CertificateSignatureSlot";
+import { formatPersonName } from "@/lib/format-person-name";
 
 export interface WorkshopCertificateProps {
   studentName: string;
   referenceNo: string;
-  /** Workshop title e.g. "Specialty Coffee Brewing" */
   workshopTitle: string;
-  /** Date string e.g. "May 12, 2026" */
   workshopDate: string;
-  /** Issue date string */
   issueDate: string;
   logoUrl: string;
-  directorSignatureUrl: string;
-  headSignatureUrl: string;
+  directorSignatureUrl?: string;
+  headSignatureUrl?: string;
   accreditationLogoUrl?: string;
   footerAddress?: string;
   footerContact?: string;
@@ -24,179 +25,155 @@ export interface WorkshopCertificateProps {
 
 const passthroughLoader: ImageLoader = ({ src }) => src;
 
-export function WorkshopCertificate({
-  studentName,
-  referenceNo,
-  workshopTitle,
-  workshopDate,
-  // issueDate,
-  logoUrl,
-  // directorSignatureUrl,
-  // headSignatureUrl,
-  accreditationLogoUrl,
-  footerAddress = siteInfo.contact.address,
-  footerContact = siteInfo.contact.email,
-  footerPhone = siteInfo.contact.phone,
-}: WorkshopCertificateProps) {
-  const centerMarkUrl = accreditationLogoUrl ?? logoUrl;
+export const WorkshopCertificate = forwardRef<
+  HTMLDivElement,
+  WorkshopCertificateProps
+>(function WorkshopCertificate(
+  {
+    studentName,
+    referenceNo,
+    workshopTitle,
+    workshopDate,
+    issueDate,
+    logoUrl,
+    directorSignatureUrl,
+    headSignatureUrl,
+    footerAddress = siteInfo.contact.address,
+    footerContact = siteInfo.contact.email,
+    footerPhone = siteInfo.contact.phone,
+  },
+  ref,
+) {
+  const sealUrl = siteInfo.assets.watermarkNoBG;
+  const displayName = formatPersonName(studentName);
 
   return (
-    <div className={styles.printScope} data-certificate>
-      <div className={styles.previewFrame}>
-        <section className={styles.paper} aria-label="Workshop Certificate">
-          {/* ── Top arc — gold tones instead of green ── */}
-          <svg
-            className={styles.topArc}
-            viewBox="0 0 794 210"
-            preserveAspectRatio="none"
-            aria-hidden="true"
-          >
-            <defs>
-              <linearGradient id="wsArcGrad" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stopColor="#7a4e24" stopOpacity="0.50" />
-                <stop offset="55%" stopColor="#c28a4f" stopOpacity="0.42" />
-                <stop offset="100%" stopColor="#7a4e24" stopOpacity="0.46" />
-              </linearGradient>
-            </defs>
-            <path
-              d="M0,168 C120,42 300,32 415,78 C556,134 664,134 794,72 L794,0 L0,0 Z"
-              fill="url(#wsArcGrad)"
-            />
-            <path
-              d="M0,182 C120,58 300,46 415,92 C556,148 664,148 794,86"
-              fill="none"
-              stroke="#c28a4f"
-              strokeWidth="3"
-              opacity="0.3"
-            />
-          </svg>
+    <>
+      <link rel="stylesheet" href="/certificate-print.css" />
+      <div ref={ref} className="cert-root" data-certificate>
+      <div className="cert-frame">
+        <section className="cert-paper" aria-label="Workshop Certificate">
+          <CertificateFrame />
 
-          {/* ── Logo ── */}
-          <div className={styles.logoCorner} aria-hidden="true">
+          <div className="cert-watermark" aria-hidden="true">
             <Image
-              className={styles.logoCornerImg}
-              src={logoUrl}
+              className="cert-watermark-img"
+              src={siteInfo.assets.emblem}
               alt=""
               loader={passthroughLoader}
-              priority
-              width={150}
-              height={150}
+              width={340}
+              height={340}
             />
           </div>
 
-          {/* ── Top-right ── */}
-          <div className={styles.topRightMeta}>
-            <div className={styles.schoolNameHeader}>
-              {siteInfo.company.shortName}
-            </div>
-            <div className={styles.certNoRow}>
-              <span className={styles.metaLabel}>Certificate No.</span>
-              <span className={styles.metaValue}>{referenceNo}</span>
-            </div>
-          </div>
-
-          {/* ── Body ── */}
-          <div className={styles.body}>
-            {/* Title — "Certificate of Participation" instead of "of Training" */}
-            <div className={styles.titleStack}>
-              <div className={styles.scriptBig}>Certificate</div>
-              <div className={styles.scriptMedium}>of Participation</div>
+          <header className="cert-header cert-header-workshop">
+            <div className="cert-logo-wrap">
+              <Image
+                className="cert-logo-img"
+                src={logoUrl}
+                alt=""
+                loader={passthroughLoader}
+                priority
+                width={68}
+                height={68}
+              />
             </div>
 
-            <div className={styles.titleRule} aria-hidden="true" />
-
-            <div className={styles.presentedTo}>Proudly presented to</div>
-
-            <div className={styles.studentBlock}>
-              <div className={styles.studentName}>{studentName}</div>
-              <div className={styles.studentRule} aria-hidden="true" />
+            <div className="cert-header-center">
+              <CertificateBrandText
+                text={siteInfo.company.shortName}
+                className="cert-academy-name"
+              />
+              <div className="cert-academy-tagline">
+                {siteInfo.company.tagline}
+              </div>
             </div>
 
-            {/* Workshop-specific prose */}
-            <p className={styles.bodyProse}>
-              This is to certify that the above named individual has
-              successfully attended and participated in the one day workshop{" "}
-              <span className={styles.courseInline}>{workshopTitle}</span> held
-              on <span className={styles.courseInline}>{workshopDate}</span>,
-              organised by{" "}
-              <span className={styles.schoolInline}>
-                {siteInfo.company.shortName}
+            <div className="cert-meta">
+              <div className="cert-meta-label">Certificate No.</div>
+              <div className="cert-meta-value">{referenceNo}</div>
+            </div>
+          </header>
+
+          <div className="cert-body">
+            <div className="cert-title-block">
+              <div className="cert-title-row">
+                <span className="cert-title-flourish" aria-hidden="true" />
+                <h1 className="cert-title">Certificate</h1>
+                <span
+                  className="cert-title-flourish cert-title-flourish-right"
+                  aria-hidden="true"
+                />
+              </div>
+              <p className="cert-title-sub">of Participation</p>
+            </div>
+            <div className="cert-title-rule" aria-hidden="true" />
+
+            <p className="cert-presented-to">Proudly presented to</p>
+            <h2 className="cert-student-name">{displayName}</h2>
+            <div className="cert-name-rule" aria-hidden="true" />
+
+            <p className="cert-body-prose">
+              This is to certify that the above-named individual has
+              successfully attended and participated in the workshop{" "}
+              <span className="cert-emphasis">{workshopTitle}</span> held on{" "}
+              <span className="cert-emphasis">{workshopDate}</span>, organised
+              by{" "}
+              <span className="cert-emphasis">
+                <CertificateBrandText text={siteInfo.company.shortName} />
               </span>
               .
             </p>
 
-            {/* <div className={styles.issuedOn}>Issued on {issueDate}</div> */}
+            <p className="cert-issued-on">Issued on {issueDate}</p>
           </div>
 
-          {/* ── Footer arc — green tones to complement gold header ── */}
-          <div className={styles.footerArcWrap} aria-hidden="true">
-            <svg
-              className={styles.footerArc}
-              viewBox="0 0 794 190"
-              preserveAspectRatio="none"
-            >
-              <defs>
-                <linearGradient id="wsFooterGrad" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stopColor="#2f4e40" stopOpacity="0.40" />
-                  <stop offset="55%" stopColor="#3a5a49" stopOpacity="0.30" />
-                  <stop offset="100%" stopColor="#2f4e40" stopOpacity="0.36" />
-                </linearGradient>
-              </defs>
-              <path
-                d="M0,20 C128,128 288,152 415,114 C558,68 668,68 794,132 L794,190 L0,190 Z"
-                fill="url(#wsFooterGrad)"
+          <footer className="cert-signatures" aria-label="Signatures">
+            <div className="cert-sig-col">
+              <CertificateSignatureSlot
+                src={directorSignatureUrl}
+                alt="Training Director signature"
               />
-              <path
-                d="M0,10 C128,114 288,138 415,100 C558,52 668,52 794,116"
-                fill="none"
-                stroke="#2f4e40"
-                strokeWidth="3"
-                opacity="0.28"
-              />
-            </svg>
-
-            {/* Address + PAN left · email + phone right */}
-            <div className={styles.footerMeta}>
-              <div className={styles.footerLeft}>
-                <div className={styles.footerAddress}>{footerAddress}</div>
-                <div className={styles.footerPan}>
-                  PAN: {siteInfo.company.panNo}
-                </div>
-              </div>
-              <div className={styles.footerContact}>
-                {footerContact}
-                <br />
-                {footerPhone}
-              </div>
+              <div className="cert-sig-line" aria-hidden="true" />
+              <div className="cert-sig-label">Training Director</div>
             </div>
-          </div>
 
-          {/* ── Signatures ── */}
-          <footer className={styles.bottom} aria-label="Signatures">
-            <div className={styles.sigCol}>
-              <div className={styles.sigBlank} />
-              <div className={styles.sigLine} aria-hidden="true" />
-              <div className={styles.sigLabel}>Training Director</div>
-            </div>
-            <div className={styles.centerCol}>
-              {/* <Image
-                className={styles.bottomMark}
-                src={centerMarkUrl}
-                alt="academy mark"
+            <div className="cert-seal-col">
+              <Image
+                className="cert-seal-img"
+                src={sealUrl}
+                alt="Academy seal"
                 loader={passthroughLoader}
                 unoptimized
-                width={180}
-                height={180}
-              /> */}
+                width={72}
+                height={72}
+              />
             </div>
-            <div className={styles.sigCol}>
-              <div className={styles.sigBlank} />
-              <div className={styles.sigLine} aria-hidden="true" />
-              <div className={styles.sigLabel}>Head of School</div>
+
+            <div className="cert-sig-col">
+              <CertificateSignatureSlot
+                src={headSignatureUrl}
+                alt="Head of School signature"
+              />
+              <div className="cert-sig-line" aria-hidden="true" />
+              <div className="cert-sig-label">Head of School</div>
             </div>
           </footer>
+
+          <div className="cert-footer-bar">
+            <div className="cert-footer-left">
+              <span>{footerAddress}</span>
+              <span>PAN {siteInfo.company.panNo}</span>
+            </div>
+            <div className="cert-footer-right">
+              {footerContact}
+              <br />
+              {footerPhone}
+            </div>
+          </div>
         </section>
       </div>
     </div>
+    </>
   );
-}
+});
