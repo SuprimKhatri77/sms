@@ -1,6 +1,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { siteInfo } from "@/utils/site-info";
+import { landingContainerClass } from "./landing-styles";
+import { cn } from "@/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -183,7 +185,7 @@ export default function Footer() {
       className="pt-16 text-white overflow-hidden"
       style={{ backgroundColor: "var(--brand-green)" }}
     >
-      <div className="mx-auto max-w-400 px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12">
+      <div className={cn(landingContainerClass, "px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12")}>
         {/* ── Brand Column ── */}
         <div>
           {/* Logo */}
@@ -223,16 +225,16 @@ export default function Footer() {
                 href={social.href}
                 target="_blank"
                 aria-label={social.label}
-                className="w-10 h-10 rounded-full flex items-center justify-center border transition-colors duration-200"
+                className="flex h-10 w-10 items-center justify-center border transition-colors duration-200"
                 style={{
                   borderColor: "rgba(255,255,255,0.2)",
                   color: "rgba(255,255,255,0.75)",
                 }}
                 onMouseEnter={(e) => {
                   (e.currentTarget as HTMLAnchorElement).style.backgroundColor =
-                    "var(--brand-orange)";
+                    "var(--brand-brown)";
                   (e.currentTarget as HTMLAnchorElement).style.borderColor =
-                    "var(--brand-orange)";
+                    "var(--brand-brown)";
                   (e.currentTarget as HTMLAnchorElement).style.color = "#fff";
                 }}
                 onMouseLeave={(e) => {
@@ -280,7 +282,7 @@ export default function Footer() {
                       "rgba(255,255,255,0.65)")
                   }
                 >
-                  <span style={{ color: "var(--brand-sage)" }}>
+                  <span style={{ color: "var(--brand-brown)" }}>
                     <ChevronRightIcon />
                   </span>
                   {link.label}
@@ -342,16 +344,13 @@ export default function Footer() {
               color: "rgba(255,255,255,0.65)",
             }}
           >
-            Begin your child&apos;s journey toward excellence. Applications are
-            open for the upcoming academic year.
+            Begin your training journey toward professional excellence.
+            Applications are open for the upcoming intake.
           </p>
           <Link
             href="/admission"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold text-white transition-opacity duration-200 hover:opacity-85"
-            style={{
-              backgroundColor: "var(--brand-orange)",
-              fontFamily: "var(--font-dm-sans)",
-            }}
+            className="inline-flex items-center gap-2 border border-(--brand-brown) bg-(--brand-brown) px-5 py-2.5 text-sm font-semibold text-white transition-opacity duration-200 hover:opacity-90"
+            style={{ fontFamily: "var(--font-dm-sans)" }}
           >
             Start Application
             <ArrowRightIcon />

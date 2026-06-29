@@ -1,16 +1,21 @@
-import { MessageCircle, FileText, Search, PartyPopper } from "lucide-react";
+import { FileText, MessageCircle, PartyPopper, Search } from "lucide-react";
+import {
+  landingContainerClass,
+  landingEyebrowClass,
+  landingMutedSectionClass,
+  landingSectionBodyClass,
+  landingSectionTitleClass,
+} from "./landing-styles";
+import { LandingPatternCard } from "./LandingPatternCard";
 
 const steps = [
   {
     step: "01",
     title: "Send an Inquiry",
     description:
-      "Fill out our simple inquiry form with your basic details and questions. Our team will get in touch within 24 hours.",
+      "Fill out our inquiry form with your details and questions. Our team will respond within 24 hours.",
     icon: MessageCircle,
-    colorVar: "var(--brand-orange)",
-    bgClass: "bg-[#e8552a]/10",
-    textClass: "text-[#e8552a]",
-    stepClass: "text-[#e8552a]/20",
+    tone: "brown" as const,
   },
   {
     step: "02",
@@ -18,138 +23,107 @@ const steps = [
     description:
       "Complete the online admission form with your details and preferred training program.",
     icon: FileText,
-    colorVar: "var(--brand-sage)",
-    bgClass: "bg-[#6b9e6b]/10",
-    textClass: "text-[#6b9e6b]",
-    stepClass: "text-[#6b9e6b]/20",
+    tone: "green" as const,
   },
   {
     step: "03",
     title: "Admin Review",
     description:
-      "Our admin team reviews your application and confirms the next steps.",
+      "Our admissions team reviews your application and confirms the next steps.",
     icon: Search,
-    colorVar: "var(--brand-mauve)",
-    bgClass: "bg-[#7d6b8a]/10",
-    textClass: "text-[#7d6b8a]",
-    stepClass: "text-[#7d6b8a]/20",
+    tone: "brown" as const,
   },
   {
     step: "04",
     title: "Welcome Aboard",
     description:
-      "Once approved, receive your confirmation and start your learning journey with us.",
+      "Once approved, receive your confirmation and begin your training journey with us.",
     icon: PartyPopper,
-    colorVar: "var(--brand-green)",
-    bgClass: "bg-[#2d4a3e]/10",
-    textClass: "text-[#2d4a3e]",
-    stepClass: "text-[#2d4a3e]/20",
+    tone: "green" as const,
   },
 ];
 
+const toneStyles = {
+  brown: {
+    iconWrap: "border-[rgba(194,138,79,0.25)] bg-[rgba(194,138,79,0.1)] text-(--brand-brown)",
+    step: "text-[rgba(194,138,79,0.22)]",
+    bar: "from-(--brand-brown)",
+  },
+  green: {
+    iconWrap: "border-[rgba(47,78,64,0.15)] bg-[rgba(47,78,64,0.06)] text-(--brand-green)",
+    step: "text-[rgba(47,78,64,0.12)]",
+    bar: "from-(--brand-green)",
+  },
+};
+
 export default function HowItWorks() {
   return (
-    <section
-      id="how-it-works"
-      className="relative overflow-hidden bg-[#f4f1ec] px-6 py-24"
-    >
-      <div className="mx-auto max-w-[1200px]">
-        {/* Header */}
-        <div className="mb-18 text-center">
-          <span
-            className="mb-3 inline-block text-[0.78rem] font-semibold tracking-widest text-[#e8552a] uppercase"
-            style={{ fontFamily: "var(--font-dm-sans)" }}
-          >
+    <section id="how-it-works" className={landingMutedSectionClass}>
+      <div className={landingContainerClass}>
+        <div className="mb-16 max-w-2xl">
+          <span className={`${landingEyebrowClass} mb-4 inline-block`}>
             The Process
           </span>
-          <h2
-            className="mb-4 text-[clamp(2rem,4vw,2.8rem)] font-bold leading-[1.2] text-[#2d4a3e]"
-            style={{ fontFamily: "var(--font-playfair)" }}
-          >
+          <h2 className={landingSectionTitleClass}>
             How Enrollment
             <br />
             <em
-              className="font-medium not-italic text-[#7d6b8a]"
-              style={{
-                fontStyle: "italic",
-                fontFamily: "var(--font-playfair)",
-              }}
+              className="font-medium text-(--brand-brown)"
+              style={{ fontStyle: "italic" }}
             >
               Works
             </em>
           </h2>
-          <p
-            className="mx-auto max-w-[480px] text-base leading-[1.7] text-[#666]"
-            style={{ fontFamily: "var(--font-dm-sans)" }}
-          >
-            We&apos;ve made the admission process straightforward and
-            transparent — so you can focus on what matters.
+          <p className={`${landingSectionBodyClass} mt-4`}>
+            We&apos;ve kept admissions straightforward and transparent — so you
+            can focus on choosing the right program.
           </p>
         </div>
 
-        {/* Steps Grid */}
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {steps.map((step, idx) => {
             const Icon = step.icon;
+            const tone = toneStyles[step.tone];
             return (
               <div key={step.step} className="relative">
-                {/* Connector line — desktop only */}
-                {idx < steps.length - 1 && (
+                {idx < steps.length - 1 ? (
                   <div
-                    className="connector-line absolute -right-4 top-8 z-1 hidden h-[2px] w-8 lg:block"
-                    style={{
-                      background: `linear-gradient(to right, ${step.colorVar}60, transparent)`,
-                    }}
+                    className="absolute top-10 -right-2.5 z-[1] hidden h-px w-5 bg-[rgba(47,78,64,0.15)] lg:block"
+                    aria-hidden
                   />
-                )}
+                ) : null}
 
-                <div className="group flex h-full flex-col rounded-[18px] border border-black/6 bg-white p-8 transition-all duration-250 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(0,0,0,0.08)]">
-                  {/* Icon row */}
+                <LandingPatternCard
+                  tone={step.tone}
+                  index={idx}
+                  className="flex h-full flex-col"
+                >
                   <div className="mb-6 flex items-center justify-between">
                     <div
-                      className={`flex h-[52px] w-[52px] items-center justify-center rounded-[14px] ${step.bgClass}`}
+                      className={`grid h-[52px] w-[52px] place-items-center border ${tone.iconWrap}`}
                     >
-                      <Icon
-                        className={`h-6 w-6 ${step.textClass}`}
-                        strokeWidth={1.75}
-                      />
+                      <Icon size={22} strokeWidth={1.75} />
                     </div>
                     <span
-                      className={`leading-none ${step.stepClass}`}
-                      style={{
-                        fontFamily: "var(--font-playfair)",
-                        fontSize: "2rem",
-                        fontWeight: 800,
-                      }}
+                      className={`font-[family-name:var(--font-playfair)] text-[2rem] font-extrabold leading-none ${tone.step}`}
                     >
                       {step.step}
                     </span>
                   </div>
 
-                  {/* Text */}
-                  <h3
-                    className="mb-[0.65rem] text-[1.15rem] font-semibold text-[#2d4a3e]"
-                    style={{ fontFamily: "var(--font-playfair)" }}
-                  >
+                  <h3 className="mb-2 font-[family-name:var(--font-playfair)] text-[1.05rem] font-semibold text-(--brand-green)">
                     {step.title}
                   </h3>
-                  <p
-                    className="text-[0.88rem] leading-[1.65] text-[#777]"
-                    style={{ fontFamily: "var(--font-dm-sans)" }}
-                  >
+                  <p className="font-[family-name:var(--font-dm-sans)] text-[0.88rem] leading-[1.65] text-[rgba(47,78,64,0.58)]">
                     {step.description}
                   </p>
 
-                  {/* Bottom accent bar — inline only for the dynamic gradient */}
                   <div className="mt-auto pt-6">
                     <div
-                      className="h-[3px] rounded-sm"
-                      style={{
-                        background: `linear-gradient(to right, ${step.colorVar}, transparent)`,
-                      }}
+                      className={`h-[3px] bg-gradient-to-r ${tone.bar} to-transparent`}
                     />
                   </div>
-                </div>
+                </LandingPatternCard>
               </div>
             );
           })}

@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import { InfiniteSlider } from "@/components/ui/infinite-slider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { landingContainerClass } from "./landing-styles";
 
 type Testimonial = {
   quote: string;
@@ -93,7 +94,7 @@ const thirdColumn = testimonials.slice(6, 9);
 export function TestimonialsSection() {
   return (
     <section className="relative py-10">
-      <div className="mx-auto max-w-5xl">
+      <div className={landingContainerClass}>
         <div className="mx-auto flex max-w-sm flex-col items-center justify-center gap-4">
           {/* <div className="flex justify-center">
             <div className="rounded-lg border px-4 py-1">Testimonials</div>

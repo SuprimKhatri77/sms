@@ -6,17 +6,25 @@ import { APIResponse, type InquiryForm, inquiryFormSchema } from "@repo/types";
 import { useForm } from "@tanstack/react-form-nextjs";
 import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
-import { useState } from "react";
+import { useState, type ComponentProps } from "react";
 import { toast } from "sonner";
 import { siteInfo } from "@/utils/site-info";
-
-type FormData = {
-  full_name: string;
-  phone: string;
-  email: string;
-  message: string;
-  source: string;
-};
+import {
+  landingContainerClass,
+  landingEyebrowClass,
+  landingMutedSectionClass,
+  landingPrimaryButtonClass,
+  landingSectionBodyClass,
+  landingSectionTitleClass,
+} from "./landing-styles";
+import { cn } from "@/lib/utils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const sourceOptions = [
   { value: "", label: "How did you hear about us?" },
@@ -77,22 +85,6 @@ const ClockIcon = () => (
   </svg>
 );
 
-const ChevronDownIcon = () => (
-  <svg
-    width="14"
-    height="14"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2.5"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    aria-hidden="true"
-  >
-    <polyline points="6 9 12 15 18 9" />
-  </svg>
-);
-
 const CheckCircleIcon = () => (
   <svg
     width="48"
@@ -127,6 +119,174 @@ const SendIcon = () => (
   </svg>
 );
 
+const floatingLabelClass =
+  "pointer-events-none absolute left-0 top-5 font-[family-name:var(--font-dm-sans)] text-[0.9rem] text-[rgba(47,78,64,0.5)] transition-all duration-200 peer-focus:top-0 peer-focus:text-[0.72rem] peer-focus:font-medium peer-focus:text-(--brand-brown) peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:text-[0.72rem] peer-[:not(:placeholder-shown)]:font-medium peer-[:not(:placeholder-shown)]:text-(--brand-green)";
+
+const underlineFieldClass =
+  "peer w-full border-0 border-b bg-transparent px-0 pt-6 pb-2.5 font-[family-name:var(--font-dm-sans)] text-sm text-(--brand-ink) outline-none transition-[border-color] duration-200";
+
+function fieldBorder(hasError: boolean) {
+  return hasError
+    ? "border-red-400 focus:border-red-500"
+    : "border-[rgba(47,78,64,0.22)] focus:border-(--brand-green)";
+}
+
+function FieldError({ message }: { message?: string }) {
+  if (!message) return null;
+  return (
+    <p
+      className="mt-1.5 font-[family-name:var(--font-dm-sans)] text-[0.76rem] text-red-500"
+      role="alert"
+    >
+      {message}
+    </p>
+  );
+}
+
+function FloatingInput({
+  id,
+  label,
+  required,
+  error,
+  className,
+  ...props
+}: {
+  id: string;
+  label: string;
+  required?: boolean;
+  error?: string;
+} & Omit<ComponentProps<"input">, "placeholder">) {
+  return (
+    <div className={className}>
+      <div className="relative">
+        <input
+          id={id}
+          placeholder=" "
+          className={cn(underlineFieldClass, fieldBorder(!!error))}
+          aria-invalid={!!error}
+          {...props}
+        />
+        <label htmlFor={id} className={floatingLabelClass}>
+          {label}
+          {required ? <span className="text-red-500"> *</span> : null}
+        </label>
+      </div>
+      <FieldError message={error} />
+    </div>
+  );
+}
+
+function FloatingTextarea({
+  id,
+  label,
+  required,
+  error,
+  className,
+  ...props
+}: {
+  id: string;
+  label: string;
+  required?: boolean;
+  error?: string;
+} & Omit<ComponentProps<"textarea">, "placeholder">) {
+  return (
+    <div className={className}>
+      <div className="relative">
+        <textarea
+          id={id}
+          placeholder=" "
+          rows={4}
+          className={cn(
+            underlineFieldClass,
+            fieldBorder(!!error),
+            "min-h-27.5 resize-y",
+          )}
+          aria-invalid={!!error}
+          {...props}
+        />
+        <label htmlFor={id} className={floatingLabelClass}>
+          {label}
+          {required ? <span className="text-red-500"> *</span> : null}
+        </label>
+      </div>
+      <FieldError message={error} />
+    </div>
+  );
+}
+
+function FloatingSelect({
+  id,
+  label,
+  required,
+  error,
+  value,
+  onValueChange,
+  options,
+}: {
+  id: string;
+  label: string;
+  required?: boolean;
+  error?: string;
+  value: string;
+  onValueChange: (value: string) => void;
+  options: readonly { value: string; label: string }[];
+}) {
+  const selectedLabel = options.find((opt) => opt.value === value)?.label;
+
+  return (
+    <div>
+      <div className="relative pt-1">
+        <label
+          htmlFor={id}
+          className="pointer-events-none absolute left-0 top-0 z-10 font-[family-name:var(--font-dm-sans)] text-[0.72rem] font-medium text-(--brand-brown)"
+        >
+          {label}
+          {required ? <span className="text-red-500"> *</span> : null}
+        </label>
+
+        <Select
+          value={value || null}
+          onValueChange={(next) => onValueChange(next ?? "")}
+        >
+          <SelectTrigger
+            id={id}
+            aria-invalid={!!error}
+            className={cn(
+              "flex h-auto min-h-14 w-full items-end justify-between gap-3 rounded-none border-0 border-b bg-transparent px-0 pt-6 pb-3 shadow-none ring-0 outline-none",
+              "font-[family-name:var(--font-dm-sans)] text-sm text-(--brand-ink)",
+              "data-[size=default]:h-auto data-[size=default]:min-h-14",
+              "focus-visible:ring-0",
+              fieldBorder(!!error),
+              "focus-visible:border-(--brand-green)",
+              "*:data-[slot=select-value]:line-clamp-none *:data-[slot=select-value]:min-w-0 *:data-[slot=select-value]:flex-1 *:data-[slot=select-value]:whitespace-normal *:data-[slot=select-value]:pb-0.5",
+              "[&_svg]:relative [&_svg]:mb-0.5 [&_svg]:shrink-0 [&_svg]:text-(--brand-green)",
+            )}
+          >
+            <SelectValue placeholder="Select an option">
+              {selectedLabel}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent
+            className="rounded-none border border-[rgba(47,78,64,0.12)] bg-white text-(--brand-ink)"
+            alignItemWithTrigger
+          >
+            {options.map((opt) => (
+              <SelectItem
+                key={opt.value}
+                value={opt.value}
+                className="rounded-none text-(--brand-ink) focus:bg-[rgba(47,78,64,0.06)] focus:text-(--brand-green)"
+              >
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <FieldError message={error} />
+    </div>
+  );
+}
+
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 interface ContactCardProps {
@@ -137,90 +297,18 @@ interface ContactCardProps {
 
 function ContactCard({ icon, label, value }: ContactCardProps) {
   return (
-    <div className="flex items-start gap-4 p-4 bg-white rounded-xl border border-black/6">
-      <span
-        className="mt-0.5 shrink-0 p-2 rounded-lg"
-        style={{
-          backgroundColor: "rgba(232,85,42,0.08)",
-          color: "var(--brand-orange)",
-        }}
-      >
-        {icon}
-      </span>
+    <div className="flex items-start gap-4 border-b border-[rgba(47,78,64,0.1)] pb-5 last:border-b-0 last:pb-0">
+      <span className="mt-0.5 shrink-0 text-(--brand-brown)">{icon}</span>
       <div>
-        <div
-          className="text-[0.72rem] font-semibold tracking-widest uppercase mb-0.5"
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            color: "var(--brand-orange)",
-          }}
-        >
+        <div className="mb-0.5 font-[family-name:var(--font-dm-sans)] text-[0.72rem] font-semibold uppercase tracking-widest text-(--brand-brown)">
           {label}
         </div>
-        <div
-          className="text-sm font-medium"
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            color: "var(--brand-green)",
-          }}
-        >
+        <div className="font-[family-name:var(--font-dm-sans)] text-sm font-medium text-(--brand-green)">
           {value}
         </div>
       </div>
     </div>
   );
-}
-
-interface FieldProps {
-  id: keyof FormData;
-  label: string;
-  required?: boolean;
-  optional?: boolean;
-  error?: string;
-  children: React.ReactNode;
-}
-
-function Field({ label, id, required, optional, error, children }: FieldProps) {
-  return (
-    <div className="flex flex-col gap-1">
-      <label
-        htmlFor={id}
-        className="text-[0.8rem] font-semibold tracking-wide"
-        style={{
-          fontFamily: "var(--font-dm-sans)",
-          color: "var(--brand-green)",
-        }}
-      >
-        {label} {required && <span className="text-red-500">*</span>}
-        {optional && (
-          <span className="font-normal" style={{ color: "#aaa" }}>
-            (optional)
-          </span>
-        )}
-      </label>
-      {children}
-      {error && (
-        <p
-          className="text-[0.76rem] text-red-500"
-          style={{ fontFamily: "var(--font-dm-sans)" }}
-          role="alert"
-        >
-          {error}
-        </p>
-      )}
-    </div>
-  );
-}
-
-// ─── Input class helper ───────────────────────────────────────────────────────
-// focus ring uses CSS var — must be inline for the box-shadow value
-const inputBase =
-  "w-full px-4 py-3 rounded-xl text-sm text-[#1a1a1a] bg-white outline-none transition-all duration-200";
-
-function inputBorder(hasError: boolean) {
-  return hasError
-    ? "border-[1.5px] border-red-500"
-    : "border-[1.5px] border-[rgba(45,74,62,0.15)] focus:border-[var(--brand-green)]";
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
@@ -272,73 +360,35 @@ export default function InquiryFormPage() {
     },
   });
 
-  // Shared focus/blur handlers — CSS vars can't be in Tailwind focus: classes
-  const focusProps = (field: keyof InquiryForm) => ({
-    onFocus: (
-      e: React.FocusEvent<
-        HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-      >,
-    ) => {
-      if (!errors[field]) e.target.style.borderColor = "var(--brand-green)";
-      e.target.style.boxShadow = "0 0 0 3px rgba(45,74,62,0.1)";
-    },
-    onBlur: (
-      e: React.FocusEvent<
-        HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-      >,
-    ) => {
-      if (!errors[field]) e.target.style.borderColor = "rgba(45,74,62,0.15)";
-      e.target.style.boxShadow = "none";
-    },
-  });
-
   return (
-    <section
-      id="inquiry"
-      className="py-24 px-6"
-      style={{ backgroundColor: "#faf9f7" }}
-    >
-      <div className="mx-auto max-w-5xl grid grid-cols-1 lg:grid-cols-[1fr_1.25fr] gap-16 items-start">
+    <section id="inquiry" className={landingMutedSectionClass}>
+      <div
+        className={`${landingContainerClass} grid grid-cols-1 items-start gap-16 lg:grid-cols-[1fr_1.25fr]`}
+      >
         {/* ── Left: Info ── */}
         <div>
-          <span
-            className="inline-block text-[0.75rem] font-semibold tracking-widest uppercase mb-3"
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              color: "var(--brand-orange)",
-            }}
-          >
+          <span className={`${landingEyebrowClass} mb-3 inline-block`}>
             Get In Touch
           </span>
 
-          <h2
-            className="font-bold leading-tight mb-5"
-            style={{
-              fontFamily: "var(--font-playfair)",
-              fontSize: "clamp(1.9rem, 3.5vw, 2.6rem)",
-              color: "var(--brand-green)",
-            }}
-          >
+          <h2 className={`${landingSectionTitleClass} mb-5`}>
             Have a Question?
             <br />
             <em
-              className="font-medium not-italic"
-              style={{ color: "var(--brand-mauve)", fontStyle: "italic" }}
+              className="font-medium text-(--brand-brown)"
+              style={{ fontStyle: "italic" }}
             >
               Let&apos;s Talk.
             </em>
           </h2>
 
-          <p
-            className="text-[0.95rem] leading-[1.75] mb-10"
-            style={{ fontFamily: "var(--font-dm-sans)", color: "#666" }}
-          >
+          <p className={`${landingSectionBodyClass} mb-10`}>
             Whether you&apos;re curious about our programs, fees, or how to
             apply — send us a message and our admissions team will respond
             promptly.
           </p>
 
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-5">
             <ContactCard
               icon={<PhoneIcon />}
               label="Call Us"
@@ -358,14 +408,11 @@ export default function InquiryFormPage() {
         </div>
 
         {/* ── Right: Form ── */}
-        <div
-          className="bg-white rounded-2xl p-8 border border-black/[0.07]"
-          style={{ boxShadow: "0 4px 40px rgba(0,0,0,0.05)" }}
-        >
+        <div className="p-0 lg:pt-2">
           {submitted ? (
             /* ── Success state ── */
             <div className="flex flex-col items-center text-center py-8 gap-4">
-              <span style={{ color: "var(--brand-sage)" }}>
+              <span className="text-(--brand-green)">
                 <CheckCircleIcon />
               </span>
               <h3
@@ -385,12 +432,9 @@ export default function InquiryFormPage() {
                 within 24 hours.
               </p>
               <button
+                type="button"
                 onClick={() => setSubmitted(false)}
-                className="mt-2 px-6 py-2.5 rounded-lg text-sm font-semibold text-white transition-opacity duration-200 hover:opacity-85 cursor-pointer"
-                style={{
-                  fontFamily: "var(--font-dm-sans)",
-                  backgroundColor: "var(--brand-green)",
-                }}
+                className={`${landingPrimaryButtonClass} mt-2 cursor-pointer bg-(--brand-green) hover:brightness-100`}
               >
                 Send Another
               </button>
@@ -420,61 +464,43 @@ export default function InquiryFormPage() {
                   e.preventDefault();
                   handleSubmit();
                 }}
-                className="flex flex-col gap-5"
+                className="flex flex-col gap-7"
               >
-                {/* Full Name */}
                 <FormField name="fullName">
                   {(field) => {
                     const fieldError = field.state.meta.errors[0]?.message;
                     const mergedError = fieldError ?? errors.fullName;
                     return (
-                      <Field
+                      <FloatingInput
                         id="full_name"
+                        name="full_name"
+                        type="text"
                         label="Full Name"
                         required
                         error={mergedError}
-                      >
-                        <input
-                          id="full_name"
-                          name="full_name"
-                          type="text"
-                          placeholder="e.g. Jane Doe"
-                          value={field.state.value}
-                          onChange={(e) => field.handleChange(e.target.value)}
-                          className={`${inputBase} ${inputBorder(!!mergedError)}`}
-                          style={{ fontFamily: "var(--font-dm-sans)" }}
-                          {...focusProps("fullName")}
-                        />
-                      </Field>
+                        value={field.state.value}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                      />
                     );
                   }}
                 </FormField>
 
-                {/* Phone + Email row */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-7 sm:grid-cols-2 sm:gap-6">
                   <FormField name="phone">
                     {(field) => {
                       const fieldError = field.state.meta.errors[0]?.message;
                       const mergedError = fieldError ?? errors.phone;
                       return (
-                        <Field
+                        <FloatingInput
                           id="phone"
+                          name="phone"
+                          type="tel"
                           label="Phone"
                           required
                           error={mergedError}
-                        >
-                          <input
-                            id="phone"
-                            name="phone"
-                            type="tel"
-                            placeholder="+1 555 0001234"
-                            value={field.state.value}
-                            onChange={(e) => field.handleChange(e.target.value)}
-                            className={`${inputBase} ${inputBorder(!!mergedError)}`}
-                            style={{ fontFamily: "var(--font-dm-sans)" }}
-                            {...focusProps("phone")}
-                          />
-                        </Field>
+                          value={field.state.value}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                        />
                       );
                     }}
                   </FormField>
@@ -483,134 +509,64 @@ export default function InquiryFormPage() {
                       const fieldError = field.state.meta.errors[0]?.message;
                       const mergedError = fieldError ?? errors.email;
                       return (
-                        <Field
+                        <FloatingInput
                           id="email"
+                          name="email"
+                          type="email"
                           label="Email"
                           required
                           error={mergedError}
-                        >
-                          <input
-                            id="email"
-                            name="email"
-                            type="email"
-                            placeholder="jane@example.com"
-                            value={field.state.value}
-                            onChange={(e) => field.handleChange(e.target.value)}
-                            className={`${inputBase} ${inputBorder(!!mergedError)}`}
-                            style={{ fontFamily: "var(--font-dm-sans)" }}
-                            {...focusProps("email")}
-                          />
-                        </Field>
+                          value={field.state.value}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                        />
                       );
                     }}
                   </FormField>
                 </div>
 
-                {/* Source */}
                 <FormField name="source">
                   {(field) => {
                     const fieldError = field.state.meta.errors[0]?.message;
                     const mergedError = fieldError ?? errors.source;
                     return (
-                      <Field
+                      <FloatingSelect
                         id="source"
-                        label="How Did You Hear About Us?"
+                        label="How did you hear about us?"
                         required
                         error={mergedError}
-                      >
-                        <div className="relative">
-                          <select
-                            id="source"
-                            name="source"
-                            value={field.state.value}
-                            onChange={(e) =>
-                              field.handleChange(
-                                e.target.value as InquiryForm["source"],
-                              )
-                            }
-                            className={`${inputBase} ${inputBorder(!!mergedError)} appearance-none pr-10 cursor-pointer`}
-                            style={{
-                              fontFamily: "var(--font-dm-sans)",
-                              color: field.state.value ? "#1a1a1a" : "#999",
-                            }}
-                            {...focusProps("source")}
-                          >
-                            {sourceOptions.map((opt) => (
-                              <option
-                                key={opt.value}
-                                value={opt.value}
-                                disabled={opt.value === ""}
-                              >
-                                {opt.label}
-                              </option>
-                            ))}
-                          </select>
-                          <span
-                            className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
-                            style={{ color: "var(--brand-green)" }}
-                          >
-                            <ChevronDownIcon />
-                          </span>
-                        </div>
-                      </Field>
+                        value={field.state.value}
+                        onValueChange={(v) =>
+                          field.handleChange(v as InquiryForm["source"])
+                        }
+                        options={sourceOptions.filter((opt) => opt.value !== "")}
+                      />
                     );
                   }}
                 </FormField>
 
-                {/* Message */}
                 <FormField name="message">
                   {(field) => {
                     const fieldError = field.state.meta.errors[0]?.message;
                     const mergedError = fieldError ?? errors.message;
                     return (
-                      <Field
+                      <FloatingTextarea
                         id="message"
-                        label="Your Message"
+                        name="message"
+                        label="Your message"
                         required
                         error={mergedError}
-                      >
-                        <textarea
-                          id="message"
-                          name="message"
-                          rows={4}
-                          placeholder="Tell us about your child, which program interests you, or any questions you have..."
-                          value={field.state.value}
-                          onChange={(e) => field.handleChange(e.target.value)}
-                          className={`${inputBase} ${inputBorder(!!mergedError)} resize-y min-h-27.5`}
-                          style={{ fontFamily: "var(--font-dm-sans)" }}
-                          {...focusProps("message")}
-                        />
-                      </Field>
+                        value={field.state.value}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                      />
                     );
                   }}
                 </FormField>
 
                 {/* Submit */}
                 <button
+                  type="submit"
                   disabled={isPending}
-                  className="w-full flex items-center justify-center gap-2.5 py-3.5 rounded-xl text-sm font-semibold text-white transition-all duration-200 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
-                  style={{
-                    fontFamily: "var(--font-dm-sans)",
-                    letterSpacing: "0.02em",
-                    backgroundColor: isPending ? "#aaa" : "var(--brand-orange)",
-                    boxShadow: isPending
-                      ? "none"
-                      : "0 4px 16px rgba(232,85,42,0.3)",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isPending) {
-                      (e.currentTarget as HTMLButtonElement).style.transform =
-                        "translateY(-1px)";
-                      (e.currentTarget as HTMLButtonElement).style.boxShadow =
-                        "0 6px 20px rgba(232,85,42,0.4)";
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.transform =
-                      "translateY(0)";
-                    (e.currentTarget as HTMLButtonElement).style.boxShadow =
-                      isPending ? "none" : "0 4px 16px rgba(232,85,42,0.3)";
-                  }}
+                  className={`${landingPrimaryButtonClass} w-full cursor-pointer py-3.5 disabled:cursor-not-allowed disabled:opacity-60`}
                 >
                   {isPending ? (
                     <>

@@ -1,6 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import {
+  landingContainerClass,
+  landingEyebrowClass,
+  landingNavLinkClass,
+  landingSectionBodyClass,
+  landingSectionTitleClass,
+} from "./landing-styles";
+import { cn } from "@/lib/utils";
 
 const partners = [
   {
@@ -74,76 +82,45 @@ export default function OurPartners() {
         }}
       />
 
-      <div className="relative mx-auto max-w-7xl">
+      <div className={landingContainerClass}>
         {/* ── Header ── */}
-        <div className="mb-16 flex flex-col items-center text-center">
-          <span
-            className="mb-3 inline-block text-[0.75rem] font-semibold uppercase tracking-[0.2em]"
-            style={{
-              color: "var(--brand-green, #2f4e40)",
-              fontFamily: "var(--font-dm-sans)",
-            }}
-          >
+        <div className="mb-14 max-w-2xl">
+          <span className={cn(landingEyebrowClass, "mb-4 inline-block")}>
             Industry Network
           </span>
-          <h2
-            className="mb-4 text-[clamp(1.9rem,3.5vw,2.6rem)] font-bold leading-[1.15]"
-            style={{
-              fontFamily: "var(--font-playfair)",
-              color: "var(--brand-ink, #1a1a1a)",
-            }}
-          >
+          <h2 className={cn(landingSectionTitleClass, "mb-4")}>
             Trusted by the{" "}
             <em
-              className="font-normal italic"
-              style={{ color: "var(--brand-brown, #c28a4f)" }}
+              className="font-medium text-(--brand-brown)"
+              style={{ fontStyle: "italic" }}
             >
               Industry&apos;s Best
             </em>
           </h2>
-          <p
-            className="max-w-lg text-[0.95rem] leading-[1.75]"
-            style={{
-              color: "rgba(26,26,26,0.55)",
-              fontFamily: "var(--font-dm-sans)",
-            }}
-          >
+          <p className={cn(landingSectionBodyClass, "max-w-xl")}>
             Our graduates are sought after by leading hotels, restaurants, and
             culinary institutions across Nepal and beyond.
           </p>
         </div>
 
         {/* ── Stats row ── */}
-        <div className="mb-14 flex flex-wrap items-center justify-center gap-12">
+        <div className="mb-14 flex flex-wrap items-start gap-x-10 gap-y-8 sm:gap-x-14">
           {stats.map((stat, i) => (
-            <div key={stat.label} className="flex items-center gap-12">
-              <div className="text-center">
-                <p
-                  className="text-[2.2rem] font-bold leading-none tracking-tight"
-                  style={{
-                    fontFamily: "var(--font-lora)",
-                    color: "var(--brand-green, #2f4e40)",
-                  }}
-                >
+            <div key={stat.label} className="flex items-center gap-10 sm:gap-14">
+              <div>
+                <p className="font-[family-name:var(--font-lora)] text-[2.2rem] font-bold leading-none tracking-tight text-(--brand-green)">
                   {stat.value}
                 </p>
-                <p
-                  className="mt-1 text-[0.75rem] uppercase tracking-widest"
-                  style={{
-                    color: "rgba(26,26,26,0.4)",
-                    fontFamily: "var(--font-dm-sans)",
-                  }}
-                >
+                <p className="mt-1 font-[family-name:var(--font-dm-sans)] text-[0.75rem] uppercase tracking-widest text-[rgba(26,26,26,0.4)]">
                   {stat.label}
                 </p>
               </div>
-              {/* Divider — hide after last item */}
-              {i < stats.length - 1 && (
+              {i < stats.length - 1 ? (
                 <div
                   className="hidden h-10 w-px sm:block"
                   style={{ backgroundColor: "rgba(47,78,64,0.15)" }}
                 />
-              )}
+              ) : null}
             </div>
           ))}
         </div>
@@ -231,34 +208,11 @@ export default function OurPartners() {
         </div>
 
         {/* ── Bottom CTA ── */}
-        <div className="mt-14 flex flex-col items-center gap-4 text-center">
-          <p
-            className="text-[0.9rem]"
-            style={{
-              color: "rgba(26,26,26,0.5)",
-              fontFamily: "var(--font-dm-sans)",
-            }}
-          >
+        <div className="mt-14">
+          <p className={cn(landingSectionBodyClass, "mb-2")}>
             Are you a hospitality business looking to hire trained graduates?
           </p>
-          <Link
-            href="#inquiry"
-            className="inline-flex items-center gap-2 rounded-xl border px-6 py-3 text-[0.875rem] font-semibold transition-all duration-200 hover:-translate-y-0.5 focus-visible:outline"
-            style={{
-              borderColor: "rgba(47,78,64,0.3)",
-              color: "var(--brand-green, #2f4e40)",
-              backgroundColor: "transparent",
-              fontFamily: "var(--font-dm-sans)",
-            }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLAnchorElement).style.backgroundColor =
-                "rgba(47,78,64,0.06)";
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLAnchorElement).style.backgroundColor =
-                "transparent";
-            }}
-          >
+          <Link href="#inquiry" className={landingNavLinkClass}>
             Become a Partner
           </Link>
         </div>

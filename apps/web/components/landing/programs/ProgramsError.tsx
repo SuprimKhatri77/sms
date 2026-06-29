@@ -2,6 +2,11 @@
 
 import { Button } from "@/components/ui/button";
 import { AlertCircle, RefreshCw } from "lucide-react";
+import {
+  landingPrimaryButtonClass,
+  landingSectionBodyClass,
+  landingSectionTitleClass,
+} from "../landing-styles";
 
 type ProgramsErrorProps = {
   message?: string;
@@ -17,37 +22,33 @@ export default function ProgramsError({
   return (
     <section
       id="programs"
-      className="relative w-full overflow-hidden px-6 py-24"
-      style={{ background: "#1e3328" }}
+      className="relative overflow-hidden bg-(--brand-cream) px-6 py-24"
     >
       <div
-        className="pointer-events-none absolute inset-0"
+        className="pointer-events-none absolute inset-0 opacity-60"
+        aria-hidden
         style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.018' fill-rule='evenodd'%3E%3Ccircle cx='20' cy='20' r='1'/%3E%3C/g%3E%3C/svg%3E")`,
+          backgroundImage: `
+            linear-gradient(rgba(47,78,64,0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(47,78,64,0.03) 1px, transparent 1px)
+          `,
+          backgroundSize: "48px 48px",
         }}
       />
 
-      <div className="relative mx-auto flex max-w-3xl flex-col items-center rounded-2xl border border-white/10 bg-white/5 px-6 py-12 text-center">
-        <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-full bg-red-500/15 text-red-300">
-          <AlertCircle className="h-5 w-5" />
+      <div className="relative mx-auto flex max-w-lg flex-col items-center px-2 py-4 text-center">
+        <div className="mb-4 text-red-500">
+          <AlertCircle className="h-8 w-8" />
         </div>
-        <h3
-          className="mb-2 text-2xl font-semibold text-white"
-          style={{ fontFamily: "var(--font-playfair)" }}
-        >
+        <h3 className={`${landingSectionTitleClass} mb-2 text-[1.5rem]`}>
           Unable to load programs
         </h3>
-        <p
-          className="mb-6 max-w-lg text-sm text-white/65"
-          style={{ fontFamily: "var(--font-dm-sans)" }}
-        >
-          {message}
-        </p>
+        <p className={`${landingSectionBodyClass} mb-6`}>{message}</p>
         <Button
           type="button"
           onClick={onRetry}
           disabled={isRetrying}
-          className="gap-2 bg-[var(--brand-brown)] text-white hover:brightness-110"
+          className={`${landingPrimaryButtonClass} gap-2`}
         >
           <RefreshCw className={`h-4 w-4 ${isRetrying ? "animate-spin" : ""}`} />
           {isRetrying ? "Retrying..." : "Try Again"}

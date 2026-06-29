@@ -5,6 +5,12 @@ import { siteInfo } from "@/utils/site-info";
 import { useAuthStore } from "@/store/auth";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import {
+  landingPrimaryButtonClass,
+  landingSecondaryButtonClass,
+  landingContainerClass,
+} from "./landing-styles";
+import { cn } from "@/lib/utils";
 
 export default function Hero() {
   const user = useAuthStore((state) => state.user);
@@ -14,7 +20,7 @@ export default function Hero() {
       className="relative w-full overflow-hidden pb-8 pt-[100px]"
       style={{ background: "var(--brand-cream)" }}
     >
-      <div className="container mx-auto max-sm:px-2">
+      <div className={cn(landingContainerClass, "px-4 sm:px-6")}>
         {/* ─── MOBILE layout ─── */}
         <div
           className="relative border-x md:hidden"
@@ -304,24 +310,16 @@ function MainContent({
       {/* CTAs */}
       <div className="mb-8 flex flex-wrap gap-3 sm:gap-4">
         <button
+          type="button"
           onClick={handleAdmissionClick}
-          className="inline-block rounded-[10px] px-7 py-3 text-[0.92rem] font-semibold tracking-[0.02em] text-white transition-all duration-200 hover:-translate-y-0.5"
-          style={{
-            background: "var(--brand-brown)",
-            boxShadow: "0 4px 18px rgba(194,138,79,0.3)",
-            fontFamily: "var(--font-dm-sans)",
-          }}
+          className={`${landingPrimaryButtonClass} px-7 py-3 text-[0.92rem] tracking-[0.02em]`}
+          style={{ boxShadow: "0 4px 18px rgba(194,138,79,0.3)" }}
         >
           Apply for Admission
         </button>
         <Link
           href="#inquiry"
-          className="inline-block rounded-[10px] px-7 py-3 text-[0.92rem] font-medium transition-all duration-200"
-          style={{
-            border: "1px solid rgba(47,78,64,0.3)",
-            color: "var(--brand-green)",
-            fontFamily: "var(--font-dm-sans)",
-          }}
+          className={`${landingSecondaryButtonClass} px-7 py-3 text-[0.92rem] font-medium`}
         >
           Send Inquiry
         </Link>
