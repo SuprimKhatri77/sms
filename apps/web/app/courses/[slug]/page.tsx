@@ -228,7 +228,8 @@ export default async function CoursePage({
               </h2>
               <p className={cn(courseBodyClass, "mt-4 max-w-lg")}>
                 See how our {course.course.toLowerCase()} sessions run — real
-                equipment, guided practice, and the pace you can expect in class.
+                equipment, guided practice, and the pace you can expect in
+                class.
               </p>
               <ul className="mt-6 flex flex-col gap-3">
                 {[
@@ -371,7 +372,10 @@ export default async function CoursePage({
       >
         <div className={courseContainerClass}>
           <SectionLabel>Week by Week</SectionLabel>
-          <h2 id="course-curriculum-heading" className={cn(courseTitleClass, "mb-10")}>
+          <h2
+            id="course-curriculum-heading"
+            className={cn(courseTitleClass, "mb-10")}
+          >
             Full Curriculum
           </h2>
           <CurriculumAccordion course={course} accent={tone.accent} />
@@ -403,7 +407,9 @@ export default async function CoursePage({
       </section>
 
       {/* ── CTA ── */}
-      <section className={cn(courseSectionClass, "pb-24 pt-4", courseCreamSection)}>
+      <section
+        className={cn(courseSectionClass, "pb-24 pt-4", courseCreamSection)}
+      >
         <div className={courseContainerClass}>
           <div className="overflow-hidden border border-[rgba(47,78,64,0.12)] bg-(--brand-green)">
             <div
