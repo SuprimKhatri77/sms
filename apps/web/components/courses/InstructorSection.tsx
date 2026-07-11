@@ -27,7 +27,7 @@ export function InstructorSection({
     <>
       <div className={courseContainerClass}>
         <SectionLabel>Your Instructor</SectionLabel>
-        <h2 className={cn(courseTitleClass, "mb-8")}>
+        <h2 id="course-instructor-heading" className={cn(courseTitleClass, "mb-8")}>
           Meet Your{" "}
           <em
             className="font-medium text-(--brand-brown)"
@@ -43,7 +43,7 @@ export function InstructorSection({
               {course.instructor.image ? (
                 <Image
                   src={course.instructor.image}
-                  alt={`Portrait of ${course.instructor.name}`}
+                  alt={`${course.instructor.name}, instructor for ${course.instructor.title} at Brew and Bake Academy Butwal`}
                   fill
                   className="object-cover object-top"
                   sizes="(max-width: 640px) 160px, 176px"

@@ -251,6 +251,7 @@ export default function Navbar() {
         >
         <Link
           href="/"
+          aria-label={`${siteInfo.company.shortName} home`}
           className="flex min-w-0 shrink items-center gap-2 no-underline transition-opacity duration-200 hover:opacity-85"
           onClick={closeMenu}
         >
@@ -259,7 +260,7 @@ export default function Navbar() {
               src={
                 siteInfo.assets.greenBrownNoBG ?? siteInfo.assets.whiteLogoNoBG
               }
-              alt={siteInfo.company.shortName}
+              alt={`${siteInfo.company.shortName} logo — hospitality training in Butwal`}
               width={120}
               height={120}
               priority
@@ -268,7 +269,10 @@ export default function Navbar() {
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-7 lg:flex xl:gap-8">
+        <nav
+          className="hidden items-center gap-7 lg:flex xl:gap-8"
+          aria-label="Primary navigation"
+        >
           {navLinks.map((link) => (
             <Link key={link.label} href={link.href} className={landingNavLinkClass}>
               {link.label}

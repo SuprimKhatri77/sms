@@ -486,6 +486,7 @@ export default function Programs() {
   return (
     <section
       id="programs"
+      aria-labelledby="programs-heading"
       className="relative overflow-hidden bg-(--brand-cream) px-6 py-24"
     >
       <div
@@ -516,7 +517,7 @@ export default function Programs() {
             <span className={`${landingEyebrowClass} mb-4 inline-block`}>
               Our Courses
             </span>
-            <h2 className={landingSectionTitleClass}>
+            <h2 id="programs-heading" className={landingSectionTitleClass}>
               Courses That Build
               <br />
               <em

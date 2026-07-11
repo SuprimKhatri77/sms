@@ -17,6 +17,7 @@ export default function Hero() {
   return (
     <section
       id="home"
+      aria-labelledby="home-heading"
       className="relative w-full overflow-hidden pb-8 pt-[100px]"
       style={{ background: "var(--brand-cream)" }}
     >
@@ -34,6 +35,7 @@ export default function Hero() {
             viewBox="0 0 210 340"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
             style={{ color: "rgba(194,138,79,0.18)", pointerEvents: "none" }}
           >
             <g>
@@ -144,6 +146,7 @@ export default function Hero() {
             viewBox="0 0 340 210"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
             style={{ color: "rgba(194,138,79,0.18)", pointerEvents: "none" }}
           >
             <g>
@@ -277,6 +280,7 @@ function MainContent({
 
       {/* Headline */}
       <h1
+        id="home-heading"
         className="mb-5 font-heading leading-[1.08] font-bold tracking-tight text-[2.2rem] sm:text-[2.8rem] lg:text-[3.2rem] xl:text-[3.6rem]"
         style={{
           color: "var(--brand-ink)",
@@ -312,6 +316,7 @@ function MainContent({
         <button
           type="button"
           onClick={handleAdmissionClick}
+          aria-label="Apply for admission to Brew and Bake Academy"
           className={`${landingPrimaryButtonClass} px-7 py-3 text-[0.92rem] tracking-[0.02em]`}
           style={{ boxShadow: "0 4px 18px rgba(194,138,79,0.3)" }}
         >
@@ -370,6 +375,7 @@ function VideoPanel() {
         muted
         loop
         playsInline
+        aria-label="Live barista and hospitality training sessions at Brew and Bake Academy Butwal"
         className="absolute inset-0 h-full w-full object-cover"
       />
       <div

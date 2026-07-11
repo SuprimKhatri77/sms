@@ -25,6 +25,7 @@ export const items = [
     title: "Espresso & Extraction",
     category: "Barista",
     caption: "Dialing in grind, dose, and yield on commercial machines.",
+    alt: "Espresso and extraction training at Brew & Bake Academy Butwal",
   },
   {
     id: 2,
@@ -32,6 +33,7 @@ export const items = [
     title: "Latte Art Practice",
     category: "Barista",
     caption: "Milk texturing and free-pour techniques in the training lab.",
+    alt: "Barista latte art training at Brew & Bake Academy Butwal",
   },
   {
     id: 3,
@@ -39,6 +41,7 @@ export const items = [
     title: "Artisan Bread Making",
     category: "Bakery",
     caption: "From mixing and fermentation to shaping and bake-off.",
+    alt: "Bakery class students learning bread making in Rupandehi",
   },
   {
     id: 4,
@@ -46,6 +49,7 @@ export const items = [
     title: "Pastry & Viennoiserie",
     category: "Bakery",
     caption: "Laminating, piping, and finishing in the pastry kitchen.",
+    alt: "Pastry and viennoiserie training at Brew & Bake Academy Butwal",
   },
   {
     id: 5,
@@ -53,6 +57,7 @@ export const items = [
     title: "Classic Cocktails",
     category: "Bartending",
     caption: "Build, stir, shake — fundamentals behind every great drink.",
+    alt: "Bartending and cocktail training at Brew & Bake Academy Butwal",
   },
   {
     id: 6,
@@ -60,6 +65,7 @@ export const items = [
     title: "Hands-On Kitchen Labs",
     category: "Training",
     caption: "Small cohorts mean more practice time and direct feedback.",
+    alt: "Hands-on hospitality training lab at Brew & Bake Academy, Rupandehi",
   },
   {
     id: 7,
@@ -67,6 +73,7 @@ export const items = [
     title: "Café Workflow",
     category: "Barista",
     caption: "Service flow, hygiene, and speed behind a busy bar.",
+    alt: "Café workflow and barista service training in Butwal",
   },
   {
     id: 8,
@@ -74,6 +81,7 @@ export const items = [
     title: "Plating & Presentation",
     category: "Bakery",
     caption: "Finishing skills that translate straight to the shop floor.",
+    alt: "Bakery plating and presentation class at Brew & Bake Academy Butwal",
   },
 ] as const;
 
@@ -187,6 +195,7 @@ export default function ImageGallery() {
     <section
       id="gallery"
       ref={sectionRef}
+      aria-labelledby="gallery-heading"
       className={cn(
         "gallery-section relative overflow-x-hidden bg-(--brand-cream) py-24",
         visible && "gallery-section--visible",
@@ -214,7 +223,7 @@ export default function ImageGallery() {
           <span className={`${landingEyebrowClass} mb-4 inline-block`}>
             Campus & Training
           </span>
-          <h2 className={landingSectionTitleClass}>
+          <h2 id="gallery-heading" className={landingSectionTitleClass}>
             Life at
             <br />
             <em
@@ -234,6 +243,10 @@ export default function ImageGallery() {
           <div className="flex min-w-0 flex-col gap-4">
             <div
               ref={containerRef}
+              role="group"
+              aria-label="Training photo gallery"
+              aria-roledescription="carousel"
+              aria-live="polite"
               className="gallery-stage relative mx-auto aspect-[3/2] w-full max-h-[min(52vw,420px)] overflow-hidden border border-[rgba(47,78,64,0.1)] bg-[rgba(47,78,64,0.04)] sm:max-h-[min(48vw,440px)] lg:mx-0 lg:max-h-[460px] lg:aspect-[16/10]"
             >
               <motion.div
@@ -251,7 +264,7 @@ export default function ImageGallery() {
                   >
                     <Image
                       src={item.url}
-                      alt={item.title}
+                      alt={item.alt}
                       fill
                       sizes="(max-width: 1024px) 100vw, 900px"
                       className="object-cover select-none"
@@ -312,6 +325,9 @@ export default function ImageGallery() {
             </div>
 
             <div className="flex items-center justify-between gap-4 px-0.5">
+              <p className="sr-only" aria-live="polite">
+                Viewing {active.title}: {active.caption}
+              </p>
               <p className="font-(family-name:--font-dm-sans) text-[0.8rem] text-[rgba(47,78,64,0.5)]">
                 Swipe or use arrow keys to browse
               </p>
@@ -485,7 +501,7 @@ const ThumbButton = ({
     type="button"
     ref={ref}
     onClick={onClick}
-    aria-label={`View ${item.title}`}
+    aria-label={`View photo: ${item.alt}`}
     aria-current={active ? "true" : undefined}
     className={cn(
       "gallery-thumb relative shrink-0 overflow-hidden border-2 border-transparent",

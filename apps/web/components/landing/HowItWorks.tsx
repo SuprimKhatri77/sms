@@ -58,13 +58,13 @@ const toneStyles = {
 
 export default function HowItWorks() {
   return (
-    <section id="how-it-works" className={landingMutedSectionClass}>
+    <section id="how-it-works" aria-labelledby="how-it-works-heading" className={landingMutedSectionClass}>
       <div className={landingContainerClass}>
         <div className="mb-16 max-w-2xl">
           <span className={`${landingEyebrowClass} mb-4 inline-block`}>
             The Process
           </span>
-          <h2 className={landingSectionTitleClass}>
+          <h2 id="how-it-works-heading" className={landingSectionTitleClass}>
             How Enrollment
             <br />
             <em
@@ -80,12 +80,12 @@ export default function HowItWorks() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <ol className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {steps.map((step, idx) => {
             const Icon = step.icon;
             const tone = toneStyles[step.tone];
             return (
-              <div key={step.step} className="relative">
+              <li key={step.step} className="relative list-none">
                 {idx < steps.length - 1 ? (
                   <div
                     className="absolute top-10 -right-2.5 z-[1] hidden h-px w-5 bg-[rgba(47,78,64,0.15)] lg:block"
@@ -102,7 +102,7 @@ export default function HowItWorks() {
                     <div
                       className={`grid h-[52px] w-[52px] place-items-center border ${tone.iconWrap}`}
                     >
-                      <Icon size={22} strokeWidth={1.75} />
+                      <Icon size={22} strokeWidth={1.75} aria-hidden />
                     </div>
                     <span
                       className={`font-[family-name:var(--font-playfair)] text-[2rem] font-extrabold leading-none ${tone.step}`}
@@ -124,10 +124,10 @@ export default function HowItWorks() {
                     />
                   </div>
                 </LandingPatternCard>
-              </div>
+              </li>
             );
           })}
-        </div>
+        </ol>
       </div>
     </section>
   );
