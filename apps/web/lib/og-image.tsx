@@ -13,11 +13,11 @@ export const ogImageContentType = "image/png";
 
 const fontsDir = path.join(process.cwd(), "assets/fonts");
 
-const playfairRegular = readFile(
+const playfairBold = readFile(
   path.join(fontsDir, "PlayfairDisplay-Bold.ttf"),
 );
-const dmSansSemiBold = readFile(path.join(fontsDir, "DMSans-SemiBold.ttf"));
-const dmSansRegular = readFile(path.join(fontsDir, "DMSans-Regular.ttf"));
+const geistMedium = readFile(path.join(fontsDir, "Geist-Medium.ttf"));
+const geistRegular = readFile(path.join(fontsDir, "Geist-Regular.ttf"));
 
 function getLogoUrl() {
   return `${getSiteUrl()}${siteInfo.assets.whiteLogo}`;
@@ -38,10 +38,10 @@ export async function createOgImage({
   footer,
   accent = "#c28a4f",
 }: OgImageOptions) {
-  const [playfair, dmSansBold, dmSans] = await Promise.all([
-    playfairRegular,
-    dmSansSemiBold,
-    dmSansRegular,
+  const [playfair, geistBold, geist] = await Promise.all([
+    playfairBold,
+    geistMedium,
+    geistRegular,
   ]);
 
   return new ImageResponse(
@@ -93,9 +93,9 @@ export async function createOgImage({
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             <div
               style={{
-                fontFamily: "DM Sans",
+                fontFamily: "Geist",
                 fontSize: 22,
-                fontWeight: 600,
+                fontWeight: 500,
                 letterSpacing: "0.08em",
                 textTransform: "uppercase",
                 color: "rgba(251,250,247,0.72)",
@@ -106,10 +106,10 @@ export async function createOgImage({
             {eyebrow ? (
               <div
                 style={{
-                  fontFamily: "DM Sans",
+                  fontFamily: "Geist",
                   fontSize: 18,
                   color: accent,
-                  fontWeight: 600,
+                  fontWeight: 500,
                 }}
               >
                 {eyebrow}
@@ -132,7 +132,7 @@ export async function createOgImage({
           </div>
           <div
             style={{
-              fontFamily: "DM Sans",
+              fontFamily: "Geist",
               fontSize: 30,
               lineHeight: 1.45,
               color: "rgba(251,250,247,0.78)",
@@ -160,7 +160,7 @@ export async function createOgImage({
           />
           <div
             style={{
-              fontFamily: "DM Sans",
+              fontFamily: "Geist",
               fontSize: 22,
               color: "rgba(251,250,247,0.62)",
             }}
@@ -180,14 +180,14 @@ export async function createOgImage({
           weight: 700,
         },
         {
-          name: "DM Sans",
-          data: dmSansBold,
+          name: "Geist",
+          data: geistBold,
           style: "normal",
-          weight: 600,
+          weight: 500,
         },
         {
-          name: "DM Sans",
-          data: dmSans,
+          name: "Geist",
+          data: geist,
           style: "normal",
           weight: 400,
         },
