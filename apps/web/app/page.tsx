@@ -21,9 +21,7 @@ export const metadata: Metadata = homeMetadata;
 export default function Home() {
   return (
     <main id="main-content">
-      <JsonLd
-        data={[createOrganizationJsonLd(), createWebsiteJsonLd()]}
-      />
+      <JsonLd data={[createOrganizationJsonLd(), createWebsiteJsonLd()]} />
       <Hero />
       <Suspense fallback={<ProgramLoadingSkeleton />}>
         <Programs />
