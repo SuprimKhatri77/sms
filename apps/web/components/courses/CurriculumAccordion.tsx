@@ -47,6 +47,7 @@ export function CurriculumAccordion({
                     className="mt-0.5 h-3.5 w-3.5 shrink-0"
                     style={{ color: accent }}
                     strokeWidth={2.5}
+                    aria-hidden
                   />
                   {topic}
                 </li>

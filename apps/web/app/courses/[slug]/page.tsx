@@ -24,7 +24,8 @@ import {
   CroissantIcon,
   UtensilsCrossed,
 } from "lucide-react";
-import { siteInfo } from "@/utils/site-info";
+import { JsonLd } from "@/components/seo/json-ld";
+import { createCourseJsonLd, createCourseMetadata } from "@/lib/seo";
 import { CourseDetailResponse } from "@repo/types";
 import { InstructorSection } from "@/components/courses/InstructorSection";
 import { ReadMoreText } from "@/components/courses/ReadMoreText";
@@ -64,10 +65,7 @@ export async function generateMetadata({
   const { slug } = await params;
   const course = getCourseBySlug(slug);
   if (!course) return { title: "Course Not Found" };
-  return {
-    title: `${course.course} — ${siteInfo.company.name}`,
-    description: course.shortDescription,
-  };
+  return createCourseMetadata(course);
 }
 
 export default async function CoursePage({
@@ -98,9 +96,16 @@ export default async function CoursePage({
   ] as const;
 
   return (
-    <main className="min-h-screen bg-(--brand-cream) font-(family-name:--font-dm-sans) text-(--brand-ink)">
+    <main
+      id="main-content"
+      className="min-h-screen bg-(--brand-cream) font-(family-name:--font-dm-sans) text-(--brand-ink)"
+    >
+      <JsonLd data={createCourseJsonLd(course)} />
       {/* ── Hero ── */}
-      <section className="relative overflow-hidden bg-(--brand-green) px-6 pb-16 pt-28 sm:pb-20 sm:pt-32">
+      <section
+        aria-labelledby="course-hero-heading"
+        className="relative overflow-hidden bg-(--brand-green) px-6 pb-16 pt-28 sm:pb-20 sm:pt-32"
+      >
         <div
           className="pointer-events-none absolute inset-0 opacity-50"
           aria-hidden
@@ -121,6 +126,7 @@ export default async function CoursePage({
         <div className={cn(courseContainerClass, "relative")}>
           <Link
             href="/#programs"
+            aria-label="Back to all training programs"
             className="mb-8 inline-flex items-center gap-2 font-(family-name:--font-dm-sans) text-[0.82rem] font-medium text-white/55 transition-colors hover:text-white"
           >
             <ArrowLeft size={15} strokeWidth={2} />
@@ -130,6 +136,7 @@ export default async function CoursePage({
           <div className="mb-6 flex flex-wrap items-center gap-3">
             <div
               className="grid h-11 w-11 place-items-center border"
+              aria-hidden
               style={{
                 borderColor: tone.border,
                 backgroundColor: tone.soft,
@@ -152,7 +159,10 @@ export default async function CoursePage({
 
           <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1fr_340px] lg:items-end lg:gap-12">
             <div>
-              <h1 className="mb-4 font-[family-name:var(--font-playfair)] text-[clamp(2.2rem,5vw,3.5rem)] font-bold leading-[1.08] text-white">
+              <h1
+                id="course-hero-heading"
+                className="mb-4 font-[family-name:var(--font-playfair)] text-[clamp(2.2rem,5vw,3.5rem)] font-bold leading-[1.08] text-white"
+              >
                 {course.course}
               </h1>
               <ReadMoreText text={course.longDescription} />
@@ -167,15 +177,21 @@ export default async function CoursePage({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
+            <div
+              className="grid grid-cols-2 gap-2.5 sm:gap-3"
+              role="list"
+              aria-label="Program details"
+            >
               {metaItems.map(({ icon: MetaIcon, label, value }) => (
                 <div
                   key={label}
+                  role="listitem"
                   className="border border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.04)] p-4"
                 >
                   <MetaIcon
                     className="mb-2 h-4 w-4 text-white/40"
                     strokeWidth={1.75}
+                    aria-hidden
                   />
                   <p className="mb-0.5 font-(family-name:--font-dm-sans) text-[0.68rem] uppercase tracking-widest text-white/40">
                     {label}
@@ -195,14 +211,14 @@ export default async function CoursePage({
       {/* ── Video (featured) ── */}
       <section
         id="video"
+        aria-labelledby="course-video-heading"
         className={cn(courseSectionClass, courseCreamSection)}
       >
         <div className={courseContainerClass}>
           <div className="mb-10 grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-center lg:gap-12">
             <div>
               <SectionLabel>Program Preview</SectionLabel>
-              <h2 className={courseTitleClass}>
-                Inside the{" "}
+              <h2 id="course-video-heading" className={courseTitleClass}>
                 <em
                   className="font-medium text-(--brand-brown)"
                   style={{ fontStyle: "italic" }}
@@ -227,6 +243,7 @@ export default async function CoursePage({
                     <CheckCircle2
                       className="mt-0.5 h-4 w-4 shrink-0 text-(--brand-brown)"
                       strokeWidth={2}
+                      aria-hidden
                     />
                     {item}
                   </li>
@@ -241,14 +258,14 @@ export default async function CoursePage({
       {/* ── Overview ── */}
       <section
         id="overview"
+        aria-labelledby="course-overview-heading"
         className={cn(courseSectionClass, courseMutedSection)}
       >
         <div className={courseContainerClass}>
           <div className="grid grid-cols-1 gap-12 lg:grid-cols-[1fr_380px] lg:gap-16">
             <div>
               <SectionLabel>About This Program</SectionLabel>
-              <h2 className={courseTitleClass}>
-                What You Will{" "}
+              <h2 id="course-overview-heading" className={courseTitleClass}>
                 <em
                   className="font-medium text-(--brand-brown)"
                   style={{ fontStyle: "italic" }}
@@ -289,6 +306,7 @@ export default async function CoursePage({
                 <Award
                   className="h-4 w-4 text-(--brand-green)"
                   strokeWidth={1.75}
+                  aria-hidden
                 />
                 <h3 className="font-(family-name:--font-dm-sans) text-[0.95rem] font-semibold text-(--brand-green)">
                   Learning Outcomes
@@ -304,6 +322,7 @@ export default async function CoursePage({
                       className="mt-0.5 h-4 w-4 shrink-0"
                       style={{ color: tone.accent }}
                       strokeWidth={2}
+                      aria-hidden
                     />
                     {outcome}
                   </li>
@@ -347,11 +366,14 @@ export default async function CoursePage({
       {/* ── Curriculum ── */}
       <section
         id="curriculum"
+        aria-labelledby="course-curriculum-heading"
         className={cn(courseSectionClass, courseCreamSection)}
       >
         <div className={courseContainerClass}>
           <SectionLabel>Week by Week</SectionLabel>
-          <h2 className={cn(courseTitleClass, "mb-10")}>Full Curriculum</h2>
+          <h2 id="course-curriculum-heading" className={cn(courseTitleClass, "mb-10")}>
+            Full Curriculum
+          </h2>
           <CurriculumAccordion course={course} accent={tone.accent} />
         </div>
       </section>
@@ -359,16 +381,23 @@ export default async function CoursePage({
       {/* ── Instructor ── */}
       <section
         id="instructor"
+        aria-labelledby="course-instructor-heading"
         className={cn(courseSectionClass, courseMutedSection)}
       >
         <InstructorSection course={safeCourse} accent={tone.accent} />
       </section>
 
       {/* ── FAQ ── */}
-      <section id="faq" className={cn(courseSectionClass, courseCreamSection)}>
+      <section
+        id="faq"
+        aria-labelledby="course-faq-heading"
+        className={cn(courseSectionClass, courseCreamSection)}
+      >
         <div className={courseContainerClass}>
           <SectionLabel>Common Questions</SectionLabel>
-          <h2 className={cn(courseTitleClass, "mb-10")}>FAQ</h2>
+          <h2 id="course-faq-heading" className={cn(courseTitleClass, "mb-10")}>
+            FAQ
+          </h2>
           <FaqList course={course} />
         </div>
       </section>

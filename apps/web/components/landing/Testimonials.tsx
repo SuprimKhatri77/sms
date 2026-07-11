@@ -93,14 +93,20 @@ const thirdColumn = testimonials.slice(6, 9);
 
 export function TestimonialsSection() {
   return (
-    <section className="relative py-10">
+    <section
+      className="relative py-10"
+      aria-labelledby="testimonials-heading"
+    >
       <div className={landingContainerClass}>
         <div className="mx-auto flex max-w-sm flex-col items-center justify-center gap-4">
           {/* <div className="flex justify-center">
             <div className="rounded-lg border px-4 py-1">Testimonials</div>
           </div> */}
 
-          <h2 className="font-bold text-3xl tracking-tighter lg:text-4xl">
+          <h2
+            id="testimonials-heading"
+            className="font-bold text-3xl tracking-tighter lg:text-4xl"
+          >
             What our students say
           </h2>
           <p className="text-center text-muted-foreground text-sm">
@@ -113,6 +119,7 @@ export function TestimonialsSection() {
             "mt-10 flex max-h-160 justify-center gap-6 overflow-hidden",
             "mask-[linear-gradient(to_bottom,transparent,black_25%,black_75%,transparent)]",
           )}
+          aria-label="Student testimonials"
         >
           <InfiniteSlider direction="vertical" speed={30} speedOnHover={15}>
             {firstColumn.map((testimonial) => (
@@ -162,15 +169,17 @@ function TestimonialsCard({
   testimonial: Testimonial;
 }) {
   const { quote, image, name, role, company } = testimonial;
+  const testimonialId = `testimonial-${name.replace(/\s+/g, "-").toLowerCase()}`;
   return (
     <figure
+      id={testimonialId}
       className={cn(
         "w-full max-w-xs rounded-3xl border bg-card p-8 shadow-foreground/10 shadow-lg dark:bg-card/20",
         className,
       )}
       {...props}
     >
-      <blockquote>{quote}</blockquote>
+      <blockquote cite={`#${testimonialId}`}>{quote}</blockquote>
       <figcaption className="mt-5 flex items-center gap-2">
         <Avatar className="size-8 rounded-full">
           <AvatarImage alt={`${name}'s profile picture`} src={image} />

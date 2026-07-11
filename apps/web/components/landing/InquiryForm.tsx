@@ -6,7 +6,8 @@ import { APIResponse, type InquiryForm, inquiryFormSchema } from "@repo/types";
 import { useForm } from "@tanstack/react-form-nextjs";
 import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
-import { useState, type ComponentProps } from "react";
+import { Check, ChevronDown } from "lucide-react";
+import { useEffect, useRef, useState, type ComponentProps } from "react";
 import { toast } from "sonner";
 import { siteInfo } from "@/utils/site-info";
 import {
@@ -18,13 +19,6 @@ import {
   landingSectionTitleClass,
 } from "./landing-styles";
 import { cn } from "@/lib/utils";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 const sourceOptions = [
   { value: "", label: "How did you hear about us?" },
@@ -231,10 +225,37 @@ function FloatingSelect({
   onValueChange: (value: string) => void;
   options: readonly { value: string; label: string }[];
 }) {
-  const selectedLabel = options.find((opt) => opt.value === value)?.label;
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const listboxId = `${id}-listbox`;
+  const selectedLabel =
+    options.find((opt) => opt.value === value)?.label ?? "Select an option";
+
+  useEffect(() => {
+    if (!open) return;
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!containerRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open]);
 
   return (
-    <div>
+    <div ref={containerRef}>
       <div className="relative pt-1">
         <label
           htmlFor={id}
@@ -244,43 +265,75 @@ function FloatingSelect({
           {required ? <span className="text-red-500"> *</span> : null}
         </label>
 
-        <Select
-          value={value || null}
-          onValueChange={(next) => onValueChange(next ?? "")}
+        <button
+          type="button"
+          id={id}
+          aria-invalid={!!error}
+          aria-expanded={open}
+          aria-haspopup="listbox"
+          aria-controls={listboxId}
+          onClick={() => setOpen((current) => !current)}
+          className={cn(
+            "flex w-full items-center justify-between gap-3 border-0 border-b bg-transparent pt-6 pb-3 text-left",
+            "font-(family-name:--font-dm-sans) text-sm outline-none transition-[border-color] duration-200",
+            fieldBorder(!!error),
+            open ? "border-(--brand-green)" : "focus-visible:border-(--brand-green)",
+            value ? "text-(--brand-ink)" : "text-[rgba(47,78,64,0.5)]",
+          )}
         >
-          <SelectTrigger
-            id={id}
-            aria-invalid={!!error}
+          <span className="min-w-0 flex-1 leading-snug">{selectedLabel}</span>
+          <ChevronDown
             className={cn(
-              "flex h-auto min-h-14 w-full items-end justify-between gap-3 rounded-none border-0 border-b bg-transparent px-0 pt-6 pb-3 shadow-none ring-0 outline-none",
-              "font-(family-name:--font-dm-sans) text-sm text-(--brand-ink)",
-              "data-[size=default]:h-auto data-[size=default]:min-h-14",
-              "focus-visible:ring-0",
-              fieldBorder(!!error),
-              "focus-visible:border-(--brand-green)",
-              "*:data-[slot=select-value]:line-clamp-none *:data-[slot=select-value]:min-w-0 *:data-[slot=select-value]:flex-1 *:data-[slot=select-value]:whitespace-normal *:data-[slot=select-value]:pb-0.5",
-              "[&_svg]:relative [&_svg]:mb-0.5 [&_svg]:shrink-0 [&_svg]:text-(--brand-green)",
+              "h-4 w-4 shrink-0 text-(--brand-green) transition-transform duration-200",
+              open && "rotate-180",
             )}
+            strokeWidth={2}
+            aria-hidden
+          />
+        </button>
+
+        {open ? (
+          <ul
+            id={listboxId}
+            role="listbox"
+            aria-label={label}
+            className="absolute left-0 right-0 top-[calc(100%+0.35rem)] z-50 overflow-hidden border border-[rgba(47,78,64,0.12)] bg-white shadow-[0_16px_40px_rgba(47,78,64,0.12)]"
           >
-            <SelectValue placeholder="Select an option">
-              {selectedLabel}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent
-            className="rounded-none border border-[rgba(47,78,64,0.12)] bg-white text-(--brand-ink)"
-            alignItemWithTrigger
-          >
-            {options.map((opt) => (
-              <SelectItem
-                key={opt.value}
-                value={opt.value}
-                className="rounded-none text-(--brand-ink) focus:bg-[rgba(47,78,64,0.06)] focus:text-(--brand-green)"
-              >
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+            {options.map((opt) => {
+              const isSelected = value === opt.value;
+
+              return (
+                <li key={opt.value} role="presentation">
+                  <button
+                    type="button"
+                    role="option"
+                    aria-selected={isSelected}
+                    onClick={() => {
+                      onValueChange(opt.value);
+                      setOpen(false);
+                    }}
+                    className={cn(
+                      "flex w-full items-center justify-between gap-3 px-4 py-3 text-left",
+                      "font-(family-name:--font-dm-sans) text-sm transition-colors duration-150",
+                      isSelected
+                        ? "bg-[rgba(47,78,64,0.08)] font-medium text-(--brand-green)"
+                        : "text-[rgba(47,78,64,0.72)] hover:bg-[rgba(47,78,64,0.05)] hover:text-(--brand-green)",
+                    )}
+                  >
+                    <span>{opt.label}</span>
+                    {isSelected ? (
+                      <Check
+                        className="h-4 w-4 shrink-0 text-(--brand-brown)"
+                        strokeWidth={2.25}
+                        aria-hidden
+                      />
+                    ) : null}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        ) : null}
       </div>
       <FieldError message={error} />
     </div>
@@ -361,7 +414,7 @@ export default function InquiryFormPage() {
   });
 
   return (
-    <section id="inquiry" className={landingMutedSectionClass}>
+    <section id="inquiry" aria-labelledby="inquiry-heading" className={landingMutedSectionClass}>
       <div
         className={`${landingContainerClass} grid grid-cols-1 items-start gap-16 lg:grid-cols-[1fr_1.25fr]`}
       >
@@ -371,7 +424,7 @@ export default function InquiryFormPage() {
             Get In Touch
           </span>
 
-          <h2 className={`${landingSectionTitleClass} mb-5`}>
+          <h2 id="inquiry-heading" className={`${landingSectionTitleClass} mb-5`}>
             Have a Question?
             <br />
             <em
@@ -460,6 +513,7 @@ export default function InquiryFormPage() {
               </p>
 
               <form
+                aria-label="Academy inquiry form"
                 onSubmit={(e) => {
                   e.preventDefault();
                   handleSubmit();

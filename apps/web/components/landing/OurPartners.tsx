@@ -70,6 +70,8 @@ const stats = [
 export default function OurPartners() {
   return (
     <section
+      id="partners"
+      aria-labelledby="partners-heading"
       className="relative w-full overflow-hidden px-6 py-24"
       style={{ backgroundColor: "var(--brand-cream, #fbfaf7)" }}
     >
@@ -88,7 +90,7 @@ export default function OurPartners() {
           <span className={cn(landingEyebrowClass, "mb-4 inline-block")}>
             Industry Network
           </span>
-          <h2 className={cn(landingSectionTitleClass, "mb-4")}>
+          <h2 id="partners-heading" className={cn(landingSectionTitleClass, "mb-4")}>
             Trusted by the{" "}
             <em
               className="font-medium text-(--brand-brown)"

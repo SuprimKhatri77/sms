@@ -74,13 +74,13 @@ const toneStyles = {
 
 export default function WhyUs() {
   return (
-    <section id="why-us" className={landingCreamSectionClass}>
+    <section id="why-us" aria-labelledby="why-us-heading" className={landingCreamSectionClass}>
       <div className={landingContainerClass}>
         <div className="mb-16 max-w-2xl">
           <span className={`${landingEyebrowClass} mb-4 inline-block`}>
             Why Choose Us
           </span>
-          <h2 className={landingSectionTitleClass}>
+          <h2 id="why-us-heading" className={landingSectionTitleClass}>
             Training That Builds
             <br />
             <em
@@ -110,7 +110,7 @@ export default function WhyUs() {
                 <div
                   className={`mb-5 grid h-11 w-11 place-items-center border ${tone.iconWrap}`}
                 >
-                  <Icon size={18} strokeWidth={1.75} />
+                  <Icon size={18} strokeWidth={1.75} aria-hidden />
                 </div>
                 <h3 className="mb-2 font-[family-name:var(--font-playfair)] text-[1.1rem] font-semibold text-(--brand-green)">
                   {feature.title}

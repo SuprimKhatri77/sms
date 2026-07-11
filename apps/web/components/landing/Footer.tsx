@@ -182,6 +182,7 @@ export default function Footer() {
 
   return (
     <footer
+      aria-label="Site footer"
       className="pt-16 text-white overflow-hidden"
       style={{ backgroundColor: "var(--brand-green)" }}
     >
@@ -193,7 +194,7 @@ export default function Footer() {
             <span className="flex h-30 w-30 shrink-0 items-center justify-center overflow-hidden ">
               <Image
                 src={siteInfo.assets.whiteLogoNoBG}
-                alt={siteInfo.company.shortName}
+                alt={`${siteInfo.company.shortName} logo — barista and bakery school in Butwal`}
                 width={120}
                 height={120}
               />
