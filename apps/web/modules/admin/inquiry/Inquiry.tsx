@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useTransition, useCallback, useRef } from "react";
+import { useState, useMemo, useTransition, useCallback, useRef } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useDebouncedCallback } from "use-debounce";
 import {
@@ -19,7 +19,8 @@ import {
   SortDesc,
 } from "lucide-react";
 import InquiryError from "./InquiryError";
-import InquirySkeleton from "./InquirySkeleton";
+import InquiryListSkeleton from "./InquirySkeleton";
+import { cn } from "@/lib/utils";
 import InquiryEmpty from "./InquiryEmpty";
 import InquiryDetailModal from "./InquiryDetailModal";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -141,16 +142,18 @@ export default function AdminInquiryPage() {
   const sourceFilter = searchParams.get("source") ?? "all";
 
   const [searchInput, setSearchInput] = useState(search);
+  const [prevSearch, setPrevSearch] = useState(search);
+  if (search !== prevSearch) {
+    setPrevSearch(search);
+    setSearchInput(search);
+  }
+
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [sortField, setSortField] = useState<SortableField>("createdAt");
   const [sortDir, setSortDir] = useState<SortDirection>("desc");
   const [selected, setSelected] = useState<Inquiry | null>(null);
   const [deletingId, setDeletingID] = useState<string>("");
   const queryClient = useQueryClient();
-
-  useEffect(() => {
-    setSearchInput(search);
-  }, [search]);
 
   const updateParams = useCallback(
     (updates: Record<string, string | null>) => {
@@ -194,7 +197,7 @@ export default function AdminInquiryPage() {
     return params.toString();
   }, [page, search, isReadParam, sourceFilter]);
 
-  const { data, isPending, isError, refetch } = useQuery({
+  const { data, isPending, isError, isRefetching, refetch } = useQuery({
     queryKey: ["admin-inquiries", page, search, isReadParam, sourceFilter],
     queryFn: async () => {
       const res = await api.get<InquiriesList>(`/admin/inquiries?${queryString}`);
@@ -316,31 +319,32 @@ export default function AdminInquiryPage() {
     return list;
   }, [sortField, sortDir, data]);
 
-  if (isPending) return <InquirySkeleton />;
+  const clearAllFilters = useCallback(() => {
+    setSearchInput("");
+    updateParams({
+      is_read: null,
+      source: null,
+      search: null,
+      page: null,
+    });
+  }, [updateParams]);
 
-  if (isError)
-    return (
-      <InquiryError
-        success={false}
-        message={"Unable to reach the server"}
-        onRetry={refetch}
-      />
-    );
+  const focusSearch = useCallback(() => searchInputRef.current?.focus(), []);
 
-  if (!data.success)
-    return (
-      <InquiryError
-        success={false}
-        message={data.message}
-        code={data.code}
-        onRetry={refetch}
-      />
-    );
+  useAdminClearFiltersShortcut(clearAllFilters);
+  useAdminFocusSearchShortcut(focusSearch);
 
-  const { unreadCount, readCount, sources } = data.data;
-  const { limit, total, totalPages } = data.meta;
+  const isInitialLoading = isPending && !data;
+  const isInitialError = isError && !data;
+  const isApiError = data && !data.success;
+
+  const unreadCount = data?.success ? data.data.unreadCount : 0;
+  const readCount = data?.success ? data.data.readCount : 0;
+  const allSources = data?.success ? data.data.sources : [];
+  const limit = data?.success ? data.meta.limit : 0;
+  const total = data?.success ? data.meta.total : 0;
+  const totalPages = data?.success ? data.meta.totalPages : 1;
   const paged = sorted;
-  const allSources = sources;
 
   const statCards: StatCard[] = [
     { label: "Total", value: total, icon: Users, color: "#2f4e40", bg: "rgba(47,78,64,0.08)" },
@@ -357,21 +361,6 @@ export default function AdminInquiryPage() {
       setSortDir("asc");
     }
   };
-
-  const clearAllFilters = useCallback(() => {
-    setSearchInput("");
-    updateParams({
-      is_read: null,
-      source: null,
-      search: null,
-      page: null,
-    });
-  }, [updateParams]);
-
-  useAdminClearFiltersShortcut(clearAllFilters);
-  useAdminFocusSearchShortcut(
-    useCallback(() => searchInputRef.current?.focus(), []),
-  );
 
   // ── Table column definitions ───────────────────────────────────────────────
   const tableColumns: Array<{
@@ -393,7 +382,15 @@ export default function AdminInquiryPage() {
   return (
     <AdminPageLayout
       title="Inquiries"
-      description="Manage and respond to visitor submissions"
+      description={
+        isInitialLoading
+          ? "Loading inquiries…"
+          : isRefetching
+            ? "Refreshing inquiries…"
+            : data?.success
+              ? `${total} submission${total === 1 ? "" : "s"} in the system`
+              : "Manage and respond to visitor submissions"
+      }
       maxWidth="wide"
     >
       <div className="space-y-6">
@@ -407,12 +404,16 @@ export default function AdminInquiryPage() {
                 <p className="font-(family-name:--font-dm-sans) text-[10px] font-semibold uppercase tracking-[0.12em] text-[rgba(47,78,64,0.45)]">
                   {s.label}
                 </p>
-                <p
-                  className="mt-2 font-(family-name:--font-lora) text-2xl font-bold"
-                  style={{ color: s.color }}
-                >
-                  {s.value}
-                </p>
+                {isInitialLoading ? (
+                  <div className="mt-2 h-8 w-12 animate-pulse bg-[rgba(47,78,64,0.08)]" />
+                ) : (
+                  <p
+                    className="mt-2 font-(family-name:--font-lora) text-2xl font-bold"
+                    style={{ color: s.color }}
+                  >
+                    {s.value}
+                  </p>
+                )}
               </div>
               <div
                 className="flex h-9 w-9 items-center justify-center border border-[rgba(47,78,64,0.12)]"
@@ -445,8 +446,12 @@ export default function AdminInquiryPage() {
                 {f === "all"
                   ? "All"
                   : f === "unread"
-                    ? `Unread (${unreadCount})`
-                    : `Read (${readCount})`}
+                    ? isInitialLoading
+                      ? "Unread"
+                      : `Unread (${unreadCount})`
+                    : isInitialLoading
+                      ? "Read"
+                      : `Read (${readCount})`}
               </button>
             ))}
           </div>
@@ -495,7 +500,24 @@ export default function AdminInquiryPage() {
           </div>
         </div>
 
-        {paged.length === 0 ? (
+        {isInitialLoading ? (
+          <InquiryListSkeleton />
+        ) : isInitialError ? (
+          <InquiryError
+            variant="inline"
+            success={false}
+            message="Unable to reach the server"
+            onRetry={() => void refetch()}
+          />
+        ) : isApiError ? (
+          <InquiryError
+            variant="inline"
+            success={false}
+            message={data.message}
+            code={data.code}
+            onRetry={() => void refetch()}
+          />
+        ) : paged.length === 0 ? (
           <div className="border border-[rgba(47,78,64,0.18)] bg-white">
             <InquiryEmpty
               message={search ? `No results for "${search}"` : undefined}
@@ -507,11 +529,15 @@ export default function AdminInquiryPage() {
                     : undefined
               }
               onClearFilter={clearAllFilters}
-              onRetry={refetch}
             />
           </div>
         ) : (
-          <>
+          <div
+            className={cn(
+              "space-y-3 transition-opacity lg:space-y-0",
+              isRefetching && "pointer-events-none opacity-60",
+            )}
+          >
             <div className="hidden overflow-hidden border border-[rgba(47,78,64,0.18)] bg-white lg:block">
               <table className={`${adminTableClass} text-sm`}>
                 <thead>
@@ -735,10 +761,10 @@ export default function AdminInquiryPage() {
                 );
               })}
             </div>
-          </>
+          </div>
         )}
 
-        {totalPages > 1 && (
+        {!isInitialLoading && !isInitialError && !isApiError && totalPages > 1 && (
           <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
             <p className="font-(family-name:--font-dm-sans) text-sm text-[rgba(47,78,64,0.55)]">
               Showing {(page - 1) * limit + 1}–
@@ -777,7 +803,11 @@ export default function AdminInquiryPage() {
           </div>
         )}
 
-        {totalPages <= 1 && paged.length > 0 && (
+        {!isInitialLoading &&
+          !isInitialError &&
+          !isApiError &&
+          totalPages <= 1 &&
+          paged.length > 0 && (
           <p className="font-(family-name:--font-dm-sans) text-xs text-[rgba(47,78,64,0.55)]">
             {total} {total === 1 ? "inquiry" : "inquiries"} found
           </p>

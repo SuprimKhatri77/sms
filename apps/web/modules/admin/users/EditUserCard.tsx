@@ -22,6 +22,7 @@ import {
 } from "@/components/admin/admin-drawer";
 import {
   adminInputClass,
+  adminInputDisabledClass,
   adminPrimaryButtonClass,
   adminSecondaryButtonClass,
 } from "@/components/admin/admin-styles";
@@ -179,13 +180,16 @@ function EditUserForm({ user, onClose }: { user: User; onClose: () => void }) {
                     name="email"
                     type="email"
                     value={field.state.value}
-                    onChange={(e) => field.handleChange(e.target.value)}
+                    disabled
                     className={cn(
                       adminInputClass,
+                      adminInputDisabledClass,
                       "normal-case tracking-normal",
-                      mergedError && "border-[#9a3412]",
                     )}
                   />
+                  <span className="font-(family-name:--font-dm-sans) text-xs normal-case tracking-normal text-[rgba(47,78,64,0.45)]">
+                    Email cannot be changed from this form.
+                  </span>
                   {mergedError ? (
                     <span className={adminFieldErrorClass}>{mergedError}</span>
                   ) : null}

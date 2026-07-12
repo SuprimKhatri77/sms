@@ -8,11 +8,12 @@ import { useDebouncedCallback } from "use-debounce";
 
 import { StatsBar } from "./StatsBar";
 import { CreateUserModal } from "./CreateUserModal";
-import { EditUserCard } from "./EditUserCard";
+// import { EditUserCard } from "./EditUserCard";
 import { UsersTable } from "./UserTable";
 import { Pagination } from "./Pagination";
 import api from "@/lib/axios";
-import { User, UsersList } from "@repo/types";
+// import { User, UsersList } from "@repo/types";
+import { UsersList } from "@repo/types";
 import { UsersTableSkeleton } from "./UserTableSkeleton";
 import { UsersErrorState } from "./UserErrorState";
 import { UsersEmptyState } from "./UserEmptyState";
@@ -47,7 +48,8 @@ export function UsersPageClient() {
   const [, startTransition] = useTransition();
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  // Edit user — disabled for now; re-enable when backend supports it again.
+  // const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [roleOpen, setRoleOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -58,9 +60,9 @@ export function UsersPageClient() {
   const focusSearch = useCallback(() => searchInputRef.current?.focus(), []);
   const handleEscape = useCallback(() => {
     if (isCreateOpen) setIsCreateOpen(false);
-    else if (selectedUser) setSelectedUser(null);
+    // else if (selectedUser) setSelectedUser(null);
     else if (roleOpen) setRoleOpen(false);
-  }, [isCreateOpen, selectedUser, roleOpen]);
+  }, [isCreateOpen, roleOpen]);
 
   useAdminNewShortcut(toggleCreate);
   useAdminFocusSearchShortcut(focusSearch);
@@ -72,15 +74,26 @@ export function UsersPageClient() {
 
   const [searchInput, setSearchInput] = useState(search);
 
-  function updateParams(updates: Record<string, string | null>) {
-    const params = new URLSearchParams(searchParams.toString());
-    for (const [k, v] of Object.entries(updates)) {
-      if (v === null || v === "") params.delete(k);
-      else params.set(k, v);
-    }
-    if ("search" in updates || "role" in updates) params.set("page", "1");
-    startTransition(() => router.push(`${pathname}?${params.toString()}`));
-  }
+  const updateParams = useCallback(
+    (updates: Record<string, string | null>) => {
+      const params = new URLSearchParams(searchParams.toString());
+      for (const [k, v] of Object.entries(updates)) {
+        if (v === null || v === "" || (k === "page" && v === "1")) {
+          params.delete(k);
+        } else {
+          params.set(k, v);
+        }
+      }
+      if ("search" in updates || "role" in updates) {
+        params.delete("page");
+      }
+      const qs = params.toString();
+      startTransition(() => {
+        router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+      });
+    },
+    [pathname, router, searchParams],
+  );
 
   const debouncedSearch = useDebouncedCallback((value: string) => {
     updateParams({ search: value || null });
@@ -98,16 +111,16 @@ export function UsersPageClient() {
 
   const clearAllFilters = useCallback(() => {
     setSearchInput("");
-    updateParams({ search: null, role: null });
-  }, [searchParams, pathname, router]);
+    updateParams({ search: null, role: null, page: null });
+  }, [updateParams]);
 
   function handleRoleSelect(value: Role) {
     setRoleOpen(false);
-    updateParams({ role: value });
+    updateParams({ role: value === "all" ? null : value });
   }
 
   function handlePageChange(newPage: number) {
-    updateParams({ page: String(newPage) });
+    updateParams({ page: newPage === 1 ? null : String(newPage) });
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -289,7 +302,8 @@ export function UsersPageClient() {
               total={data.meta.total}
               roleCount={{ ...data.meta.roleCounts }}
             />
-            <UsersTable users={users} onRowClick={setSelectedUser} />
+            <UsersTable users={users} />
+            {/* <UsersTable users={users} onRowClick={setSelectedUser} /> */}
 
             <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
               <p className="font-(family-name:--font-dm-sans) text-xs text-[rgba(47,78,64,0.55)]">
@@ -311,7 +325,7 @@ export function UsersPageClient() {
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
       />
-      <EditUserCard user={selectedUser} onClose={() => setSelectedUser(null)} />
+      {/* <EditUserCard user={selectedUser} onClose={() => setSelectedUser(null)} /> */}
     </AdminPageLayout>
   );
 }

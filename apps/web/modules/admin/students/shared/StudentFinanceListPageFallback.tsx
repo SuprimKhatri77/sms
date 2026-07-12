@@ -6,23 +6,26 @@ import {
   StudentFinanceMobileSkeleton,
   StudentFinanceTableSkeleton,
 } from "./StudentFinanceTableSkeleton";
-import { adminSecondaryButtonClass, adminTableClass } from "@/components/admin/admin-styles";
-
-const thClass =
-  "px-5 py-3.5 text-left font-(family-name:--font-dm-sans) text-[10px] font-semibold uppercase tracking-widest text-[rgba(47,78,64,0.45)] bg-[rgba(47,78,64,0.03)] border-b border-[rgba(47,78,64,0.12)] whitespace-nowrap";
+import {
+  FinanceTableColGroup,
+  FinanceTableHead,
+  financeTableClass,
+  type FinanceTableColumn,
+} from "./student-finance-table-layout";
+import { adminSecondaryButtonClass } from "@/components/admin/admin-styles";
 
 type StudentFinanceListPageFallbackProps = {
   title: string;
   description: string;
-  columnCount?: number;
-  columnLabels?: string[];
+  columns: FinanceTableColumn[];
+  showSearch?: boolean;
 };
 
 export function StudentFinanceListPageFallback({
   title,
   description,
-  columnCount = 5,
-  columnLabels = ["Student", "Amount", "Details", "Note", "Date"],
+  columns,
+  showSearch = true,
 }: StudentFinanceListPageFallbackProps) {
   return (
     <AdminPageLayout
@@ -45,22 +48,15 @@ export function StudentFinanceListPageFallback({
         secondaryHint="Please wait"
       />
 
-      <StudentDateFilters isPending />
+      <StudentDateFilters isPending showSearch={showSearch} />
 
       <div className="overflow-hidden border border-[rgba(47,78,64,0.18)] bg-white">
         <div className="overflow-x-auto max-md:hidden">
-          <table className={adminTableClass}>
-            <thead>
-              <tr>
-                {columnLabels.slice(0, columnCount).map((label) => (
-                  <th key={label} className={thClass}>
-                    {label}
-                  </th>
-                ))}
-              </tr>
-            </thead>
+          <table className={financeTableClass}>
+            <FinanceTableColGroup columns={columns} />
+            <FinanceTableHead columns={columns} />
             <tbody>
-              <StudentFinanceTableSkeleton columns={columnCount} />
+              <StudentFinanceTableSkeleton columns={columns} />
             </tbody>
           </table>
         </div>

@@ -19,9 +19,8 @@ import (
 const handlerGetPaginatedUsers = "GetPaginatedUsers"
 
 type GetPaginatedUsersParams struct {
-	Role  string `form:"role"`
-	Name  string `form:"name"`
-	Email string `form:"email"`
+	Role   string `form:"role"`
+	Search string `form:"search"`
 }
 type UsersPaginationMeta struct {
 	Total      int        `json:"total"`
@@ -151,8 +150,7 @@ func GetPaginatedUsers(queries repository.UserRepository) gin.HandlerFunc {
 		users, err := queries.GetPaginatedUsers(ctx, db.GetPaginatedUsersParams{
 			Limit:  int32(PAGE_LIMIT),
 			Offset: int32(offset),
-			Name:   utils.ToNullableText(filter.Name),
-			Email:  utils.ToNullableText(filter.Email),
+			Search: utils.ToNullableText(filter.Search),
 			Role:   roleFilter,
 		})
 

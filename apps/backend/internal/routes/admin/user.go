@@ -9,5 +9,5 @@ import (
 func setupAdminUserRoutes(admin *gin.RouterGroup, cfg config.Config) {
 	admin.POST("/users", users.CreateUser(cfg.Queries))
 	admin.GET("/users", users.GetPaginatedUsers(cfg.Queries))
-	admin.PUT("/users/:userID", users.UpdateUser(cfg.Queries))
+	// admin.PUT("/users/:userID", users.UpdateUser(cfg.Queries))
 }

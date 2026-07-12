@@ -27,16 +27,15 @@ import {
 } from "../shared/student-finance-list-utils";
 import { parseStudentFinanceFilters } from "../shared/student-date-filter-utils";
 import { formatNpr } from "../shared/student-utils";
-import { adminSecondaryButtonClass, adminTableClass } from "@/components/admin/admin-styles";
+import { adminSecondaryButtonClass } from "@/components/admin/admin-styles";
 import { useAdminRefreshShortcut } from "@/components/admin/admin-shortcut-provider";
 import { useAdminQueryRefresh } from "@/hooks/useAdminQueryRefresh";
-
-const thClass =
-  "px-5 py-3.5 text-left font-(family-name:--font-dm-sans) text-[10px] font-semibold uppercase tracking-widest text-[rgba(47,78,64,0.45)] bg-[rgba(47,78,64,0.03)] border-b border-[rgba(47,78,64,0.12)] whitespace-nowrap";
-
-const thRightClass = `${thClass} text-right`;
-
-const COLUMN_COUNT = 6;
+import {
+  DISCOUNT_TABLE_COLUMNS,
+  FinanceTableColGroup,
+  FinanceTableHead,
+  financeTableClass,
+} from "../shared/student-finance-table-layout";
 
 function formatDiscountType(type: string): string {
   return type.replace(/_/g, " ").replace(/\b\w/g, (m) => m.toUpperCase());
@@ -90,23 +89,15 @@ export function StudentDiscountsView() {
 
       <div className="overflow-hidden border border-[rgba(47,78,64,0.18)] bg-white">
         <div className="overflow-x-auto max-md:hidden">
-          <table className={adminTableClass}>
-            <thead>
-              <tr>
-                <th className={thClass}>Student</th>
-                <th className={thClass}>Type</th>
-                <th className={thRightClass}>Percent</th>
-                <th className={thRightClass}>Amount</th>
-                <th className={thClass}>Note</th>
-                <th className={thClass}>Date</th>
-              </tr>
-            </thead>
+          <table className={financeTableClass}>
+            <FinanceTableColGroup columns={DISCOUNT_TABLE_COLUMNS} />
+            <FinanceTableHead columns={DISCOUNT_TABLE_COLUMNS} />
             <tbody>
               {isPending ? (
-                <StudentFinanceTableSkeleton columns={COLUMN_COUNT} />
+                <StudentFinanceTableSkeleton columns={DISCOUNT_TABLE_COLUMNS} />
               ) : isError ? (
                 <tr>
-                  <td colSpan={COLUMN_COUNT} className="p-0">
+                  <td colSpan={DISCOUNT_TABLE_COLUMNS.length} className="p-0">
                     <StudentFinanceListError
                       description="We couldn't load discounts. Check your connection and try again."
                       onRetry={() => refetch()}
@@ -115,7 +106,7 @@ export function StudentDiscountsView() {
                 </tr>
               ) : isEmpty ? (
                 <tr>
-                  <td colSpan={COLUMN_COUNT} className="p-0">
+                  <td colSpan={DISCOUNT_TABLE_COLUMNS.length} className="p-0">
                     <StudentFinanceListEmpty
                       title="No discounts found"
                       description="Try adjusting the date range or search term, or clear filters to see all records."

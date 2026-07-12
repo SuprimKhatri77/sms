@@ -13,10 +13,10 @@ const tdClass =
 
 interface UsersTableProps {
   users: User[];
-  onRowClick: (user: User) => void;
+  // onRowClick?: (user: User) => void;
 }
 
-export function UsersTable({ users, onRowClick }: UsersTableProps) {
+export function UsersTable({ users }: UsersTableProps) {
   return (
     <div className={`${adminTableScrollClass} w-full border border-[rgba(47,78,64,0.18)] bg-white`}>
       <table className={`${adminTableClass} min-w-130`}>
@@ -33,14 +33,17 @@ export function UsersTable({ users, onRowClick }: UsersTableProps) {
           {users.map((user, idx) => (
             <tr
               key={user.id}
-              onClick={() => onRowClick(user)}
+              className="border-t border-[rgba(47,78,64,0.08)]"
+              /*
+              onClick={() => onRowClick?.(user)}
               className="group cursor-pointer border-t border-[rgba(47,78,64,0.08)] transition-colors hover:bg-[rgba(47,78,64,0.02)]"
               tabIndex={0}
               role="button"
               aria-label={`Edit ${user.name}`}
               onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") onRowClick(user);
+                if (e.key === "Enter" || e.key === " ") onRowClick?.(user);
               }}
+              */
             >
               <td className={`${tdClass} text-xs text-[rgba(47,78,64,0.45)]`}>
                 {idx + 1}
@@ -52,9 +55,14 @@ export function UsersTable({ users, onRowClick }: UsersTableProps) {
                     imageUrl={user.imageUrl ?? ""}
                     size="sm"
                   />
+                  <span className="font-semibold text-(--brand-green)">
+                    {user.name}
+                  </span>
+                  {/*
                   <span className="font-semibold text-(--brand-green) underline-offset-2 group-hover:underline">
                     {user.name}
                   </span>
+                  */}
                 </div>
               </td>
               <td className={`${tdClass} hidden sm:table-cell`}>{user.email}</td>

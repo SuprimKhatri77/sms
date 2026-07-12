@@ -8,9 +8,14 @@ import {
   formatFinancePercent,
 } from "../shared/student-finance-list-utils";
 import { formatNpr } from "../shared/student-utils";
+import {
+  financeTdClass,
+  SCHOLARSHIP_TABLE_COLUMNS,
+} from "../shared/student-finance-table-layout";
 
-const tdClass =
-  "border-b border-[rgba(47,78,64,0.1)] px-5 py-4 align-middle whitespace-nowrap group-last:border-b-0";
+const columnCellClass = Object.fromEntries(
+  SCHOLARSHIP_TABLE_COLUMNS.map((column) => [column.key, column.cellClassName ?? ""]),
+);
 
 export function ScholarshipTableRow({
   scholarship,
@@ -24,24 +29,24 @@ export function ScholarshipTableRow({
       onClick={() => router.push(`/admin/students/${scholarship.studentId}`)}
       className="group cursor-pointer transition-colors hover:bg-[rgba(47,78,64,0.03)]"
     >
-      <td className={tdClass}>
+      <td className={financeTdClass}>
         <StudentFinanceStudentCell
           fullName={scholarship.fullName}
           email={scholarship.email}
           referenceNo={scholarship.referenceNo}
         />
       </td>
-      <td className={`${tdClass} text-right`}>
+      <td className={`${financeTdClass} text-right ${columnCellClass.percent}`}>
         <span className="font-(family-name:--font-dm-sans) text-sm tabular-nums text-[rgba(47,78,64,0.75)]">
           {formatFinancePercent(scholarship.percent)}
         </span>
       </td>
-      <td className={`${tdClass} text-right`}>
+      <td className={`${financeTdClass} ${columnCellClass.amount}`}>
         <span className="font-(family-name:--font-dm-sans) text-sm font-semibold tabular-nums text-(--brand-ink)">
           {formatNpr(scholarship.amount / 100)}
         </span>
       </td>
-      <td className={`${tdClass} max-w-[200px]`}>
+      <td className={`${financeTdClass} ${columnCellClass.note}`}>
         <span
           className="block truncate font-(family-name:--font-dm-sans) text-sm text-[rgba(47,78,64,0.6)]"
           title={scholarship.note ?? undefined}
@@ -49,7 +54,7 @@ export function ScholarshipTableRow({
           {scholarship.note?.trim() || "—"}
         </span>
       </td>
-      <td className={tdClass}>
+      <td className={`${financeTdClass} ${columnCellClass.date}`}>
         <span className="font-(family-name:--font-dm-sans) text-sm text-[rgba(47,78,64,0.65)]">
           {formatFinanceDate(scholarship.createdAt)}
         </span>
