@@ -15,7 +15,7 @@ export function CertificateQrCode({ value, size = 56 }: Props) {
           value={value}
           size={size}
           bgColor="#ffffff"
-          fgColor="#000000"
+          fgColor="#3F6B51"
           level="M"
           style={{ height: "auto", maxWidth: "100%", width: "100%" }}
         />

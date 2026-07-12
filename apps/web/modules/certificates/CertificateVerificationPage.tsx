@@ -77,13 +77,13 @@ export function CertificateVerificationPage({ certificate }: Props) {
 
       <section className="px-4 pb-10 sm:px-6">
         <div className={landingContainerClass}>
-          <div className="mb-6 flex max-w-[1123px] items-center gap-2 font-(family-name:--font-dm-sans) text-[0.78rem] font-medium uppercase tracking-[0.12em] text-[rgba(47,78,64,0.5)]">
+          <div className="mb-6 flex max-w-[794px] items-center gap-2 font-(family-name:--font-dm-sans) text-[0.78rem] font-medium uppercase tracking-[0.12em] text-[rgba(47,78,64,0.5)]">
             <BadgeCheck size={15} className="text-(--brand-brown)" />
             Authentic certificate record
           </div>
 
           <div className="overflow-x-auto border border-[rgba(47,78,64,0.12)] bg-white p-4 shadow-[0_24px_64px_rgba(47,78,64,0.08)] sm:p-6">
-            <div style={{ minWidth: 1123 }}>
+            <div style={{ minWidth: 794 }}>
               {isWorkshop ? (
                 <WorkshopCertificate
                   studentName={certificate.fullName}

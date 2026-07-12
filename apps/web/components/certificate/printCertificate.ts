@@ -55,15 +55,15 @@ function buildPrintHtml(content: string, origin: string, inlineCss: string) {
   ${stylesheetTag}
   <style>
     @page {
-      size: A4 landscape;
+      size: A4 portrait;
       margin: 0;
     }
     html, body {
       margin: 0;
       padding: 0;
-      width: 297mm;
-      height: 210mm;
-      max-height: 210mm;
+      width: 210mm;
+      height: 297mm;
+      max-height: 297mm;
       overflow: hidden;
       background: #fff;
       -webkit-print-color-adjust: exact;

@@ -370,7 +370,7 @@ export default function StudentDetailPage({
               )}
             </div>
             <div className="overflow-x-auto p-5">
-              <div style={{ minWidth: 1123 }}>
+              <div style={{ minWidth: 794 }}>
                 <Certificate
                   ref={courseCertRef}
                   studentName={student.fullName}
@@ -422,7 +422,7 @@ export default function StudentDetailPage({
               </button>
             </div>
             <div className="overflow-x-auto p-5">
-              <div style={{ minWidth: 1123 }}>
+              <div style={{ minWidth: 794 }}>
                 <WorkshopCertificate
                   ref={workshopCertRef}
                   studentName={student.fullName}
