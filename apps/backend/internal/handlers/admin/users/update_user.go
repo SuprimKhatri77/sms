@@ -1,12 +1,10 @@
 package users
 
 import (
-	"errors"
 	"log/slog"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/suprimkhatri77/sms/backend/internal/constants"
 	db "github.com/suprimkhatri77/sms/backend/internal/database/generated"
 	"github.com/suprimkhatri77/sms/backend/internal/repository"
@@ -63,30 +61,30 @@ func UpdateUser(queries repository.UserRepository) gin.HandlerFunc {
 		utils.TrimStruct(&updateUserRequest)
 
 		updatedUser, err := queries.UpdateUser(ctx, db.UpdateUserParams{
-			ID:    userID,
-			Name:  updateUserRequest.Name,
-			Email: updateUserRequest.Email,
-			Role:  updateUserRequest.Role,
+			ID:   userID,
+			Name: updateUserRequest.Name,
+			// Email: updateUserRequest.Email,
+			Role: updateUserRequest.Role,
 		})
 
 		if err != nil {
-			var pgErr *pgconn.PgError
-			if errors.As(err, &pgErr) && pgErr.Code == "23505" {
-				slog.Warn("email already in use",
-					"actor_id", requestUserID,
-					"target_user_id", userID,
-					"email", updateUserRequest.Email,
-					"path", c.FullPath(),
-					"ip", c.ClientIP(),
-				)
+			// var pgErr *pgconn.PgError
+			// if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			// 	slog.Warn("email already in use",
+			// 		"actor_id", requestUserID,
+			// 		"target_user_id", userID,
+			// 		"email", updateUserRequest.Email,
+			// 		"path", c.FullPath(),
+			// 		"ip", c.ClientIP(),
+			// 	)
 
-				c.JSON(http.StatusConflict, types.APIResponse{
-					Success: false,
-					Message: "Email is already in use",
-					Code:    constants.UserAlreadyExists,
-				})
-				return
-			}
+			// 	c.JSON(http.StatusConflict, types.APIResponse{
+			// 		Success: false,
+			// 		Message: "Email is already in use",
+			// 		Code:    constants.UserAlreadyExists,
+			// 	})
+			// 	return
+			// }
 
 			slog.Error("failed to update user",
 				"actor_id", requestUserID,

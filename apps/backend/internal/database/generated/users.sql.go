@@ -65,8 +65,7 @@ FROM users
 WHERE 
     role IN ('student', 'admin', 'instructor')
     AND ($3::text IS NULL OR role = $3::text)
-    AND ($4::text IS NULL OR name ILIKE '%' || $4::text || '%')
-    AND ($5::text IS NULL OR email ILIKE '%' || $5::text || '%')
+    AND ($4::text IS NULL OR name ILIKE '%' || $4::text || '%' OR email ILIKE '%' || $4::text || '%')
 ORDER BY created_at DESC, id ASC
 LIMIT $1 OFFSET $2
 `
@@ -75,8 +74,7 @@ type GetPaginatedUsersParams struct {
 	Limit  int32       `json:"limit"`
 	Offset int32       `json:"offset"`
 	Role   pgtype.Text `json:"role"`
-	Name   pgtype.Text `json:"name"`
-	Email  pgtype.Text `json:"email"`
+	Search pgtype.Text `json:"search"`
 }
 
 type GetPaginatedUsersRow struct {
@@ -93,8 +91,7 @@ func (q *Queries) GetPaginatedUsers(ctx context.Context, arg GetPaginatedUsersPa
 		arg.Limit,
 		arg.Offset,
 		arg.Role,
-		arg.Name,
-		arg.Email,
+		arg.Search,
 	)
 	if err != nil {
 		return nil, err
@@ -231,24 +228,18 @@ func (q *Queries) Listusers(ctx context.Context) ([]ListusersRow, error) {
 }
 
 const updateUser = `-- name: UpdateUser :one
-UPDATE users SET name = $2, email = $3, role = $4
+UPDATE users SET name = $2, role = $3
 WHERE id = $1 RETURNING id, name, email, password_hash, image_url, role, created_at
 `
 
 type UpdateUserParams struct {
-	ID    pgtype.UUID `json:"id"`
-	Name  string      `json:"name"`
-	Email string      `json:"email"`
-	Role  string      `json:"role"`
+	ID   pgtype.UUID `json:"id"`
+	Name string      `json:"name"`
+	Role string      `json:"role"`
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
-	row := q.db.QueryRow(ctx, updateUser,
-		arg.ID,
-		arg.Name,
-		arg.Email,
-		arg.Role,
-	)
+	row := q.db.QueryRow(ctx, updateUser, arg.ID, arg.Name, arg.Role)
 	var i User
 	err := row.Scan(
 		&i.ID,

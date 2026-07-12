@@ -4,6 +4,9 @@ export const ADMIN_BORDER_LIGHT = "border-[rgba(47,78,64,0.12)]";
 export const adminInputClass =
   "w-full rounded-none border border-[rgba(47,78,64,0.18)] bg-white px-3 py-2 text-sm text-(--brand-ink) outline-none transition-colors focus:border-(--brand-green)";
 
+export const adminInputDisabledClass =
+  "cursor-not-allowed border-[rgba(47,78,64,0.12)] bg-[rgba(47,78,64,0.04)] text-[rgba(47,78,64,0.55)] focus:border-[rgba(47,78,64,0.12)]";
+
 export const adminPrimaryButtonClass =
   "inline-flex cursor-pointer items-center gap-2 border border-(--brand-green) bg-(--brand-green) px-4 py-2 font-(family-name:--font-dm-sans) text-xs font-semibold uppercase tracking-[0.08em] text-white transition-colors hover:bg-(--brand-green-2)";
 

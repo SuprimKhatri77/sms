@@ -1,10 +1,9 @@
 "use client";
 
-import { Inbox, RefreshCw, Filter } from "lucide-react";
+import { Inbox, Filter } from "lucide-react";
 
 import {
   adminPrimaryButtonClass,
-  adminSecondaryButtonClass,
 } from "@/components/admin/admin-styles";
 
 interface Props {
@@ -12,7 +11,6 @@ interface Props {
   code?: string;
   activeFilter?: string;
   onClearFilter?: () => void;
-  onRetry?: () => void;
 }
 
 export default function InquiryEmpty({
@@ -20,7 +18,6 @@ export default function InquiryEmpty({
   code,
   activeFilter,
   onClearFilter,
-  onRetry,
 }: Props) {
   const isFiltered = !!activeFilter && activeFilter !== "all";
 
@@ -52,13 +49,6 @@ export default function InquiryEmpty({
           <button onClick={onClearFilter} className={adminPrimaryButtonClass}>
             <Filter className="h-4 w-4" />
             Clear Filter
-          </button>
-        )}
-
-        {onRetry && (
-          <button onClick={onRetry} className={adminSecondaryButtonClass}>
-            <RefreshCw className="h-4 w-4" />
-            Refresh
           </button>
         )}
       </div>
