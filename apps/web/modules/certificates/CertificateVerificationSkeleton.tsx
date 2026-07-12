@@ -34,7 +34,7 @@ export function CertificateVerificationSkeleton() {
       <section className="px-4 pb-10 sm:px-6">
         <div className={landingContainerClass}>
           <div className="mb-6 h-4 w-48 animate-pulse bg-[rgba(47,78,64,0.08)]" />
-          <div className="mx-auto max-w-[1123px] overflow-hidden border border-[rgba(47,78,64,0.12)] bg-white p-4 shadow-[0_24px_64px_rgba(47,78,64,0.08)] sm:p-6">
+          <div className="mx-auto max-w-[794px] overflow-hidden border border-[rgba(47,78,64,0.12)] bg-white p-4 shadow-[0_24px_64px_rgba(47,78,64,0.08)] sm:p-6">
             <div className="h-[794px] w-full animate-pulse bg-[rgba(47,78,64,0.05)]" />
           </div>
         </div>

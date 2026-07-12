@@ -7,6 +7,10 @@ import { CertificateBrandText } from "./CertificateBrandText";
 import { CertificateFrame } from "./CertificateFrame";
 import { CertificateSignatureSlot } from "./CertificateSignatureSlot";
 import { formatPersonName } from "@/lib/format-person-name";
+import {
+  formatCertificateFooterAddress,
+  formatCertificateFooterEmail,
+} from "@/lib/certificate-footer";
 import { CertificateQrCode } from "./CertificateQrCode";
 
 export interface WorkshopCertificateProps {
@@ -37,7 +41,6 @@ export const WorkshopCertificate = forwardRef<
     workshopTitle,
     workshopDate,
     issueDate,
-    logoUrl,
     directorSignatureUrl,
     headSignatureUrl,
     footerAddress = siteInfo.contact.address,
@@ -47,8 +50,9 @@ export const WorkshopCertificate = forwardRef<
   },
   ref,
 ) {
-  const sealUrl = siteInfo.assets.watermarkNoBG;
   const displayName = formatPersonName(studentName);
+  const displayAddress = formatCertificateFooterAddress(footerAddress);
+  const displayEmail = formatCertificateFooterEmail(footerContact);
 
   return (
     <>
@@ -64,60 +68,33 @@ export const WorkshopCertificate = forwardRef<
               src={siteInfo.assets.emblem}
               alt=""
               loader={passthroughLoader}
-              width={340}
-              height={340}
+              width={680}
+              height={680}
             />
           </div>
 
           <header className="cert-header cert-header-workshop">
-            <div className="cert-logo-wrap">
+            <div className="cert-header-logo-center">
               <Image
-                className="cert-logo-img"
-                src={logoUrl}
-                alt=""
+                className="cert-header-wordmark"
+                src={siteInfo.assets.noBGLogo}
+                alt={siteInfo.company.shortName}
                 loader={passthroughLoader}
                 priority
-                width={68}
-                height={68}
+                width={600}
+                height={112}
               />
-            </div>
-
-            <div className="cert-header-center">
-              <CertificateBrandText
-                text={siteInfo.company.shortName}
-                className="cert-academy-name"
-              />
-              <div className="cert-academy-tagline">
-                {siteInfo.company.tagline}
-              </div>
-            </div>
-
-            <div className="cert-meta">
-              {qrCodeUrl ? <CertificateQrCode value={qrCodeUrl} size={56} /> : null}
-              <div className="cert-meta-details">
-                <div className="cert-meta-label">Certificate No.</div>
-                <div className="cert-meta-value">{referenceNo}</div>
-              </div>
             </div>
           </header>
 
           <div className="cert-body">
             <div className="cert-title-block">
-              <div className="cert-title-row">
-                <span className="cert-title-flourish" aria-hidden="true" />
-                <h1 className="cert-title">Certificate</h1>
-                <span
-                  className="cert-title-flourish cert-title-flourish-right"
-                  aria-hidden="true"
-                />
-              </div>
-              <p className="cert-title-sub">of Participation</p>
+              <h1 className="cert-title">Certificate of Participation</h1>
+              <p className="cert-course-name">{workshopTitle}</p>
+              <p className="cert-presented-to">Awarded to</p>
+              <h2 className="cert-student-name">{displayName}</h2>
             </div>
             <div className="cert-title-rule" aria-hidden="true" />
-
-            <p className="cert-presented-to">Proudly presented to</p>
-            <h2 className="cert-student-name">{displayName}</h2>
-            <div className="cert-name-rule" aria-hidden="true" />
 
             <p className="cert-body-prose">
               This is to certify that the above-named individual has
@@ -130,8 +107,6 @@ export const WorkshopCertificate = forwardRef<
               </span>
               .
             </p>
-
-            <p className="cert-issued-on">Issued on {issueDate}</p>
           </div>
 
           <footer className="cert-signatures" aria-label="Signatures">
@@ -144,18 +119,6 @@ export const WorkshopCertificate = forwardRef<
               <div className="cert-sig-label">Training Director</div>
             </div>
 
-            <div className="cert-seal-col">
-              <Image
-                className="cert-seal-img"
-                src={sealUrl}
-                alt="Academy seal"
-                loader={passthroughLoader}
-                unoptimized
-                width={72}
-                height={72}
-              />
-            </div>
-
             <div className="cert-sig-col">
               <CertificateSignatureSlot
                 src={headSignatureUrl}
@@ -164,17 +127,41 @@ export const WorkshopCertificate = forwardRef<
               <div className="cert-sig-line" aria-hidden="true" />
               <div className="cert-sig-label">Head of School</div>
             </div>
+
+            <div className="cert-sig-col cert-sig-col-date">
+              <div className="cert-sig-date">{issueDate}</div>
+              <div className="cert-sig-line" aria-hidden="true" />
+              <div className="cert-sig-label">Date of Issue</div>
+            </div>
+
+            <div className="cert-sig-col cert-sig-col-qr">
+              {qrCodeUrl ? (
+                <CertificateQrCode value={qrCodeUrl} size={56} />
+              ) : (
+                <div
+                  className="cert-signature-img cert-signature-placeholder"
+                  aria-hidden="true"
+                />
+              )}
+              <div className="cert-sig-cert-no">
+                <div className="cert-sig-cert-label">Certificate No.</div>
+                <div className="cert-sig-cert-value">{referenceNo}</div>
+              </div>
+            </div>
           </footer>
 
           <div className="cert-footer-bar">
             <div className="cert-footer-left">
-              <span>{footerAddress}</span>
-              <span>PAN {siteInfo.company.panNo}</span>
+              <div className="cert-footer-line">{displayAddress}</div>
+              <div className="cert-footer-line cert-footer-pan">
+                PAN {siteInfo.company.panNo}
+              </div>
             </div>
             <div className="cert-footer-right">
-              {footerContact}
-              <br />
-              {footerPhone}
+              <div className="cert-footer-line cert-footer-email">
+                {displayEmail}
+              </div>
+              <div className="cert-footer-line">{footerPhone}</div>
             </div>
           </div>
 
