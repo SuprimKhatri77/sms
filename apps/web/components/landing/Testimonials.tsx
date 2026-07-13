@@ -1,160 +1,143 @@
 import { cn } from "@/lib/utils";
-import { InfiniteSlider } from "@/components/ui/infinite-slider";
+import { GridPattern } from "@/components/ui/grid-pattern";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { landingContainerClass } from "./landing-styles";
+import { FullWidthDivider } from "@/components/full-width-divider";
+import { GridFiller } from "@/components/grid-filler";
+import {
+  landingContainerClass,
+  landingSectionBodyClass,
+  landingSectionTitleClass,
+} from "./landing-styles";
 
 type Testimonial = {
-  quote: string;
-  image: string;
   name: string;
   role: string;
+  image: string;
   company?: string;
+  quote: string;
 };
 
 const testimonials: Testimonial[] = [
   {
     quote:
-      "Efferd is so polished I might just retire and become a full-time potato farmer. The ecosystem is in safe hands.",
-    image: "https://github.com/shadcn.png",
-    name: "Shadcn",
-    role: "Founder",
-    company: "Shadcn UI",
+      "I joined with zero café experience. Within weeks I was dialing in espresso, steaming milk properly, and pouring basic latte art. The trainers work in real cafés, so everything they teach actually applies on the bar.",
+    image:
+      "https://ui-avatars.com/api/?name=Srijana+Thapa&background=2F4E40&color=FBFAF7&size=128",
+    name: "Srijana Thapa",
+    role: "Barista",
+    company: "Café Kalika, Butwal",
   },
   {
     quote:
-      "Efferd is why I still have hair. No more pulling it out over centering divs or fighting with CSS grid.",
-    image: "https://github.com/rauchg.png",
-    name: "Guillermo Rauch",
-    role: "CEO",
-    company: "Vercel",
-  },
-
-  {
-    quote:
-      "I tried to buy Efferd but they wouldn't sell. So I just bought Twitter instead to complain about it.",
-    image: "https://unavatar.io/x/elonmusk",
-    name: "Elon Musk",
-    role: "CEO",
-    company: "X.com",
+      "The bakery course is fully hands-on — mixing, proofing, shaping, and baking every day. I left confident enough to handle production shifts at a local bakery, not just follow recipes from a book.",
+    image:
+      "https://ui-avatars.com/api/?name=Anjali+Gurung&background=C28A4F&color=FBFAF7&size=128",
+    name: "Anjali Gurung",
+    role: "Bakery Trainee",
+    company: "Sweet Crust Bakery",
   },
   {
     quote:
-      "We just acquired Efferd for 3 gazillion dollars. We're calling it iEfferd. It's our best product yet.",
-    image: "https://unavatar.io/x/tim_cook",
-    name: "Tim Cook",
-    role: "CEO",
-    company: "Apple",
+      "Small batch sizes made a huge difference. I got repeated practice on commercial machines and direct feedback every session. That is hard to find at bigger institutes.",
+    image:
+      "https://ui-avatars.com/api/?name=Nabin+Adhikari&background=2F4E40&color=FBFAF7&size=128",
+    name: "Nabin Adhikari",
+    role: "Head Barista",
+    company: "Bhairahawa",
   },
   {
     quote:
-      "I'm considering shipping Efferd components with Prime delivery. 2-day shipping on beautiful UIs? Done.",
-    image: "https://unavatar.io/x/JeffBezos",
-    name: "Jeff Bezos",
-    role: "Founder",
-    company: "Amazon",
+      "Bartending training covered build, stir, and shake techniques along with bar hygiene and service flow. The mock bar setup feels close to a real shift behind the counter.",
+    image:
+      "https://ui-avatars.com/api/?name=Rajan+KC&background=C28A4F&color=FBFAF7&size=128",
+    name: "Rajan KC",
+    role: "Bartender",
+    company: "Hotel Siddhartha",
   },
   {
     quote:
-      "We're rewriting OpenAI's entire frontend in Efferd. The AGI told us it's the only logical choice.",
-    image: "https://unavatar.io/x/sama",
-    name: "Sam Altman",
-    role: "CEO",
-    company: "OpenAI",
+      "Pastry and bread modules were well structured — from laminated dough to cake finishing. Instructors corrected my technique on the spot, which helped me improve much faster.",
+    image:
+      "https://ui-avatars.com/api/?name=Sunita+Poudel&background=2F4E40&color=FBFAF7&size=128",
+    name: "Sunita Poudel",
+    role: "Pastry Assistant",
+    company: "Butwal",
   },
   {
     quote:
-      "We processed 100 petabytes of data to find the perfect UI library. The algorithm returned 'Efferd' with 99.9% confidence.",
-    image: "https://unavatar.io/x/sundarpichai",
-    name: "Sundar Pichai",
-    role: "CEO",
-    company: "Google",
+      "After completing barista training, the academy helped me connect with a café opening in Kalikanagar. I was working within a few weeks of graduation.",
+    image:
+      "https://ui-avatars.com/api/?name=Bikash+Sharma&background=C28A4F&color=FBFAF7&size=128",
+    name: "Bikash Sharma",
+    role: "Barista",
+    company: "Bean & Leaf Café",
   },
   {
     quote:
-      "Our links might 404 sometimes, but thanks to Efferd, at least the 404 page looks absolutely stunning.",
-    image: "https://github.com/steven-tey.png",
-    name: "Steven Tey",
-    role: "Founder",
-    company: "Dub.co",
+      "I came from Bardaghat for the combined barista and bakery program. The schedule was manageable, the environment was friendly, and the skills I gained were immediately useful at work.",
+    image:
+      "https://ui-avatars.com/api/?name=Menuka+Rana&background=2F4E40&color=FBFAF7&size=128",
+    name: "Menuka Rana",
+    role: "Café Team Member",
+    company: "Bardaghat",
   },
   {
     quote:
-      "It's so fast, I finished my UI sprint before my next meeting even started. Open source for the win.",
-    image: "https://unavatar.io/x/peer_rich",
-    name: "Peer Richelsen",
-    role: "Co-Founder",
-    company: "Cal.com",
+      "What stood out was the focus on professional habits — cleanliness, speed, and customer service — not just making coffee look good. That mindset helped me in my hotel interview.",
+    image:
+      "https://ui-avatars.com/api/?name=Ashish+Bhandari&background=C28A4F&color=FBFAF7&size=128",
+    name: "Ashish Bhandari",
+    role: "Hospitality Graduate",
+    company: "Pokhara",
+  },
+  {
+    quote:
+      "The training labs mirror real kitchen and bar conditions. I never felt like I was only watching demos — we were practicing, correcting mistakes, and building muscle memory every class.",
+    image:
+      "https://ui-avatars.com/api/?name=Pramila+Chaudhary&background=2F4E40&color=FBFAF7&size=128",
+    name: "Pramila Chaudhary",
+    role: "Barista Graduate",
+    company: "Tansen",
   },
 ];
-
-const firstColumn = testimonials.slice(0, 3);
-const secondColumn = testimonials.slice(3, 6);
-const thirdColumn = testimonials.slice(6, 9);
 
 export function TestimonialsSection() {
   return (
     <section
-      className="relative py-10"
+      className="bg-(--brand-cream) py-24"
       aria-labelledby="testimonials-heading"
     >
-      <div className={landingContainerClass}>
-        <div className="mx-auto flex max-w-sm flex-col items-center justify-center gap-4">
-          {/* <div className="flex justify-center">
-            <div className="rounded-lg border px-4 py-1">Testimonials</div>
-          </div> */}
-
-          <h2
-            id="testimonials-heading"
-            className="font-bold text-3xl tracking-tighter lg:text-4xl"
-          >
+      <div
+        className={cn(
+          landingContainerClass,
+          "mx-auto space-y-8 border-x border-[rgba(47,78,64,0.1)] py-6",
+        )}
+      >
+        <div className="flex flex-col gap-2 px-4 md:px-6">
+          <h2 id="testimonials-heading" className={landingSectionTitleClass}>
             What our students say
           </h2>
-          <p className="text-center text-muted-foreground text-sm">
-            See what our customers have to say about us.
+          <p className={cn(landingSectionBodyClass, "max-w-2xl")}>
+            Hear from graduates who trained with us in barista, bakery, and
+            hospitality programs.
           </p>
         </div>
 
         <div
-          className={cn(
-            "mt-10 flex max-h-160 justify-center gap-6 overflow-hidden",
-            "mask-[linear-gradient(to_bottom,transparent,black_25%,black_75%,transparent)]",
-          )}
+          className="relative grid grid-cols-1 gap-px bg-border sm:grid-cols-2 lg:grid-cols-3"
           aria-label="Student testimonials"
         >
-          <InfiniteSlider direction="vertical" speed={30} speedOnHover={15}>
-            {firstColumn.map((testimonial) => (
-              <TestimonialsCard
-                key={testimonial.name}
-                testimonial={testimonial}
-              />
-            ))}
-          </InfiniteSlider>
-          <InfiniteSlider
-            className="hidden md:block"
-            direction="vertical"
-            speed={50}
-            speedOnHover={25}
-          >
-            {secondColumn.map((testimonial) => (
-              <TestimonialsCard
-                key={testimonial.name}
-                testimonial={testimonial}
-              />
-            ))}
-          </InfiniteSlider>
-          <InfiniteSlider
-            className="hidden lg:block"
-            direction="vertical"
-            speed={35}
-            speedOnHover={17}
-          >
-            {thirdColumn.map((testimonial) => (
-              <TestimonialsCard
-                key={testimonial.name}
-                testimonial={testimonial}
-              />
-            ))}
-          </InfiniteSlider>
+          <FullWidthDivider position="top" />
+          {testimonials.map((testimonial) => (
+            <TestimonialsCard key={testimonial.name} testimonial={testimonial} />
+          ))}
+          <GridFiller
+            className="bg-background"
+            lgColumns={3}
+            smColumns={2}
+            totalItems={testimonials.length}
+          />
+          <FullWidthDivider position="bottom" />
         </div>
       </div>
     </section>
@@ -168,32 +151,44 @@ function TestimonialsCard({
 }: React.ComponentProps<"figure"> & {
   testimonial: Testimonial;
 }) {
-  const { quote, image, name, role, company } = testimonial;
+  const { quote, image, name } = testimonial;
   const testimonialId = `testimonial-${name.replace(/\s+/g, "-").toLowerCase()}`;
+
   return (
     <figure
       id={testimonialId}
       className={cn(
-        "w-full max-w-xs rounded-3xl border bg-card p-8 shadow-foreground/10 shadow-lg dark:bg-card/20",
+        "relative grid grid-cols-[auto_1fr] gap-x-3 overflow-hidden bg-background p-4",
         className,
       )}
       {...props}
     >
-      <blockquote cite={`#${testimonialId}`}>{quote}</blockquote>
-      <figcaption className="mt-5 flex items-center gap-2">
-        <Avatar className="size-8 rounded-full">
-          <AvatarImage alt={`${name}'s profile picture`} src={image} />
-          <AvatarFallback>{name.charAt(0)}</AvatarFallback>
-        </Avatar>
-        <div className="flex flex-col">
-          <cite className="font-medium not-italic leading-5 tracking-tight">
-            {name}
-          </cite>
-          <span className="text-muted-foreground text-sm leading-5 tracking-tight">
-            {role} {company && `, ${company}`}
-          </span>
-        </div>
-      </figcaption>
+      <div className="mask-[radial-gradient(farthest-side_at_top,white,transparent)] pointer-events-none absolute top-0 left-1/2 -mt-2 -ml-20 size-full">
+        <GridPattern
+          className="absolute inset-0 size-full stroke-border"
+          height={25}
+          width={25}
+          x={-12}
+          y={4}
+        />
+      </div>
+
+      <Avatar className="size-8 rounded-full">
+        <AvatarImage alt={`${name}'s profile picture`} src={image} />
+        <AvatarFallback>{name.charAt(0)}</AvatarFallback>
+      </Avatar>
+      <div>
+        <figcaption className="-mt-0.5 -space-y-0.5">
+          <cite className="text-sm not-italic md:text-base">{name}</cite>
+          {/* <span className="block font-light text-[11px] text-muted-foreground tracking-tight">
+            {role}
+            {company && `, ${company}`}
+          </span> */}
+        </figcaption>
+        <blockquote className="mt-3" cite={`#${testimonialId}`}>
+          <p className="text-foreground/80 text-sm tracking-wide">{quote}</p>
+        </blockquote>
+      </div>
     </figure>
   );
 }

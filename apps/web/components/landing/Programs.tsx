@@ -25,6 +25,7 @@ import {
 } from "./landing-styles";
 import { cn } from "@/lib/utils";
 import { CoursePriceVatNote } from "@/components/courses/CoursePriceVatNote";
+import { LandingSectionPattern } from "./LandingSectionPattern";
 
 type ProgramTone = "brown" | "gold" | "green";
 
@@ -489,28 +490,7 @@ export default function Programs() {
       aria-labelledby="programs-heading"
       className="relative overflow-hidden bg-(--brand-cream) px-6 py-24"
     >
-      <div
-        className="pointer-events-none absolute inset-0 opacity-60"
-        aria-hidden
-        style={{
-          backgroundImage: `
-            linear-gradient(rgba(47,78,64,0.03) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(47,78,64,0.03) 1px, transparent 1px)
-          `,
-          backgroundSize: "48px 48px",
-        }}
-      />
-      <div
-        className="pointer-events-none absolute -top-24 right-0 h-72 w-72 rounded-full opacity-40 blur-3xl"
-        style={{ background: "rgba(194,138,79,0.12)" }}
-        aria-hidden
-      />
-      <div
-        className="pointer-events-none absolute -bottom-16 left-0 h-64 w-64 rounded-full opacity-30 blur-3xl"
-        style={{ background: "rgba(47,78,64,0.08)" }}
-        aria-hidden
-      />
-
+      <LandingSectionPattern variant="programs" />
       <div className={landingContainerClass}>
         <Reveal>
           <div className="mb-14 max-w-2xl">

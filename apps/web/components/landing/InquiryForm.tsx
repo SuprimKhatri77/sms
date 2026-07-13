@@ -19,6 +19,7 @@ import {
   landingSectionTitleClass,
 } from "./landing-styles";
 import { cn } from "@/lib/utils";
+import { LandingSectionPattern } from "./LandingSectionPattern";
 
 const sourceOptions = [
   { value: "", label: "How did you hear about us?" },
@@ -414,7 +415,12 @@ export default function InquiryFormPage() {
   });
 
   return (
-    <section id="inquiry" aria-labelledby="inquiry-heading" className={landingMutedSectionClass}>
+    <section
+      id="inquiry"
+      aria-labelledby="inquiry-heading"
+      className={`${landingMutedSectionClass} relative overflow-hidden`}
+    >
+      <LandingSectionPattern variant="inquiry" />
       <div
         className={`${landingContainerClass} grid grid-cols-1 items-start gap-16 lg:grid-cols-[1fr_1.25fr]`}
       >
