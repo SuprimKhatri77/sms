@@ -17,6 +17,7 @@ import {
   landingSectionBodyClass,
   landingSectionTitleClass,
 } from "@/components/landing/landing-styles";
+import { LandingSectionPattern } from "@/components/landing/LandingSectionPattern";
 
 export const items = [
   {
@@ -201,23 +202,7 @@ export default function ImageGallery() {
         visible && "gallery-section--visible",
       )}
     >
-      <div
-        className="pointer-events-none absolute inset-0 opacity-50"
-        aria-hidden
-        style={{
-          backgroundImage: `
-            linear-gradient(rgba(47,78,64,0.03) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(47,78,64,0.03) 1px, transparent 1px)
-          `,
-          backgroundSize: "48px 48px",
-        }}
-      />
-      <div
-        className="pointer-events-none absolute right-0 top-0 h-80 w-80 rounded-full opacity-35 blur-3xl"
-        style={{ background: "rgba(194,138,79,0.14)" }}
-        aria-hidden
-      />
-
+      <LandingSectionPattern variant="gallery" />
       <div className={galleryContainerClass}>
         <div className="gallery-reveal mb-12 max-w-2xl">
           <span className={`${landingEyebrowClass} mb-4 inline-block`}>

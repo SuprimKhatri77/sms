@@ -2,7 +2,7 @@ import type { CSSProperties } from "react";
 
 /**
  * Card background patterns adapted for the brand palette.
- * Inspired by grid/glow snippets from PatternCraft (patterncraft.fun).
+ * Inspired by grid/glow snippets from Pattern Craft (patterncraft.store).
  */
 export type LandingCardPatternTone = "brown" | "green";
 

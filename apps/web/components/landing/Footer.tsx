@@ -3,6 +3,7 @@ import Image from "next/image";
 import { siteInfo } from "@/utils/site-info";
 import { landingContainerClass } from "./landing-styles";
 import { cn } from "@/lib/utils";
+import { LandingSectionPattern } from "./LandingSectionPattern";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -183,10 +184,16 @@ export default function Footer() {
   return (
     <footer
       aria-label="Site footer"
-      className="pt-16 text-white overflow-hidden"
+      className="relative overflow-hidden pt-16 text-white"
       style={{ backgroundColor: "var(--brand-green)" }}
     >
-      <div className={cn(landingContainerClass, "px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12")}>
+      <LandingSectionPattern variant="footer" />
+      <div
+        className={cn(
+          landingContainerClass,
+          "relative z-[1] px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12",
+        )}
+      >
         {/* ── Brand Column ── */}
         <div>
           {/* Logo */}
@@ -361,8 +368,8 @@ export default function Footer() {
 
       {/* ── Bottom Bar ── */}
       <div
-        className="mt-12 px-6 py-5 text-center"
-        style={{ borderTop: "1px solid rgba(255,255,255,0.1)" }}
+        className="relative z-1 mt-12 px-6 py-5 text-center"
+        // style={{ borderTop: "1px solid rgba(255,255,255,0.1)" }}
       >
         <p
           className="text-xs"

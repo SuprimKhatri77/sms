@@ -12,9 +12,9 @@ export const siteInfo = {
     officeHours: "Sun - Fri, 7:00 AM - 5:00 PM",
   },
   social: {
-    facebook: "#",
+    facebook: "https://www.facebook.com/brewandbakeacademy/",
     instagram: "https://www.instagram.com/brewbakeacademy/",
-    tiktok: "#",
+    tiktok: "https://www.tiktok.com/@brewandbake.academy",
   },
   assets: {
     logo: "/assets/logo.png",

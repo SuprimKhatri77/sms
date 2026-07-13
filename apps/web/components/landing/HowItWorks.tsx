@@ -58,7 +58,11 @@ const toneStyles = {
 
 export default function HowItWorks() {
   return (
-    <section id="how-it-works" aria-labelledby="how-it-works-heading" className={landingMutedSectionClass}>
+    <section
+      id="how-it-works"
+      aria-labelledby="how-it-works-heading"
+      className={landingMutedSectionClass}
+    >
       <div className={landingContainerClass}>
         <div className="mb-16 max-w-2xl">
           <span className={`${landingEyebrowClass} mb-4 inline-block`}>
