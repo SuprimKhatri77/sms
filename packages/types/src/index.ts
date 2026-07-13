@@ -143,11 +143,12 @@ export {
   certificateRecordSchema,
   issueCertificateResponseSchema,
   studentCertificateSchema,
-  getStudentCertificateResponseSchema,
+  getStudentCertificatesResponseSchema,
   type IssueCertificateInput,
   type CertificateRecord,
   type IssueCertificateResponse,
   type StudentCertificate,
+  type GetStudentCertificatesResponse,
   type GetStudentCertificateResponse,
 } from "./admin/certificates";
 

@@ -22,7 +22,7 @@ import { Certificate } from "@/components/certificate/Certificate";
 import { printCertificateElement } from "@/components/certificate/printCertificate";
 import { getCertificateVerifyUrl } from "@/lib/certificate-url";
 import { useIssueCertificate } from "@/hooks/mutations/admin/certificates/useIssueCertificate";
-import { useStudentCertificate } from "@/hooks/queries/admin/certificates/useStudentCertificate";
+import { useStudentCertificates } from "@/hooks/queries/admin/certificates/useStudentCertificates";
 import { siteInfo } from "@/utils/site-info";
 import { usePrintInvoice } from "./PrintInvoice";
 import { PaymentRow } from "./PaymentRow";
@@ -82,17 +82,6 @@ export const STATUS_META: Record<
 
 const WORKSHOP_TITLE = "Specialty Coffee Brewing";
 
-function buildCertificateRemarks(
-  type: "normal" | "workshop",
-  courseNames: string[],
-  workshopTitle: string,
-): string {
-  if (type === "workshop") {
-    return `Workshop certificate for ${workshopTitle}`;
-  }
-  return `Course certificate for ${courseNames.join(", ")}`;
-}
-
 export default function StudentDetailPage({
   student,
   courses,
@@ -104,7 +93,10 @@ export default function StudentDetailPage({
   const [showInvoice, setShowInvoice] = useState(false);
   const [showCertificate, setShowCertificate] = useState(false);
   const [showWorkshopCertificate, setShowWorkshopCertificate] = useState(false);
+  const [selectedCourseId, setSelectedCourseId] = useState(courses[0]?.id ?? "");
   const [issuedCertId, setIssuedCertId] = useState<string | null>(null);
+  const [issuedForCourseId, setIssuedForCourseId] = useState<string | null>(null);
+  const [issuedAt, setIssuedAt] = useState<string | null>(null);
   const [pendingPrint, setPendingPrint] = useState(false);
   const [isIssuing, setIsIssuing] = useState(false);
   const courseCertRef = useRef<HTMLDivElement>(null);
@@ -131,20 +123,45 @@ export default function StudentDetailPage({
     }, [paymentDisabled]),
   );
 
-  const { data: certificateResponse, isLoading: isLoadingCertificate } =
-    useStudentCertificate(student.id, showCertificate);
+  const { data: certificatesResponse, isLoading: isLoadingCertificate } =
+    useStudentCertificates(student.id, showCertificate);
 
-  const existingCertificate = certificateResponse?.data?.id
-    ? certificateResponse.data
-    : null;
+  const certificates = certificatesResponse?.data ?? [];
 
-  const certificateId = existingCertificate?.id ?? issuedCertId;
+  useEffect(() => {
+    if (courses.length === 0) return;
+    if (!courses.some((course) => course.id === selectedCourseId)) {
+      setSelectedCourseId(courses[0].id);
+    }
+  }, [courses, selectedCourseId]);
+
+  const selectedCourse = courses.find((course) => course.id === selectedCourseId);
+
+  const existingCertificate =
+    certificates.find(
+      (cert) => cert.type === "normal" && cert.courseId === selectedCourseId,
+    ) ?? null;
+
+  const hasIssuedCertificateForSelection =
+    !!existingCertificate ||
+    (issuedForCourseId === selectedCourseId && !!issuedCertId);
+
+  const certificateId =
+    existingCertificate?.id ??
+    (issuedForCourseId === selectedCourseId ? issuedCertId : null);
+
+  const previewCourseName =
+    existingCertificate?.courseName ?? selectedCourse?.name ?? "";
   const courseQrUrl = certificateId
     ? getCertificateVerifyUrl(certificateId)
     : null;
 
-  const issueDate = existingCertificate?.issuedAt
-    ? new Date(existingCertificate.issuedAt).toLocaleDateString("en-NP", {
+  const resolvedIssueAt =
+    existingCertificate?.issuedAt ??
+    (issuedForCourseId === selectedCourseId ? issuedAt : null);
+
+  const issueDate = resolvedIssueAt
+    ? new Date(resolvedIssueAt).toLocaleDateString("en-NP", {
         year: "numeric",
         month: "long",
         day: "numeric",
@@ -229,21 +246,25 @@ export default function StudentDetailPage({
   };
 
   const handleIssueCertificate = async () => {
-    const remarks = buildCertificateRemarks(
-      "normal",
-      courses.map((course) => course.name),
-      WORKSHOP_TITLE,
-    );
+    if (!selectedCourse) return;
 
     setIsIssuing(true);
     try {
-      const result = await issueCertificate({ remarks, type: "normal" });
+      const result = await issueCertificate({
+        type: "normal",
+        courseId: selectedCourse.id,
+      });
       setIssuedCertId(result.data.id);
+      setIssuedForCourseId(selectedCourse.id);
+      setIssuedAt(result.data.issuedAt ?? null);
       setPendingPrint(true);
     } catch {
       setIsIssuing(false);
     }
   };
+
+  const certificateSelectClass =
+    "cursor-pointer border border-[rgba(47,78,64,0.18)] bg-white px-3 py-2 font-(family-name:--font-dm-sans) text-xs font-semibold text-(--brand-green) outline-none transition-colors hover:border-(--brand-green)";
 
   const certificateActionDisabled =
     isIssuing || isIssuingCertificate || pendingPrint || isLoadingCertificate;
@@ -328,46 +349,64 @@ export default function StudentDetailPage({
                   Certificate Preview
                 </h2>
                 <p className="mt-1 font-(family-name:--font-dm-sans) text-[0.72rem] text-[rgba(47,78,64,0.45)]">
-                  {existingCertificate
+                  {hasIssuedCertificateForSelection
                     ? "Certificate issued. Print with verification QR code. Turn off Headers & footers and turn on Background graphics."
-                    : "Issue to record the certificate and print with verification QR code. Print: turn off Headers & footers, turn on Background graphics"}
+                    : "Issue to record the certificate. The verification QR code will appear after a successful issue. Print: turn off Headers & footers, turn on Background graphics."}
                 </p>
               </div>
-              {isLoadingCertificate ? (
-                <button
-                  type="button"
-                  disabled
-                  className={certificateActionButtonClass}
-                >
-                  <Loader2 size={14} className="animate-spin" />
-                  Loading…
-                </button>
-              ) : existingCertificate ? (
-                <button
-                  type="button"
-                  onClick={() => void handlePrintCertificate()}
-                  className={certificateActionButtonClass}
-                >
-                  <Printer size={14} />
-                  Print Certificate
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => void handleIssueCertificate()}
-                  disabled={certificateActionDisabled}
-                  className={certificateActionButtonClass}
-                >
-                  {isIssuing || isIssuingCertificate ? (
+              <div className="flex flex-wrap items-center gap-2">
+                {courses.length > 0 ? (
+                  <select
+                    value={selectedCourseId}
+                    onChange={(event) =>
+                      setSelectedCourseId(event.target.value)
+                    }
+                    className={certificateSelectClass}
+                    aria-label="Select course certificate"
+                  >
+                    {courses.map((course) => (
+                      <option key={course.id} value={course.id}>
+                        {course.name}
+                      </option>
+                    ))}
+                  </select>
+                ) : null}
+                {isLoadingCertificate ? (
+                  <button
+                    type="button"
+                    disabled
+                    className={certificateActionButtonClass}
+                  >
                     <Loader2 size={14} className="animate-spin" />
-                  ) : (
-                    <Stamp size={14} />
-                  )}
-                  {isIssuing || isIssuingCertificate
-                    ? "Issuing…"
-                    : "Issue Certificate"}
-                </button>
-              )}
+                    Loading…
+                  </button>
+                ) : hasIssuedCertificateForSelection ? (
+                  <button
+                    type="button"
+                    onClick={() => void handlePrintCertificate()}
+                    className={certificateActionButtonClass}
+                  >
+                    <Printer size={14} />
+                    Print Certificate
+                  </button>
+                ) : courses.length > 0 ? (
+                  <button
+                    type="button"
+                    onClick={() => void handleIssueCertificate()}
+                    disabled={certificateActionDisabled || !selectedCourse}
+                    className={certificateActionButtonClass}
+                  >
+                    {isIssuing || isIssuingCertificate ? (
+                      <Loader2 size={14} className="animate-spin" />
+                    ) : (
+                      <Stamp size={14} />
+                    )}
+                    {isIssuing || isIssuingCertificate
+                      ? "Issuing…"
+                      : "Issue Certificate"}
+                  </button>
+                ) : null}
+              </div>
             </div>
             <div className="overflow-x-auto p-5">
               <div style={{ minWidth: 794 }}>
@@ -375,7 +414,7 @@ export default function StudentDetailPage({
                   ref={courseCertRef}
                   studentName={student.fullName}
                   referenceNo={student.referenceNo}
-                  courses={courses.map((c) => c.name)}
+                  courses={previewCourseName ? [previewCourseName] : []}
                   issueDate={issueDate}
                   schoolName={siteInfo.company.name}
                   logoUrl={siteInfo.assets.watermarkNoBG}

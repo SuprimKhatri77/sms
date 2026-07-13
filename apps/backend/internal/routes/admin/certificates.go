@@ -10,5 +10,5 @@ func setupAdminCertificatesRoutes(admin *gin.RouterGroup, cfg config.Config) {
 	c := admin.Group("/certificates")
 
 	c.POST("/:studentID", certificates.CreateCertificate(cfg.Queries))
-	c.GET("/:studentID", certificates.GetCertificate(cfg.Queries))
+	c.GET("/:studentID", certificates.ListStudentCertificates(cfg.Queries))
 }

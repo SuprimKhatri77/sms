@@ -48,12 +48,14 @@ type CashLedger struct {
 }
 
 type Certificate struct {
-	ID        string             `json:"id"`
-	StudentID pgtype.UUID        `json:"studentId"`
-	IssuedBy  pgtype.UUID        `json:"issuedBy"`
-	IssuedAt  pgtype.Timestamptz `json:"issuedAt"`
-	Remarks   pgtype.Text        `json:"remarks"`
-	Type      string             `json:"type"`
+	ID         string             `json:"id"`
+	StudentID  pgtype.UUID        `json:"studentId"`
+	CourseID   pgtype.UUID        `json:"courseId"`
+	CourseName pgtype.Text        `json:"courseName"`
+	IssuedBy   pgtype.UUID        `json:"issuedBy"`
+	IssuedAt   pgtype.Timestamptz `json:"issuedAt"`
+	Remarks    pgtype.Text        `json:"remarks"`
+	Type       string             `json:"type"`
 }
 
 type Course struct {
