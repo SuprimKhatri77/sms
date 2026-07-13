@@ -2,11 +2,13 @@ package certificates
 
 import (
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jaevor/go-nanoid"
 	"github.com/suprimkhatri77/sms/backend/internal/constants"
 	db "github.com/suprimkhatri77/sms/backend/internal/database/generated"
@@ -18,8 +20,15 @@ import (
 )
 
 type CreateCertificateRequest struct {
-	Remarks string `json:"remarks" binding:"required"`
-	Type    string `json:"type default=normal" binding:"omitempty,oneof=normal workshop"`
+	Type     string `json:"type" binding:"omitempty,oneof=normal workshop"`
+	CourseID string `json:"courseId" binding:"required,uuid"`
+}
+
+func buildCertificateRemarks(certType, courseName string) string {
+	if certType == "workshop" {
+		return fmt.Sprintf("Workshop certificate for %s", courseName)
+	}
+	return fmt.Sprintf("Course certificate for %s", courseName)
 }
 
 func generateCertificateID(length int) (string, error) {
@@ -31,6 +40,8 @@ func generateCertificateID(length int) (string, error) {
 }
 
 const handlerCreateCertificate = "CreateCertificate"
+
+const maxCertificateIDAttempts = 5
 
 func CreateCertificate(queries repository.CertificatesRepository) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -77,6 +88,18 @@ func CreateCertificate(queries repository.CertificatesRepository) gin.HandlerFun
 			req.Type = "normal"
 		}
 
+		courseID, err := utils.ConvertToUUID(req.CourseID)
+		if err != nil {
+			applog.Warn(c, handlerCreateCertificate, "invalid course ID",
+				slog.Any(applog.AttrError, err))
+			c.JSON(http.StatusBadRequest, types.APIResponse{
+				Success: false,
+				Message: "Invalid course ID",
+				Code:    constants.InvalidIDFormat,
+			})
+			return
+		}
+
 		studentStatus, err := queries.GetStudentStatus(ctx, studentID)
 		if err != nil {
 			applog.Error(c, handlerCreateCertificate, "failed to get student by ID",
@@ -108,52 +131,91 @@ func CreateCertificate(queries repository.CertificatesRepository) gin.HandlerFun
 			return
 		}
 
-		certificateExists, err := queries.CheckCertificateExists(ctx, db.CheckCertificateExistsParams{
+		courseName, err := queries.GetStudentEnrolledCourseName(ctx, db.GetStudentEnrolledCourseNameParams{
 			StudentID: studentID,
-			Type:      req.Type,
+			CourseID:  courseID,
 		})
 		if err != nil {
-			applog.Error(c, handlerCreateCertificate, "failed to check certificate exists",
+			if errors.Is(err, pgx.ErrNoRows) {
+				applog.Warn(c, handlerCreateCertificate, "student not enrolled in course",
+					slog.String("course_id", req.CourseID))
+				c.JSON(http.StatusBadRequest, types.APIResponse{
+					Success: false,
+					Message: "Student is not enrolled in this course",
+					Code:    constants.StudentNotEnrolledInCourse,
+				})
+				return
+			}
+			applog.Error(c, handlerCreateCertificate, "failed to get enrolled course name",
 				slog.Any(applog.AttrError, err))
 			c.JSON(http.StatusInternalServerError, types.APIResponse{
 				Success: false,
-				Message: "Failed to check certificate exists",
+				Message: "Failed to get enrolled course name",
 				Code:    constants.InternalServerError,
-			})
-			return
-		}
-		if certificateExists {
-			applog.Warn(c, handlerCreateCertificate, "certificate already exists",
-				slog.String(applog.AttrCertificateType, req.Type))
-			c.JSON(http.StatusBadRequest, types.APIResponse{
-				Success: false,
-				Message: "Certificate already exists",
-				Code:    constants.CertificateAlreadyExists,
 			})
 			return
 		}
 
-		certificateID, err := generateCertificateID(14)
-		if err != nil {
-			applog.Error(c, handlerCreateCertificate, "failed to generate certificate ID",
-				slog.Any(applog.AttrError, err))
-			c.JSON(http.StatusInternalServerError, types.APIResponse{
-				Success: false,
-				Message: "Failed to generate certificate ID",
-				Code:    constants.InternalServerError,
-			})
-			return
+		issueParams := db.IssueCertificateParams{
+			StudentID:  studentID,
+			CourseID:   courseID,
+			CourseName: utils.ToNullableText(courseName),
+			IssuedBy:   userID,
+			Remarks:    utils.ToNullableText(buildCertificateRemarks(req.Type, courseName)),
+			Type:       req.Type,
 		}
-		certificate, err := queries.IssueCertificate(ctx, db.IssueCertificateParams{
-			ID:        certificateID,
-			StudentID: studentID,
-			IssuedBy:  userID,
-			Remarks:   utils.ToNullableText(req.Remarks),
-			Type:      req.Type,
-		})
-		if err != nil {
+
+		var certificate db.Certificate
+		var issueErr error
+
+		for attempt := range maxCertificateIDAttempts {
+			certificateID, genErr := generateCertificateID(14)
+			if genErr != nil {
+				applog.Error(c, handlerCreateCertificate, "failed to generate certificate ID",
+					slog.Any(applog.AttrError, genErr))
+				c.JSON(http.StatusInternalServerError, types.APIResponse{
+					Success: false,
+					Message: "Failed to generate certificate ID",
+					Code:    constants.InternalServerError,
+				})
+				return
+			}
+
+			issueParams.ID = certificateID
+			certificate, issueErr = queries.IssueCertificate(ctx, issueParams)
+			if issueErr == nil {
+				break
+			}
+
+			var pgErr *pgconn.PgError
+			if !errors.As(issueErr, &pgErr) || pgErr.Code != "23505" {
+				break
+			}
+
+			switch pgErr.ConstraintName {
+			case "certificates_pkey":
+				applog.Warn(c, handlerCreateCertificate, "certificate ID collision, retrying",
+					slog.Int("attempt", attempt+1))
+				continue
+			case "certificates_student_all_courses_unique",
+				"certificates_student_course_unique":
+				applog.Warn(c, handlerCreateCertificate, "certificate already exists",
+					slog.String(applog.AttrCertificateType, req.Type),
+					slog.String("course_id", req.CourseID))
+				c.JSON(http.StatusBadRequest, types.APIResponse{
+					Success: false,
+					Message: "Certificate already exists",
+					Code:    constants.CertificateAlreadyExists,
+				})
+				return
+			}
+
+			break
+		}
+
+		if issueErr != nil {
 			applog.Error(c, handlerCreateCertificate, "failed to issue certificate",
-				slog.Any(applog.AttrError, err))
+				slog.Any(applog.AttrError, issueErr))
 			c.JSON(http.StatusInternalServerError, types.APIResponse{
 				Success: false,
 				Message: "Failed to issue certificate",

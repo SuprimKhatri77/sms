@@ -29,8 +29,9 @@ const (
 	StudentAlreadyExists = "STUDENT_ALREADY_EXISTS"
 	MissingStudentID     = "MISSING_STUDENT_ID"
 	StudentNotFound      = "STUDENT_NOT_FOUND"
-	InvalidStudentStatus = "INVALID_STUDENT_STATUS"
-	StudentNotRegistered = "STUDENT_NOT_REGISTERED"
+	InvalidStudentStatus        = "INVALID_STUDENT_STATUS"
+	StudentNotRegistered        = "STUDENT_NOT_REGISTERED"
+	StudentNotEnrolledInCourse  = "STUDENT_NOT_ENROLLED_IN_COURSE"
 
 	// student payments
 	PaymentNotFound = "PAYMENT_NOT_FOUND"

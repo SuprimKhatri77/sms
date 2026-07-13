@@ -1,29 +1,27 @@
 package certificates
 
 import (
-	"errors"
 	"log/slog"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5"
-	"github.com/suprimkhatri77/sms/backend/internal/constants"
 	db "github.com/suprimkhatri77/sms/backend/internal/database/generated"
+	"github.com/suprimkhatri77/sms/backend/internal/constants"
 	"github.com/suprimkhatri77/sms/backend/internal/pkg/applog"
 	"github.com/suprimkhatri77/sms/backend/internal/repository"
 	"github.com/suprimkhatri77/sms/backend/internal/types"
 	"github.com/suprimkhatri77/sms/backend/internal/utils"
 )
 
-const handlerGetCertificate = "GetCertificate"
+const handlerListStudentCertificates = "ListStudentCertificates"
 
-func GetCertificate(queries repository.CertificatesRepository) gin.HandlerFunc {
+func ListStudentCertificates(queries repository.CertificatesRepository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
 
 		studentID, err := utils.ConvertToUUID(c.Param("studentID"))
 		if err != nil {
-			applog.Warn(c, handlerGetCertificate, "invalid request",
+			applog.Warn(c, handlerListStudentCertificates, "invalid request",
 				slog.Any(applog.AttrError, err))
 			c.JSON(http.StatusBadRequest, types.APIResponse{
 				Success: false,
@@ -33,32 +31,25 @@ func GetCertificate(queries repository.CertificatesRepository) gin.HandlerFunc {
 			return
 		}
 
-		certificate, err := queries.GetStudentCertificate(ctx, db.GetStudentCertificateParams{
-			StudentID: studentID,
-			Type:      "normal",
-		})
+		certificates, err := queries.ListStudentCertificates(ctx, studentID)
 		if err != nil {
-			applog.Error(c, handlerGetCertificate, "failed to get student certificate",
+			applog.Error(c, handlerListStudentCertificates, "failed to list student certificates",
 				slog.Any(applog.AttrError, err))
-			if errors.Is(err, pgx.ErrNoRows) {
-				c.JSON(http.StatusOK, types.APIResponse{
-					Success: true,
-					Data:    nil,
-					Message: "No certificate found",
-				})
-				return
-			}
 			c.JSON(http.StatusInternalServerError, types.APIResponse{
 				Success: false,
-				Message: "Failed to get student certificate",
+				Message: "Failed to list student certificates",
 				Code:    constants.InternalServerError,
 			})
 			return
 		}
 
+		if certificates == nil {
+			certificates = []db.ListStudentCertificatesRow{}
+		}
+
 		c.JSON(http.StatusOK, types.APIResponse{
 			Success: true,
-			Data:    certificate,
+			Data:    certificates,
 		})
 	}
 }

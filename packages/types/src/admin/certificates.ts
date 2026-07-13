@@ -3,7 +3,7 @@ import z from "zod";
 export const certificateTypeSchema = z.enum(["normal", "workshop"]);
 
 export const issueCertificateInputSchema = z.object({
-  remarks: z.string().min(1, "Remarks are required"),
+  courseId: z.uuid(),
   type: certificateTypeSchema.optional(),
 });
 
@@ -16,6 +16,8 @@ export const certificateRecordSchema = z.object({
   issuedAt: z.string(),
   remarks: z.string().nullable().optional(),
   type: certificateTypeSchema,
+  courseId: z.string().nullable().optional(),
+  courseName: z.string().nullable().optional(),
 });
 
 export type CertificateRecord = z.infer<typeof certificateRecordSchema>;
@@ -33,18 +35,23 @@ export type IssueCertificateResponse = z.infer<
 export const studentCertificateSchema = z.object({
   id: z.string(),
   type: certificateTypeSchema,
+  courseId: z.string().nullable().optional(),
+  courseName: z.string().nullable().optional(),
   remarks: z.string().nullable().optional(),
   issuedAt: z.string().nullable().optional(),
 });
 
 export type StudentCertificate = z.infer<typeof studentCertificateSchema>;
 
-export const getStudentCertificateResponseSchema = z.object({
+export const getStudentCertificatesResponseSchema = z.object({
   success: z.literal(true),
   message: z.string().optional(),
-  data: studentCertificateSchema,
+  data: z.array(studentCertificateSchema),
 });
 
-export type GetStudentCertificateResponse = z.infer<
-  typeof getStudentCertificateResponseSchema
+export type GetStudentCertificatesResponse = z.infer<
+  typeof getStudentCertificatesResponseSchema
 >;
+
+/** @deprecated Use GetStudentCertificatesResponse */
+export type GetStudentCertificateResponse = GetStudentCertificatesResponse;

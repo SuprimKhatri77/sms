@@ -1,14 +1,14 @@
 import {
-  GetStudentCertificateResponse,
+  GetStudentCertificatesResponse,
   IssueCertificateInput,
   IssueCertificateResponse,
 } from "@repo/types";
 import api from "../axios";
 
-export const getStudentCertificate = async (
+export const getStudentCertificates = async (
   studentId: string,
-): Promise<GetStudentCertificateResponse> => {
-  const res = await api.get<GetStudentCertificateResponse>(
+): Promise<GetStudentCertificatesResponse> => {
+  const res = await api.get<GetStudentCertificatesResponse>(
     `/admin/certificates/${studentId}`,
   );
   return res.data;
