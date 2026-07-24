@@ -128,27 +128,26 @@ export default function StudentDetailPage({
 
   const certificates = certificatesResponse?.data ?? [];
 
-  useEffect(() => {
-    if (courses.length === 0) return;
-    if (!courses.some((course) => course.id === selectedCourseId)) {
-      setSelectedCourseId(courses[0].id);
-    }
-  }, [courses, selectedCourseId]);
+  const resolvedCourseId = courses.some(
+    (course) => course.id === selectedCourseId,
+  )
+    ? selectedCourseId
+    : (courses[0]?.id ?? "");
 
-  const selectedCourse = courses.find((course) => course.id === selectedCourseId);
+  const selectedCourse = courses.find((course) => course.id === resolvedCourseId);
 
   const existingCertificate =
     certificates.find(
-      (cert) => cert.type === "normal" && cert.courseId === selectedCourseId,
+      (cert) => cert.type === "normal" && cert.courseId === resolvedCourseId,
     ) ?? null;
 
   const hasIssuedCertificateForSelection =
     !!existingCertificate ||
-    (issuedForCourseId === selectedCourseId && !!issuedCertId);
+    (issuedForCourseId === resolvedCourseId && !!issuedCertId);
 
   const certificateId =
     existingCertificate?.id ??
-    (issuedForCourseId === selectedCourseId ? issuedCertId : null);
+    (issuedForCourseId === resolvedCourseId ? issuedCertId : null);
 
   const previewCourseName =
     existingCertificate?.courseName ?? selectedCourse?.name ?? "";
@@ -158,7 +157,7 @@ export default function StudentDetailPage({
 
   const resolvedIssueAt =
     existingCertificate?.issuedAt ??
-    (issuedForCourseId === selectedCourseId ? issuedAt : null);
+    (issuedForCourseId === resolvedCourseId ? issuedAt : null);
 
   const issueDate = resolvedIssueAt
     ? new Date(resolvedIssueAt).toLocaleDateString("en-NP", {
@@ -357,7 +356,7 @@ export default function StudentDetailPage({
               <div className="flex flex-wrap items-center gap-2">
                 {courses.length > 0 ? (
                   <select
-                    value={selectedCourseId}
+                    value={resolvedCourseId}
                     onChange={(event) =>
                       setSelectedCourseId(event.target.value)
                     }

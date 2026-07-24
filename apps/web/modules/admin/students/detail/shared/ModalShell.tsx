@@ -3,8 +3,10 @@ import { X } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import {
   adminPrimaryButtonClass,
+  adminPrimaryButtonDisabledClass,
   adminSecondaryButtonClass,
 } from "@/components/admin/admin-styles";
+import { cn } from "@/lib/utils";
 import { detailPanelClass } from "../detail-styles";
 
 export function ModalShell({
@@ -65,7 +67,10 @@ export function ModalShell({
             type="button"
             onClick={onCancel}
             disabled={submitting}
-            className={adminSecondaryButtonClass}
+            className={cn(
+              adminSecondaryButtonClass,
+              "disabled:cursor-not-allowed disabled:opacity-50",
+            )}
           >
             Cancel
           </button>
@@ -73,7 +78,10 @@ export function ModalShell({
             type="button"
             onClick={onSubmit}
             disabled={submitting}
-            className={adminPrimaryButtonClass}
+            className={cn(
+              adminPrimaryButtonClass,
+              adminPrimaryButtonDisabledClass,
+            )}
           >
             {submitting ? (
               <>
