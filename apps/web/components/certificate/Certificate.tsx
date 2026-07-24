@@ -79,110 +79,114 @@ export const Certificate = forwardRef<HTMLDivElement, CertificateProps>(
                 />
               </div>
 
-              <header className="cert-header">
-                <div className="cert-header-meta">
-                  <div className="cert-header-meta-row">
-                    <span className="cert-header-meta-label">
-                      Registration No:
-                    </span>{" "}
-                    <span className="cert-header-meta-value">
-                      {siteInfo.company.registrationNo}
-                    </span>
-                  </div>
-                  <div className="cert-header-meta-row cert-header-meta-pan">
-                    <span className="cert-header-meta-label">PAN No:</span>{" "}
-                    <span className="cert-header-meta-value">
-                      {siteInfo.company.panNo}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="cert-header-logo-center">
-                  <Image
-                    className="cert-header-wordmark"
-                    src={siteInfo.assets.noBGLogo}
-                    alt={siteInfo.company.shortName}
-                    loader={passthroughLoader}
-                    priority
-                    width={600}
-                    height={112}
-                  />
-                </div>
-
-                <div className="cert-header-qr">
-                  {qrCodeUrl ? (
-                    <CertificateQrCode value={qrCodeUrl} size={56} />
-                  ) : (
-                    <div
-                      className="cert-signature-img cert-signature-placeholder"
-                      aria-hidden="true"
-                    />
-                  )}
-                  <div className="cert-header-cert-no">
-                    Certificate No: <span>{referenceNo}</span>
-                  </div>
-                </div>
-              </header>
-
-              <div className="cert-main">
+              <div className="cert-shell">
                 <CertificateFrame />
 
-                <div className="cert-body">
-                  <div className="cert-title-block">
-                    <h1 className="cert-title">Certificate of Achievement</h1>
-                    {courseTitle ? (
-                      <p className="cert-course-name">{courseTitle}</p>
-                    ) : null}
+                <header className="cert-header">
+                  <div className="cert-header-meta">
+                    <div className="cert-header-meta-row">
+                      <span className="cert-header-meta-label">
+                        Registration No:
+                      </span>{" "}
+                      <span className="cert-header-meta-value">
+                        {siteInfo.company.registrationNo}
+                      </span>
+                    </div>
+                    <div className="cert-header-meta-row cert-header-meta-pan">
+                      <span className="cert-header-meta-label">PAN No:</span>{" "}
+                      <span className="cert-header-meta-value">
+                        {siteInfo.company.panNo}
+                      </span>
+                    </div>
                   </div>
 
-                  <p className="cert-presented-to">Awarded to</p>
-                  <h2 className="cert-student-name">{displayName}</h2>
-                  <div className="cert-title-rule" aria-hidden="true" />
+                  <div className="cert-header-logo-center">
+                    <Image
+                      className="cert-header-wordmark"
+                      src={siteInfo.assets.noBGLogo}
+                      alt={siteInfo.company.shortName}
+                      loader={passthroughLoader}
+                      priority
+                      width={600}
+                      height={112}
+                    />
+                  </div>
 
-                  <p className="cert-body-prose">
-                    This is to certify that the above named student has
-                    successfully completed all required coursework and
-                    assessments for a verified certificate in{" "}
-                    <span className="cert-emphasis">
-                      {formatCourseList(cleanCourses)}
-                    </span>{" "}
-                    offered by{" "}
-                    <span className="cert-emphasis">
-                      <CertificateBrandText text={siteInfo.company.shortName} />
-                    </span>
-                    .
-                  </p>
+                  <div className="cert-header-qr">
+                    {qrCodeUrl ? (
+                      <CertificateQrCode value={qrCodeUrl} size={56} />
+                    ) : (
+                      <div
+                        className="cert-signature-img cert-signature-placeholder"
+                        aria-hidden="true"
+                      />
+                    )}
+                    <div className="cert-header-cert-no">
+                      Certificate No: <span>{referenceNo}</span>
+                    </div>
+                  </div>
+                </header>
+
+                <div className="cert-main">
+                  <div className="cert-body">
+                    <div className="cert-title-block">
+                      <h1 className="cert-title">Certificate of Achievement</h1>
+                      {courseTitle ? (
+                        <p className="cert-course-name">{courseTitle}</p>
+                      ) : null}
+                    </div>
+
+                    <p className="cert-presented-to">Awarded to</p>
+                    <h2 className="cert-student-name">{displayName}</h2>
+                    <div className="cert-title-rule" aria-hidden="true" />
+
+                    <p className="cert-body-prose">
+                      This is to certify that the above named student has
+                      successfully completed all required coursework and
+                      assessments for a verified certificate in{" "}
+                      <span className="cert-emphasis">
+                        {formatCourseList(cleanCourses)}
+                      </span>{" "}
+                      offered by{" "}
+                      <span className="cert-emphasis">
+                        <CertificateBrandText
+                          text={siteInfo.company.shortName}
+                        />
+                      </span>
+                      .
+                    </p>
+                  </div>
+
+                  <footer className="cert-signatures" aria-label="Signatures">
+                    <div className="cert-sig-col">
+                      <CertificateSignatureSlot
+                        src={directorSignatureUrl}
+                        alt="Training Director signature"
+                        width={140}
+                        height={52}
+                      />
+                      <div className="cert-sig-line" aria-hidden="true" />
+                      <div className="cert-sig-label">Training Director</div>
+                    </div>
+
+                    <div className="cert-sig-col">
+                      <CertificateSignatureSlot
+                        src={headSignatureUrl}
+                        alt="Director signature"
+                        width={140}
+                        height={52}
+                      />
+                      <div className="cert-sig-line" aria-hidden="true" />
+                      <div className="cert-sig-label">Director</div>
+                    </div>
+
+                    <div className="cert-sig-col cert-sig-col-date">
+                      <div className="cert-sig-date">{issueDate}</div>
+                      <div className="cert-sig-line" aria-hidden="true" />
+                      <div className="cert-sig-label">Date of Issue</div>
+                    </div>
+                  </footer>
                 </div>
-
-                <footer className="cert-signatures" aria-label="Signatures">
-                  <div className="cert-sig-col">
-                    <CertificateSignatureSlot
-                      src={directorSignatureUrl}
-                      alt="Training Director signature"
-                      width={140}
-                      height={52}
-                    />
-                    <div className="cert-sig-line" aria-hidden="true" />
-                    <div className="cert-sig-label">Training Director</div>
-                  </div>
-
-                  <div className="cert-sig-col">
-                    <CertificateSignatureSlot
-                      src={headSignatureUrl}
-                      alt="Director signature"
-                      width={140}
-                      height={52}
-                    />
-                    <div className="cert-sig-line" aria-hidden="true" />
-                    <div className="cert-sig-label">Director</div>
-                  </div>
-
-                  <div className="cert-sig-col cert-sig-col-date">
-                    <div className="cert-sig-date">{issueDate}</div>
-                    <div className="cert-sig-line" aria-hidden="true" />
-                    <div className="cert-sig-label">Date of Issue</div>
-                  </div>
-                </footer>
               </div>
 
               <div className="cert-footer-bar">

@@ -136,6 +136,15 @@
   flex-direction: column;
 }
 
+.cert-shell {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
 .cert-main {
   position: relative;
   z-index: 1;
@@ -220,9 +229,22 @@
   gap: 16px;
   box-sizing: border-box;
   min-height: var(--cert-header-block-height);
-  padding: 20px 48px 18px;
+  padding: 20px 48px 20px;
   background: #ffffff;
   color: #3e6b51;
+}
+
+/* Single brown rule under header — only meets the innermost verticals */
+.cert-header::after {
+  content: "";
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 0;
+  height: 2.5px;
+  pointer-events: none;
+  z-index: 6;
+  background: #c28c53;
 }
 
 .cert-header-workshop {
