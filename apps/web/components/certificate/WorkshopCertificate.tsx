@@ -74,15 +74,19 @@ export const WorkshopCertificate = forwardRef<
 
             <header className="cert-header cert-header-workshop">
               <div className="cert-header-meta">
-                <div className="cert-header-meta-label">Registration No.</div>
-                <div className="cert-header-meta-value">
-                  {siteInfo.company.registrationNo}
+                <div className="cert-header-meta-row">
+                  <span className="cert-header-meta-label">
+                    Registration No:
+                  </span>{" "}
+                  <span className="cert-header-meta-value">
+                    {siteInfo.company.registrationNo}
+                  </span>
                 </div>
-                <div className="cert-header-meta-label cert-header-meta-pan">
-                  PAN
-                </div>
-                <div className="cert-header-meta-value">
-                  {siteInfo.company.panNo}
+                <div className="cert-header-meta-row cert-header-meta-pan">
+                  <span className="cert-header-meta-label">PAN No:</span>{" "}
+                  <span className="cert-header-meta-value">
+                    {siteInfo.company.panNo}
+                  </span>
                 </div>
               </div>
 
@@ -107,6 +111,9 @@ export const WorkshopCertificate = forwardRef<
                     aria-hidden="true"
                   />
                 )}
+                <div className="cert-header-cert-no">
+                  Certificate No: <span>{referenceNo}</span>
+                </div>
               </div>
             </header>
 
@@ -117,9 +124,10 @@ export const WorkshopCertificate = forwardRef<
                 <div className="cert-title-block">
                   <h1 className="cert-title">Certificate of Participation</h1>
                   <p className="cert-course-name">{workshopTitle}</p>
-                  <p className="cert-presented-to">Awarded to</p>
-                  <h2 className="cert-student-name">{displayName}</h2>
                 </div>
+
+                <p className="cert-presented-to">Awarded to</p>
+                <h2 className="cert-student-name">{displayName}</h2>
                 <div className="cert-title-rule" aria-hidden="true" />
 
                 <p className="cert-body-prose">
@@ -148,22 +156,16 @@ export const WorkshopCertificate = forwardRef<
                 <div className="cert-sig-col">
                   <CertificateSignatureSlot
                     src={headSignatureUrl}
-                    alt="Head of School signature"
+                    alt="Director signature"
                   />
                   <div className="cert-sig-line" aria-hidden="true" />
-                  <div className="cert-sig-label">Head of School</div>
+                  <div className="cert-sig-label">Director</div>
                 </div>
 
                 <div className="cert-sig-col cert-sig-col-date">
                   <div className="cert-sig-date">{issueDate}</div>
                   <div className="cert-sig-line" aria-hidden="true" />
                   <div className="cert-sig-label">Date of Issue</div>
-                </div>
-
-                <div className="cert-sig-col cert-sig-col-cert-no">
-                  <div className="cert-sig-cert-value">{referenceNo}</div>
-                  <div className="cert-sig-line" aria-hidden="true" />
-                  <div className="cert-sig-label">Certificate No.</div>
                 </div>
               </footer>
             </div>

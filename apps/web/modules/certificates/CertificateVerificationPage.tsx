@@ -57,7 +57,7 @@ export function CertificateVerificationPage({ certificate }: Props) {
             </p>
           </div>
 
-          <div className="mt-10 grid max-w-4xl grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-10 grid max-w-4xl grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
             {metaItems.map((item) => (
               <div
                 key={item.label}

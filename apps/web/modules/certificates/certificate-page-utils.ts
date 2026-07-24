@@ -31,6 +31,7 @@ export function getCertificateMetaItems(certificate: CertificateDetails) {
       label: "Issued on",
       value: formatCertificateIssueDate(certificate.issuedAt),
     },
+    { label: "Course Duration", value: "30 days" },
     { label: "Verification ID", value: certificate.id },
   ] as const;
 }
