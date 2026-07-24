@@ -25,13 +25,19 @@ function waitForImages(doc: Document): Promise<void> {
   ).then(() => undefined);
 }
 
+/** Inline CSS must not keep @import — it delays/breaks print rendering. */
+function prepareInlineCss(css: string): string {
+  return css.replace(/@import\s+url\([^)]+\)\s*;?/g, "").trim();
+}
+
 async function loadCertificateStyles(origin: string): Promise<string> {
   try {
-    const response = await fetch(`${origin}/certificate-print.css`, {
-      cache: "no-store",
-    });
+    const response = await fetch(
+      `${origin}/certificate-print.css?t=${Date.now()}`,
+      { cache: "no-store" },
+    );
     if (response.ok) {
-      return await response.text();
+      return prepareInlineCss(await response.text());
     }
   } catch {
     // Fall back to linked stylesheet in the print document.
@@ -42,7 +48,7 @@ async function loadCertificateStyles(origin: string): Promise<string> {
 function buildPrintHtml(content: string, origin: string, inlineCss: string) {
   const stylesheetTag = inlineCss
     ? `<style>${inlineCss}</style>`
-    : `<link rel="stylesheet" href="${origin}/certificate-print.css" />`;
+    : `<link rel="stylesheet" href="${origin}/certificate-print.css?t=${Date.now()}" />`;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -66,11 +72,32 @@ function buildPrintHtml(content: string, origin: string, inlineCss: string) {
       max-height: 297mm;
       overflow: hidden;
       background: #fff;
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    *, *::before, *::after {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
     }
     .cert-frame {
       margin: 0 !important;
+    }
+    .cert-paper {
+      width: 210mm !important;
+      height: 297mm !important;
+      max-height: 297mm !important;
+      margin: 0 !important;
+      box-shadow: none !important;
+    }
+    .cert-body-prose {
+      max-width: 132mm !important;
+      width: 132mm !important;
+      margin-left: auto !important;
+      margin-right: auto !important;
+    }
+    .cert-frame-ring {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
     }
   </style>
 </head>
@@ -95,8 +122,9 @@ export async function printCertificateElement(
 
   const iframe = document.createElement("iframe");
   iframe.setAttribute("aria-hidden", "true");
+  // Real A4 size off-screen — 0×0 iframes break flex/gradient print layout
   iframe.style.cssText =
-    "position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0;pointer-events:none;";
+    "position:fixed;left:-10000px;top:0;width:210mm;height:297mm;border:0;opacity:0;pointer-events:none;";
   document.body.appendChild(iframe);
 
   const win = iframe.contentWindow;
@@ -116,7 +144,8 @@ export async function printCertificateElement(
         await doc.fonts.ready;
       }
       await waitForImages(doc);
-      await new Promise((resolve) => setTimeout(resolve, 350));
+      // Allow layout + background paints to settle at real A4 size
+      await new Promise((resolve) => setTimeout(resolve, 500));
     } catch {
       // Continue even if assets fail to load.
     }
