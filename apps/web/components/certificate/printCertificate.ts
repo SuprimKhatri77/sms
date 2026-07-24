@@ -62,14 +62,13 @@ function buildPrintHtml(content: string, origin: string, inlineCss: string) {
   <style>
     @page {
       size: A4 portrait;
-      margin: 0;
+      margin: 6mm;
     }
     html, body {
       margin: 0;
       padding: 0;
-      width: 210mm;
-      height: 297mm;
-      max-height: 297mm;
+      width: 100%;
+      height: 100%;
       overflow: hidden;
       background: #fff;
       -webkit-print-color-adjust: exact !important;
@@ -81,11 +80,16 @@ function buildPrintHtml(content: string, origin: string, inlineCss: string) {
     }
     .cert-frame {
       margin: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
     }
     .cert-paper {
-      width: 210mm !important;
-      height: 297mm !important;
-      max-height: 297mm !important;
+      position: relative !important;
+      top: auto !important;
+      left: auto !important;
+      width: 100% !important;
+      height: 100% !important;
+      max-height: none !important;
       margin: 0 !important;
       box-shadow: none !important;
     }
@@ -96,8 +100,27 @@ function buildPrintHtml(content: string, origin: string, inlineCss: string) {
       margin-right: auto !important;
     }
     .cert-frame-ring {
+      border-width: 3px 3px 0 !important;
       -webkit-print-color-adjust: exact !important;
       print-color-adjust: exact !important;
+    }
+    .cert-frame-ring-outer {
+      top: 3px !important;
+      left: 3px !important;
+      right: 3px !important;
+      border-color: #c28c53 !important;
+    }
+    .cert-frame-ring-mid {
+      top: 10px !important;
+      left: 10px !important;
+      right: 10px !important;
+      border-color: #3e6b51 !important;
+    }
+    .cert-frame-ring-inner {
+      top: 17px !important;
+      left: 17px !important;
+      right: 17px !important;
+      border-color: #c28c53 !important;
     }
   </style>
 </head>
