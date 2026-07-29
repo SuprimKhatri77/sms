@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { X } from "lucide-react";
 import { siteInfo } from "@/utils/site-info";
 import { cn } from "@/lib/utils";
@@ -9,6 +9,9 @@ import { cn } from "@/lib/utils";
 function toWhatsAppDigits(phone: string) {
   return phone.replace(/\D/g, "");
 }
+
+const FOCUSABLE_SELECTOR =
+  'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 const WhatsAppIcon = ({ className }: { className?: string }) => (
   <svg
@@ -25,11 +28,20 @@ export default function WhatsAppFloat() {
   const [open, setOpen] = useState(false);
   const panelId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const wasOpenRef = useRef(false);
+  const reduceMotion = useReducedMotion();
   const phone = siteInfo.contact.phone;
   const whatsappHref = `https://wa.me/${toWhatsAppDigits(phone)}`;
 
   useEffect(() => {
     if (!open) return;
+
+    const frame = window.requestAnimationFrame(() => {
+      closeButtonRef.current?.focus();
+    });
 
     const onPointerDown = (event: MouseEvent | TouchEvent) => {
       const target = event.target as Node;
@@ -39,18 +51,57 @@ export default function WhatsAppFloat() {
     };
 
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setOpen(false);
+        return;
+      }
+
+      if (event.key !== "Tab" || !panelRef.current) return;
+
+      const focusable = Array.from(
+        panelRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
+      ).filter((el) => !el.hasAttribute("disabled") && el.tabIndex !== -1);
+
+      if (focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement as HTMLElement | null;
+
+      if (event.shiftKey) {
+        if (active === first || !panelRef.current.contains(active)) {
+          event.preventDefault();
+          last.focus();
+        }
+        return;
+      }
+
+      if (active === last || !panelRef.current.contains(active)) {
+        event.preventDefault();
+        first.focus();
+      }
     };
 
     document.addEventListener("mousedown", onPointerDown);
     document.addEventListener("touchstart", onPointerDown);
     document.addEventListener("keydown", onKeyDown);
     return () => {
+      window.cancelAnimationFrame(frame);
       document.removeEventListener("mousedown", onPointerDown);
       document.removeEventListener("touchstart", onPointerDown);
       document.removeEventListener("keydown", onKeyDown);
     };
   }, [open]);
+
+  useEffect(() => {
+    if (wasOpenRef.current && !open) {
+      triggerRef.current?.focus({ preventScroll: true });
+    }
+    wasOpenRef.current = open;
+  }, [open]);
+
+  const closePanel = () => setOpen(false);
 
   return (
     <div
@@ -60,14 +111,24 @@ export default function WhatsAppFloat() {
       <AnimatePresence>
         {open && (
           <motion.div
+            ref={panelRef}
             id={panelId}
             role="dialog"
-            aria-modal="false"
+            aria-modal="true"
             aria-labelledby={`${panelId}-title`}
-            initial={{ opacity: 0, y: 12, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 8, scale: 0.96 }}
-            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+            initial={
+              reduceMotion ? { opacity: 0 } : { opacity: 0, y: 12, scale: 0.96 }
+            }
+            animate={
+              reduceMotion ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }
+            }
+            exit={
+              reduceMotion ? { opacity: 0 } : { opacity: 0, y: 8, scale: 0.96 }
+            }
+            transition={{
+              duration: reduceMotion ? 0.12 : 0.22,
+              ease: [0.22, 1, 0.36, 1],
+            }}
             className="pointer-events-auto w-[min(100vw-2rem,20.5rem)] origin-bottom-right overflow-hidden border border-[rgba(47,78,64,0.12)] bg-(--brand-cream) shadow-[0_18px_50px_rgba(26,26,26,0.16)]"
           >
             <div className="flex items-start justify-between gap-3 bg-(--brand-green) px-4 py-3.5 text-white">
@@ -83,8 +144,9 @@ export default function WhatsAppFloat() {
                 </p>
               </div>
               <button
+                ref={closeButtonRef}
                 type="button"
-                onClick={() => setOpen(false)}
+                onClick={closePanel}
                 className="shrink-0 rounded-sm p-1 text-white/80 transition-colors hover:bg-white/10 hover:text-white"
                 aria-label="Close WhatsApp chat"
               >
@@ -111,12 +173,13 @@ export default function WhatsAppFloat() {
                 href={whatsappHref}
                 target="_blank"
                 rel="noopener noreferrer"
-                onClick={() => setOpen(false)}
+                onClick={closePanel}
                 className={cn(
                   "inline-flex w-full items-center justify-center gap-2",
                   "bg-[#25D366] px-4 py-3",
                   "font-(family-name:--font-dm-sans) text-sm font-semibold text-white",
-                  "transition-all duration-200 hover:-translate-y-0.5 hover:brightness-105",
+                  "transition-all duration-200 hover:brightness-105",
+                  !reduceMotion && "hover:-translate-y-0.5",
                 )}
               >
                 <WhatsAppIcon className="size-4.5" />
@@ -128,16 +191,22 @@ export default function WhatsAppFloat() {
       </AnimatePresence>
 
       <motion.button
+        ref={triggerRef}
         type="button"
+        tabIndex={open ? -1 : undefined}
         aria-expanded={open}
         aria-controls={panelId}
         aria-label={open ? "Close WhatsApp chat" : "Chat with us on WhatsApp"}
         onClick={() => setOpen((prev) => !prev)}
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1], delay: 0.4 }}
-        whileHover={{ scale: 1.06 }}
-        whileTap={{ scale: 0.96 }}
+        initial={reduceMotion ? false : { opacity: 0, scale: 0.8 }}
+        animate={reduceMotion ? { opacity: 1 } : { opacity: 1, scale: 1 }}
+        transition={{
+          duration: reduceMotion ? 0 : 0.35,
+          ease: [0.22, 1, 0.36, 1],
+          delay: reduceMotion ? 0 : 0.4,
+        }}
+        whileHover={reduceMotion ? undefined : { scale: 1.06 }}
+        whileTap={reduceMotion ? undefined : { scale: 0.96 }}
         className={cn(
           "pointer-events-auto relative flex size-14 items-center justify-center",
           "bg-[#25D366] text-white",
@@ -146,25 +215,39 @@ export default function WhatsAppFloat() {
           "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--brand-green)",
         )}
       >
-        <span className="pointer-events-none absolute inset-0 animate-ping bg-[#25D366]/30 animation-duration-[2.4s]" />
+        {!reduceMotion && (
+          <span className="pointer-events-none absolute inset-0 animate-ping bg-[#25D366]/30 animation-duration-[2.4s]" />
+        )}
         <AnimatePresence mode="wait" initial={false}>
           {open ? (
             <motion.span
               key="close"
-              initial={{ opacity: 0, rotate: -40 }}
-              animate={{ opacity: 1, rotate: 0 }}
-              exit={{ opacity: 0, rotate: 40 }}
-              transition={{ duration: 0.15 }}
+              initial={
+                reduceMotion ? { opacity: 0 } : { opacity: 0, rotate: -40 }
+              }
+              animate={
+                reduceMotion ? { opacity: 1 } : { opacity: 1, rotate: 0 }
+              }
+              exit={
+                reduceMotion ? { opacity: 0 } : { opacity: 0, rotate: 40 }
+              }
+              transition={{ duration: reduceMotion ? 0.1 : 0.15 }}
             >
               <X className="relative size-6" strokeWidth={2.25} />
             </motion.span>
           ) : (
             <motion.span
               key="wa"
-              initial={{ opacity: 0, rotate: 40 }}
-              animate={{ opacity: 1, rotate: 0 }}
-              exit={{ opacity: 0, rotate: -40 }}
-              transition={{ duration: 0.15 }}
+              initial={
+                reduceMotion ? { opacity: 0 } : { opacity: 0, rotate: 40 }
+              }
+              animate={
+                reduceMotion ? { opacity: 1 } : { opacity: 1, rotate: 0 }
+              }
+              exit={
+                reduceMotion ? { opacity: 0 } : { opacity: 0, rotate: -40 }
+              }
+              transition={{ duration: reduceMotion ? 0.1 : 0.15 }}
             >
               <WhatsAppIcon className="relative size-7" />
             </motion.span>
