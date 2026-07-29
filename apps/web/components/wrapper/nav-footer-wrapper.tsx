@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import Navbar from "../landing/Navbar";
 import Footer from "../landing/Footer";
+import WhatsAppFloat from "../landing/WhatsAppFloat";
 
 const EXCLUDE_NAV_FOOTER_ROUTES = ["/admin", "/auth", "/dashboard"];
 export default function NavFooterWrapper({
@@ -23,6 +24,7 @@ export default function NavFooterWrapper({
       <Navbar />
       {children}
       <Footer />
+      <WhatsAppFloat />
     </>
   );
 }
