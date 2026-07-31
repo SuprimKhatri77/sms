@@ -81,7 +81,7 @@ const navSections = [
         icon: <BarChart3 />,
       },
       {
-        title: "Payments",
+        title: "Received Payments",
         url: "/students/payments",
         icon: <Wallet />,
       },
@@ -101,8 +101,16 @@ const navSections = [
     label: "Inventory",
     items: [
       { title: "Products", url: "/inventory/products", icon: <Package /> },
-      { title: "Stock In", url: "/inventory/stock-in", icon: <ArrowDownToLine /> },
-      { title: "Stock Out", url: "/inventory/stock-out", icon: <ArrowUpFromLine /> },
+      {
+        title: "Stock In",
+        url: "/inventory/stock-in",
+        icon: <ArrowDownToLine />,
+      },
+      {
+        title: "Stock Out",
+        url: "/inventory/stock-out",
+        icon: <ArrowUpFromLine />,
+      },
       { title: "Wastage", url: "/inventory/wastage", icon: <Trash2 /> },
       { title: "Summary", url: "/inventory/summary", icon: <ClipboardList /> },
     ],

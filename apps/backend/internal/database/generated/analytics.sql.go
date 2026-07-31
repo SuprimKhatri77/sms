@@ -7,15 +7,32 @@ package db
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const getAnalyticsOverview = `-- name: GetAnalyticsOverview :one
 SELECT
     COUNT(DISTINCT s.id)::INTEGER AS total_students,
     COUNT(DISTINCT s.id) FILTER (WHERE s.status = 'pending')::INTEGER AS pending_approvals,
-    (SELECT COALESCE(SUM(amount), 0)::BIGINT FROM payments) AS total_revenue,
-    (SELECT COALESCE(SUM(amount), 0)::BIGINT FROM student_discounts) AS total_discounts,
-    (SELECT COALESCE(SUM(amount), 0)::BIGINT FROM student_scholarships) AS total_scholarships,
+    (
+        SELECT COALESCE(SUM(amount), 0)::BIGINT
+        FROM payments p
+        WHERE ($1::TEXT IS NULL OR p.added_at >= $1::TIMESTAMPTZ)
+          AND ($2::TEXT IS NULL OR p.added_at < ($2::TIMESTAMPTZ + INTERVAL '1 day'))
+    ) AS total_revenue,
+    (
+        SELECT COALESCE(SUM(amount), 0)::BIGINT
+        FROM student_discounts sd
+        WHERE ($1::TEXT IS NULL OR sd.created_at >= $1::TIMESTAMPTZ)
+          AND ($2::TEXT IS NULL OR sd.created_at < ($2::TIMESTAMPTZ + INTERVAL '1 day'))
+    ) AS total_discounts,
+    (
+        SELECT COALESCE(SUM(amount), 0)::BIGINT
+        FROM student_scholarships ss
+        WHERE ($1::TEXT IS NULL OR ss.created_at >= $1::TIMESTAMPTZ)
+          AND ($2::TEXT IS NULL OR ss.created_at < ($2::TIMESTAMPTZ + INTERVAL '1 day'))
+    ) AS total_scholarships,
     COUNT(DISTINCT s.id) FILTER (
         WHERE s.status IN ('active', 'completed')
         AND (
@@ -40,7 +57,14 @@ SELECT
         ) > 0
     )::INTEGER AS students_with_balance
 FROM students s
+WHERE ($1::TEXT IS NULL OR s.created_at >= $1::TIMESTAMPTZ)
+  AND ($2::TEXT IS NULL OR s.created_at < ($2::TIMESTAMPTZ + INTERVAL '1 day'))
 `
+
+type GetAnalyticsOverviewParams struct {
+	From pgtype.Text `json:"from"`
+	To   pgtype.Text `json:"to"`
+}
 
 type GetAnalyticsOverviewRow struct {
 	TotalStudents       int32 `json:"totalStudents"`
@@ -51,8 +75,8 @@ type GetAnalyticsOverviewRow struct {
 	StudentsWithBalance int32 `json:"studentsWithBalance"`
 }
 
-func (q *Queries) GetAnalyticsOverview(ctx context.Context) (GetAnalyticsOverviewRow, error) {
-	row := q.db.QueryRow(ctx, getAnalyticsOverview)
+func (q *Queries) GetAnalyticsOverview(ctx context.Context, arg GetAnalyticsOverviewParams) (GetAnalyticsOverviewRow, error) {
+	row := q.db.QueryRow(ctx, getAnalyticsOverview, arg.From, arg.To)
 	var i GetAnalyticsOverviewRow
 	err := row.Scan(
 		&i.TotalStudents,
@@ -68,20 +92,28 @@ func (q *Queries) GetAnalyticsOverview(ctx context.Context) (GetAnalyticsOvervie
 const getCoursePopularity = `-- name: GetCoursePopularity :many
 SELECT
     c.name AS course,
-    COUNT(sc.student_id)::INTEGER AS count
+    COUNT(s.id)::INTEGER AS count
 FROM courses c
 LEFT JOIN student_courses sc ON sc.course_id = c.id
+LEFT JOIN students s ON s.id = sc.student_id
+    AND ($1::TEXT IS NULL OR s.created_at >= $1::TIMESTAMPTZ)
+    AND ($2::TEXT IS NULL OR s.created_at < ($2::TIMESTAMPTZ + INTERVAL '1 day'))
 GROUP BY c.id, c.name
 ORDER BY count DESC
 `
+
+type GetCoursePopularityParams struct {
+	From pgtype.Text `json:"from"`
+	To   pgtype.Text `json:"to"`
+}
 
 type GetCoursePopularityRow struct {
 	Course string `json:"course"`
 	Count  int32  `json:"count"`
 }
 
-func (q *Queries) GetCoursePopularity(ctx context.Context) ([]GetCoursePopularityRow, error) {
-	rows, err := q.db.Query(ctx, getCoursePopularity)
+func (q *Queries) GetCoursePopularity(ctx context.Context, arg GetCoursePopularityParams) ([]GetCoursePopularityRow, error) {
+	rows, err := q.db.Query(ctx, getCoursePopularity, arg.From, arg.To)
 	if err != nil {
 		return nil, err
 	}
@@ -105,15 +137,22 @@ SELECT
     COUNT(*)::INTEGER AS total,
     COUNT(*) FILTER (WHERE is_read = false)::INTEGER AS unread
 FROM inquiries
+WHERE ($1::TEXT IS NULL OR created_at >= $1::TIMESTAMPTZ)
+  AND ($2::TEXT IS NULL OR created_at < ($2::TIMESTAMPTZ + INTERVAL '1 day'))
 `
+
+type GetInquiryStatsParams struct {
+	From pgtype.Text `json:"from"`
+	To   pgtype.Text `json:"to"`
+}
 
 type GetInquiryStatsRow struct {
 	Total  int32 `json:"total"`
 	Unread int32 `json:"unread"`
 }
 
-func (q *Queries) GetInquiryStats(ctx context.Context) (GetInquiryStatsRow, error) {
-	row := q.db.QueryRow(ctx, getInquiryStats)
+func (q *Queries) GetInquiryStats(ctx context.Context, arg GetInquiryStatsParams) (GetInquiryStatsRow, error) {
+	row := q.db.QueryRow(ctx, getInquiryStats, arg.From, arg.To)
 	var i GetInquiryStatsRow
 	err := row.Scan(&i.Total, &i.Unread)
 	return i, err
@@ -124,17 +163,24 @@ SELECT
     TO_CHAR(DATE_TRUNC('month', s.created_at), 'Month') AS month,
     COUNT(*)::INTEGER AS count
 FROM students s
+WHERE ($1::TEXT IS NULL OR s.created_at >= $1::TIMESTAMPTZ)
+  AND ($2::TEXT IS NULL OR s.created_at < ($2::TIMESTAMPTZ + INTERVAL '1 day'))
 GROUP BY DATE_TRUNC('month', s.created_at)
 ORDER BY DATE_TRUNC('month', s.created_at)
 `
+
+type GetMonthlyAdmissionsParams struct {
+	From pgtype.Text `json:"from"`
+	To   pgtype.Text `json:"to"`
+}
 
 type GetMonthlyAdmissionsRow struct {
 	Month string `json:"month"`
 	Count int32  `json:"count"`
 }
 
-func (q *Queries) GetMonthlyAdmissions(ctx context.Context) ([]GetMonthlyAdmissionsRow, error) {
-	rows, err := q.db.Query(ctx, getMonthlyAdmissions)
+func (q *Queries) GetMonthlyAdmissions(ctx context.Context, arg GetMonthlyAdmissionsParams) ([]GetMonthlyAdmissionsRow, error) {
+	rows, err := q.db.Query(ctx, getMonthlyAdmissions, arg.From, arg.To)
 	if err != nil {
 		return nil, err
 	}
@@ -158,17 +204,24 @@ SELECT
     TO_CHAR(DATE_TRUNC('month', created_at), 'Month') AS month,
     COUNT(*)::INTEGER AS count
 FROM inquiries
+WHERE ($1::TEXT IS NULL OR created_at >= $1::TIMESTAMPTZ)
+  AND ($2::TEXT IS NULL OR created_at < ($2::TIMESTAMPTZ + INTERVAL '1 day'))
 GROUP BY DATE_TRUNC('month', created_at)
 ORDER BY DATE_TRUNC('month', created_at)
 `
+
+type GetMonthlyInquiriesParams struct {
+	From pgtype.Text `json:"from"`
+	To   pgtype.Text `json:"to"`
+}
 
 type GetMonthlyInquiriesRow struct {
 	Month string `json:"month"`
 	Count int32  `json:"count"`
 }
 
-func (q *Queries) GetMonthlyInquiries(ctx context.Context) ([]GetMonthlyInquiriesRow, error) {
-	rows, err := q.db.Query(ctx, getMonthlyInquiries)
+func (q *Queries) GetMonthlyInquiries(ctx context.Context, arg GetMonthlyInquiriesParams) ([]GetMonthlyInquiriesRow, error) {
+	rows, err := q.db.Query(ctx, getMonthlyInquiries, arg.From, arg.To)
 	if err != nil {
 		return nil, err
 	}
@@ -192,17 +245,24 @@ SELECT
     TO_CHAR(DATE_TRUNC('month', p.added_at), 'Month') AS month,
     COALESCE(SUM(p.amount), 0)::INTEGER AS amount
 FROM payments p
+WHERE ($1::TEXT IS NULL OR p.added_at >= $1::TIMESTAMPTZ)
+  AND ($2::TEXT IS NULL OR p.added_at < ($2::TIMESTAMPTZ + INTERVAL '1 day'))
 GROUP BY DATE_TRUNC('month', p.added_at)
 ORDER BY DATE_TRUNC('month', p.added_at)
 `
+
+type GetMonthlyRevenueParams struct {
+	From pgtype.Text `json:"from"`
+	To   pgtype.Text `json:"to"`
+}
 
 type GetMonthlyRevenueRow struct {
 	Month  string `json:"month"`
 	Amount int32  `json:"amount"`
 }
 
-func (q *Queries) GetMonthlyRevenue(ctx context.Context) ([]GetMonthlyRevenueRow, error) {
-	rows, err := q.db.Query(ctx, getMonthlyRevenue)
+func (q *Queries) GetMonthlyRevenue(ctx context.Context, arg GetMonthlyRevenueParams) ([]GetMonthlyRevenueRow, error) {
+	rows, err := q.db.Query(ctx, getMonthlyRevenue, arg.From, arg.To)
 	if err != nil {
 		return nil, err
 	}
@@ -225,9 +285,13 @@ const getRevenueStats = `-- name: GetRevenueStats :one
 SELECT
     COALESCE(SUM(p.amount) FILTER (
         WHERE DATE_TRUNC('month', p.added_at) = DATE_TRUNC('month', NOW())
+          AND ($1::TEXT IS NULL OR p.added_at >= $1::TIMESTAMPTZ)
+          AND ($2::TEXT IS NULL OR p.added_at < ($2::TIMESTAMPTZ + INTERVAL '1 day'))
     ), 0)::INTEGER AS this_month,
     COALESCE(SUM(p.amount) FILTER (
         WHERE DATE_TRUNC('month', p.added_at) = DATE_TRUNC('month', NOW() - INTERVAL '1 month')
+          AND ($1::TEXT IS NULL OR p.added_at >= $1::TIMESTAMPTZ)
+          AND ($2::TEXT IS NULL OR p.added_at < ($2::TIMESTAMPTZ + INTERVAL '1 day'))
     ), 0)::INTEGER AS last_month,
     COALESCE((
         SELECT SUM(outstanding)
@@ -259,6 +323,8 @@ SELECT
                 GROUP BY student_id
             ) scholarships ON scholarships.student_id = s.id
             WHERE s.status IN ('active', 'completed')
+              AND ($1::TEXT IS NULL OR s.created_at >= $1::TIMESTAMPTZ)
+              AND ($2::TEXT IS NULL OR s.created_at < ($2::TIMESTAMPTZ + INTERVAL '1 day'))
               AND (
                     COALESCE(fees.total_fee, 0)
                     - COALESCE(pays.total_paid, 0)
@@ -270,14 +336,19 @@ SELECT
 FROM payments p
 `
 
+type GetRevenueStatsParams struct {
+	From pgtype.Text `json:"from"`
+	To   pgtype.Text `json:"to"`
+}
+
 type GetRevenueStatsRow struct {
 	ThisMonth   int32 `json:"thisMonth"`
 	LastMonth   int32 `json:"lastMonth"`
 	Outstanding int32 `json:"outstanding"`
 }
 
-func (q *Queries) GetRevenueStats(ctx context.Context) (GetRevenueStatsRow, error) {
-	row := q.db.QueryRow(ctx, getRevenueStats)
+func (q *Queries) GetRevenueStats(ctx context.Context, arg GetRevenueStatsParams) (GetRevenueStatsRow, error) {
+	row := q.db.QueryRow(ctx, getRevenueStats, arg.From, arg.To)
 	var i GetRevenueStatsRow
 	err := row.Scan(&i.ThisMonth, &i.LastMonth, &i.Outstanding)
 	return i, err
@@ -288,17 +359,24 @@ SELECT
     source,
     COUNT(*)::INTEGER AS count
 FROM students
+WHERE ($1::TEXT IS NULL OR created_at >= $1::TIMESTAMPTZ)
+  AND ($2::TEXT IS NULL OR created_at < ($2::TIMESTAMPTZ + INTERVAL '1 day'))
 GROUP BY source
 ORDER BY count DESC
 `
+
+type GetSourceBreakdownParams struct {
+	From pgtype.Text `json:"from"`
+	To   pgtype.Text `json:"to"`
+}
 
 type GetSourceBreakdownRow struct {
 	Source string `json:"source"`
 	Count  int32  `json:"count"`
 }
 
-func (q *Queries) GetSourceBreakdown(ctx context.Context) ([]GetSourceBreakdownRow, error) {
-	rows, err := q.db.Query(ctx, getSourceBreakdown)
+func (q *Queries) GetSourceBreakdown(ctx context.Context, arg GetSourceBreakdownParams) ([]GetSourceBreakdownRow, error) {
+	rows, err := q.db.Query(ctx, getSourceBreakdown, arg.From, arg.To)
 	if err != nil {
 		return nil, err
 	}
@@ -324,7 +402,14 @@ SELECT
     COUNT(*) FILTER (WHERE status = 'rejected')::INTEGER AS rejected,
     COUNT(*) FILTER (WHERE status = 'completed')::INTEGER AS completed
 FROM students
+WHERE ($1::TEXT IS NULL OR created_at >= $1::TIMESTAMPTZ)
+  AND ($2::TEXT IS NULL OR created_at < ($2::TIMESTAMPTZ + INTERVAL '1 day'))
 `
+
+type GetStatusBreakdownParams struct {
+	From pgtype.Text `json:"from"`
+	To   pgtype.Text `json:"to"`
+}
 
 type GetStatusBreakdownRow struct {
 	Pending   int32 `json:"pending"`
@@ -333,8 +418,8 @@ type GetStatusBreakdownRow struct {
 	Completed int32 `json:"completed"`
 }
 
-func (q *Queries) GetStatusBreakdown(ctx context.Context) (GetStatusBreakdownRow, error) {
-	row := q.db.QueryRow(ctx, getStatusBreakdown)
+func (q *Queries) GetStatusBreakdown(ctx context.Context, arg GetStatusBreakdownParams) (GetStatusBreakdownRow, error) {
+	row := q.db.QueryRow(ctx, getStatusBreakdown, arg.From, arg.To)
 	var i GetStatusBreakdownRow
 	err := row.Scan(
 		&i.Pending,

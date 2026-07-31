@@ -1,6 +1,11 @@
 import { GetBankLedgerSummaryParams } from "./api/bank_ledger";
 
 export const queryKeys = {
+  analytics: {
+    all: ["admin-analytics"] as const,
+    detail: (from?: string | null, to?: string | null) =>
+      ["admin-analytics", from ?? null, to ?? null] as const,
+  },
   bankAccounts: {
     all: ["admin-bank-accounts"] as const,
     list: (page: number) => ["admin-bank-accounts", "list", page] as const,
