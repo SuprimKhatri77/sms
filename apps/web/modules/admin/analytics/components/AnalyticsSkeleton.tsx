@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { AdminPageLayout } from "@/components/admin/admin-page-layout";
 import { DashboardStatsSkeleton } from "@/modules/admin/dashboard/DashboardStats";
 import { RevenueChartSkeleton } from "./RevenueChart";
@@ -7,18 +8,27 @@ import { StatusBreakdownSkeleton } from "./StatusBreakdown";
 import { CoursePopularitySkeleton } from "./CoursePopularity";
 import { InquiryStatsSkeleton } from "./InquiryStats";
 import { AnalyticsGrid, AnalyticsSection } from "./AnalyticsPanel";
-import { FISCAL_YEAR } from "../types";
+import { FiscalYearFilter } from "./FiscalYearFilter";
+import { FISCAL_YEAR_ALL } from "../fiscal-year";
 
-export function AnalyticsSkeleton() {
+type AnalyticsSkeletonProps = {
+  action?: ReactNode;
+};
+
+export function AnalyticsSkeleton({ action }: AnalyticsSkeletonProps) {
   return (
     <AdminPageLayout
       title="Analytics"
       description="Overview of your school's performance and metrics"
       maxWidth="wide"
       action={
-        <span className="inline-flex items-center border border-[rgba(194,138,79,0.3)] bg-[rgba(194,138,79,0.08)] px-3 py-1.5 font-(family-name:--font-dm-sans) text-[10px] font-semibold uppercase tracking-[0.12em] text-(--brand-brown)">
-          FY {FISCAL_YEAR}
-        </span>
+        action ?? (
+          <FiscalYearFilter
+            value={FISCAL_YEAR_ALL}
+            onChange={() => {}}
+            disabled
+          />
+        )
       }
     >
       <div className="space-y-10">

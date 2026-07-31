@@ -16,6 +16,11 @@ import (
 
 const handlerGetAnalytics = "GetAnalytics"
 
+type GetAnalyticsParams struct {
+	From string `form:"from" binding:"omitempty,date_format"`
+	To   string `form:"to" binding:"omitempty,date_format"`
+}
+
 type result[T any] struct {
 	data T
 	err  error
@@ -23,8 +28,22 @@ type result[T any] struct {
 
 func GetAnalytics(queries repository.AnalyticsRepository) gin.HandlerFunc {
 	return func(c *gin.Context) {
-
 		ctx := c.Request.Context()
+
+		var params GetAnalyticsParams
+		if err := c.ShouldBindQuery(&params); err != nil {
+			applog.Warn(c, handlerGetAnalytics, "invalid request",
+				slog.Any(applog.AttrError, err))
+			c.JSON(http.StatusBadRequest, types.APIResponse{
+				Success: false,
+				Message: "Invalid query parameter",
+				Code:    constants.InvalidQueryParam,
+			})
+			return
+		}
+
+		from := utils.ToNullableText(params.From)
+		to := utils.ToNullableText(params.To)
 
 		overviewCh := make(chan result[db.GetAnalyticsOverviewRow], 1)
 		monthlyRevenueCh := make(chan result[[]db.GetMonthlyRevenueRow], 1)
@@ -37,47 +56,74 @@ func GetAnalytics(queries repository.AnalyticsRepository) gin.HandlerFunc {
 		revenueStatsCh := make(chan result[db.GetRevenueStatsRow], 1)
 
 		go func() {
-			data, err := queries.GetAnalyticsOverview(ctx)
+			data, err := queries.GetAnalyticsOverview(ctx, db.GetAnalyticsOverviewParams{
+				From: from,
+				To:   to,
+			})
 			overviewCh <- result[db.GetAnalyticsOverviewRow]{data, err}
 		}()
 
 		go func() {
-			data, err := queries.GetMonthlyRevenue(ctx)
+			data, err := queries.GetMonthlyRevenue(ctx, db.GetMonthlyRevenueParams{
+				From: from,
+				To:   to,
+			})
 			monthlyRevenueCh <- result[[]db.GetMonthlyRevenueRow]{data, err}
 		}()
 
 		go func() {
-			data, err := queries.GetMonthlyAdmissions(ctx)
+			data, err := queries.GetMonthlyAdmissions(ctx, db.GetMonthlyAdmissionsParams{
+				From: from,
+				To:   to,
+			})
 			monthlyAdmissionsCh <- result[[]db.GetMonthlyAdmissionsRow]{data, err}
 		}()
 
 		go func() {
-			data, err := queries.GetSourceBreakdown(ctx)
+			data, err := queries.GetSourceBreakdown(ctx, db.GetSourceBreakdownParams{
+				From: from,
+				To:   to,
+			})
 			sourceBreakdownCh <- result[[]db.GetSourceBreakdownRow]{data, err}
 		}()
 
 		go func() {
-			data, err := queries.GetStatusBreakdown(ctx)
+			data, err := queries.GetStatusBreakdown(ctx, db.GetStatusBreakdownParams{
+				From: from,
+				To:   to,
+			})
 			statusBreakdownCh <- result[db.GetStatusBreakdownRow]{data, err}
 		}()
 
 		go func() {
-			data, err := queries.GetCoursePopularity(ctx)
+			data, err := queries.GetCoursePopularity(ctx, db.GetCoursePopularityParams{
+				From: from,
+				To:   to,
+			})
 			coursePopularityCh <- result[[]db.GetCoursePopularityRow]{data, err}
 		}()
 
 		go func() {
-			data, err := queries.GetInquiryStats(ctx)
+			data, err := queries.GetInquiryStats(ctx, db.GetInquiryStatsParams{
+				From: from,
+				To:   to,
+			})
 			inquiryStatsCh <- result[db.GetInquiryStatsRow]{data, err}
 		}()
 
 		go func() {
-			data, err := queries.GetMonthlyInquiries(ctx)
+			data, err := queries.GetMonthlyInquiries(ctx, db.GetMonthlyInquiriesParams{
+				From: from,
+				To:   to,
+			})
 			monthlyInquiriesCh <- result[[]db.GetMonthlyInquiriesRow]{data, err}
 		}()
 
 		go func() {
-			data, err := queries.GetRevenueStats(ctx)
+			data, err := queries.GetRevenueStats(ctx, db.GetRevenueStatsParams{
+				From: from,
+				To:   to,
+			})
 			revenueStatsCh <- result[db.GetRevenueStatsRow]{data, err}
 		}()
 
@@ -134,6 +180,5 @@ func GetAnalytics(queries repository.AnalyticsRepository) gin.HandlerFunc {
 				RevenueStats:      revenueStatsRes.data,
 			},
 		})
-
 	}
 }

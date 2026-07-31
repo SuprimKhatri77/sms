@@ -1,8 +1,17 @@
 "use client";
 
+import { Suspense, useCallback, useMemo } from "react";
 import { RefreshCw } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useAnalytics } from "./hooks/useAnalytics";
-import { FISCAL_YEAR } from "./types";
+import {
+  FISCAL_YEAR_ALL,
+  FY_QUERY_PARAM,
+  fiscalYearToAdRange,
+  listFiscalYearOptions,
+  normalizeFyParam,
+} from "./fiscal-year";
+import { FiscalYearFilter } from "./components/FiscalYearFilter";
 
 import { RevenueChart } from "./components/RevenueChart";
 import { AdmissionsChart } from "./components/AdmissionsChart";
@@ -16,10 +25,7 @@ import {
   AnalyticsSection,
 } from "./components/AnalyticsPanel";
 import { AdminPageLayout } from "@/components/admin/admin-page-layout";
-import {
-  DashboardStats,
-  DashboardStatsSkeleton,
-} from "@/modules/admin/dashboard/DashboardStats";
+import { DashboardStats } from "@/modules/admin/dashboard/DashboardStats";
 
 function AnalyticsError({ onRetry }: { onRetry: () => void }) {
   return (
@@ -52,11 +58,46 @@ function AnalyticsError({ onRetry }: { onRetry: () => void }) {
   );
 }
 
-export default function AnalyticsPage() {
-  const { data, isPending, isError, refetch } = useAnalytics();
+function AnalyticsPageInner() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const fyOptions = useMemo(() => listFiscalYearOptions(), []);
+  const selectedFy = normalizeFyParam(searchParams.get(FY_QUERY_PARAM));
+  const dateRange = useMemo(
+    () => fiscalYearToAdRange(selectedFy),
+    [selectedFy],
+  );
+
+  const setFiscalYear = useCallback(
+    (next: string) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (next === FISCAL_YEAR_ALL) {
+        params.delete(FY_QUERY_PARAM);
+      } else {
+        params.set(FY_QUERY_PARAM, next);
+      }
+      const qs = params.toString();
+      router.replace(`${pathname}${qs ? `?${qs}` : ""}`, { scroll: false });
+    },
+    [pathname, router, searchParams],
+  );
+
+  const { data, isPending, isError, refetch } = useAnalytics({
+    from: dateRange?.from,
+    to: dateRange?.to,
+  });
+
+  const filterAction = (
+    <FiscalYearFilter
+      value={selectedFy}
+      onChange={setFiscalYear}
+      options={fyOptions}
+    />
+  );
 
   if (isPending) {
-    return <AnalyticsSkeleton />;
+    return <AnalyticsSkeleton action={filterAction} />;
   }
 
   if (isError || !data || !data.success) {
@@ -80,11 +121,7 @@ export default function AnalyticsPage() {
       title="Analytics"
       description="Overview of your school's performance and metrics"
       maxWidth="wide"
-      action={
-        <span className="inline-flex items-center border border-[rgba(194,138,79,0.3)] bg-[rgba(194,138,79,0.08)] px-3 py-1.5 font-(family-name:--font-dm-sans) text-[10px] font-semibold uppercase tracking-[0.12em] text-(--brand-brown)">
-          FY {FISCAL_YEAR}
-        </span>
-      }
+      action={filterAction}
     >
       <div className="space-y-10">
         <section>
@@ -141,5 +178,13 @@ export default function AnalyticsPage() {
         </AnalyticsSection>
       </div>
     </AdminPageLayout>
+  );
+}
+
+export default function AnalyticsPage() {
+  return (
+    <Suspense fallback={<AnalyticsSkeleton />}>
+      <AnalyticsPageInner />
+    </Suspense>
   );
 }

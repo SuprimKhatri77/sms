@@ -66,8 +66,6 @@ export interface AnalyticsResponse {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-export const FISCAL_YEAR = "082/083";
-
 export const PAISA_TO_RUPEES = 100;
 
 /** Colors used across analytics charts and cards */
