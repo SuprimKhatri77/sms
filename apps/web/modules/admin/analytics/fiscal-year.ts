@@ -52,15 +52,19 @@ export function listFiscalYearOptions(now = new Date()): FiscalYearOption[] {
   return options;
 }
 
+/** BSToAD does not throw on out-of-range days — round-trip to detect real month length. */
+function isValidBsDate(bs: string): boolean {
+  try {
+    return ADToBS(BSToAD(bs)) === bs;
+  } catch {
+    return false;
+  }
+}
+
 function lastDayOfBsMonth(year: number, month: number): number {
   for (let day = 32; day >= 28; day--) {
     const bs = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    try {
-      BSToAD(bs);
-      return day;
-    } catch {
-      // try previous day
-    }
+    if (isValidBsDate(bs)) return day;
   }
   return 30;
 }

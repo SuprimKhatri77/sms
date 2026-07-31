@@ -42,6 +42,18 @@ func GetAnalytics(queries repository.AnalyticsRepository) gin.HandlerFunc {
 			return
 		}
 
+		if params.From != "" && params.To != "" && params.From > params.To {
+			applog.Warn(c, handlerGetAnalytics, "invalid request",
+				slog.String("from", params.From),
+				slog.String("to", params.To))
+			c.JSON(http.StatusBadRequest, types.APIResponse{
+				Success: false,
+				Message: "Invalid query parameter",
+				Code:    constants.InvalidQueryParam,
+			})
+			return
+		}
+
 		from := utils.ToNullableText(params.From)
 		to := utils.ToNullableText(params.To)
 

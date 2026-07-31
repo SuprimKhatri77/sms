@@ -19,19 +19,19 @@ SELECT
         SELECT COALESCE(SUM(amount), 0)::BIGINT
         FROM payments p
         WHERE ($1::TEXT IS NULL OR p.added_at >= $1::TIMESTAMPTZ)
-          AND ($2::TEXT IS NULL OR p.added_at <= ($2::TIMESTAMPTZ + INTERVAL '1 day'))
+          AND ($2::TEXT IS NULL OR p.added_at < ($2::TIMESTAMPTZ + INTERVAL '1 day'))
     ) AS total_revenue,
     (
         SELECT COALESCE(SUM(amount), 0)::BIGINT
         FROM student_discounts sd
         WHERE ($1::TEXT IS NULL OR sd.created_at >= $1::TIMESTAMPTZ)
-          AND ($2::TEXT IS NULL OR sd.created_at <= ($2::TIMESTAMPTZ + INTERVAL '1 day'))
+          AND ($2::TEXT IS NULL OR sd.created_at < ($2::TIMESTAMPTZ + INTERVAL '1 day'))
     ) AS total_discounts,
     (
         SELECT COALESCE(SUM(amount), 0)::BIGINT
         FROM student_scholarships ss
         WHERE ($1::TEXT IS NULL OR ss.created_at >= $1::TIMESTAMPTZ)
-          AND ($2::TEXT IS NULL OR ss.created_at <= ($2::TIMESTAMPTZ + INTERVAL '1 day'))
+          AND ($2::TEXT IS NULL OR ss.created_at < ($2::TIMESTAMPTZ + INTERVAL '1 day'))
     ) AS total_scholarships,
     COUNT(DISTINCT s.id) FILTER (
         WHERE s.status IN ('active', 'completed')
@@ -58,7 +58,7 @@ SELECT
     )::INTEGER AS students_with_balance
 FROM students s
 WHERE ($1::TEXT IS NULL OR s.created_at >= $1::TIMESTAMPTZ)
-  AND ($2::TEXT IS NULL OR s.created_at <= ($2::TIMESTAMPTZ + INTERVAL '1 day'))
+  AND ($2::TEXT IS NULL OR s.created_at < ($2::TIMESTAMPTZ + INTERVAL '1 day'))
 `
 
 type GetAnalyticsOverviewParams struct {
@@ -97,7 +97,7 @@ FROM courses c
 LEFT JOIN student_courses sc ON sc.course_id = c.id
 LEFT JOIN students s ON s.id = sc.student_id
     AND ($1::TEXT IS NULL OR s.created_at >= $1::TIMESTAMPTZ)
-    AND ($2::TEXT IS NULL OR s.created_at <= ($2::TIMESTAMPTZ + INTERVAL '1 day'))
+    AND ($2::TEXT IS NULL OR s.created_at < ($2::TIMESTAMPTZ + INTERVAL '1 day'))
 GROUP BY c.id, c.name
 ORDER BY count DESC
 `
@@ -138,7 +138,7 @@ SELECT
     COUNT(*) FILTER (WHERE is_read = false)::INTEGER AS unread
 FROM inquiries
 WHERE ($1::TEXT IS NULL OR created_at >= $1::TIMESTAMPTZ)
-  AND ($2::TEXT IS NULL OR created_at <= ($2::TIMESTAMPTZ + INTERVAL '1 day'))
+  AND ($2::TEXT IS NULL OR created_at < ($2::TIMESTAMPTZ + INTERVAL '1 day'))
 `
 
 type GetInquiryStatsParams struct {
@@ -164,7 +164,7 @@ SELECT
     COUNT(*)::INTEGER AS count
 FROM students s
 WHERE ($1::TEXT IS NULL OR s.created_at >= $1::TIMESTAMPTZ)
-  AND ($2::TEXT IS NULL OR s.created_at <= ($2::TIMESTAMPTZ + INTERVAL '1 day'))
+  AND ($2::TEXT IS NULL OR s.created_at < ($2::TIMESTAMPTZ + INTERVAL '1 day'))
 GROUP BY DATE_TRUNC('month', s.created_at)
 ORDER BY DATE_TRUNC('month', s.created_at)
 `
@@ -205,7 +205,7 @@ SELECT
     COUNT(*)::INTEGER AS count
 FROM inquiries
 WHERE ($1::TEXT IS NULL OR created_at >= $1::TIMESTAMPTZ)
-  AND ($2::TEXT IS NULL OR created_at <= ($2::TIMESTAMPTZ + INTERVAL '1 day'))
+  AND ($2::TEXT IS NULL OR created_at < ($2::TIMESTAMPTZ + INTERVAL '1 day'))
 GROUP BY DATE_TRUNC('month', created_at)
 ORDER BY DATE_TRUNC('month', created_at)
 `
@@ -246,7 +246,7 @@ SELECT
     COALESCE(SUM(p.amount), 0)::INTEGER AS amount
 FROM payments p
 WHERE ($1::TEXT IS NULL OR p.added_at >= $1::TIMESTAMPTZ)
-  AND ($2::TEXT IS NULL OR p.added_at <= ($2::TIMESTAMPTZ + INTERVAL '1 day'))
+  AND ($2::TEXT IS NULL OR p.added_at < ($2::TIMESTAMPTZ + INTERVAL '1 day'))
 GROUP BY DATE_TRUNC('month', p.added_at)
 ORDER BY DATE_TRUNC('month', p.added_at)
 `
@@ -286,12 +286,12 @@ SELECT
     COALESCE(SUM(p.amount) FILTER (
         WHERE DATE_TRUNC('month', p.added_at) = DATE_TRUNC('month', NOW())
           AND ($1::TEXT IS NULL OR p.added_at >= $1::TIMESTAMPTZ)
-          AND ($2::TEXT IS NULL OR p.added_at <= ($2::TIMESTAMPTZ + INTERVAL '1 day'))
+          AND ($2::TEXT IS NULL OR p.added_at < ($2::TIMESTAMPTZ + INTERVAL '1 day'))
     ), 0)::INTEGER AS this_month,
     COALESCE(SUM(p.amount) FILTER (
         WHERE DATE_TRUNC('month', p.added_at) = DATE_TRUNC('month', NOW() - INTERVAL '1 month')
           AND ($1::TEXT IS NULL OR p.added_at >= $1::TIMESTAMPTZ)
-          AND ($2::TEXT IS NULL OR p.added_at <= ($2::TIMESTAMPTZ + INTERVAL '1 day'))
+          AND ($2::TEXT IS NULL OR p.added_at < ($2::TIMESTAMPTZ + INTERVAL '1 day'))
     ), 0)::INTEGER AS last_month,
     COALESCE((
         SELECT SUM(outstanding)
@@ -324,7 +324,7 @@ SELECT
             ) scholarships ON scholarships.student_id = s.id
             WHERE s.status IN ('active', 'completed')
               AND ($1::TEXT IS NULL OR s.created_at >= $1::TIMESTAMPTZ)
-              AND ($2::TEXT IS NULL OR s.created_at <= ($2::TIMESTAMPTZ + INTERVAL '1 day'))
+              AND ($2::TEXT IS NULL OR s.created_at < ($2::TIMESTAMPTZ + INTERVAL '1 day'))
               AND (
                     COALESCE(fees.total_fee, 0)
                     - COALESCE(pays.total_paid, 0)
@@ -360,7 +360,7 @@ SELECT
     COUNT(*)::INTEGER AS count
 FROM students
 WHERE ($1::TEXT IS NULL OR created_at >= $1::TIMESTAMPTZ)
-  AND ($2::TEXT IS NULL OR created_at <= ($2::TIMESTAMPTZ + INTERVAL '1 day'))
+  AND ($2::TEXT IS NULL OR created_at < ($2::TIMESTAMPTZ + INTERVAL '1 day'))
 GROUP BY source
 ORDER BY count DESC
 `
@@ -403,7 +403,7 @@ SELECT
     COUNT(*) FILTER (WHERE status = 'completed')::INTEGER AS completed
 FROM students
 WHERE ($1::TEXT IS NULL OR created_at >= $1::TIMESTAMPTZ)
-  AND ($2::TEXT IS NULL OR created_at <= ($2::TIMESTAMPTZ + INTERVAL '1 day'))
+  AND ($2::TEXT IS NULL OR created_at < ($2::TIMESTAMPTZ + INTERVAL '1 day'))
 `
 
 type GetStatusBreakdownParams struct {
