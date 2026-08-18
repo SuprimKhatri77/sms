@@ -12,6 +12,7 @@ import (
 	db "github.com/suprimkhatri77/sms/backend/internal/database/generated"
 	accountingRepository "github.com/suprimkhatri77/sms/backend/internal/repository/accounting"
 	"github.com/suprimkhatri77/sms/backend/internal/types"
+	"github.com/suprimkhatri77/sms/backend/internal/utils"
 )
 
 const handlerListSuppliers = "ListSuppliers"
@@ -19,7 +20,10 @@ const handlerListSuppliers = "ListSuppliers"
 func ListSuppliers(queries accountingRepository.SuppliersRepository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
-		const PAGE_LIMIT = 20
+		const (
+			defaultLimit = 20
+			maxLimit     = 40
+		)
 
 		page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
 		if err != nil {
@@ -43,7 +47,24 @@ func ListSuppliers(queries accountingRepository.SuppliersRepository) gin.Handler
 			return
 		}
 
-		total, err := queries.GetSupplierCount(ctx)
+		limit, err := strconv.Atoi(c.DefaultQuery("limit", strconv.Itoa(defaultLimit)))
+		if err != nil || limit <= 0 {
+			applog.Warn(c, handlerListSuppliers, "invalid request",
+				slog.Any(applog.AttrError, err))
+			c.JSON(http.StatusBadRequest, types.APIResponse{
+				Success: false,
+				Message: "Invalid query parameter",
+				Code:    constants.InvalidQueryParam,
+			})
+			return
+		}
+		if limit > maxLimit {
+			limit = maxLimit
+		}
+
+		nameFilter := utils.ToNullableText(c.Query("name"))
+
+		total, err := queries.GetSupplierCountFiltered(ctx, nameFilter)
 		if err != nil {
 			applog.Error(c, handlerListSuppliers, "failed to process request",
 				slog.Any(applog.AttrError, err))
@@ -61,14 +82,14 @@ func ListSuppliers(queries accountingRepository.SuppliersRepository) gin.Handler
 				Meta: types.PaginationMeta{
 					Total:      0,
 					TotalPages: 0,
-					Limit:      PAGE_LIMIT,
+					Limit:      limit,
 					Page:       page,
 				},
 			})
 			return
 		}
 
-		totalPages := (total + PAGE_LIMIT - 1) / PAGE_LIMIT
+		totalPages := (total + int64(limit) - 1) / int64(limit)
 		if page > int(totalPages) {
 			applog.Warn(c, handlerListSuppliers, "invalid request")
 			c.JSON(http.StatusBadRequest, types.APIResponse{
@@ -79,11 +100,12 @@ func ListSuppliers(queries accountingRepository.SuppliersRepository) gin.Handler
 			return
 		}
 
-		offset := (page - 1) * PAGE_LIMIT
+		offset := (page - 1) * limit
 
 		suppliers, err := queries.ListSuppliers(ctx, db.ListSuppliersParams{
-			Limit:  PAGE_LIMIT,
+			Limit:  int32(limit),
 			Offset: int32(offset),
+			Name:   nameFilter,
 		})
 		if err != nil {
 			applog.Error(c, handlerListSuppliers, "failed to process request",
@@ -107,7 +129,7 @@ func ListSuppliers(queries accountingRepository.SuppliersRepository) gin.Handler
 				Total:      int(total),
 				TotalPages: int(totalPages),
 				Page:       page,
-				Limit:      PAGE_LIMIT,
+				Limit:      limit,
 			},
 		})
 

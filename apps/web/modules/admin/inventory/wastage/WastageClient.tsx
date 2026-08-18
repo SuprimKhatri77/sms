@@ -24,7 +24,6 @@ import {
   CreateWastageResponse,
   DeleteWastageResponse,
   EditWastageResponse,
-  GetProductResponse,
   ListWastageResponse,
 } from "@repo/types/inventory";
 import api from "@/lib/axios";
@@ -148,17 +147,7 @@ export function WastageClient() {
     gcTime: 5 * 60 * 1000,
   });
 
-  const { data: productsData, isPending: productsPending } = useQuery({
-    queryKey: ["admin-inventory-products"],
-    queryFn: async () => {
-      const res = await api.get<GetProductResponse>(
-        `/admin/inventory/products`,
-      );
-      return res.data;
-    },
-    staleTime: 30 * 1000,
-    gcTime: 5 * 60 * 1000,
-  });
+  
 
   const createWastage = useMutation({
     mutationFn: async (data: CreateWastageInput) => {
@@ -298,11 +287,11 @@ export function WastageClient() {
         onClear={handleClear}
       />
 
-      {isPending || productsPending ? (
+      {isPending ? (
         <WastageLoading />
       ) : isError ? (
         <WastageError error={error} reset={refetch} />
-      ) : !data.success || !productsData?.success ? (
+      ) : !data.success ? (
         <WastageError
           error={{ ...data, message: "Failed to process request" }}
           reset={refetch}
@@ -331,7 +320,7 @@ export function WastageClient() {
         }}
         onSubmit={handleSubmit}
         initialData={editTarget}
-        products={productsData?.success ? productsData.data : []}
+        
       />
 
       {deleteTarget && (

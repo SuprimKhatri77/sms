@@ -27,7 +27,10 @@ func ListProducts(queries repository.InventoryRepository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
 
-		const LIMIT = 20
+		const (
+			defaultLimit = 20
+			maxLimit     = 40
+		)
 
 		var filter ListProductsParams
 		if err := c.ShouldBindQuery(&filter); err != nil {
@@ -53,6 +56,21 @@ func ListProducts(queries repository.InventoryRepository) gin.HandlerFunc {
 			return
 		}
 
+		limit, err := strconv.Atoi(c.DefaultQuery("limit", strconv.Itoa(defaultLimit)))
+		if err != nil || limit <= 0 {
+			applog.Warn(c, handlerListProducts, "invalid request",
+				slog.Any(applog.AttrError, err))
+			c.JSON(http.StatusBadRequest, types.APIResponse{
+				Success: false,
+				Message: "Invalid query parameter",
+				Code:    constants.InvalidQueryParam,
+			})
+			return
+		}
+		if limit > maxLimit {
+			limit = maxLimit
+		}
+
 		total, err := queries.GetProductCount(ctx, db.GetProductCountParams{
 			Name: utils.ToNullableText(filter.Name),
 			From: utils.ToNullableDate(filter.From),
@@ -75,7 +93,7 @@ func ListProducts(queries repository.InventoryRepository) gin.HandlerFunc {
 				Data:    []db.Product{},
 				Meta: &types.PaginationMeta{
 					Total:      int(total),
-					Limit:      LIMIT,
+					Limit:      limit,
 					TotalPages: 0,
 					Page:       page,
 				},
@@ -83,7 +101,7 @@ func ListProducts(queries repository.InventoryRepository) gin.HandlerFunc {
 			return
 		}
 
-		totalPages := (total + LIMIT - 1) / LIMIT
+		totalPages := (total + int64(limit) - 1) / int64(limit)
 		if page > int(totalPages) {
 			applog.Warn(c, handlerListProducts, "invalid request")
 			c.JSON(http.StatusBadRequest, types.APIResponse{
@@ -94,10 +112,10 @@ func ListProducts(queries repository.InventoryRepository) gin.HandlerFunc {
 			return
 		}
 
-		offset := LIMIT * (page - 1)
+		offset := limit * (page - 1)
 
 		products, err := queries.ListProducts(ctx, db.ListProductsParams{
-			Limit:  LIMIT,
+			Limit:  int32(limit),
 			Offset: int32(offset),
 			Name:   utils.ToNullableText(filter.Name),
 			From:   utils.ToNullableDate(filter.From),
@@ -125,7 +143,7 @@ func ListProducts(queries repository.InventoryRepository) gin.HandlerFunc {
 				Total:      int(total),
 				TotalPages: int(totalPages),
 				Page:       page,
-				Limit:      LIMIT,
+				Limit:      limit,
 			},
 		})
 	}

@@ -73,17 +73,34 @@ func (q *Queries) GetSupplierCount(ctx context.Context) (int64, error) {
 	return count, err
 }
 
+const getSupplierCountFiltered = `-- name: GetSupplierCountFiltered :one
+SELECT COUNT(*) FROM suppliers
+WHERE
+    ($1::TEXT IS NULL OR company_name ILIKE '%' || $1::TEXT || '%')
+`
+
+func (q *Queries) GetSupplierCountFiltered(ctx context.Context, name pgtype.Text) (int64, error) {
+	row := q.db.QueryRow(ctx, getSupplierCountFiltered, name)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const listSuppliers = `-- name: ListSuppliers :many
-SELECT id, company_name, vat_no, phone, created_at FROM suppliers ORDER BY company_name ASC LIMIT $1 OFFSET $2
+SELECT id, company_name, vat_no, phone, created_at FROM suppliers
+WHERE
+    ($3::TEXT IS NULL OR company_name ILIKE '%' || $3::TEXT || '%')
+ORDER BY company_name ASC LIMIT $1 OFFSET $2
 `
 
 type ListSuppliersParams struct {
-	Limit  int32 `json:"limit"`
-	Offset int32 `json:"offset"`
+	Limit  int32       `json:"limit"`
+	Offset int32       `json:"offset"`
+	Name   pgtype.Text `json:"name"`
 }
 
 func (q *Queries) ListSuppliers(ctx context.Context, arg ListSuppliersParams) ([]Supplier, error) {
-	rows, err := q.db.Query(ctx, listSuppliers, arg.Limit, arg.Offset)
+	rows, err := q.db.Query(ctx, listSuppliers, arg.Limit, arg.Offset, arg.Name)
 	if err != nil {
 		return nil, err
 	}

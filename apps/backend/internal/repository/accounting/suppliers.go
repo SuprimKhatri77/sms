@@ -14,4 +14,5 @@ type SuppliersRepository interface {
 	DeleteSupplier(ctx context.Context, id pgtype.UUID) (pgconn.CommandTag, error)
 	ListSuppliers(ctx context.Context, params db.ListSuppliersParams) ([]db.Supplier, error)
 	GetSupplierCount(ctx context.Context) (int64, error)
+	GetSupplierCountFiltered(ctx context.Context, name pgtype.Text) (int64, error)
 }

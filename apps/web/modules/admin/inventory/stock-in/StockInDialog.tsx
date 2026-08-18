@@ -1,12 +1,5 @@
 "use client";
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { CalendarDays } from "lucide-react";
 import { NepaliDatePicker } from "nepali-datepicker-reactjs";
 import { BSToAD } from "bikram-sambat-js";
@@ -22,8 +15,11 @@ import {
   InventoryFormField,
   InventoryFormSection,
   inventoryFieldInputClass,
-  inventorySelectTriggerClass,
 } from "../shared/InventoryFormField";
+import {
+  SearchableSelect,
+  type SearchableSelectOption,
+} from "../shared/SearchableSelect";
 
 import {
   CreateStockInInput,
@@ -33,11 +29,11 @@ import {
   ListStockInResponse,
   updateStockInSchema,
 } from "@repo/types";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { mapFieldErrors } from "@/utils/api";
-import { useSuppliers } from "@/hooks/queries/admin/suppliers/useSuppliers";
-import Link from "next/link";
+import api from "@/lib/axios";
+import { GetSupplierResponse } from "@repo/types";
 
 type StockIn = Extract<ListStockInResponse, { success: true }>["data"][number];
 type BackendError = Extract<CreateStockInResponse, { success: false }>;
@@ -51,12 +47,9 @@ type StockInFormData = Omit<
   bsDate?: string;
 };
 
-type Product = Extract<GetProductResponse, { success: true }>["data"][number];
-
 type Props = {
   open: boolean;
   onClose: () => void;
-  products: Product[];
   onSubmit: (data: StockInFormData) => Promise<void>;
   initialData?: StockIn | null;
 };
@@ -80,7 +73,6 @@ export function StockInDialog({
   onClose,
   onSubmit,
   initialData,
-  products,
 }: Props) {
   const isEdit = !!initialData;
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -94,9 +86,38 @@ export function StockInDialog({
         >
       >
     >();
+  const [selectedProductName, setSelectedProductName] = useState("");
+  const [selectedSupplierName, setSelectedSupplierName] = useState("");
 
-  const { data: suppliersData, isPending: suppliersLoading } = useSuppliers(1);
-  const suppliers = suppliersData?.suppliers ?? [];
+  const searchProducts = useCallback(
+    async (q: string): Promise<SearchableSelectOption[]> => {
+      const params = new URLSearchParams();
+      params.set("page", "1");
+      params.set("limit", "10");
+      if (q) params.set("name", q);
+      const res = await api.get<GetProductResponse>(
+        `/admin/inventory/products?${params.toString()}`,
+      );
+      if (!res.data.success) return [];
+      return res.data.data.map((p) => ({ value: p.id, label: p.name }));
+    },
+    [],
+  );
+
+  const searchSuppliers = useCallback(
+    async (q: string): Promise<SearchableSelectOption[]> => {
+      const params = new URLSearchParams();
+      params.set("page", "1");
+      params.set("limit", "10");
+      if (q) params.set("name", q);
+      const res = await api.get<GetSupplierResponse>(
+        `/admin/accounting/suppliers?${params.toString()}`,
+      );
+      if (!res.data.success) return [];
+      return res.data.data.map((s) => ({ value: s.id, label: s.companyName }));
+    },
+    [],
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -113,8 +134,12 @@ export function StockInDialog({
           adDate: "",
           date: initialData.date ?? "",
         });
+        setSelectedProductName(initialData.productName ?? "");
+        setSelectedSupplierName("");
       } else {
         setFormData(emptyForm);
+        setSelectedProductName("");
+        setSelectedSupplierName("");
       }
       setErrors({});
     }, 0);
@@ -217,18 +242,6 @@ export function StockInDialog({
     }
   };
 
-  const selectedProduct = useMemo(() => {
-    if (!products || !formData.productID) return undefined;
-    return products.find((p) => p.id === formData.productID);
-  }, [products, formData.productID]);
-
-  const selectedSupplier = useMemo(
-    () => suppliers.find((s) => s.id === formData.supplierID),
-    [suppliers, formData.supplierID],
-  );
-
-  const selectTriggerClass = inventorySelectTriggerClass;
-
   return (
     <AdminDrawer
       open={open}
@@ -267,38 +280,16 @@ export function StockInDialog({
       >
         <InventoryFormSection title="Item details">
           <InventoryFormField label="Product" required error={errors?.productID}>
-            {products.length === 0 ? (
-              <p className="text-xs text-[rgba(47,78,64,0.55)]">
-                No products found. Please{" "}
-                <Link
-                  href="/admin/inventory/products"
-                  className="text-(--brand-brown) underline-offset-2 hover:underline"
-                >
-                  create a product
-                </Link>{" "}
-                first.
-              </p>
-            ) : (
-              <Select
-                value={formData.productID}
-                onValueChange={(v) =>
-                  setFormData((prev) => ({ ...prev, productID: v ?? "" }))
-                }
-              >
-                <SelectTrigger className={selectTriggerClass}>
-                  <SelectValue placeholder="Select product">
-                    {selectedProduct?.name}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent className="rounded-none border border-[rgba(47,78,64,0.18)] bg-white">
-                  {products.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
+            <SearchableSelect
+              value={formData.productID}
+              onChange={(v, label) => {
+                setFormData((prev) => ({ ...prev, productID: v }));
+                setSelectedProductName(label);
+              }}
+              onSearch={searchProducts}
+              placeholder="Search product…"
+              selectedLabel={selectedProductName}
+            />
           </InventoryFormField>
 
           {!isEdit ? (
@@ -307,32 +298,16 @@ export function StockInDialog({
               required
               error={errors?.supplierID}
             >
-              <Select
+              <SearchableSelect
                 value={formData.supplierID}
-                onValueChange={(v) =>
-                  setFormData((prev) => ({ ...prev, supplierID: v ?? "" }))
-                }
-                disabled={suppliersLoading}
-              >
-                <SelectTrigger className={selectTriggerClass}>
-                  <SelectValue
-                    placeholder={
-                      suppliersLoading
-                        ? "Loading suppliers…"
-                        : "Select supplier"
-                    }
-                  >
-                    {selectedSupplier?.companyName}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent className="rounded-none border border-[rgba(47,78,64,0.18)] bg-white">
-                  {suppliers.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>
-                      {s.companyName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                onChange={(v, label) => {
+                  setFormData((prev) => ({ ...prev, supplierID: v }));
+                  setSelectedSupplierName(label);
+                }}
+                onSearch={searchSuppliers}
+                placeholder="Search supplier…"
+                selectedLabel={selectedSupplierName}
+              />
             </InventoryFormField>
           ) : null}
 
