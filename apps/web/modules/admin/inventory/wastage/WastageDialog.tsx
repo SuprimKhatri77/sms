@@ -1,12 +1,5 @@
 "use client";
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { CalendarDays } from "lucide-react";
 import { NepaliDatePicker } from "nepali-datepicker-reactjs";
 import { cn } from "@/lib/utils";
@@ -21,8 +14,11 @@ import {
   InventoryFormField,
   InventoryFormSection,
   inventoryFieldInputClass,
-  inventorySelectTriggerClass,
 } from "../shared/InventoryFormField";
+import {
+  SearchableSelect,
+  type SearchableSelectOption,
+} from "../shared/SearchableSelect";
 import {
   CreateWastageInput,
   CreateWastageResponse,
@@ -30,9 +26,10 @@ import {
   GetProductResponse,
   ListWastageResponse,
 } from "@repo/types";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { mapFieldErrors } from "@/utils/api";
 import { toast } from "sonner";
+import api from "@/lib/axios";
 
 type Wastage = Extract<ListWastageResponse, { success: true }>["data"][number];
 type BackendError = Extract<CreateWastageResponse, { success: false }>;
@@ -42,11 +39,8 @@ type WastageFormData = Omit<
 > & {
   quantity: number;
 };
-type Product = Extract<GetProductResponse, { success: true }>["data"][number];
-
 type Props = {
   open: boolean;
-  products: Product[];
   onClose: () => void;
   onSubmit: (data: WastageFormData) => Promise<void> | void;
   initialData?: Wastage | null;
@@ -67,13 +61,28 @@ export function WastageDialog({
   onClose,
   onSubmit,
   initialData,
-  products,
 }: Props) {
   const isEdit = !!initialData;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [errors, setErrors] =
     useState<Partial<Record<keyof CreateWastageInput, string>>>();
+  const [selectedProductName, setSelectedProductName] = useState("");
+
+  const searchProducts = useCallback(
+    async (q: string): Promise<SearchableSelectOption[]> => {
+      const params = new URLSearchParams();
+      params.set("page", "1");
+      params.set("limit", "10");
+      if (q) params.set("name", q);
+      const res = await api.get<GetProductResponse>(
+        `/admin/inventory/products?${params.toString()}`,
+      );
+      if (!res.data.success) return [];
+      return res.data.data.map((p) => ({ value: p.id, label: p.name }));
+    },
+    [],
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -86,8 +95,10 @@ export function WastageDialog({
           rate: (initialData.rate / 100).toString(),
           date: initialData.date ?? "",
         });
+        setSelectedProductName(initialData.productName ?? "");
       } else {
         setFormData(EMPTY_FORM);
+        setSelectedProductName("");
       }
       setErrors({});
     }, 0);
@@ -143,13 +154,6 @@ export function WastageDialog({
     }
   };
 
-  const selectedProduct = useMemo(() => {
-    if (!formData.productID) return undefined;
-    return products.find((p) => p.id === formData.productID);
-  }, [products, formData.productID]);
-
-  const selectTriggerClass = inventorySelectTriggerClass;
-
   return (
     <AdminDrawer
       open={open}
@@ -186,25 +190,16 @@ export function WastageDialog({
       >
         <InventoryFormSection title="Item details">
           <InventoryFormField label="Product" required error={errors?.productID}>
-            <Select
+            <SearchableSelect
               value={formData.productID}
-              onValueChange={(v) =>
-                setFormData((prev) => ({ ...prev, productID: v ?? "" }))
-              }
-            >
-              <SelectTrigger className={selectTriggerClass}>
-                <SelectValue placeholder="Select product">
-                  {selectedProduct?.name}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent className="rounded-none border border-[rgba(47,78,64,0.18)] bg-white">
-                {products.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              onChange={(v, label) => {
+                setFormData((prev) => ({ ...prev, productID: v }));
+                setSelectedProductName(label);
+              }}
+              onSearch={searchProducts}
+              placeholder="Search product…"
+              selectedLabel={selectedProductName}
+            />
           </InventoryFormField>
 
           <InventoryFormField label="Date (BS)" required error={errors?.date}>

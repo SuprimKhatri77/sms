@@ -22,7 +22,6 @@ import {
   CreateStockOutResponse,
   DeleteStockOutResponse,
   EditStockOutResponse,
-  GetProductResponse,
   ListStockOutResponse,
 } from "@repo/types";
 import api from "@/lib/axios";
@@ -142,17 +141,7 @@ export function StockOutClient() {
     gcTime: 5 * 60 * 1000,
   });
 
-  const { data: productsData, isPending: productsPending } = useQuery({
-    queryKey: ["admin-inventory-stock-out-products"],
-    queryFn: async () => {
-      const res = await api.get<GetProductResponse>(
-        `/admin/inventory/products`,
-      );
-      return res.data;
-    },
-    staleTime: 30 * 1000,
-    gcTime: 5 * 60 * 1000,
-  });
+  
 
   const createStockOut = useMutation({
     mutationFn: async (data: StockOutFormData) => {
@@ -294,21 +283,17 @@ export function StockOutClient() {
         onClear={handleClear}
       />
 
-      {isPending || productsPending ? (
+      {isPending ? (
         <StockOutLoading />
-      ) : isError || !data || !productsData ? (
+      ) : isError || !data ? (
         <StockOutError
           error={{ message: error?.message ?? "Failed to load data" }}
           reset={refetch}
         />
-      ) : !data.success || !productsData.success ? (
+      ) : !data.success ? (
         <StockOutError
           error={{
-            message: !data.success
-              ? data.message
-              : !productsData.success
-                ? productsData.message
-                : "Failed to process request",
+            message: data.message ?? "Failed to process request",
           }}
           reset={refetch}
         />
@@ -330,7 +315,6 @@ export function StockOutClient() {
 
       <StockOutDialog
         open={dialogOpen}
-        products={productsData?.success ? productsData.data : []}
         stockOut={data?.success ? data.data : []}
         onClose={handleClose}
         onSubmit={handleSubmit}
