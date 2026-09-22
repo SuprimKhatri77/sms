@@ -11,6 +11,18 @@ export type SearchableSelectOption = {
   label: string;
 };
 
+const DROPDOWN_ESTIMATED_HEIGHT = 200;
+
+function getScrollParent(node: HTMLElement | null): HTMLElement | null {
+  let el = node?.parentElement ?? null;
+  while (el) {
+    const { overflowY } = getComputedStyle(el);
+    if (overflowY === "auto" || overflowY === "scroll") return el;
+    el = el.parentElement;
+  }
+  return null;
+}
+
 type Props = {
   value: string;
   onChange: (value: string, label: string) => void;
@@ -36,6 +48,7 @@ export function SearchableSelect({
   debounceMs = 350,
 }: Props) {
   const [open, setOpen] = useState(false);
+  const [dropUp, setDropUp] = useState(false);
   const [query, setQuery] = useState("");
   const [options, setOptions] = useState<SearchableSelectOption[]>(
     initialOptions ?? [],
@@ -77,6 +90,28 @@ export function SearchableSelect({
   useEffect(() => {
     if (open && options.length === 0 && !loading) {
       doSearch("");
+    }
+  }, [open]);
+
+  // Flip the dropdown upward (and nudge it into view) when there isn't
+  // enough room below within the nearest scrollable ancestor
+  useEffect(() => {
+    if (!open || !containerRef.current) return;
+    const el = containerRef.current;
+    const scrollParent = getScrollParent(el);
+    const viewport = scrollParent
+      ? scrollParent.getBoundingClientRect()
+      : { top: 0, bottom: window.innerHeight };
+    const rect = el.getBoundingClientRect();
+    const spaceBelow = viewport.bottom - rect.bottom;
+    const spaceAbove = rect.top - viewport.top;
+    const shouldDropUp =
+      spaceBelow < DROPDOWN_ESTIMATED_HEIGHT && spaceAbove > spaceBelow;
+    setDropUp(shouldDropUp);
+
+    const availableSpace = shouldDropUp ? spaceAbove : spaceBelow;
+    if (availableSpace < DROPDOWN_ESTIMATED_HEIGHT) {
+      el.scrollIntoView({ block: "center", behavior: "instant" });
     }
   }, [open]);
 
@@ -178,7 +213,8 @@ export function SearchableSelect({
 
           <div
             className={cn(
-              "absolute left-0 top-full z-50 mt-1 max-h-46 w-full rounded-none border border-[rgba(47,78,64,0.18)] bg-white shadow-md",
+              "absolute left-0 z-50 max-h-46 w-full rounded-none border border-[rgba(47,78,64,0.18)] bg-white shadow-md",
+              dropUp ? "bottom-full mb-1" : "top-full mt-1",
               showLoadingSkeleton ? "overflow-hidden" : "overflow-y-auto",
             )}
           >

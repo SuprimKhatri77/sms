@@ -69,8 +69,8 @@ export function LineItemsEditor({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="overflow-x-auto border border-[rgba(47,78,64,0.18)]">
-        <table className="w-full min-w-[420px] border-collapse">
+      <div className="border border-[rgba(47,78,64,0.18)]">
+        <table className="w-full border-collapse">
           <thead>
             <tr>
               <th className={inventoryThClass}>Product</th>
