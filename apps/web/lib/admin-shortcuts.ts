@@ -207,14 +207,14 @@ export const ADMIN_SHORTCUT_GROUPS: AdminShortcutGroup[] = [
       },
       {
         keys: ["G", "N"],
-        label: "Stock in",
-        description: "Open stock in.",
+        label: "Purchase",
+        description: "Open purchase.",
         scope: "Admin panel",
       },
       {
         keys: ["G", "X"],
-        label: "Stock out",
-        description: "Open stock out.",
+        label: "Sales",
+        description: "Open sales.",
         scope: "Admin panel",
       },
       {
@@ -283,8 +283,8 @@ export const ADMIN_GO_NAV_ROUTES: AdminGoNavRoute[] = [
   { key: "u", label: "Users", href: "/admin/users" },
   { key: "t", label: "Settings", href: "/admin/settings" },
   { key: "p", label: "Products", href: "/admin/inventory/products" },
-  { key: "n", label: "Stock in", href: "/admin/inventory/stock-in" },
-  { key: "x", label: "Stock out", href: "/admin/inventory/stock-out" },
+  { key: "n", label: "Purchase", href: "/admin/inventory/stock-in" },
+  { key: "x", label: "Sales", href: "/admin/inventory/stock-out" },
   { key: "w", label: "Wastage", href: "/admin/inventory/wastage" },
   { key: "m", label: "Inventory summary", href: "/admin/inventory/summary" },
   { key: "k", label: "Banks", href: "/admin/banks" },
@@ -533,7 +533,7 @@ export const ADMIN_PAGE_SHORTCUTS: AdminPageShortcut[] = [
   {
     path: "/admin/inventory/stock-in",
     category: "Inventory",
-    page: "Stock in",
+    page: "Purchase",
     action: "Add entry",
     newEntry: true,
     focusSearch: true,
@@ -546,7 +546,7 @@ export const ADMIN_PAGE_SHORTCUTS: AdminPageShortcut[] = [
   {
     path: "/admin/inventory/stock-out",
     category: "Inventory",
-    page: "Stock out",
+    page: "Sales",
     action: "Add entry",
     newEntry: true,
     focusSearch: true,
