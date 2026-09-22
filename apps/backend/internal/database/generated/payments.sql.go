@@ -24,7 +24,7 @@ type AddPaymentParams struct {
 	Remarks     pgtype.Text        `json:"remarks"`
 	PaymentMode string             `json:"paymentMode"`
 	Date        pgtype.Timestamptz `json:"date"`
-	BsDate      pgtype.Text        `json:"bsDate"`
+	BsDate      string             `json:"bsDate"`
 }
 
 func (q *Queries) AddPayment(ctx context.Context, arg AddPaymentParams) (Payment, error) {
@@ -114,7 +114,7 @@ type GetAllPaymentsRow struct {
 	AddedBy     pgtype.UUID        `json:"addedBy"`
 	AddedAt     pgtype.Timestamptz `json:"addedAt"`
 	Date        pgtype.Timestamptz `json:"date"`
-	BsDate      pgtype.Text        `json:"bsDate"`
+	BsDate      string             `json:"bsDate"`
 }
 
 func (q *Queries) GetAllPayments(ctx context.Context, arg GetAllPaymentsParams) ([]GetAllPaymentsRow, error) {
@@ -239,7 +239,7 @@ type GetPaymentsByStudentRow struct {
 	AddedBy     pgtype.UUID        `json:"addedBy"`
 	AddedAt     pgtype.Timestamptz `json:"addedAt"`
 	Date        pgtype.Timestamptz `json:"date"`
-	BsDate      pgtype.Text        `json:"bsDate"`
+	BsDate      string             `json:"bsDate"`
 	Remarks     pgtype.Text        `json:"remarks"`
 	PaymentMode string             `json:"paymentMode"`
 	AddedByName string             `json:"addedByName"`
@@ -295,7 +295,7 @@ type GetStudentPaymentsRow struct {
 	Remarks     pgtype.Text        `json:"remarks"`
 	AddedAt     pgtype.Timestamptz `json:"addedAt"`
 	Date        pgtype.Timestamptz `json:"date"`
-	BsDate      pgtype.Text        `json:"bsDate"`
+	BsDate      string             `json:"bsDate"`
 }
 
 func (q *Queries) GetStudentPayments(ctx context.Context, studentID pgtype.UUID) ([]GetStudentPaymentsRow, error) {

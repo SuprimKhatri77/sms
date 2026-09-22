@@ -4,8 +4,8 @@ CREATE TABLE payments (
     amount     INTEGER NOT NULL,
     added_by   UUID NOT NULL REFERENCES users(id),
     added_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    date       TIMESTAMPTZ,
-    bs_date    TEXT,
+    date       TIMESTAMPTZ NOT NULL,
+    bs_date    TEXT NOT NULL,
     remarks    VARCHAR,
     payment_mode TEXT NOT NULL
 );
