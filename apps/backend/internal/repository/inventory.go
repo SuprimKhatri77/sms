@@ -17,14 +17,14 @@ type InventoryRepository interface {
 	ListProducts(ctx context.Context, params db.ListProductsParams) ([]db.Product, error)
 	GetProductCount(ctx context.Context, params db.GetProductCountParams) (int64, error)
 
-	// for admin/inventory/stock/in
+	// for admin/inventory/purchase
 	CreateStockIn(ctx context.Context, params db.CreateStockInParams) (db.StockIn, error)
 	UpdateStockIn(ctx context.Context, params db.UpdateStockInParams) (db.StockIn, error)
 	DeleteStockIn(ctx context.Context, id pgtype.UUID) error
 	ListStockIn(ctx context.Context, params db.ListStockInParams) ([]db.ListStockInRow, error)
 	GetStockInCount(ctx context.Context, params db.GetStockInCountParams) (int64, error)
 
-	// for admin/inventory/stock/out
+	// for admin/inventory/sales
 	CreateStockOut(ctx context.Context, params db.CreateStockOutParams) (db.StockOut, error)
 	UpdateStockOut(ctx context.Context, params db.UpdateStockOutParams) (db.StockOut, error)
 	DeleteStockOut(ctx context.Context, id pgtype.UUID) error
@@ -46,6 +46,8 @@ type InventoryTxRepository interface {
 	WithTx(tx pgx.Tx) InventoryTxRepository
 	CreateStockIn(ctx context.Context, params db.CreateStockInParams) (db.StockIn, error)
 	CreateSupplierLedgerEntry(ctx context.Context, params db.CreateSupplierLedgerEntryParams) (db.SupplierLedger, error)
+	CreateStockOut(ctx context.Context, params db.CreateStockOutParams) (db.StockOut, error)
+	CreateWastage(ctx context.Context, params db.CreateWastageParams) (db.Wastage, error)
 }
 
 type inventoryTxRepository struct {
@@ -66,4 +68,10 @@ func (r *inventoryTxRepository) CreateStockIn(ctx context.Context, params db.Cre
 }
 func (r *inventoryTxRepository) CreateSupplierLedgerEntry(ctx context.Context, params db.CreateSupplierLedgerEntryParams) (db.SupplierLedger, error) {
 	return r.queries.CreateSupplierLedgerEntry(ctx, params)
+}
+func (r *inventoryTxRepository) CreateStockOut(ctx context.Context, params db.CreateStockOutParams) (db.StockOut, error) {
+	return r.queries.CreateStockOut(ctx, params)
+}
+func (r *inventoryTxRepository) CreateWastage(ctx context.Context, params db.CreateWastageParams) (db.Wastage, error) {
+	return r.queries.CreateWastage(ctx, params)
 }

@@ -1,8 +1,11 @@
 "use client";
+
 import { Button } from "@/components/ui/button";
 import { AlertTriangle } from "lucide-react";
+
 type Props = { error: { message: string }; reset: () => void };
-export default function StockOutError({ error, reset }: Props) {
+
+export default function PurchaseError({ error, reset }: Props) {
   return (
     <div className="flex flex-col items-center justify-center py-20 gap-4 text-center font-[var(--font-dm-sans)]">
       <AlertTriangle className="text-[var(--brand-brown)]" size={36} />

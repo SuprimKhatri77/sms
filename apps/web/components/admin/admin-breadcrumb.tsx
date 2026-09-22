@@ -26,8 +26,7 @@ const LABELS: Record<string, string> = {
   courses: "Courses",
   inventory: "Inventory",
   products: "Products",
-  "stock-in": "Stock In",
-  "stock-out": "Stock Out",
+  purchase: "Purchase",
   wastage: "Wastage",
   summary: "Summary",
   banks: "Banks",
@@ -38,7 +37,8 @@ const LABELS: Record<string, string> = {
   certificate: "Certificate",
 };
 
-function segmentLabel(segment: string) {
+function segmentLabel(segment: string, parent?: string) {
+  if (segment === "sales" && parent === "inventory") return "Sales";
   if (LABELS[segment]) return LABELS[segment];
   // Hide UUID-like segments in breadcrumbs
   if (
@@ -61,7 +61,7 @@ export function AdminBreadcrumb() {
         {segments.map((segment, index) => {
           const href = `/${segments.slice(0, index + 1).join("/")}`;
           const isLast = index === segments.length - 1;
-          const label = segmentLabel(segment);
+          const label = segmentLabel(segment, segments[index - 1]);
 
           return (
             <div key={href} className="contents">

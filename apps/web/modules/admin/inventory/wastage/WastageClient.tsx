@@ -20,9 +20,10 @@ import { useAdminQueryRefresh } from "@/hooks/useAdminQueryRefresh";
 import { adminPrimaryButtonClass } from "@/components/admin/admin-styles";
 import { InventoryTransactionFilters } from "../shared/InventoryTransactionFilters";
 import {
-  CreateWastageInput,
-  CreateWastageResponse,
+  CreateWastageBatchInput,
+  CreateWastageBatchResponse,
   DeleteWastageResponse,
+  EditWastageInput,
   EditWastageResponse,
   ListWastageResponse,
 } from "@repo/types/inventory";
@@ -33,12 +34,6 @@ import WastageError from "./WastageError";
 import axios from "axios";
 
 type Wastage = Extract<ListWastageResponse, { success: true }>["data"][number];
-type WastageFormData = Omit<
-  Wastage,
-  "id" | "createdAt" | "productName" | "productUnit" | "updatedAt" | "qty"
-> & {
-  quantity: number;
-};
 
 export function WastageClient() {
   const router = useRouter();
@@ -150,9 +145,9 @@ export function WastageClient() {
   
 
   const createWastage = useMutation({
-    mutationFn: async (data: CreateWastageInput) => {
+    mutationFn: async (data: CreateWastageBatchInput) => {
       try {
-        const res = await api.post<CreateWastageResponse>(
+        const res = await api.post<CreateWastageBatchResponse>(
           `/admin/inventory/wastages`,
           data,
         );
@@ -171,7 +166,7 @@ export function WastageClient() {
     },
   });
   const updateWastage = useMutation({
-    mutationFn: async ({ id, ...data }: WastageFormData & { id: string }) => {
+    mutationFn: async ({ id, ...data }: EditWastageInput & { id: string }) => {
       try {
         const res = await api.put<EditWastageResponse>(
           `/admin/inventory/wastages/${id}`,
@@ -210,18 +205,13 @@ export function WastageClient() {
     },
   });
 
-  const handleSubmit = async (
-    data: Omit<
-      Wastage,
-      "id" | "createdAt" | "productName" | "productUnit" | "updatedAt" | "qty"
-    > & { quantity: number },
-  ) => {
-    if (editTarget) {
-      await updateWastage.mutateAsync({ id: editTarget.id, ...data });
-      setEditTarget(null);
-    } else {
-      await createWastage.mutateAsync(data);
-    }
+  const handleCreate = async (data: CreateWastageBatchInput) => {
+    await createWastage.mutateAsync(data);
+  };
+
+  const handleUpdate = async (data: EditWastageInput & { id: string }) => {
+    await updateWastage.mutateAsync(data);
+    setEditTarget(null);
   };
 
   const handleDelete = () => {
@@ -318,9 +308,9 @@ export function WastageClient() {
           setDialogOpen(false);
           setEditTarget(null);
         }}
-        onSubmit={handleSubmit}
+        onCreate={handleCreate}
+        onUpdate={handleUpdate}
         initialData={editTarget}
-        
       />
 
       {deleteTarget && (
