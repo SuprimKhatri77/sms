@@ -30,7 +30,7 @@ const percentModeDiscountSchema = z.object({
   ...discountBaseFields,
   percent: z.coerce
     .number({ error: "Discount percentage is required" })
-    .gt(0, { error: "Discount percentage must be greater than 0" })
+    .gte(0.01, { error: "Discount percentage must be at least 0.01" })
     .lte(100, { error: "Discount percentage cannot exceed 100" }),
 });
 
@@ -39,7 +39,8 @@ const amountModeDiscountSchema = z.object({
   ...discountBaseFields,
   amount: z.coerce
     .number({ error: "Discount amount is required" })
-    .gt(0, { error: "Discount amount must be greater than 0" }),
+    .gt(0, { error: "Discount amount must be greater than 0" })
+    .lte(10000000, { error: "Discount amount is unrealistically large" }),
 });
 
 export const studentDiscountMutationSchema = z.discriminatedUnion("mode", [
