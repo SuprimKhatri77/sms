@@ -147,7 +147,7 @@ export function CreateCashLedgerEntryForm({
         className="flex flex-col gap-8 px-8 py-10"
       >
         <AccountingFormSection title="Entry details">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <form.Field name="bsDate">
               {(field) => {
                 const fieldError = field.state.meta.errors[0]?.message;
@@ -209,7 +209,7 @@ export function CreateCashLedgerEntryForm({
                       )}
                     />
                     <span className="font-(family-name:--font-dm-sans) text-xs text-[rgba(47,78,64,0.45)]">
-                      Auto-generated
+                      Auto-generated from BS date
                     </span>
                   </AccountingFormField>
                 );
@@ -217,7 +217,7 @@ export function CreateCashLedgerEntryForm({
             </form.Field>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <form.Field name="entryType">
               {(field) => {
                 const fieldError = field.state.meta.errors[0]?.message;

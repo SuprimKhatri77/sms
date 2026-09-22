@@ -184,7 +184,7 @@ export function CreateLedgerEntryForm({
             </AccountingFormField>
           )}
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <form.Field name="date">
               {(field) => {
                 const fieldError = field.state.meta.errors[0]?.message;
@@ -253,7 +253,7 @@ export function CreateLedgerEntryForm({
             </form.Field>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <form.Field name="entryType">
               {(field) => {
                 const fieldError = field.state.meta.errors[0]?.message;
