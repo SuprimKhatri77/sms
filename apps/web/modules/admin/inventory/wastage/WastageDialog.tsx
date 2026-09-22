@@ -236,7 +236,8 @@ export function WastageDialog({
     <AdminDrawer
       open={open}
       onOpenChange={handleOpenChange}
-      className={isEdit ? undefined : "data-[side=right]:sm:max-w-xl"}
+      variant="modal"
+      className={isEdit ? undefined : "sm:max-w-xl"}
       title={isEdit ? "Edit Wastage" : "Log Wastage"}
       description={
         isEdit ? "Update a wastage record" : "Record damaged or lost inventory"

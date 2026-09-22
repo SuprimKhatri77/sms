@@ -108,6 +108,7 @@ export function SupplierEditDialog({
     <AdminDrawer
       open={!!supplier}
       onOpenChange={(next) => !next && handleClose()}
+      variant="modal"
       title="Edit Supplier"
       description="Update the supplier's details below."
       footer={

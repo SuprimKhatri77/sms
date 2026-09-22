@@ -98,6 +98,7 @@ export function BankAccountCreateDialog({
     <AdminDrawer
       open={open}
       onOpenChange={(next) => !next && handleClose()}
+      variant="modal"
       title="Add Bank Account"
       description="Create a new account linked to a bank."
       footer={

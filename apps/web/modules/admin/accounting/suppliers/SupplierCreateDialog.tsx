@@ -98,6 +98,7 @@ export function SupplierCreateDialog({
     <AdminDrawer
       open={open}
       onOpenChange={(next) => !next && handleClose()}
+      variant="modal"
       title="Add Supplier"
       description="Fill in the details to add a new supplier."
       footer={

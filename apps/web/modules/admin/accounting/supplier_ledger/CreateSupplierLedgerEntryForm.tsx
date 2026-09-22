@@ -162,6 +162,8 @@ export function CreateSupplierLedgerEntryForm({
     <AdminDrawer
       open={open}
       onOpenChange={handleOpenChange}
+      variant="modal"
+      className="sm:max-w-xl"
       title="New Supplier Entry"
       description="Record a purchase (credit) or payment (debit) against a supplier."
       footer={
@@ -214,59 +216,61 @@ export function CreateSupplierLedgerEntryForm({
             </AccountingFormField>
           )}
 
-          <AccountingFormField
-            label="Date (BS)"
-            required
-            error={errors?.bsDate}
-          >
-            <div className="relative">
-              <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-[rgba(47,78,64,0.4)]">
-                <CalendarDays className="h-4 w-4" strokeWidth={1.75} />
-              </span>
-              <NepaliDatePicker
-                inputClassName={cn(
-                  accountingFieldInputClass,
-                  "pl-9",
-                  errors?.bsDate && "border-[#9a3412]",
-                )}
-                value={bsDate}
-                onChange={(v: string) => {
-                  setBsDate(v);
-                  try {
-                    setAdDate(BSToAD(v));
-                  } catch (err) {
-                    toast.error(
-                      err instanceof Error ? err.message : "Invalid date",
-                    );
-                  }
-                }}
-                options={{ calenderLocale: "en", valueLocale: "en" }}
-              />
-            </div>
-          </AccountingFormField>
-
-          <AccountingFormField
-            label="Entry Type"
-            required
-            error={errors?.entryType}
-          >
-            <Select
-              value={entryType}
-              onValueChange={(v) => setEntryType(v as "dr" | "cr")}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <AccountingFormField
+              label="Date (BS)"
+              required
+              error={errors?.bsDate}
             >
-              <SelectTrigger className={accountingSelectTriggerClass}>
-                <SelectValue placeholder="Select type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="cr">
-                  Credit — Purchase / Payable added
-                </SelectItem>
-                <SelectItem value="dr">
-                  Debit — Payment made to supplier
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </AccountingFormField>
+              <div className="relative">
+                <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-[rgba(47,78,64,0.4)]">
+                  <CalendarDays className="h-4 w-4" strokeWidth={1.75} />
+                </span>
+                <NepaliDatePicker
+                  inputClassName={cn(
+                    accountingFieldInputClass,
+                    "pl-9",
+                    errors?.bsDate && "border-[#9a3412]",
+                  )}
+                  value={bsDate}
+                  onChange={(v: string) => {
+                    setBsDate(v);
+                    try {
+                      setAdDate(BSToAD(v));
+                    } catch (err) {
+                      toast.error(
+                        err instanceof Error ? err.message : "Invalid date",
+                      );
+                    }
+                  }}
+                  options={{ calenderLocale: "en", valueLocale: "en" }}
+                />
+              </div>
+            </AccountingFormField>
+
+            <AccountingFormField
+              label="Entry Type"
+              required
+              error={errors?.entryType}
+            >
+              <Select
+                value={entryType}
+                onValueChange={(v) => setEntryType(v as "dr" | "cr")}
+              >
+                <SelectTrigger className={accountingSelectTriggerClass}>
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cr">
+                    Credit — Purchase / Payable added
+                  </SelectItem>
+                  <SelectItem value="dr">
+                    Debit — Payment made to supplier
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </AccountingFormField>
+          </div>
 
           <AccountingFormField
             label="Amount (Rs.)"

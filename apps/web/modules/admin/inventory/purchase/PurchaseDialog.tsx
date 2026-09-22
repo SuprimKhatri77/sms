@@ -261,7 +261,8 @@ export function PurchaseDialog({
     <AdminDrawer
       open={open}
       onOpenChange={handleOpenChange}
-      className={isEdit ? undefined : "data-[side=right]:sm:max-w-xl"}
+      variant="modal"
+      className={isEdit ? undefined : "sm:max-w-xl"}
       title={isEdit ? "Edit Purchase" : "Add Purchase"}
       description={
         isEdit

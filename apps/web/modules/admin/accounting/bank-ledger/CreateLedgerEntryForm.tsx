@@ -115,6 +115,8 @@ export function CreateLedgerEntryForm({
     <AdminDrawer
       open={open}
       onOpenChange={(next) => !next && handleClose()}
+      variant="modal"
+      className="sm:max-w-lg"
       title="New Ledger Entry"
       description="Record a manual debit or credit transaction against a bank account."
       footer={
@@ -182,131 +184,135 @@ export function CreateLedgerEntryForm({
             </AccountingFormField>
           )}
 
-          <form.Field name="date">
-            {(field) => {
-              const fieldError = field.state.meta.errors[0]?.message;
-              const mergedError = fieldError ?? errors.date;
-              return (
-                <AccountingFormField
-                  label="Date (AD)"
-                  htmlFor="ledger-date"
-                  error={mergedError}
-                >
-                  <input
-                    id="ledger-date"
-                    type="date"
-                    value={field.state.value}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    className={cn(
-                      accountingFieldInputClass,
-                      mergedError && "border-[#9a3412]",
-                    )}
-                  />
-                </AccountingFormField>
-              );
-            }}
-          </form.Field>
-
-          <form.Field name="bsDate">
-            {(field) => {
-              const fieldError = field.state.meta.errors[0]?.message;
-              const mergedError = fieldError ?? errors.bsDate;
-
-              return (
-                <AccountingFormField
-                  label="BS Date"
-                  error={mergedError}
-                >
-                  <div className="relative">
-                    <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-[rgba(47,78,64,0.4)]">
-                      <CalendarDays className="h-4 w-4" strokeWidth={1.75} />
-                    </span>
-                    <NepaliDatePicker
-                      inputClassName={cn(
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <form.Field name="date">
+              {(field) => {
+                const fieldError = field.state.meta.errors[0]?.message;
+                const mergedError = fieldError ?? errors.date;
+                return (
+                  <AccountingFormField
+                    label="Date (AD)"
+                    htmlFor="ledger-date"
+                    error={mergedError}
+                  >
+                    <input
+                      id="ledger-date"
+                      type="date"
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      className={cn(
                         accountingFieldInputClass,
-                        "pl-9",
                         mergedError && "border-[#9a3412]",
                       )}
-                      value={field.state.value}
-                      onChange={(bsValue: string) => {
-                        field.handleChange(bsValue);
-                        try {
-                          const adValue = BSToAD(bsValue);
-                          form.setFieldValue("date", adValue);
-                        } catch (err) {
-                          toast.error(
-                            err instanceof Error
-                              ? err.message
-                              : "Something went wrong while setting date",
-                          );
-                        }
-                      }}
-                      options={{ calenderLocale: "en", valueLocale: "en" }}
                     />
-                  </div>
-                </AccountingFormField>
-              );
-            }}
-          </form.Field>
+                  </AccountingFormField>
+                );
+              }}
+            </form.Field>
 
-          <form.Field name="entryType">
-            {(field) => {
-              const fieldError = field.state.meta.errors[0]?.message;
-              const mergedError = fieldError ?? errors.entryType;
+            <form.Field name="bsDate">
+              {(field) => {
+                const fieldError = field.state.meta.errors[0]?.message;
+                const mergedError = fieldError ?? errors.bsDate;
 
-              return (
-                <AccountingFormField
-                  label="Entry Type"
-                  required
-                  error={mergedError}
-                >
-                  <Select
-                    value={field.state.value}
-                    onValueChange={(val) =>
-                      field.handleChange(val as "cr" | "dr")
-                    }
+                return (
+                  <AccountingFormField
+                    label="BS Date"
+                    error={mergedError}
                   >
-                    <SelectTrigger className={accountingSelectTriggerClass}>
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="cr">Credit (CR)</SelectItem>
-                      <SelectItem value="dr">Debit (DR)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </AccountingFormField>
-              );
-            }}
-          </form.Field>
+                    <div className="relative">
+                      <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-[rgba(47,78,64,0.4)]">
+                        <CalendarDays className="h-4 w-4" strokeWidth={1.75} />
+                      </span>
+                      <NepaliDatePicker
+                        inputClassName={cn(
+                          accountingFieldInputClass,
+                          "pl-9",
+                          mergedError && "border-[#9a3412]",
+                        )}
+                        value={field.state.value}
+                        onChange={(bsValue: string) => {
+                          field.handleChange(bsValue);
+                          try {
+                            const adValue = BSToAD(bsValue);
+                            form.setFieldValue("date", adValue);
+                          } catch (err) {
+                            toast.error(
+                              err instanceof Error
+                                ? err.message
+                                : "Something went wrong while setting date",
+                            );
+                          }
+                        }}
+                        options={{ calenderLocale: "en", valueLocale: "en" }}
+                      />
+                    </div>
+                  </AccountingFormField>
+                );
+              }}
+            </form.Field>
+          </div>
 
-          <form.Field name="amount">
-            {(field) => {
-              const fieldError = field.state.meta.errors[0]?.message;
-              const mergedError = fieldError ?? errors.amount;
-              return (
-                <AccountingFormField
-                  label="Amount (Rs.)"
-                  htmlFor="ledger-amount"
-                  required
-                  error={mergedError}
-                >
-                  <input
-                    id="ledger-amount"
-                    type="number"
-                    step="0.01"
-                    min="0.01"
-                    placeholder="0.00"
-                    value={field.state.value}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    className={cn(
-                      accountingFieldInputClass,
-                      mergedError && "border-[#9a3412]",
-                    )}
-                  />
-                </AccountingFormField>
-              );
-            }}
-          </form.Field>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <form.Field name="entryType">
+              {(field) => {
+                const fieldError = field.state.meta.errors[0]?.message;
+                const mergedError = fieldError ?? errors.entryType;
+
+                return (
+                  <AccountingFormField
+                    label="Entry Type"
+                    required
+                    error={mergedError}
+                  >
+                    <Select
+                      value={field.state.value}
+                      onValueChange={(val) =>
+                        field.handleChange(val as "cr" | "dr")
+                      }
+                    >
+                      <SelectTrigger className={accountingSelectTriggerClass}>
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="cr">Credit (CR)</SelectItem>
+                        <SelectItem value="dr">Debit (DR)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </AccountingFormField>
+                );
+              }}
+            </form.Field>
+
+            <form.Field name="amount">
+              {(field) => {
+                const fieldError = field.state.meta.errors[0]?.message;
+                const mergedError = fieldError ?? errors.amount;
+                return (
+                  <AccountingFormField
+                    label="Amount (Rs.)"
+                    htmlFor="ledger-amount"
+                    required
+                    error={mergedError}
+                  >
+                    <input
+                      id="ledger-amount"
+                      type="number"
+                      step="0.01"
+                      min="0.01"
+                      placeholder="0.00"
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      className={cn(
+                        accountingFieldInputClass,
+                        mergedError && "border-[#9a3412]",
+                      )}
+                    />
+                  </AccountingFormField>
+                );
+              }}
+            </form.Field>
+          </div>
 
           <form.Field name="description">
             {(field) => {
