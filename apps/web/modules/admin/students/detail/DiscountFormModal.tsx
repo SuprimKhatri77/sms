@@ -176,7 +176,8 @@ export function DiscountFormModal({
               inputCls,
               "pr-8",
               errors.percent && "border-[#9a3412]",
-              form.mode === "amount" && "text-[rgba(47,78,64,0.5)]",
+              form.mode === "amount" &&
+                "cursor-not-allowed text-[rgba(47,78,64,0.5)]",
             )}
             placeholder="e.g. 10"
             type="number"
@@ -217,7 +218,8 @@ export function DiscountFormModal({
               inputCls,
               "pl-10",
               errors.amount && "border-[#9a3412]",
-              form.mode === "percent" && "text-[rgba(47,78,64,0.5)]",
+              form.mode === "percent" &&
+                "cursor-not-allowed text-[rgba(47,78,64,0.5)]",
             )}
             placeholder="e.g. 500"
             type="number"
