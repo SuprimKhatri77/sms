@@ -76,6 +76,7 @@ export function BankCreateDialog({
     <AdminDrawer
       open={open}
       onOpenChange={(next) => !next && handleClose()}
+      variant="modal"
       title="Add Bank"
       description="Create a new bank for payment processing."
       footer={

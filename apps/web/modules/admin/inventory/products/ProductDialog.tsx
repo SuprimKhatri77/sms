@@ -87,6 +87,7 @@ export function ProductDialog({
       onOpenChange={(next) => {
         if (!next) handleClose();
       }}
+      variant="modal"
       title={isEdit ? "Edit Product" : "New Product"}
       description="Add or update a product in your catalogue"
       footer={

@@ -31,6 +31,9 @@ export const adminSegmentInactiveClass =
 export const adminDrawerContentClass =
   "w-full gap-0 rounded-none border-l border-[rgba(47,78,64,0.18)] bg-(--brand-cream) p-0 shadow-[0_0_40px_rgba(0,0,0,0.1)] sm:max-w-md";
 
+export const adminModalContentClass =
+  "flex w-full max-h-[85vh] flex-col gap-0 overflow-hidden rounded-none border border-[rgba(47,78,64,0.18)] bg-(--brand-cream) p-0 shadow-[0_20px_60px_rgba(0,0,0,0.18)] sm:max-w-md";
+
 export const adminTableScrollClass = "overflow-x-auto";
 
 export const adminTableClass = "w-max min-w-full border-collapse";

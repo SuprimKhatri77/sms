@@ -75,6 +75,7 @@ export function BankEditDialog({
     <AdminDrawer
       open={!!bank}
       onOpenChange={(next) => !next && handleClose()}
+      variant="modal"
       title="Edit Bank"
       description="Update the bank name."
       footer={

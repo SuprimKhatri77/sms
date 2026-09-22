@@ -162,6 +162,8 @@ export function CreateSupplierLedgerEntryForm({
     <AdminDrawer
       open={open}
       onOpenChange={handleOpenChange}
+      variant="modal"
+      className="sm:max-w-xl"
       title="New Supplier Entry"
       description="Record a purchase (credit) or payment (debit) against a supplier."
       footer={
@@ -214,136 +216,140 @@ export function CreateSupplierLedgerEntryForm({
             </AccountingFormField>
           )}
 
-          <AccountingFormField
-            label="Date (BS)"
-            required
-            error={errors?.bsDate}
-          >
-            <div className="relative">
-              <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-[rgba(47,78,64,0.4)]">
-                <CalendarDays className="h-4 w-4" strokeWidth={1.75} />
-              </span>
-              <NepaliDatePicker
-                inputClassName={cn(
-                  accountingFieldInputClass,
-                  "pl-9",
-                  errors?.bsDate && "border-[#9a3412]",
-                )}
-                value={bsDate}
-                onChange={(v: string) => {
-                  setBsDate(v);
-                  try {
-                    setAdDate(BSToAD(v));
-                  } catch (err) {
-                    toast.error(
-                      err instanceof Error ? err.message : "Invalid date",
-                    );
-                  }
-                }}
-                options={{ calenderLocale: "en", valueLocale: "en" }}
-              />
-            </div>
-          </AccountingFormField>
-
-          <AccountingFormField
-            label="Entry Type"
-            required
-            error={errors?.entryType}
-          >
-            <Select
-              value={entryType}
-              onValueChange={(v) => setEntryType(v as "dr" | "cr")}
+          <div className="grid grid-cols-2 gap-4">
+            <AccountingFormField
+              label="Date (BS)"
+              required
+              error={errors?.bsDate}
             >
-              <SelectTrigger className={accountingSelectTriggerClass}>
-                <SelectValue placeholder="Select type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="cr">
-                  Credit — Purchase / Payable added
-                </SelectItem>
-                <SelectItem value="dr">
-                  Debit — Payment made to supplier
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </AccountingFormField>
+              <div className="relative">
+                <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-[rgba(47,78,64,0.4)]">
+                  <CalendarDays className="h-4 w-4" strokeWidth={1.75} />
+                </span>
+                <NepaliDatePicker
+                  inputClassName={cn(
+                    accountingFieldInputClass,
+                    "pl-9",
+                    errors?.bsDate && "border-[#9a3412]",
+                  )}
+                  value={bsDate}
+                  onChange={(v: string) => {
+                    setBsDate(v);
+                    try {
+                      setAdDate(BSToAD(v));
+                    } catch (err) {
+                      toast.error(
+                        err instanceof Error ? err.message : "Invalid date",
+                      );
+                    }
+                  }}
+                  options={{ calenderLocale: "en", valueLocale: "en" }}
+                />
+              </div>
+            </AccountingFormField>
 
-          <AccountingFormField
-            label="Amount (Rs.)"
-            htmlFor="supplier-amount"
-            required
-            error={errors?.amount}
-          >
-            <div className="relative">
-              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 font-(family-name:--font-dm-sans) text-sm text-[rgba(47,78,64,0.45)]">
-                Rs.
-              </span>
+            <AccountingFormField
+              label="Entry Type"
+              required
+              error={errors?.entryType}
+            >
+              <Select
+                value={entryType}
+                onValueChange={(v) => setEntryType(v as "dr" | "cr")}
+              >
+                <SelectTrigger className={accountingSelectTriggerClass}>
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cr">
+                    Credit — Purchase / Payable added
+                  </SelectItem>
+                  <SelectItem value="dr">
+                    Debit — Payment made to supplier
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </AccountingFormField>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <AccountingFormField
+              label="Amount (Rs.)"
+              htmlFor="supplier-amount"
+              required
+              error={errors?.amount}
+            >
+              <div className="relative">
+                <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 font-(family-name:--font-dm-sans) text-sm text-[rgba(47,78,64,0.45)]">
+                  Rs.
+                </span>
+                <input
+                  id="supplier-amount"
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={amountRs}
+                  onChange={(e) => setAmountRs(e.target.value)}
+                  className={cn(
+                    accountingFieldInputClass,
+                    "pl-10",
+                    errors?.amount && "border-[#9a3412]",
+                  )}
+                />
+              </div>
+            </AccountingFormField>
+
+            <AccountingFormField
+              label="Payment Type"
+              htmlFor="supplier-payment-type"
+              required
+              error={errors?.paymentType}
+            >
               <input
-                id="supplier-amount"
-                type="number"
-                min="0.01"
-                step="0.01"
-                placeholder="0.00"
-                value={amountRs}
-                onChange={(e) => setAmountRs(e.target.value)}
+                id="supplier-payment-type"
+                type="text"
+                placeholder="Type a custom payment method…"
+                value={paymentType}
+                onChange={(e) => {
+                  setPaymentType(e.target.value);
+                  setErrors((prev) => ({ ...prev, paymentType: undefined }));
+                }}
                 className={cn(
                   accountingFieldInputClass,
-                  "pl-10",
-                  errors?.amount && "border-[#9a3412]",
+                  errors?.paymentType && "border-[#9a3412]",
                 )}
               />
-            </div>
-          </AccountingFormField>
+              <div className="mt-2.5 flex flex-wrap gap-2">
+                {PAYMENT_TYPE_SUGGESTIONS.map((option) => {
+                  const isSelected =
+                    paymentType.trim().toLowerCase() === option.value;
 
-          <AccountingFormField
-            label="Payment Type"
-            htmlFor="supplier-payment-type"
-            required
-            error={errors?.paymentType}
-          >
-            <input
-              id="supplier-payment-type"
-              type="text"
-              placeholder="Type a custom payment method…"
-              value={paymentType}
-              onChange={(e) => {
-                setPaymentType(e.target.value);
-                setErrors((prev) => ({ ...prev, paymentType: undefined }));
-              }}
-              className={cn(
-                accountingFieldInputClass,
-                errors?.paymentType && "border-[#9a3412]",
-              )}
-            />
-            <div className="mt-2.5 flex flex-wrap gap-2">
-              {PAYMENT_TYPE_SUGGESTIONS.map((option) => {
-                const isSelected =
-                  paymentType.trim().toLowerCase() === option.value;
-
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => {
-                      setPaymentType(option.value);
-                      setErrors((prev) => ({
-                        ...prev,
-                        paymentType: undefined,
-                      }));
-                    }}
-                    className={cn(
-                      "border px-3 py-1.5 font-(family-name:--font-dm-sans) text-xs font-semibold uppercase tracking-[0.06em] transition-colors",
-                      isSelected
-                        ? "border-(--brand-green) bg-(--brand-green) text-white"
-                        : "border-[rgba(47,78,64,0.18)] bg-white text-[rgba(47,78,64,0.65)] hover:border-(--brand-green) hover:text-(--brand-green)",
-                    )}
-                  >
-                    {option.label}
-                  </button>
-                );
-              })}
-            </div>
-          </AccountingFormField>
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => {
+                        setPaymentType(option.value);
+                        setErrors((prev) => ({
+                          ...prev,
+                          paymentType: undefined,
+                        }));
+                      }}
+                      className={cn(
+                        "border px-3 py-1.5 font-(family-name:--font-dm-sans) text-xs font-semibold uppercase tracking-[0.06em] transition-colors",
+                        isSelected
+                          ? "border-(--brand-green) bg-(--brand-green) text-white"
+                          : "border-[rgba(47,78,64,0.18)] bg-white text-[rgba(47,78,64,0.65)] hover:border-(--brand-green) hover:text-(--brand-green)",
+                      )}
+                    >
+                      {option.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </AccountingFormField>
+          </div>
 
           {isBankMode && (
             <AccountingFormField label="Bank Account" required>
