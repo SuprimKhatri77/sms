@@ -1,6 +1,6 @@
 -- name: CreateDiscount :one
-INSERT INTO student_discounts (student_id, type, percent, note, amount, added_by)
-VALUES ($1, $2, $3, $4, $5, $6)
+INSERT INTO student_discounts (student_id, type, percent, note, amount, added_by, mode)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
 RETURNING *;
 
 -- name: GetDiscountByID :one
@@ -18,7 +18,7 @@ ORDER BY sd.created_at DESC;
 
 -- name: UpdateDiscount :one
 UPDATE student_discounts
-SET type = $2, percent = $3, note = $4, amount = $5
+SET type = $2, percent = $3, note = $4, amount = $5, mode = $6
 WHERE id = $1
 RETURNING *;
 

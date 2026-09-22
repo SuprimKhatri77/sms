@@ -81,6 +81,11 @@ func UpdateDiscount(queries repository.StudentDiscounts) gin.HandlerFunc {
 			return
 		}
 
+		mode := "percent"
+		if !hasPercent {
+			mode = "amount"
+		}
+
 		existingDiscount, err := queries.GetDiscountByID(ctx, discountID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, types.APIResponse{
@@ -170,6 +175,7 @@ func UpdateDiscount(queries repository.StudentDiscounts) gin.HandlerFunc {
 			Type:    req.Type,
 			Percent: percent,
 			Amount:  newDiscountAmount,
+			Mode:    mode,
 		})
 
 		if err != nil {

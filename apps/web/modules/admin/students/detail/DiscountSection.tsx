@@ -236,7 +236,9 @@ export function DiscountSection({
         <DiscountFormModal
           initial={{
             type: editTarget.type,
+            mode: editTarget.mode,
             percent: Number(editTarget.percent),
+            amount: editTarget.amount,
             note: editTarget.note ?? "",
           }}
           balanceDue={balanceDue + editTarget.amount / 100}

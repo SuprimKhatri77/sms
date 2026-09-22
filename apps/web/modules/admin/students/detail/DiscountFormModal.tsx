@@ -29,7 +29,9 @@ type StudentDiscountFormInput = {
 
 type DiscountFormInitial = {
   type: string;
+  mode: DiscountMode;
   percent: number;
+  amount: number;
   note: string;
 };
 
@@ -55,9 +57,11 @@ export function DiscountFormModal({
 }) {
   const [form, setForm] = useState<StudentDiscountFormInput>({
     type: initial?.type ?? "",
-    mode: "percent",
+    mode: initial?.mode ?? "percent",
     percent: initial ? initial.percent.toString() : "",
-    amount: "",
+    amount: initial && initial.mode === "amount"
+      ? (initial.amount / 100).toString()
+      : "",
     note: initial?.note ?? "",
   });
   const [errors, setErrors] = useState<DiscountFormErrors>({});

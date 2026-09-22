@@ -81,6 +81,11 @@ func CreateDiscount(queries repository.StudentDiscounts) gin.HandlerFunc {
 			return
 		}
 
+		mode := "percent"
+		if !hasPercent {
+			mode = "amount"
+		}
+
 		summary, err := queries.GetStudentFeeSummary(ctx, studentID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, types.APIResponse{
@@ -167,6 +172,7 @@ func CreateDiscount(queries repository.StudentDiscounts) gin.HandlerFunc {
 			Percent:   percent,
 			Amount:    newDiscountAmount,
 			AddedBy:   adminID,
+			Mode:      mode,
 		})
 
 		if err != nil {

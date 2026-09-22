@@ -12,9 +12,9 @@ import (
 )
 
 const createDiscount = `-- name: CreateDiscount :one
-INSERT INTO student_discounts (student_id, type, percent, note, amount, added_by)
-VALUES ($1, $2, $3, $4, $5, $6)
-RETURNING id, student_id, added_by, type, percent, note, amount, created_at
+INSERT INTO student_discounts (student_id, type, percent, note, amount, added_by, mode)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
+RETURNING id, student_id, added_by, type, percent, note, amount, created_at, mode
 `
 
 type CreateDiscountParams struct {
@@ -24,6 +24,7 @@ type CreateDiscountParams struct {
 	Note      pgtype.Text    `json:"note"`
 	Amount    int64          `json:"amount"`
 	AddedBy   pgtype.UUID    `json:"addedBy"`
+	Mode      string         `json:"mode"`
 }
 
 func (q *Queries) CreateDiscount(ctx context.Context, arg CreateDiscountParams) (StudentDiscount, error) {
@@ -34,6 +35,7 @@ func (q *Queries) CreateDiscount(ctx context.Context, arg CreateDiscountParams) 
 		arg.Note,
 		arg.Amount,
 		arg.AddedBy,
+		arg.Mode,
 	)
 	var i StudentDiscount
 	err := row.Scan(
@@ -45,6 +47,7 @@ func (q *Queries) CreateDiscount(ctx context.Context, arg CreateDiscountParams) 
 		&i.Note,
 		&i.Amount,
 		&i.CreatedAt,
+		&i.Mode,
 	)
 	return i, err
 }
@@ -207,7 +210,7 @@ func (q *Queries) GetAllStudentDiscountsTotal(ctx context.Context, arg GetAllStu
 }
 
 const getDiscountByID = `-- name: GetDiscountByID :one
-SELECT id, student_id, added_by, type, percent, note, amount, created_at FROM student_discounts
+SELECT id, student_id, added_by, type, percent, note, amount, created_at, mode FROM student_discounts
 WHERE id = $1
 `
 
@@ -223,6 +226,7 @@ func (q *Queries) GetDiscountByID(ctx context.Context, id pgtype.UUID) (StudentD
 		&i.Note,
 		&i.Amount,
 		&i.CreatedAt,
+		&i.Mode,
 	)
 	return i, err
 }
@@ -290,7 +294,7 @@ func (q *Queries) GetTotalDiscountPercentByStudent(ctx context.Context, studentI
 
 const listDiscountsByStudent = `-- name: ListDiscountsByStudent :many
 SELECT 
-    sd.id, sd.student_id, sd.added_by, sd.type, sd.percent, sd.note, sd.amount, sd.created_at,
+    sd.id, sd.student_id, sd.added_by, sd.type, sd.percent, sd.note, sd.amount, sd.created_at, sd.mode,
     u.name AS added_by_name
 FROM student_discounts sd
 JOIN users u ON u.id = sd.added_by
@@ -307,6 +311,7 @@ type ListDiscountsByStudentRow struct {
 	Note        pgtype.Text        `json:"note"`
 	Amount      int64              `json:"amount"`
 	CreatedAt   pgtype.Timestamptz `json:"createdAt"`
+	Mode        string             `json:"mode"`
 	AddedByName string             `json:"addedByName"`
 }
 
@@ -328,6 +333,7 @@ func (q *Queries) ListDiscountsByStudent(ctx context.Context, studentID pgtype.U
 			&i.Note,
 			&i.Amount,
 			&i.CreatedAt,
+			&i.Mode,
 			&i.AddedByName,
 		); err != nil {
 			return nil, err
@@ -342,9 +348,9 @@ func (q *Queries) ListDiscountsByStudent(ctx context.Context, studentID pgtype.U
 
 const updateDiscount = `-- name: UpdateDiscount :one
 UPDATE student_discounts
-SET type = $2, percent = $3, note = $4, amount = $5
+SET type = $2, percent = $3, note = $4, amount = $5, mode = $6
 WHERE id = $1
-RETURNING id, student_id, added_by, type, percent, note, amount, created_at
+RETURNING id, student_id, added_by, type, percent, note, amount, created_at, mode
 `
 
 type UpdateDiscountParams struct {
@@ -353,6 +359,7 @@ type UpdateDiscountParams struct {
 	Percent pgtype.Numeric `json:"percent"`
 	Note    pgtype.Text    `json:"note"`
 	Amount  int64          `json:"amount"`
+	Mode    string         `json:"mode"`
 }
 
 func (q *Queries) UpdateDiscount(ctx context.Context, arg UpdateDiscountParams) (StudentDiscount, error) {
@@ -362,6 +369,7 @@ func (q *Queries) UpdateDiscount(ctx context.Context, arg UpdateDiscountParams) 
 		arg.Percent,
 		arg.Note,
 		arg.Amount,
+		arg.Mode,
 	)
 	var i StudentDiscount
 	err := row.Scan(
@@ -373,6 +381,7 @@ func (q *Queries) UpdateDiscount(ctx context.Context, arg UpdateDiscountParams) 
 		&i.Note,
 		&i.Amount,
 		&i.CreatedAt,
+		&i.Mode,
 	)
 	return i, err
 }
