@@ -25,6 +25,9 @@ import {
 } from "@/components/admin/admin-styles";
 import { formatNpr } from "../shared/student-utils";
 import { inputCls } from "./shared/utils";
+import { SearchableSelect } from "../../inventory/shared/SearchableSelect";
+import { useBankAccountSearch } from "../../inventory/shared/useProductSupplierSearch";
+import { useBankAccountsDropdown } from "@/hooks/queries/admin/banks/bank_ledger/useBankAccountsDropdown";
 
 const modalSchema = z.object({
   amount: z.number().gt(0, {
@@ -46,6 +49,7 @@ const modalSchema = z.object({
   bsDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, {
     error: "BS date must be in YYYY-MM-DD format",
   }),
+  bankAccountID: z.uuid().optional(),
 });
 type AddPaymentModal = z.infer<typeof modalSchema>;
 
@@ -55,6 +59,7 @@ type AddPaymentModalErrors = {
   paymentMode?: string;
   date?: string;
   bsDate?: string;
+  bankAccountID?: string;
 };
 
 type PaymentModeOption = {
@@ -100,6 +105,21 @@ export function AddPaymentModal({
   const [isAddingNewMode, setIsAddingNewMode] = useState(false);
   const [newModeInput, setNewModeInput] = useState("");
   const [paymentModes, setPaymentModes] = useState(defaultPaymentModes);
+  const [bankAccountId, setBankAccountId] = useState("");
+  const [bankAccountLabel, setBankAccountLabel] = useState("");
+
+  const searchBankAccounts = useBankAccountSearch();
+  const { data: bankAccounts } = useBankAccountsDropdown();
+
+  const isBankMode = paymentMode === "bank";
+  const defaultBankAccount = bankAccounts?.find((a) => a.isDefault);
+  const effectiveBankAccountId =
+    bankAccountId || (isBankMode ? (defaultBankAccount?.id ?? "") : "");
+  const effectiveBankAccountLabel =
+    bankAccountLabel ||
+    (isBankMode && defaultBankAccount
+      ? `${defaultBankAccount.bankName} — ${defaultBankAccount.accountName}`
+      : "");
 
   const todayAd = useMemo(
     () => new Date().toISOString().split("T")[0],
@@ -115,6 +135,8 @@ export function AddPaymentModal({
     setIsAddingNewMode(false);
     setNewModeInput("");
     setPaymentModes(defaultPaymentModes);
+    setBankAccountId("");
+    setBankAccountLabel("");
   };
 
   const handleClose = () => {
@@ -123,12 +145,18 @@ export function AddPaymentModal({
   };
 
   const handleSubmit = async () => {
+    if (isBankMode && !effectiveBankAccountId) {
+      toast.error("Please select a bank account.");
+      return;
+    }
+
     const result = modalSchema.safeParse({
       amount: Number(amount),
       remarks: remarks || undefined,
       paymentMode: paymentMode || undefined,
       date: todayAd,
       bsDate: todayBs,
+      bankAccountID: isBankMode ? effectiveBankAccountId : undefined,
     });
 
     if (!result.success) {
@@ -321,6 +349,21 @@ export function AddPaymentModal({
               );
             })}
           </div>
+
+          {isBankMode && (
+            <div className="mt-4">
+              <SearchableSelect
+                value={effectiveBankAccountId}
+                onChange={(v, label) => {
+                  setBankAccountId(v);
+                  setBankAccountLabel(label);
+                }}
+                onSearch={searchBankAccounts}
+                selectedLabel={effectiveBankAccountLabel}
+                placeholder="Search bank accounts…"
+              />
+            </div>
+          )}
 
           {isAddingNewMode ? (
             <div className="mt-4 flex gap-2">

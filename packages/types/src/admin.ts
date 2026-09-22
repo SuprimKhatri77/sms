@@ -168,6 +168,7 @@ export const addPaymentSchema = z.object({
   amount: z.number().gt(0),
   remarks: z.string().min(3).max(100).optional(),
   paymentMode: z.string().min(2).max(60),
+  bankAccountID: z.uuid().optional(),
 });
 
 export type AddPayment = z.infer<typeof addPaymentSchema>;

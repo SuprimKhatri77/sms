@@ -17,7 +17,7 @@ type BankAccountRepository interface {
 	ListBankAccounts(ctx context.Context, params db.ListBankAccountsParams) ([]db.ListBankAccountsRow, error)
 	GetBankAccountsCount(ctx context.Context) (int64, error)
 	IsBankAccountDefault(ctx context.Context, id pgtype.UUID) (bool, error)
-	ListBankAccountsForDropdown(ctx context.Context) ([]db.ListBankAccountsForDropdownRow, error)
+	ListBankAccountsForDropdown(ctx context.Context, params db.ListBankAccountsForDropdownParams) ([]db.ListBankAccountsForDropdownRow, error)
 }
 
 type BankAccountTxRepository interface {

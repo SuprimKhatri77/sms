@@ -20,11 +20,12 @@ import (
 )
 
 type AddPaymentRequest struct {
-	Amount      float64 `json:"amount" binding:"required,gt=0"`
-	PaymentMode string  `json:"paymentMode" binding:"required,notblank,min=1,max=50"`
-	Remarks     string  `json:"remarks,omitempty" binding:"omitempty,notblank,min=1,max=200"`
-	BsDate      string  `json:"bsDate" binding:"required,bs_date"`
-	Date        string  `json:"date" binding:"required,date_format"`
+	Amount        float64 `json:"amount" binding:"required,gt=0"`
+	PaymentMode   string  `json:"paymentMode" binding:"required,notblank,min=1,max=50"`
+	Remarks       string  `json:"remarks,omitempty" binding:"omitempty,notblank,min=1,max=200"`
+	BsDate        string  `json:"bsDate" binding:"required,bs_date"`
+	Date          string  `json:"date" binding:"required,date_format"`
+	BankAccountID string  `json:"bankAccountID" binding:"omitempty,uuid"`
 }
 
 func AddPayment(queries repository.AdminPaymentTxRepository, pool *pgxpool.Pool) gin.HandlerFunc {
@@ -276,37 +277,78 @@ func AddPayment(queries repository.AdminPaymentTxRepository, pool *pgxpool.Pool)
 				return
 			}
 		} else {
-			defaultBankAccount, err := qtx.GetDefaultBankAccount(ctx)
-			if err != nil {
-				slog.Error("failed to get default bank account",
-					slog.String("handler", "AddPayment"),
-					slog.Any("error", err),
-				)
-				if errors.Is(err, pgx.ErrNoRows) {
+			var bankAccountID pgtype.UUID
+			if req.PaymentMode == "bank" && req.BankAccountID != "" {
+				bankAccountID, err = utils.ConvertToUUID(req.BankAccountID)
+				if err != nil {
+					slog.Warn("invalid bank account id format",
+						slog.String("handler", "AddPayment"),
+						slog.String("bank_account_id_raw", req.BankAccountID),
+						slog.Any("error", err),
+					)
 					c.JSON(http.StatusBadRequest, types.APIResponse{
 						Success: false,
-						Message: "No default bank account configured. Please set a default bank account first.",
-						Code:    constants.NoDefaultBankAccount,
+						Message: "Invalid ID format",
+						Code:    constants.InvalidIDFormat,
 					})
 					return
 				}
-				c.JSON(http.StatusInternalServerError, types.APIResponse{
-					Success: false,
-					Message: "Failed to process request",
-					Code:    constants.InternalServerError,
-				})
-				return
+			} else {
+				bankAccountID, err = qtx.GetDefaultBankAccountID(ctx)
+				if err != nil {
+					slog.Error("failed to get default bank account",
+						slog.String("handler", "AddPayment"),
+						slog.Any("error", err),
+					)
+					if errors.Is(err, pgx.ErrNoRows) {
+						c.JSON(http.StatusBadRequest, types.APIResponse{
+							Success: false,
+							Message: "No default bank account configured. Please set a default bank account first.",
+							Code:    constants.NoDefaultBankAccount,
+						})
+						return
+					}
+					c.JSON(http.StatusInternalServerError, types.APIResponse{
+						Success: false,
+						Message: "Failed to process request",
+						Code:    constants.InternalServerError,
+					})
+					return
+				}
 			}
 			_, err = qtx.CreateBankLedgerEntry(ctx, db.CreateBankLedgerEntryParams{
 				Amount:        int64(amount),
 				EntryType:     "cr",
 				Description:   pgtype.Text{String: "Student payment - auto recorded", Valid: true},
 				PaymentID:     payment.ID,
-				BankAccountID: defaultBankAccount.ID,
+				BankAccountID: bankAccountID,
 				BsDate:        req.BsDate,
 				Date:          pgtype.Timestamptz{Time: adDate, Valid: true},
 			})
 			if err != nil {
+				var pgErr *pgconn.PgError
+				if errors.As(err, &pgErr) && pgErr.Code == "23503" {
+					slog.Warn("foreign key violation",
+						slog.String("handler", "AddPayment"),
+						slog.String("constraint", pgErr.ConstraintName),
+					)
+					switch pgErr.ConstraintName {
+					case "bank_ledger_bank_account_id_fkey":
+						c.JSON(http.StatusNotFound, types.APIResponse{
+							Success: false,
+							Message: "Bank account not found",
+							Code:    constants.BankAccountNotFound,
+						})
+						return
+					case "bank_ledger_payment_id_fkey":
+						c.JSON(http.StatusNotFound, types.APIResponse{
+							Success: false,
+							Message: "Payment not found",
+							Code:    constants.PaymentNotFound,
+						})
+						return
+					}
+				}
 				slog.Error("failed to create bank ledger entry",
 					slog.String("handler", "AddPayment"),
 					slog.Any("error", err),

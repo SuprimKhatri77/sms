@@ -24,13 +24,14 @@ import (
 const handlerCreateSupplierLedgerEntry = "CreateSupplierLedgerEntry"
 
 type CreateSupplierLedgerEntryRequest struct {
-	Date        string  `json:"date" binding:"required,date_format"`
-	BsDate      string  `json:"bsDate" binding:"required,bs_date"`
-	EntryType   string  `json:"entryType" binding:"required,oneof=cr dr"`
-	Amount      float64 `json:"amount" binding:"required,gt=0,lte=10000000"`
-	Description string  `json:"description" binding:"omitempty,notblank,min=5,max=200"`
-	StockInID   string  `json:"stockInID" binding:"omitempty,uuid"`
-	PaymentType string  `json:"paymentType" binding:"required,notblank,min=2,max=100"`
+	Date          string  `json:"date" binding:"required,date_format"`
+	BsDate        string  `json:"bsDate" binding:"required,bs_date"`
+	EntryType     string  `json:"entryType" binding:"required,oneof=cr dr"`
+	Amount        float64 `json:"amount" binding:"required,gt=0,lte=10000000"`
+	Description   string  `json:"description" binding:"omitempty,notblank,min=5,max=200"`
+	StockInID     string  `json:"stockInID" binding:"omitempty,uuid"`
+	PaymentType   string  `json:"paymentType" binding:"required,notblank,min=2,max=100"`
+	BankAccountID string  `json:"bankAccountID" binding:"omitempty,uuid"`
 }
 
 func CreateSupplierLedgerEntry(queries accountingRepository.SupplierLedgerTxRepository, pool *pgxpool.Pool) gin.HandlerFunc {
@@ -243,30 +244,45 @@ func CreateSupplierLedgerEntry(queries accountingRepository.SupplierLedgerTxRepo
 			}
 
 		} else {
-			defaultBankAccountID, err := qtx.GetDefaultBankAccountID(ctx)
-			if err != nil {
-				if errors.Is(err, pgx.ErrNoRows) {
-					applog.Warn(c, handlerCreateSupplierLedgerEntry, "resource not found",
+			var bankAccountID pgtype.UUID
+			if req.PaymentType == "bank" && req.BankAccountID != "" {
+				bankAccountID, err = utils.ConvertToUUID(req.BankAccountID)
+				if err != nil {
+					applog.Warn(c, handlerCreateSupplierLedgerEntry, "invalid request",
 						slog.Any(applog.AttrError, err))
-					c.JSON(http.StatusNotFound, types.APIResponse{
+					c.JSON(http.StatusBadRequest, types.APIResponse{
 						Success: false,
-						Message: "No default bank account configured",
-						Code:    constants.NoDefaultBankAccount,
+						Message: "Invalid ID format",
+						Code:    constants.InvalidIDFormat,
 					})
 					return
 				}
-				applog.Error(c, handlerCreateSupplierLedgerEntry, "failed to get default bank account id",
-					slog.Any(applog.AttrError, err))
-				c.JSON(http.StatusInternalServerError, types.APIResponse{
-					Success: false,
-					Message: "Failed to get default bank account id",
-					Code:    constants.InternalServerError,
-				})
-				return
+			} else {
+				bankAccountID, err = qtx.GetDefaultBankAccountID(ctx)
+				if err != nil {
+					if errors.Is(err, pgx.ErrNoRows) {
+						applog.Warn(c, handlerCreateSupplierLedgerEntry, "resource not found",
+							slog.Any(applog.AttrError, err))
+						c.JSON(http.StatusNotFound, types.APIResponse{
+							Success: false,
+							Message: "No default bank account configured",
+							Code:    constants.NoDefaultBankAccount,
+						})
+						return
+					}
+					applog.Error(c, handlerCreateSupplierLedgerEntry, "failed to get default bank account id",
+						slog.Any(applog.AttrError, err))
+					c.JSON(http.StatusInternalServerError, types.APIResponse{
+						Success: false,
+						Message: "Failed to get default bank account id",
+						Code:    constants.InternalServerError,
+					})
+					return
+				}
 			}
 			_, err = qtx.CreateBankLedgerEntry(ctx, db.CreateBankLedgerEntryParams{
 				Amount:        int64(req.Amount * 100),
-				BankAccountID: defaultBankAccountID,
+				BankAccountID: bankAccountID,
 				EntryType:     counterEntryType,
 				Description:   pgtype.Text{String: "Supplier payment - auto recorded", Valid: true},
 				BsDate:        req.BsDate,
