@@ -201,7 +201,7 @@ func AddPayment(queries repository.AdminPaymentTxRepository, pool *pgxpool.Pool)
 			AddedBy:     addedBy,
 			PaymentMode: req.PaymentMode,
 			Date:        pgtype.Timestamptz{Time: adDate, Valid: true},
-			BsDate:      pgtype.Text{String: req.BsDate, Valid: true},
+			BsDate:      req.BsDate,
 		})
 
 		if err != nil {

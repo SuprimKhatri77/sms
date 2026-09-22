@@ -117,7 +117,7 @@ export const studentPaymentDetailsResponseSchema = z.discriminatedUnion(
           addedBy: z.uuid(),
           addedAt: z.date(),
           date: z.date(),
-          bsDate: z.string().nullable(),
+          bsDate: z.string(),
           remarks: z.string(),
           amount: z.number(),
           addedByName: z.string(),
