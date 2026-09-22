@@ -77,6 +77,7 @@ export const createSupplierLedgerEntryInput = z.object({
     .trim()
     .min(2, { error: "Payment type is required" })
     .max(100, { error: "Payment type must be 100 characters or less" }),
+  bankAccountID: z.uuid().optional(),
 });
 
 export type CreateSupplierLedgerEntryInput = z.infer<

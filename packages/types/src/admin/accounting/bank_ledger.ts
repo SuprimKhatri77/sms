@@ -103,6 +103,7 @@ const bankAccountForDropdown = z.object({
   bankName: z.string(),
   accountName: z.string(),
   bankId: z.string(),
+  isDefault: z.boolean(),
 });
 
 export type BankAccountForDropdown = z.infer<typeof bankAccountForDropdown>;

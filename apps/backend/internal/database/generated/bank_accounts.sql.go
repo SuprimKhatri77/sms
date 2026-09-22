@@ -94,44 +94,6 @@ func (q *Queries) GetBankAccountsCount(ctx context.Context) (int64, error) {
 	return count, err
 }
 
-const getDefaultBankAccount = `-- name: GetDefaultBankAccount :one
-SELECT
-    ba.id, ba.bank_id, ba.account_name, ba.account_number, ba.is_default, ba.created_at,
-    b.name AS bank_name,
-    b.is_default AS bank_is_default
-FROM bank_accounts ba
-JOIN banks b ON b.id = ba.bank_id
-WHERE b.is_default = TRUE
-LIMIT 1
-`
-
-type GetDefaultBankAccountRow struct {
-	ID            pgtype.UUID        `json:"id"`
-	BankID        pgtype.UUID        `json:"bankId"`
-	AccountName   string             `json:"accountName"`
-	AccountNumber pgtype.Text        `json:"accountNumber"`
-	IsDefault     bool               `json:"isDefault"`
-	CreatedAt     pgtype.Timestamptz `json:"createdAt"`
-	BankName      string             `json:"bankName"`
-	BankIsDefault bool               `json:"bankIsDefault"`
-}
-
-func (q *Queries) GetDefaultBankAccount(ctx context.Context) (GetDefaultBankAccountRow, error) {
-	row := q.db.QueryRow(ctx, getDefaultBankAccount)
-	var i GetDefaultBankAccountRow
-	err := row.Scan(
-		&i.ID,
-		&i.BankID,
-		&i.AccountName,
-		&i.AccountNumber,
-		&i.IsDefault,
-		&i.CreatedAt,
-		&i.BankName,
-		&i.BankIsDefault,
-	)
-	return i, err
-}
-
 const getDefaultBankAccountID = `-- name: GetDefaultBankAccountID :one
 SELECT id FROM bank_accounts WHERE is_default = TRUE LIMIT 1
 `
@@ -261,27 +223,39 @@ func (q *Queries) ListBankAccountsByBank(ctx context.Context, bankID pgtype.UUID
 }
 
 const listBankAccountsForDropdown = `-- name: ListBankAccountsForDropdown :many
-SELECT 
+SELECT
     ba.id,
     ba.account_name,
     ba.bank_id,
+    ba.is_default,
     b.name AS bank_name,
     b.id AS bank_id
 FROM bank_accounts ba
 JOIN banks b ON b.id = ba.bank_id
+WHERE
+    ($1::TEXT IS NULL
+        OR ba.account_name ILIKE '%' || $1::TEXT || '%'
+        OR b.name ILIKE '%' || $1::TEXT || '%')
 ORDER BY ba.account_name ASC
+LIMIT $2::INT
 `
+
+type ListBankAccountsForDropdownParams struct {
+	Name  pgtype.Text `json:"name"`
+	Limit pgtype.Int4 `json:"limit"`
+}
 
 type ListBankAccountsForDropdownRow struct {
 	ID          pgtype.UUID `json:"id"`
 	AccountName string      `json:"accountName"`
 	BankID      pgtype.UUID `json:"bankId"`
+	IsDefault   bool        `json:"isDefault"`
 	BankName    string      `json:"bankName"`
 	BankID_2    pgtype.UUID `json:"bankId2"`
 }
 
-func (q *Queries) ListBankAccountsForDropdown(ctx context.Context) ([]ListBankAccountsForDropdownRow, error) {
-	rows, err := q.db.Query(ctx, listBankAccountsForDropdown)
+func (q *Queries) ListBankAccountsForDropdown(ctx context.Context, arg ListBankAccountsForDropdownParams) ([]ListBankAccountsForDropdownRow, error) {
+	rows, err := q.db.Query(ctx, listBankAccountsForDropdown, arg.Name, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -293,6 +267,7 @@ func (q *Queries) ListBankAccountsForDropdown(ctx context.Context) ([]ListBankAc
 			&i.ID,
 			&i.AccountName,
 			&i.BankID,
+			&i.IsDefault,
 			&i.BankName,
 			&i.BankID_2,
 		); err != nil {

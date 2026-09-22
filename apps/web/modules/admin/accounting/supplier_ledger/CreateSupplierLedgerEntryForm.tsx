@@ -34,6 +34,9 @@ import {
   accountingFieldInputClass,
   accountingSelectTriggerClass,
 } from "../shared/accounting-styles";
+import { SearchableSelect } from "../../inventory/shared/SearchableSelect";
+import { useBankAccountSearch } from "../../inventory/shared/useProductSupplierSearch";
+import { useBankAccountsDropdown } from "@/hooks/queries/admin/banks/bank_ledger/useBankAccountsDropdown";
 
 const PAYMENT_TYPE_SUGGESTIONS = [
   { value: "cash", label: "Cash" },
@@ -68,8 +71,23 @@ export function CreateSupplierLedgerEntryForm({
   const [amountRs, setAmountRs] = useState("");
   const [description, setDescription] = useState<string | undefined>(undefined);
   const [paymentType, setPaymentType] = useState("");
+  const [bankAccountId, setBankAccountId] = useState("");
+  const [bankAccountLabel, setBankAccountLabel] = useState("");
   const [errors, setErrors] =
     useState<Partial<Record<keyof CreateSupplierLedgerEntryInput, string>>>();
+
+  const searchBankAccounts = useBankAccountSearch();
+  const { data: bankAccounts } = useBankAccountsDropdown();
+
+  const isBankMode = paymentType.trim().toLowerCase() === "bank";
+  const defaultBankAccount = bankAccounts?.find((a) => a.isDefault);
+  const effectiveBankAccountId =
+    bankAccountId || (isBankMode ? (defaultBankAccount?.id ?? "") : "");
+  const effectiveBankAccountLabel =
+    bankAccountLabel ||
+    (isBankMode && defaultBankAccount
+      ? `${defaultBankAccount.bankName} — ${defaultBankAccount.accountName}`
+      : "");
 
   const resetForm = () => {
     setSupplierId(defaultSupplierId ?? "");
@@ -79,6 +97,8 @@ export function CreateSupplierLedgerEntryForm({
     setAmountRs("");
     setDescription(undefined);
     setPaymentType("");
+    setBankAccountId("");
+    setBankAccountLabel("");
     setErrors({});
   };
 
@@ -93,6 +113,10 @@ export function CreateSupplierLedgerEntryForm({
       toast.error("Please select a supplier.");
       return;
     }
+    if (isBankMode && !effectiveBankAccountId) {
+      toast.error("Please select a bank account.");
+      return;
+    }
 
     const validateFields = createSupplierLedgerEntryInput.safeParse({
       date: adDate,
@@ -101,6 +125,7 @@ export function CreateSupplierLedgerEntryForm({
       amount: Number(amountRs),
       description: description,
       paymentType,
+      bankAccountID: isBankMode ? effectiveBankAccountId : undefined,
     });
     if (!validateFields.success) {
       const tree = z.treeifyError(validateFields.error).properties;
@@ -319,6 +344,21 @@ export function CreateSupplierLedgerEntryForm({
               })}
             </div>
           </AccountingFormField>
+
+          {isBankMode && (
+            <AccountingFormField label="Bank Account" required>
+              <SearchableSelect
+                value={effectiveBankAccountId}
+                onChange={(v, label) => {
+                  setBankAccountId(v);
+                  setBankAccountLabel(label);
+                }}
+                onSearch={searchBankAccounts}
+                selectedLabel={effectiveBankAccountLabel}
+                placeholder="Search bank accounts…"
+              />
+            </AccountingFormField>
+          )}
 
           <AccountingFormField
             label="Narration"

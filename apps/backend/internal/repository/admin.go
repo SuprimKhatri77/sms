@@ -78,7 +78,7 @@ type AdminPaymentTxRepository interface {
 	GetStudentByID(ctx context.Context, id pgtype.UUID) (db.GetStudentByIDRow, error)
 	CreateBankLedgerEntry(ctx context.Context, params db.CreateBankLedgerEntryParams) (db.BankLedger, error)
 	CreateCashLedgerEntry(ctx context.Context, params db.CreateCashLedgerEntryParams) (db.CashLedger, error)
-	GetDefaultBankAccount(ctx context.Context) (db.GetDefaultBankAccountRow, error)
+	GetDefaultBankAccountID(ctx context.Context) (pgtype.UUID, error)
 }
 
 type adminPaymentTxRepository struct {
@@ -114,6 +114,6 @@ func (r *adminPaymentTxRepository) CreateCashLedgerEntry(ctx context.Context, pa
 	return r.queries.CreateCashLedgerEntry(ctx, params)
 }
 
-func (r *adminPaymentTxRepository) GetDefaultBankAccount(ctx context.Context) (db.GetDefaultBankAccountRow, error) {
-	return r.queries.GetDefaultBankAccount(ctx)
+func (r *adminPaymentTxRepository) GetDefaultBankAccountID(ctx context.Context) (pgtype.UUID, error) {
+	return r.queries.GetDefaultBankAccountID(ctx)
 }

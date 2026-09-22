@@ -31,16 +31,6 @@ JOIN banks b ON b.id = ba.bank_id
 WHERE ba.bank_id = $1
 ORDER BY ba.created_at DESC;
 
--- name: GetDefaultBankAccount :one
-SELECT
-    ba.*,
-    b.name AS bank_name,
-    b.is_default AS bank_is_default
-FROM bank_accounts ba
-JOIN banks b ON b.id = ba.bank_id
-WHERE b.is_default = TRUE
-LIMIT 1;
-
 -- name: UpdateBankAccount :execresult
 UPDATE bank_accounts
 SET account_name = $2, account_number = $3
@@ -62,15 +52,21 @@ SELECT COUNT(*) FROM bank_accounts;
 SELECT is_default FROM bank_accounts WHERE id = $1;
 
 -- name: ListBankAccountsForDropdown :many
-SELECT 
+SELECT
     ba.id,
     ba.account_name,
     ba.bank_id,
+    ba.is_default,
     b.name AS bank_name,
     b.id AS bank_id
 FROM bank_accounts ba
 JOIN banks b ON b.id = ba.bank_id
-ORDER BY ba.account_name ASC;
+WHERE
+    (sqlc.narg('name')::TEXT IS NULL
+        OR ba.account_name ILIKE '%' || sqlc.narg('name')::TEXT || '%'
+        OR b.name ILIKE '%' || sqlc.narg('name')::TEXT || '%')
+ORDER BY ba.account_name ASC
+LIMIT sqlc.narg('limit')::INT;
 
 -- name: GetDefaultBankAccountID :one
 SELECT id FROM bank_accounts WHERE is_default = TRUE LIMIT 1;
