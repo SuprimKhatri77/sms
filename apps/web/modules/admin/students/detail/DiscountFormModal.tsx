@@ -148,7 +148,10 @@ export function DiscountFormModal({
           <button
             key={m}
             type="button"
-            onClick={() => setForm((prev) => ({ ...prev, mode: m }))}
+            onClick={() => {
+              setForm((prev) => ({ ...prev, mode: m }));
+              setErrors({});
+            }}
             className={cn(
               "border px-3 py-1.5 font-(family-name:--font-dm-sans) text-xs font-semibold uppercase tracking-[0.06em] transition-colors",
               form.mode === m

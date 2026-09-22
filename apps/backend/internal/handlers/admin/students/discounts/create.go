@@ -131,18 +131,12 @@ func CreateDiscount(queries repository.StudentDiscounts) gin.HandlerFunc {
 			percentValue = req.Percent
 		} else {
 			newDiscountAmount = utils.RupeesToPaisa(req.Amount)
-			if newDiscountAmount > remainingBalance {
-				c.JSON(http.StatusBadRequest, types.APIResponse{
-					Success: false,
-					Message: "Discount exceeds outstanding balance",
-					Code:    constants.ValidationFailed,
-				})
-				return
-			}
 			percentValue = utils.AmountToPercent(remainingBalance, newDiscountAmount)
 		}
 
-		if alreadyCovered+newDiscountAmount > effectiveFee {
+		// remainingBalance is already the room left for this discount alone,
+		// so this single check covers both percent- and amount-mode.
+		if newDiscountAmount > remainingBalance {
 			c.JSON(http.StatusBadRequest, types.APIResponse{
 				Success: false,
 				Message: "Discount exceeds outstanding balance",
