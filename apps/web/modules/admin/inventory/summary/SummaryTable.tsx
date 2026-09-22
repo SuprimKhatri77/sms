@@ -45,14 +45,14 @@ export function SummaryTable({ data }: Props) {
   const headers = [
     "Product",
     "Unit",
-    "Stock In (qty)",
-    "Stock Out (qty)",
-    "Wastage (qty)",
-    "Closing (qty)",
-    "Stock In Amt",
-    "Stock Out Amt",
-    "Wastage Amt",
-    "Closing Amt",
+    "Purchase (Qty)",
+    "Purchase (Amt)",
+    "Sales (Qty)",
+    "Sales (Amt)",
+    "Wastage (Qty)",
+    "Wastage (Amt)",
+    "Closing (Qty)",
+    "Closing (Amt)",
   ];
 
   return (
@@ -81,19 +81,19 @@ export function SummaryTable({ data }: Props) {
                   {row.productUnit}
                 </td>
                 <td className={inventoryTdClass}>{row.stockInQty}</td>
-                <td className={inventoryTdClass}>{row.stockOutQty}</td>
-                <td className={inventoryTdClass}>{row.wastageQty}</td>
-                <td className={`${inventoryTdClass} font-semibold text-(--brand-green)`}>
-                  {row.closingQty}
-                </td>
                 <td className={inventoryTdClass}>
                   <AmountCell cents={row.stockInAmount} />
                 </td>
+                <td className={inventoryTdClass}>{row.stockOutQty}</td>
                 <td className={inventoryTdClass}>
                   <AmountCell cents={row.stockOutAmount} />
                 </td>
+                <td className={inventoryTdClass}>{row.wastageQty}</td>
                 <td className={inventoryTdClass}>
                   <AmountCell cents={row.wastageAmount} />
+                </td>
+                <td className={`${inventoryTdClass} font-semibold text-(--brand-green)`}>
+                  {row.closingQty}
                 </td>
                 <td className={`${inventoryTdClass} font-semibold`}>
                   <AmountCell cents={row.closingAmount} />
@@ -104,20 +104,24 @@ export function SummaryTable({ data }: Props) {
           <tfoot>
             <tr className="bg-[rgba(47,78,64,0.04)]">
               <td
-                colSpan={6}
+                colSpan={2}
                 className="px-5 py-4 font-(family-name:--font-dm-sans) text-xs font-bold uppercase tracking-[0.08em] text-(--brand-green)"
               >
                 Totals
               </td>
+              <td className={inventoryTdClass} />
               <td className={`${inventoryTdClass} font-bold text-(--brand-green)`}>
                 {formatAmount(totals.stock_in_amount)}
               </td>
+              <td className={inventoryTdClass} />
               <td className={`${inventoryTdClass} font-bold text-(--brand-green)`}>
                 {formatAmount(totals.stock_out_amount)}
               </td>
+              <td className={inventoryTdClass} />
               <td className={`${inventoryTdClass} font-bold text-(--brand-green)`}>
                 {formatAmount(totals.wastage_amount)}
               </td>
+              <td className={inventoryTdClass} />
               <td className={`${inventoryTdClass} font-bold text-(--brand-green)`}>
                 {formatAmount(totals.closing_amount)}
               </td>
