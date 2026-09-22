@@ -120,7 +120,7 @@ func CreateStockIn(queries repository.InventoryTxRepository, pool *pgxpool.Pool)
 				InvoiceNo:  utils.ToNullableText(req.InvoiceNo),
 				Rate:       int32(math.Round(item.Rate * 100)),
 				Qty:        int32(item.Quantity),
-				Date:       req.Date,
+				Date:       req.BsDate,
 				SupplierID: supplierID,
 			})
 			if err != nil {
