@@ -21,6 +21,8 @@ jobs:
             cd ~/bakeandbrew
             git pull origin main
             cd apps/backend
+            export PATH=$PATH:$HOME/go/bin
+            make migrate-up
             go build -o server ./cmd/server
             chmod +x server
             sudo systemctl restart bakeandbrew
