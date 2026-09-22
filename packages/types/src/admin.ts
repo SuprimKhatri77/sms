@@ -116,6 +116,8 @@ export const studentPaymentDetailsResponseSchema = z.discriminatedUnion(
           studentID: z.uuid(),
           addedBy: z.uuid(),
           addedAt: z.date(),
+          date: z.date(),
+          bsDate: z.string().nullable(),
           remarks: z.string(),
           amount: z.number(),
           addedByName: z.string(),
@@ -168,6 +170,8 @@ export const addPaymentSchema = z.object({
   amount: z.number().gt(0),
   remarks: z.string().min(3).max(100).optional(),
   paymentMode: z.string().min(2).max(60),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  bsDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   bankAccountID: z.uuid().optional(),
 });
 

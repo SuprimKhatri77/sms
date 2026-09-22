@@ -84,6 +84,8 @@ type Payment struct {
 	Amount      int32              `json:"amount"`
 	AddedBy     pgtype.UUID        `json:"addedBy"`
 	AddedAt     pgtype.Timestamptz `json:"addedAt"`
+	Date        pgtype.Timestamptz `json:"date"`
+	BsDate      pgtype.Text        `json:"bsDate"`
 	Remarks     pgtype.Text        `json:"remarks"`
 	PaymentMode string             `json:"paymentMode"`
 }

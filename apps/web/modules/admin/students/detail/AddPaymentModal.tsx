@@ -4,16 +4,19 @@ import { Spinner } from "@/components/ui/spinner";
 import { mapFieldErrors } from "@/utils/api";
 import { APIResponse } from "@repo/types";
 import { AxiosError } from "axios";
-import { ADToBS } from "bikram-sambat-js";
+import { ADToBS, BSToAD } from "bikram-sambat-js";
+import { NepaliDatePicker } from "nepali-datepicker-reactjs";
+import "nepali-datepicker-reactjs/dist/index.css";
 import {
   AlertCircle,
   Banknote,
   Building2,
+  CalendarDays,
   CreditCard,
   Plus,
   Smartphone,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import z from "zod";
 import { AdminDrawer } from "@/components/admin/admin-drawer";
@@ -75,6 +78,11 @@ const defaultPaymentModes: PaymentModeOption[] = [
   { value: "bank", label: "Bank", icon: Building2 },
 ];
 
+function getToday() {
+  const ad = new Date().toISOString().split("T")[0];
+  return { ad, bs: ADToBS(ad) };
+}
+
 function FieldError({ message }: { message?: string }) {
   if (!message) return null;
   return (
@@ -121,11 +129,15 @@ export function AddPaymentModal({
       ? `${defaultBankAccount.bankName} — ${defaultBankAccount.accountName}`
       : "");
 
-  const todayAd = useMemo(
-    () => new Date().toISOString().split("T")[0],
-    [],
-  );
-  const todayBs = useMemo(() => ADToBS(todayAd), [todayAd]);
+  const [bsDate, setBsDate] = useState(() => getToday().bs);
+  const [adDate, setAdDate] = useState(() => getToday().ad);
+
+  useEffect(() => {
+    if (!open) return;
+    const today = getToday();
+    setBsDate(today.bs);
+    setAdDate(today.ad);
+  }, [open]);
 
   const resetForm = () => {
     setAmount("");
@@ -137,6 +149,9 @@ export function AddPaymentModal({
     setPaymentModes(defaultPaymentModes);
     setBankAccountId("");
     setBankAccountLabel("");
+    const today = getToday();
+    setBsDate(today.bs);
+    setAdDate(today.ad);
   };
 
   const handleClose = () => {
@@ -154,8 +169,8 @@ export function AddPaymentModal({
       amount: Number(amount),
       remarks: remarks || undefined,
       paymentMode: paymentMode || undefined,
-      date: todayAd,
-      bsDate: todayBs,
+      date: adDate,
+      bsDate: bsDate,
       bankAccountID: isBankMode ? effectiveBankAccountId : undefined,
     });
 
@@ -412,6 +427,40 @@ export function AddPaymentModal({
           )}
 
           <FieldError message={error.paymentMode} />
+        </section>
+
+        <section>
+          <p className={adminFieldLabelClass}>Date (BS)</p>
+          <div className="relative mt-5">
+            <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-[rgba(47,78,64,0.4)]">
+              <CalendarDays className="h-4 w-4" strokeWidth={1.75} />
+            </span>
+            <NepaliDatePicker
+              inputClassName={cn(
+                inputCls,
+                "pl-9",
+                (error.bsDate || error.date) && "border-[#9a3412]",
+              )}
+              value={bsDate}
+              onChange={(v: string) => {
+                setBsDate(v);
+                try {
+                  setAdDate(BSToAD(v));
+                  setError((prev) => ({
+                    ...prev,
+                    bsDate: undefined,
+                    date: undefined,
+                  }));
+                } catch (err) {
+                  toast.error(
+                    err instanceof Error ? err.message : "Invalid date",
+                  );
+                }
+              }}
+              options={{ calenderLocale: "en", valueLocale: "en" }}
+            />
+          </div>
+          <FieldError message={error.bsDate ?? error.date} />
         </section>
 
         <section>

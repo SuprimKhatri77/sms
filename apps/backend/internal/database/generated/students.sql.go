@@ -267,8 +267,8 @@ JOIN (
 LEFT JOIN (
     SELECT student_id, SUM(amount) AS total_paid
     FROM payments
-    WHERE ($3::TEXT IS NULL OR added_at >= $3::TIMESTAMPTZ)
-      AND ($4::TEXT IS NULL OR added_at <= ($4::TIMESTAMPTZ + INTERVAL '1 day'))
+    WHERE ($3::TEXT IS NULL OR COALESCE(date, added_at) >= $3::TIMESTAMPTZ)
+      AND ($4::TEXT IS NULL OR COALESCE(date, added_at) <= ($4::TIMESTAMPTZ + INTERVAL '1 day'))
     GROUP BY student_id
 ) pays ON pays.student_id = s.id
 LEFT JOIN (

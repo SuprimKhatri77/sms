@@ -200,6 +200,8 @@ func AddPayment(queries repository.AdminPaymentTxRepository, pool *pgxpool.Pool)
 			Remarks:     utils.ToNullableText(req.Remarks),
 			AddedBy:     addedBy,
 			PaymentMode: req.PaymentMode,
+			Date:        pgtype.Timestamptz{Time: adDate, Valid: true},
+			BsDate:      pgtype.Text{String: req.BsDate, Valid: true},
 		})
 
 		if err != nil {

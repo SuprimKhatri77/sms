@@ -18,8 +18,8 @@ SELECT
     (
         SELECT COALESCE(SUM(amount), 0)::BIGINT
         FROM payments p
-        WHERE ($1::TEXT IS NULL OR p.added_at >= $1::TIMESTAMPTZ)
-          AND ($2::TEXT IS NULL OR p.added_at < ($2::TIMESTAMPTZ + INTERVAL '1 day'))
+        WHERE ($1::TEXT IS NULL OR COALESCE(p.date, p.added_at) >= $1::TIMESTAMPTZ)
+          AND ($2::TEXT IS NULL OR COALESCE(p.date, p.added_at) < ($2::TIMESTAMPTZ + INTERVAL '1 day'))
     ) AS total_revenue,
     (
         SELECT COALESCE(SUM(amount), 0)::BIGINT
@@ -242,13 +242,13 @@ func (q *Queries) GetMonthlyInquiries(ctx context.Context, arg GetMonthlyInquiri
 
 const getMonthlyRevenue = `-- name: GetMonthlyRevenue :many
 SELECT
-    TO_CHAR(DATE_TRUNC('month', p.added_at), 'Month') AS month,
+    TO_CHAR(DATE_TRUNC('month', COALESCE(p.date, p.added_at)), 'Month') AS month,
     COALESCE(SUM(p.amount), 0)::INTEGER AS amount
 FROM payments p
-WHERE ($1::TEXT IS NULL OR p.added_at >= $1::TIMESTAMPTZ)
-  AND ($2::TEXT IS NULL OR p.added_at < ($2::TIMESTAMPTZ + INTERVAL '1 day'))
-GROUP BY DATE_TRUNC('month', p.added_at)
-ORDER BY DATE_TRUNC('month', p.added_at)
+WHERE ($1::TEXT IS NULL OR COALESCE(p.date, p.added_at) >= $1::TIMESTAMPTZ)
+  AND ($2::TEXT IS NULL OR COALESCE(p.date, p.added_at) < ($2::TIMESTAMPTZ + INTERVAL '1 day'))
+GROUP BY DATE_TRUNC('month', COALESCE(p.date, p.added_at))
+ORDER BY DATE_TRUNC('month', COALESCE(p.date, p.added_at))
 `
 
 type GetMonthlyRevenueParams struct {
@@ -284,14 +284,14 @@ func (q *Queries) GetMonthlyRevenue(ctx context.Context, arg GetMonthlyRevenuePa
 const getRevenueStats = `-- name: GetRevenueStats :one
 SELECT
     COALESCE(SUM(p.amount) FILTER (
-        WHERE DATE_TRUNC('month', p.added_at) = DATE_TRUNC('month', NOW())
-          AND ($1::TEXT IS NULL OR p.added_at >= $1::TIMESTAMPTZ)
-          AND ($2::TEXT IS NULL OR p.added_at < ($2::TIMESTAMPTZ + INTERVAL '1 day'))
+        WHERE DATE_TRUNC('month', COALESCE(p.date, p.added_at)) = DATE_TRUNC('month', NOW())
+          AND ($1::TEXT IS NULL OR COALESCE(p.date, p.added_at) >= $1::TIMESTAMPTZ)
+          AND ($2::TEXT IS NULL OR COALESCE(p.date, p.added_at) < ($2::TIMESTAMPTZ + INTERVAL '1 day'))
     ), 0)::INTEGER AS this_month,
     COALESCE(SUM(p.amount) FILTER (
-        WHERE DATE_TRUNC('month', p.added_at) = DATE_TRUNC('month', NOW() - INTERVAL '1 month')
-          AND ($1::TEXT IS NULL OR p.added_at >= $1::TIMESTAMPTZ)
-          AND ($2::TEXT IS NULL OR p.added_at < ($2::TIMESTAMPTZ + INTERVAL '1 day'))
+        WHERE DATE_TRUNC('month', COALESCE(p.date, p.added_at)) = DATE_TRUNC('month', NOW() - INTERVAL '1 month')
+          AND ($1::TEXT IS NULL OR COALESCE(p.date, p.added_at) >= $1::TIMESTAMPTZ)
+          AND ($2::TEXT IS NULL OR COALESCE(p.date, p.added_at) < ($2::TIMESTAMPTZ + INTERVAL '1 day'))
     ), 0)::INTEGER AS last_month,
     COALESCE((
         SELECT SUM(outstanding)

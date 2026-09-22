@@ -4,7 +4,7 @@ import { siteInfo } from "@/utils/site-info";
 interface Payment {
   id: string | number;
   amount: number; // in paisa (×100)
-  addedAt: string;
+  date: string;
   remarks?: string | null;
   addedByName?: string;
   paymentMode?: string | null;
@@ -32,7 +32,7 @@ function buildReceiptHTML(
 ): string {
   const amountRaw = payment.amount / 100;
 
-  const paymentDate = new Date(payment.addedAt).toLocaleDateString("en-NP", {
+  const paymentDate = new Date(payment.date).toLocaleDateString("en-NP", {
     year: "numeric",
     month: "long",
     day: "numeric",

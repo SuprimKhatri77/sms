@@ -36,6 +36,8 @@ export interface PaymentListItem extends StudentFinanceRecordStudent {
   remarks?: string | null;
   addedBy: string;
   addedAt: string;
+  date: string;
+  bsDate?: string | null;
 }
 
 export interface PaymentsListData {

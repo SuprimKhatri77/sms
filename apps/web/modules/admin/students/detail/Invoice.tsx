@@ -185,7 +185,7 @@ export function Invoice({ student, payments, courses }: Props) {
                 className="py-2 text-[0.82rem] text-[#2d4a3e]/60"
                 style={{ fontFamily: "var(--font-dm-sans)" }}
               >
-                {new Date(p.addedAt).toLocaleDateString("en-NP", {
+                {new Date(p.date).toLocaleDateString("en-NP", {
                   day: "2-digit",
                   month: "short",
                   year: "numeric",
