@@ -17,16 +17,19 @@ import {
   inventoryThClass,
 } from "../shared/inventory-styles";
 
-type StockIn = Extract<ListStockInResponse, { success: true }>["data"][number];
+type Purchase = Extract<
+  ListStockInResponse,
+  { success: true }
+>["data"][number];
 type Props = {
-  data: StockIn[];
+  data: Purchase[];
   currentPage: number;
   totalPages: number;
   limit: number;
   total: number;
   onPageChange: (page: number) => void;
-  onEdit: (item: StockIn) => void;
-  onDelete: (item: StockIn) => void;
+  onEdit: (item: Purchase) => void;
+  onDelete: (item: Purchase) => void;
 };
 
 const headers = [
@@ -40,7 +43,7 @@ const headers = [
   "Actions",
 ];
 
-export function StockInTable({
+export function PurchaseTable({
   data,
   currentPage,
   limit,
@@ -53,7 +56,7 @@ export function StockInTable({
   if (data.length === 0) {
     return (
       <div className={inventoryTableWrapClass}>
-        <EmptyState message="No stock-in records yet. Add your first entry above." />
+        <EmptyState message="No purchase records yet. Add your first entry above." />
       </div>
     );
   }

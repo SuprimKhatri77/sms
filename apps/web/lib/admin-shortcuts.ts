@@ -283,8 +283,8 @@ export const ADMIN_GO_NAV_ROUTES: AdminGoNavRoute[] = [
   { key: "u", label: "Users", href: "/admin/users" },
   { key: "t", label: "Settings", href: "/admin/settings" },
   { key: "p", label: "Products", href: "/admin/inventory/products" },
-  { key: "n", label: "Purchase", href: "/admin/inventory/stock-in" },
-  { key: "x", label: "Sales", href: "/admin/inventory/stock-out" },
+  { key: "n", label: "Purchase", href: "/admin/inventory/purchase" },
+  { key: "x", label: "Sales", href: "/admin/inventory/sales" },
   { key: "w", label: "Wastage", href: "/admin/inventory/wastage" },
   { key: "m", label: "Inventory summary", href: "/admin/inventory/summary" },
   { key: "k", label: "Banks", href: "/admin/banks" },
@@ -531,7 +531,7 @@ export const ADMIN_PAGE_SHORTCUTS: AdminPageShortcut[] = [
     discount: false,
   },
   {
-    path: "/admin/inventory/stock-in",
+    path: "/admin/inventory/purchase",
     category: "Inventory",
     page: "Purchase",
     action: "Add entry",
@@ -544,7 +544,7 @@ export const ADMIN_PAGE_SHORTCUTS: AdminPageShortcut[] = [
     discount: false,
   },
   {
-    path: "/admin/inventory/stock-out",
+    path: "/admin/inventory/sales",
     category: "Inventory",
     page: "Sales",
     action: "Add entry",

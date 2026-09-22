@@ -24,27 +24,28 @@ import {
 } from "../shared/LineItemsEditor";
 import { useProductSearch } from "../shared/useProductSupplierSearch";
 import {
-  CreateWastageBatchInput,
-  CreateWastageBatchResponse,
-  EditWastageInput,
-  EditWastageResponse,
-  createWastageBatchSchema,
-  editWastageSchema,
-  ListWastageResponse,
+  CreateStockOutBatchInput,
+  CreateStockOutBatchResponse,
+  EditStockOutInput,
+  EditStockOutResponse,
+  createStockOutBatchSchema,
+  editStockOutSchema,
+  ListStockOutResponse,
 } from "@repo/types";
 import { useEffect, useState } from "react";
 import { mapFieldErrors } from "@/utils/api";
 import { toast } from "sonner";
 
-type Wastage = Extract<ListWastageResponse, { success: true }>["data"][number];
+type Sale = Extract<ListStockOutResponse, { success: true }>["data"][number];
 type BatchBackendError = Extract<
-  CreateWastageBatchResponse,
+  CreateStockOutBatchResponse,
   { success: false }
 >;
-type EditBackendError = Extract<EditWastageResponse, { success: false }>;
+type EditBackendError = Extract<EditStockOutResponse, { success: false }>;
 
 type EditFormData = {
-  reason: string;
+  billNo: string;
+  note: string;
   productID: string;
   quantity: string;
   rate: string;
@@ -52,31 +53,33 @@ type EditFormData = {
 };
 
 type HeaderFormData = {
-  reason: string;
+  billNo: string;
+  note: string;
   date: string;
 };
 
 type Props = {
   open: boolean;
   onClose: () => void;
-  onCreate: (data: CreateWastageBatchInput) => Promise<void>;
-  onUpdate: (data: EditWastageInput & { id: string }) => Promise<void>;
-  initialData?: Wastage | null;
+  onCreate: (data: CreateStockOutBatchInput) => Promise<void>;
+  onUpdate: (data: EditStockOutInput & { id: string }) => Promise<void>;
+  initialData?: Sale | null;
 };
 
 const fieldInputClass = inventoryFieldInputClass;
 
 const emptyEditForm: EditFormData = {
-  reason: "",
+  billNo: "",
+  note: "",
   productID: "",
   quantity: "1",
   rate: "",
   date: "",
 };
 
-const emptyHeader: HeaderFormData = { reason: "", date: "" };
+const emptyHeader: HeaderFormData = { billNo: "", note: "", date: "" };
 
-export function WastageDialog({
+export function SaleDialog({
   open,
   onClose,
   onCreate,
@@ -104,7 +107,8 @@ export function WastageDialog({
     const id = setTimeout(() => {
       if (initialData) {
         setEditForm({
-          reason: initialData.reason ?? "",
+          billNo: initialData.billNo ?? "",
+          note: initialData.note ?? "",
           productID: initialData.productID ?? "",
           quantity: initialData.qty.toString(),
           rate: (initialData.rate / 100).toString(),
@@ -139,21 +143,23 @@ export function WastageDialog({
     if (!initialData) return;
     setIsSubmitting(true);
 
-    const validateFields = editWastageSchema.safeParse({
+    const validateFields = editStockOutSchema.safeParse({
       productID: editForm.productID,
       quantity: Number(editForm.quantity),
       rate: Number(editForm.rate),
-      reason: editForm.reason || undefined,
+      note: editForm.note || undefined,
+      billNo: editForm.billNo || undefined,
       date: editForm.date,
     });
     if (!validateFields.success) {
       setIsSubmitting(false);
       const fieldErrors = validateFields.error.flatten().fieldErrors;
       setEditErrors({
-        reason: fieldErrors.reason?.[0],
+        note: fieldErrors.note?.[0],
         quantity: fieldErrors.quantity?.[0],
         productID: fieldErrors.productID?.[0],
         rate: fieldErrors.rate?.[0],
+        billNo: fieldErrors.billNo?.[0],
         date: fieldErrors.date?.[0],
       });
       return;
@@ -179,7 +185,8 @@ export function WastageDialog({
 
     const payload = {
       date: header.date,
-      reason: header.reason || undefined,
+      note: header.note || undefined,
+      billNo: header.billNo || undefined,
       items: items.map((item) => ({
         productID: item.productID,
         quantity: Number(item.quantity),
@@ -187,13 +194,14 @@ export function WastageDialog({
       })),
     };
 
-    const validateFields = createWastageBatchSchema.safeParse(payload);
+    const validateFields = createStockOutBatchSchema.safeParse(payload);
     if (!validateFields.success) {
       setIsSubmitting(false);
       const fieldErrors = validateFields.error.flatten().fieldErrors;
       setHeaderErrors({
         date: fieldErrors.date?.[0],
-        reason: fieldErrors.reason?.[0],
+        note: fieldErrors.note?.[0],
+        billNo: fieldErrors.billNo?.[0],
       });
 
       const nextItemErrors: LineItemErrors = {};
@@ -237,9 +245,11 @@ export function WastageDialog({
       open={open}
       onOpenChange={handleOpenChange}
       className={isEdit ? undefined : "data-[side=right]:sm:max-w-xl"}
-      title={isEdit ? "Edit Wastage" : "Log Wastage"}
+      title={isEdit ? "Edit Sale" : "Add Sale"}
       description={
-        isEdit ? "Update a wastage record" : "Record damaged or lost inventory"
+        isEdit
+          ? "Update an existing sale record"
+          : "Record one bill's worth of outgoing inventory, item by item"
       }
       footer={
         <div className="flex justify-end gap-2">
@@ -253,18 +263,18 @@ export function WastageDialog({
           </button>
           <button
             type="submit"
-            form="wastage-form"
+            form="sale-form"
             disabled={isSubmitting}
             className={adminPrimaryButtonClass}
           >
-            {isSubmitting ? <Spinner /> : isEdit ? "Update" : "Log Wastage"}
+            {isSubmitting ? <Spinner /> : isEdit ? "Update" : "Add"}
           </button>
         </div>
       }
     >
       {isEdit ? (
         <form
-          id="wastage-form"
+          id="sale-form"
           onSubmit={handleEditSubmit}
           className="flex flex-col gap-10 px-8 py-10"
         >
@@ -345,29 +355,40 @@ export function WastageDialog({
                 />
               </InventoryFormField>
             </div>
+
+            <InventoryFormField label="Bill No" optional>
+              <input
+                placeholder="BILL-001"
+                value={editForm.billNo}
+                onChange={(e) =>
+                  setEditForm((prev) => ({ ...prev, billNo: e.target.value }))
+                }
+                className={fieldInputClass}
+              />
+            </InventoryFormField>
           </InventoryFormSection>
 
           <InventoryFormSection title="Additional">
-            <InventoryFormField label="Reason" optional>
+            <InventoryFormField label="Note" optional>
               <textarea
-                value={editForm.reason}
+                value={editForm.note}
                 onChange={(e) =>
-                  setEditForm((prev) => ({ ...prev, reason: e.target.value }))
+                  setEditForm((prev) => ({ ...prev, note: e.target.value }))
                 }
                 rows={3}
                 className={cn(fieldInputClass, "resize-none")}
-                placeholder="e.g. Damaged in transit…"
+                placeholder="Optional note…"
               />
             </InventoryFormField>
           </InventoryFormSection>
         </form>
       ) : (
         <form
-          id="wastage-form"
+          id="sale-form"
           onSubmit={handleCreateSubmit}
           className="flex flex-col gap-10 px-8 py-10"
         >
-          <InventoryFormSection title="Batch details">
+          <InventoryFormSection title="Bill details">
             <InventoryFormField
               label="Date (BS)"
               required
@@ -389,15 +410,26 @@ export function WastageDialog({
               </div>
             </InventoryFormField>
 
-            <InventoryFormField label="Reason" optional>
-              <textarea
-                value={header.reason}
+            <InventoryFormField label="Bill No" optional>
+              <input
+                placeholder="BILL-001"
+                value={header.billNo}
                 onChange={(e) =>
-                  setHeader((prev) => ({ ...prev, reason: e.target.value }))
+                  setHeader((prev) => ({ ...prev, billNo: e.target.value }))
+                }
+                className={fieldInputClass}
+              />
+            </InventoryFormField>
+
+            <InventoryFormField label="Note" optional>
+              <textarea
+                value={header.note}
+                onChange={(e) =>
+                  setHeader((prev) => ({ ...prev, note: e.target.value }))
                 }
                 rows={2}
                 className={cn(fieldInputClass, "resize-none")}
-                placeholder="e.g. Damaged in transit…"
+                placeholder="Optional note…"
               />
             </InventoryFormField>
           </InventoryFormSection>

@@ -17,20 +17,17 @@ import {
   inventoryThClass,
 } from "../shared/inventory-styles";
 
-type StockOut = Extract<
-  ListStockOutResponse,
-  { success: true }
->["data"][number];
+type Sale = Extract<ListStockOutResponse, { success: true }>["data"][number];
 
 type Props = {
-  data: StockOut[];
+  data: Sale[];
   currentPage: number;
   totalPages: number;
   limit: number;
   total: number;
   onPageChange: (page: number) => void;
-  onEdit: (item: StockOut) => void;
-  onDelete: (item: StockOut) => void;
+  onEdit: (item: Sale) => void;
+  onDelete: (item: Sale) => void;
 };
 
 const headers = [
@@ -44,7 +41,7 @@ const headers = [
   "Actions",
 ];
 
-export function StockOutTable({
+export function SaleTable({
   data,
   limit,
   total,
@@ -57,7 +54,7 @@ export function StockOutTable({
   if (data.length === 0) {
     return (
       <div className={inventoryTableWrapClass}>
-        <EmptyState message="No stock-out records yet. Start adding outgoing inventory." />
+        <EmptyState message="No sales records yet. Start adding outgoing inventory." />
       </div>
     );
   }

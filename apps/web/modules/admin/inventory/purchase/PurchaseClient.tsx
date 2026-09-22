@@ -3,10 +3,24 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Plus } from "lucide-react";
-import { StockOutTable } from "./StockOutTable";
-import { StockOutDialog } from "./StockOutDialog";
+import { PurchaseDialog } from "./PurchaseDialog";
 import { ConfirmDialog } from "../shared/ConfirmDialog";
-import { useDebounce } from "@/modules/admin/analytics/hooks/useDebounce";
+import { PurchaseTable } from "./PurchaseTable";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  CreateStockInBatchInput,
+  CreateStockInBatchResponse,
+  DeleteStockInResponse,
+  ListStockInResponse,
+  UpdateStockInInput,
+  UpdateStockInResponse,
+} from "@repo/types";
+import api from "@/lib/axios";
+import PurchaseLoading from "./PurchaseLoadingSkeleton";
+import PurchaseError from "./PurchaseError";
+import axios from "axios";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useDebounce } from "../../analytics/hooks/useDebounce";
 import { AdminPageLayout } from "@/components/admin/admin-page-layout";
 import {
   useAdminEscapeShortcut,
@@ -18,31 +32,13 @@ import {
 import { useAdminQueryRefresh } from "@/hooks/useAdminQueryRefresh";
 import { adminPrimaryButtonClass } from "@/components/admin/admin-styles";
 import { InventoryTransactionFilters } from "../shared/InventoryTransactionFilters";
-import {
-  CreateStockOutResponse,
-  DeleteStockOutResponse,
-  EditStockOutResponse,
-  ListStockOutResponse,
-} from "@repo/types";
-import api from "@/lib/axios";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import StockOutLoading from "./StockOutLoading";
-import StockOutError from "./StockOutError";
-import axios from "axios";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-type StockOut = Extract<
-  ListStockOutResponse,
+type Purchase = Extract<
+  ListStockInResponse,
   { success: true }
 >["data"][number];
-type StockOutFormData = Omit<
-  StockOut,
-  "id" | "createdAt" | "productName" | "productUnit" | "updatedAt" | "qty"
-> & {
-  quantity: number;
-};
 
-export function StockOutClient() {
+export function PurchaseClient() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -55,15 +51,105 @@ export function StockOutClient() {
   );
   const [pendingTo, setPendingTo] = useState(searchParams.get("to") ?? "");
   const [priceSort, setPriceSort] = useState<"asc" | "desc" | "">(
-    (searchParams.get("sort") as "asc" | "desc") ?? "",
+    (searchParams.get("sort_by_rate") as "asc" | "desc") ?? "",
   );
+  const debouncedSearch = useDebounce(search, 400);
 
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editTarget, setEditTarget] = useState<StockOut | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<StockOut | null>(null);
+  const [editTarget, setEditTarget] = useState<Purchase | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Purchase | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const queryClient = useQueryClient();
-  const debouncedSearch = useDebounce(search, 400);
+
+  const { data, isPending, isError, refetch, error } = useQuery({
+    queryKey: [
+      "admin-inventory-purchase",
+      currentPage,
+      debouncedSearch.trim(),
+      dateFrom,
+      dateTo,
+      priceSort,
+    ],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      params.set("page", currentPage.toString());
+      const trimmedSearch = debouncedSearch.trim();
+      if (trimmedSearch) params.set("search", trimmedSearch);
+      if (dateFrom) params.set("from", dateFrom);
+      if (dateTo) params.set("to", dateTo);
+      if (priceSort) params.set("sort_by_rate", priceSort);
+      const res = await api.get<ListStockInResponse>(
+        `/admin/inventory/purchase?${params.toString()}`,
+      );
+      return res.data;
+    },
+    staleTime: 10 * 1000 * 60,
+    gcTime: 20 * 60 * 1000,
+  });
+
+  const createPurchase = useMutation({
+    mutationFn: async (data: CreateStockInBatchInput) => {
+      try {
+        const res = await api.post<CreateStockInBatchResponse>(
+          `/admin/inventory/purchase`,
+          data,
+        );
+        if (!res.data.success) throw res.data;
+        return res.data;
+      } catch (err) {
+        if (axios.isAxiosError(err)) throw err.response?.data;
+        throw err;
+      }
+    },
+    onSuccess: (result) => {
+      toast.success(result.message);
+      queryClient.invalidateQueries({
+        queryKey: ["admin-inventory-purchase", currentPage],
+      });
+    },
+  });
+  const updatePurchase = useMutation({
+    mutationFn: async ({
+      id,
+      ...data
+    }: UpdateStockInInput & { id: string }) => {
+      try {
+        const res = await api.put<UpdateStockInResponse>(
+          `/admin/inventory/purchase/${id}`,
+          data,
+        );
+        if (!res.data.success) throw res.data;
+        return res.data;
+      } catch (err) {
+        if (axios.isAxiosError(err)) throw err.response?.data;
+        throw err;
+      }
+    },
+    onSuccess: (result) => {
+      toast.success(result.message);
+      queryClient.invalidateQueries({
+        queryKey: ["admin-inventory-purchase", currentPage],
+      });
+    },
+  });
+  const deletePurchase = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await api.delete<DeleteStockInResponse>(
+        `/admin/inventory/purchase/${id}`,
+      );
+      if (!res.data.success) throw res.data;
+      return res.data;
+    },
+    onSuccess: (result) => {
+      toast.success(result.message);
+      queryClient.invalidateQueries({
+        queryKey: ["admin-inventory-purchase", currentPage],
+      });
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
 
   const updateParams = useCallback(
     (updates: Record<string, string>) => {
@@ -81,12 +167,6 @@ export function StockOutClient() {
   useEffect(() => {
     updateParams({ search: debouncedSearch.trim() });
   }, [debouncedSearch]);
-
-  const handleSearchChange = (value: string) => {
-    if (value.startsWith(" ")) return;
-    setSearch(value);
-    setCurrentPage(1);
-  };
 
   const handleApplyDates = () => {
     setDateFrom(pendingFrom);
@@ -115,115 +195,19 @@ export function StockOutClient() {
   const hasActiveFilters = !!search || !!dateFrom || !!dateTo || !!priceSort;
   const hasPendingDateChange = pendingFrom !== dateFrom || pendingTo !== dateTo;
 
-  const { data, isPending, isError, refetch, error } = useQuery({
-    queryKey: [
-      "admin-inventory-stock-out",
-      currentPage,
-      debouncedSearch.trim(),
-      dateFrom,
-      dateTo,
-      priceSort,
-    ],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      params.set("page", currentPage.toString());
-      const trimmedSearch = debouncedSearch.trim();
-      if (trimmedSearch) params.set("search", trimmedSearch);
-      if (dateFrom) params.set("from", dateFrom);
-      if (dateTo) params.set("to", dateTo);
-      if (priceSort) params.set("sort_by_rate", priceSort);
-      const res = await api.get<ListStockOutResponse>(
-        `/admin/inventory/stock/out?${params.toString()}`,
-      );
-      return res.data;
-    },
-    staleTime: 30 * 1000,
-    gcTime: 5 * 60 * 1000,
-  });
+  const handleCreate = async (data: CreateStockInBatchInput) => {
+    await createPurchase.mutateAsync(data);
+  };
 
-  
-
-  const createStockOut = useMutation({
-    mutationFn: async (data: StockOutFormData) => {
-      try {
-        const res = await api.post<CreateStockOutResponse>(
-          `/admin/inventory/stock/out`,
-          data,
-        );
-        if (!res.data.success) throw res.data;
-        return res.data;
-      } catch (err) {
-        if (axios.isAxiosError(err)) throw err.response?.data;
-        throw err;
-      }
-    },
-    onSuccess: (result) => {
-      toast.success(result.message);
-      queryClient.invalidateQueries({
-        queryKey: ["admin-inventory-stock-out", currentPage],
-      });
-    },
-  });
-
-  const updateStockOut = useMutation({
-    mutationFn: async ({ id, ...data }: StockOutFormData & { id: string }) => {
-      try {
-        const res = await api.put<EditStockOutResponse>(
-          `/admin/inventory/stock/out/${id}`,
-          data,
-        );
-        if (!res.data.success) throw res.data;
-        return res.data;
-      } catch (err) {
-        if (axios.isAxiosError(err)) throw err.response?.data;
-        throw err;
-      }
-    },
-    onSuccess: (result) => {
-      toast.success(result.message);
-      queryClient.invalidateQueries({
-        queryKey: ["admin-inventory-stock-out", currentPage],
-      });
-    },
-  });
-
-  const deleteStockOut = useMutation({
-    mutationFn: async (id: string) => {
-      const res = await api.delete<DeleteStockOutResponse>(
-        `/admin/inventory/stock/out/${id}`,
-      );
-      if (!res.data.success) throw res.data;
-      return res.data;
-    },
-    onSuccess: (result) => {
-      toast.success(result.message);
-      queryClient.invalidateQueries({
-        queryKey: ["admin-inventory-stock-out", currentPage],
-      });
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
-
-  const handleSubmit = async (data: StockOutFormData) => {
-    if (editTarget) {
-      await updateStockOut.mutateAsync({ id: editTarget.id, ...data });
-      setEditTarget(null);
-    } else {
-      await createStockOut.mutateAsync(data);
-    }
+  const handleUpdate = async (data: UpdateStockInInput & { id: string }) => {
+    await updatePurchase.mutateAsync(data);
+    setEditTarget(null);
   };
 
   const handleDelete = () => {
     if (!deleteTarget) return;
-    deleteStockOut.mutate(deleteTarget.id);
+    deletePurchase.mutate(deleteTarget.id);
     setDeleteTarget(null);
-  };
-
-  const handleClose = () => {
-    setDialogOpen(false);
-    setTimeout(() => setEditTarget(null), 200);
   };
 
   const openCreate = useCallback(() => {
@@ -247,30 +231,35 @@ export function StockOutClient() {
   useAdminEscapeShortcut(
     useCallback(() => {
       if (deleteTarget) setDeleteTarget(null);
-      else if (dialogOpen) handleClose();
-    }, [deleteTarget, dialogOpen, handleClose]),
+      else if (dialogOpen) setDialogOpen(false);
+    }, [deleteTarget, dialogOpen]),
   );
 
   return (
     <AdminPageLayout
-      title="Stock Out"
-      description="Record outgoing inventory and sales."
+      title="Purchase"
+      description="Track all incoming inventory and purchase records."
       maxWidth="wide"
       action={
         <button
           type="button"
-          onClick={openCreate}
+          onClick={() => {
+            openCreate();
+          }}
           className={adminPrimaryButtonClass}
         >
           <Plus size={16} />
-          Add Stock Out
+          Add Purchase
         </button>
       }
     >
       <InventoryTransactionFilters
         search={search}
-        onSearchChange={handleSearchChange}
-        searchPlaceholder="Product name or bill no…"
+        onSearchChange={(v) => {
+          setSearch(v);
+          setCurrentPage(1);
+        }}
+        searchPlaceholder="Product name or invoice no…"
         priceSort={priceSort}
         onPriceSortChange={handlePriceSort}
         pendingFrom={pendingFrom}
@@ -284,40 +273,43 @@ export function StockOutClient() {
       />
 
       {isPending ? (
-        <StockOutLoading />
+        <PurchaseLoading />
       ) : isError || !data ? (
-        <StockOutError
+        <PurchaseError
           error={{ message: error?.message ?? "Failed to load data" }}
           reset={refetch}
         />
-      ) : !data.success ? (
-        <StockOutError
+      ) : !data?.success ? (
+        <PurchaseError
           error={{
             message: data.message ?? "Failed to process request",
           }}
           reset={refetch}
         />
       ) : (
-        <StockOutTable
+        <PurchaseTable
           data={data.data}
-          limit={data.meta.limit}
           total={data.meta.total}
+          limit={data.meta.limit}
           currentPage={currentPage}
           totalPages={data.meta.totalPages}
           onPageChange={setCurrentPage}
           onEdit={(item) => {
-            setEditTarget(item);
             setDialogOpen(true);
+            setEditTarget(item);
           }}
           onDelete={setDeleteTarget}
         />
       )}
 
-      <StockOutDialog
+      <PurchaseDialog
         open={dialogOpen}
-        stockOut={data?.success ? data.data : []}
-        onClose={handleClose}
-        onSubmit={handleSubmit}
+        onClose={() => {
+          setDialogOpen(false);
+          setEditTarget(null);
+        }}
+        onCreate={handleCreate}
+        onUpdate={handleUpdate}
         initialData={editTarget}
       />
 

@@ -3,7 +3,7 @@ import { InventoryTransactionPageSkeleton } from "@/modules/admin/inventory/shar
 export default function Loading() {
   return (
     <InventoryTransactionPageSkeleton
-      title="Stock In"
+      title="Purchase"
       description="Track all incoming inventory and purchase records."
       actionWidth="w-36"
       variant="stock-in-out"

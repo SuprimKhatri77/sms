@@ -2,6 +2,6 @@ import {
   InventoryTransactionTableSkeleton,
 } from "../shared/InventoryTransactionTableSkeleton";
 
-export default function StockInLoading() {
+export default function PurchaseLoading() {
   return <InventoryTransactionTableSkeleton variant="stock-in-out" />;
 }

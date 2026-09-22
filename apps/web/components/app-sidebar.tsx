@@ -103,12 +103,12 @@ const navSections = [
       { title: "Products", url: "/inventory/products", icon: <Package /> },
       {
         title: "Purchase",
-        url: "/inventory/stock-in",
+        url: "/inventory/purchase",
         icon: <ArrowDownToLine />,
       },
       {
         title: "Sales",
-        url: "/inventory/stock-out",
+        url: "/inventory/sales",
         icon: <ArrowUpFromLine />,
       },
       { title: "Wastage", url: "/inventory/wastage", icon: <Trash2 /> },

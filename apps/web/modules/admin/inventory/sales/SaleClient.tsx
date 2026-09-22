@@ -3,21 +3,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Plus } from "lucide-react";
-import { StockInDialog } from "./StockInDialog";
+import { SaleTable } from "./SaleTable";
+import { SaleDialog } from "./SaleDialog";
 import { ConfirmDialog } from "../shared/ConfirmDialog";
-import { StockInTable } from "./StockInTable";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  CreateStockInResponse,
-  DeleteStockInResponse,
-  ListStockInResponse,
-} from "@repo/types";
-import api from "@/lib/axios";
-import StockInLoading from "./StockInLoadingSkeleton";
-import StockInError from "./StockInError";
-import axios from "axios";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useDebounce } from "../../analytics/hooks/useDebounce";
+import { useDebounce } from "@/modules/admin/analytics/hooks/useDebounce";
 import { AdminPageLayout } from "@/components/admin/admin-page-layout";
 import {
   useAdminEscapeShortcut,
@@ -29,16 +18,24 @@ import {
 import { useAdminQueryRefresh } from "@/hooks/useAdminQueryRefresh";
 import { adminPrimaryButtonClass } from "@/components/admin/admin-styles";
 import { InventoryTransactionFilters } from "../shared/InventoryTransactionFilters";
+import {
+  CreateStockOutBatchInput,
+  CreateStockOutBatchResponse,
+  DeleteStockOutResponse,
+  EditStockOutInput,
+  EditStockOutResponse,
+  ListStockOutResponse,
+} from "@repo/types";
+import api from "@/lib/axios";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import SaleLoading from "./SaleLoading";
+import SaleError from "./SaleError";
+import axios from "axios";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-type StockIn = Extract<ListStockInResponse, { success: true }>["data"][number];
-type StockInFormData = Omit<
-  StockIn,
-  "id" | "createdAt" | "productName" | "productUnit" | "updatedAt" | "qty"
-> & {
-  quantity: number;
-};
+type Sale = Extract<ListStockOutResponse, { success: true }>["data"][number];
 
-export function StockInClient() {
+export function SaleClient() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -51,103 +48,15 @@ export function StockInClient() {
   );
   const [pendingTo, setPendingTo] = useState(searchParams.get("to") ?? "");
   const [priceSort, setPriceSort] = useState<"asc" | "desc" | "">(
-    (searchParams.get("sort_by_rate") as "asc" | "desc") ?? "",
+    (searchParams.get("sort") as "asc" | "desc") ?? "",
   );
-  const debouncedSearch = useDebounce(search, 400);
 
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editTarget, setEditTarget] = useState<StockIn | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<StockIn | null>(null);
+  const [editTarget, setEditTarget] = useState<Sale | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Sale | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const queryClient = useQueryClient();
-
-  const { data, isPending, isError, refetch, error } = useQuery({
-    queryKey: [
-      "admin-inventory-stock-in",
-      currentPage,
-      debouncedSearch.trim(),
-      dateFrom,
-      dateTo,
-      priceSort,
-    ],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      params.set("page", currentPage.toString());
-      const trimmedSearch = debouncedSearch.trim();
-      if (trimmedSearch) params.set("search", trimmedSearch);
-      if (dateFrom) params.set("from", dateFrom);
-      if (dateTo) params.set("to", dateTo);
-      if (priceSort) params.set("sort_by_rate", priceSort);
-      const res = await api.get<ListStockInResponse>(
-        `/admin/inventory/stock/in?${params.toString()}`,
-      );
-      return res.data;
-    },
-    staleTime: 10 * 1000 * 60,
-    gcTime: 20 * 60 * 1000,
-  });
-
-  
-  const createStockIn = useMutation({
-    mutationFn: async (data: StockInFormData) => {
-      try {
-        const res = await api.post<CreateStockInResponse>(
-          `/admin/inventory/stock/in`,
-          data,
-        );
-        if (!res.data.success) throw res.data;
-        return res.data;
-      } catch (err) {
-        if (axios.isAxiosError(err)) throw err.response?.data;
-        throw err;
-      }
-    },
-    onSuccess: (result) => {
-      toast.success(result.message);
-      queryClient.invalidateQueries({
-        queryKey: ["admin-inventory-stock-in", currentPage],
-      });
-    },
-  });
-  const updateStockIn = useMutation({
-    mutationFn: async ({ id, ...data }: StockInFormData & { id: string }) => {
-      try {
-        const res = await api.put<CreateStockInResponse>(
-          `/admin/inventory/stock/in/${id}`,
-          data,
-        );
-        if (!res.data.success) throw res.data;
-        return res.data;
-      } catch (err) {
-        if (axios.isAxiosError(err)) throw err.response?.data;
-        throw err;
-      }
-    },
-    onSuccess: (result) => {
-      toast.success(result.message);
-      queryClient.invalidateQueries({
-        queryKey: ["admin-inventory-stock-in", currentPage],
-      });
-    },
-  });
-  const deleteStockIn = useMutation({
-    mutationFn: async (id: string) => {
-      const res = await api.delete<DeleteStockInResponse>(
-        `/admin/inventory/stock/in/${id}`,
-      );
-      if (!res.data.success) throw res.data;
-      return res.data;
-    },
-    onSuccess: (result) => {
-      toast.success(result.message);
-      queryClient.invalidateQueries({
-        queryKey: ["admin-inventory-stock-in", currentPage],
-      });
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
+  const debouncedSearch = useDebounce(search, 400);
 
   const updateParams = useCallback(
     (updates: Record<string, string>) => {
@@ -165,6 +74,12 @@ export function StockInClient() {
   useEffect(() => {
     updateParams({ search: debouncedSearch.trim() });
   }, [debouncedSearch]);
+
+  const handleSearchChange = (value: string) => {
+    if (value.startsWith(" ")) return;
+    setSearch(value);
+    setCurrentPage(1);
+  };
 
   const handleApplyDates = () => {
     setDateFrom(pendingFrom);
@@ -193,19 +108,116 @@ export function StockInClient() {
   const hasActiveFilters = !!search || !!dateFrom || !!dateTo || !!priceSort;
   const hasPendingDateChange = pendingFrom !== dateFrom || pendingTo !== dateTo;
 
-  const handleSubmit = async (data: StockInFormData) => {
-    if (editTarget) {
-      updateStockIn.mutateAsync({ ...data, id: editTarget.id });
-      setEditTarget(null);
-    } else {
-      await createStockIn.mutateAsync(data);
-    }
+  const { data, isPending, isError, refetch, error } = useQuery({
+    queryKey: [
+      "admin-inventory-sale",
+      currentPage,
+      debouncedSearch.trim(),
+      dateFrom,
+      dateTo,
+      priceSort,
+    ],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      params.set("page", currentPage.toString());
+      const trimmedSearch = debouncedSearch.trim();
+      if (trimmedSearch) params.set("search", trimmedSearch);
+      if (dateFrom) params.set("from", dateFrom);
+      if (dateTo) params.set("to", dateTo);
+      if (priceSort) params.set("sort_by_rate", priceSort);
+      const res = await api.get<ListStockOutResponse>(
+        `/admin/inventory/sales?${params.toString()}`,
+      );
+      return res.data;
+    },
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000,
+  });
+
+  const createSale = useMutation({
+    mutationFn: async (data: CreateStockOutBatchInput) => {
+      try {
+        const res = await api.post<CreateStockOutBatchResponse>(
+          `/admin/inventory/sales`,
+          data,
+        );
+        if (!res.data.success) throw res.data;
+        return res.data;
+      } catch (err) {
+        if (axios.isAxiosError(err)) throw err.response?.data;
+        throw err;
+      }
+    },
+    onSuccess: (result) => {
+      toast.success(result.message);
+      queryClient.invalidateQueries({
+        queryKey: ["admin-inventory-sale", currentPage],
+      });
+    },
+  });
+
+  const updateSale = useMutation({
+    mutationFn: async ({
+      id,
+      ...data
+    }: EditStockOutInput & { id: string }) => {
+      try {
+        const res = await api.put<EditStockOutResponse>(
+          `/admin/inventory/sales/${id}`,
+          data,
+        );
+        if (!res.data.success) throw res.data;
+        return res.data;
+      } catch (err) {
+        if (axios.isAxiosError(err)) throw err.response?.data;
+        throw err;
+      }
+    },
+    onSuccess: (result) => {
+      toast.success(result.message);
+      queryClient.invalidateQueries({
+        queryKey: ["admin-inventory-sale", currentPage],
+      });
+    },
+  });
+
+  const deleteSale = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await api.delete<DeleteStockOutResponse>(
+        `/admin/inventory/sales/${id}`,
+      );
+      if (!res.data.success) throw res.data;
+      return res.data;
+    },
+    onSuccess: (result) => {
+      toast.success(result.message);
+      queryClient.invalidateQueries({
+        queryKey: ["admin-inventory-sale", currentPage],
+      });
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const handleCreate = async (data: CreateStockOutBatchInput) => {
+    await createSale.mutateAsync(data);
+  };
+
+  const handleUpdate = async (data: EditStockOutInput & { id: string }) => {
+    await updateSale.mutateAsync(data);
+    setEditTarget(null);
   };
 
   const handleDelete = () => {
     if (!deleteTarget) return;
-    deleteStockIn.mutate(deleteTarget.id);
+    deleteSale.mutate(deleteTarget.id);
     setDeleteTarget(null);
+  };
+
+  const handleClose = () => {
+    setDialogOpen(false);
+    setTimeout(() => setEditTarget(null), 200);
   };
 
   const openCreate = useCallback(() => {
@@ -229,35 +241,30 @@ export function StockInClient() {
   useAdminEscapeShortcut(
     useCallback(() => {
       if (deleteTarget) setDeleteTarget(null);
-      else if (dialogOpen) setDialogOpen(false);
-    }, [deleteTarget, dialogOpen]),
+      else if (dialogOpen) handleClose();
+    }, [deleteTarget, dialogOpen, handleClose]),
   );
 
   return (
     <AdminPageLayout
-      title="Stock In"
-      description="Track all incoming inventory and purchase records."
+      title="Sales"
+      description="Record outgoing inventory and sales."
       maxWidth="wide"
       action={
         <button
           type="button"
-          onClick={() => {
-            openCreate();
-          }}
+          onClick={openCreate}
           className={adminPrimaryButtonClass}
         >
           <Plus size={16} />
-          Add Stock In
+          Add Sale
         </button>
       }
     >
       <InventoryTransactionFilters
         search={search}
-        onSearchChange={(v) => {
-          setSearch(v);
-          setCurrentPage(1);
-        }}
-        searchPlaceholder="Product name or invoice no…"
+        onSearchChange={handleSearchChange}
+        searchPlaceholder="Product name or bill no…"
         priceSort={priceSort}
         onPriceSortChange={handlePriceSort}
         pendingFrom={pendingFrom}
@@ -271,42 +278,40 @@ export function StockInClient() {
       />
 
       {isPending ? (
-        <StockInLoading />
+        <SaleLoading />
       ) : isError || !data ? (
-        <StockInError
+        <SaleError
           error={{ message: error?.message ?? "Failed to load data" }}
           reset={refetch}
         />
-      ) : !data?.success ? (
-        <StockInError
+      ) : !data.success ? (
+        <SaleError
           error={{
             message: data.message ?? "Failed to process request",
           }}
           reset={refetch}
         />
       ) : (
-        <StockInTable
+        <SaleTable
           data={data.data}
-          total={data.meta.total}
           limit={data.meta.limit}
+          total={data.meta.total}
           currentPage={currentPage}
           totalPages={data.meta.totalPages}
           onPageChange={setCurrentPage}
           onEdit={(item) => {
-            setDialogOpen(true);
             setEditTarget(item);
+            setDialogOpen(true);
           }}
           onDelete={setDeleteTarget}
         />
       )}
 
-      <StockInDialog
+      <SaleDialog
         open={dialogOpen}
-        onClose={() => {
-          setDialogOpen(false);
-          setEditTarget(null);
-        }}
-        onSubmit={handleSubmit}
+        onClose={handleClose}
+        onCreate={handleCreate}
+        onUpdate={handleUpdate}
         initialData={editTarget}
       />
 

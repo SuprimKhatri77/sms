@@ -88,24 +88,33 @@ const bsDateSchema = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/, "BS date must be in YYYY-MM-DD format");
 
-export const createStockInSchema = z.object({
+export const stockInLineItemSchema = z.object({
   productID: z.uuid(),
-  supplierID: z.uuid({ error: "Supplier is required" }),
   quantity: z.number().min(1),
   rate: z.number().gt(0),
+});
+
+export const updateStockInSchema = stockInLineItemSchema.extend({
   date: adDateSchema,
-  bsDate: bsDateSchema,
   note: optionalString,
   invoiceNo: optionalString,
 });
 
-export const updateStockInSchema = createStockInSchema.omit({
-  supplierID: true,
-  bsDate: true,
+export const createStockInBatchSchema = z.object({
+  supplierID: z.uuid({ error: "Supplier is required" }),
+  date: adDateSchema,
+  bsDate: bsDateSchema,
+  note: optionalString,
+  invoiceNo: optionalString,
+  items: z
+    .array(stockInLineItemSchema)
+    .min(1, "Add at least one item")
+    .max(100),
 });
 
-export type CreateStockInInput = z.infer<typeof createStockInSchema>;
+export type StockInLineItemInput = z.infer<typeof stockInLineItemSchema>;
 export type UpdateStockInInput = z.infer<typeof updateStockInSchema>;
+export type CreateStockInBatchInput = z.infer<typeof createStockInBatchSchema>;
 
 const stockInSchema = z.object({
   id: z.uuid(),
@@ -118,7 +127,25 @@ const stockInSchema = z.object({
   createdAt: z.date(),
   updatedAt: z.date(),
 });
-export const createStockInResponse = z.discriminatedUnion("success", [
+export const createStockInBatchResponse = z.discriminatedUnion("success", [
+  z.object({
+    success: z.literal(true),
+    message: z.string(),
+    data: z.array(stockInSchema),
+  }),
+  z.object({
+    success: z.literal(false),
+    message: z.string(),
+    errors: z.array(errorResponse).optional(),
+    code: z.string(),
+  }),
+]);
+
+export type CreateStockInBatchResponse = z.infer<
+  typeof createStockInBatchResponse
+>;
+
+export const updateStockInResponse = z.discriminatedUnion("success", [
   z.object({
     success: z.literal(true),
     message: z.string(),
@@ -132,7 +159,7 @@ export const createStockInResponse = z.discriminatedUnion("success", [
   }),
 ]);
 
-export type CreateStockInResponse = z.infer<typeof createStockInResponse>;
+export type UpdateStockInResponse = z.infer<typeof updateStockInResponse>;
 
 export const listStockInResponse = z.discriminatedUnion("success", [
   z.object({
@@ -209,10 +236,14 @@ export const listStockOutResponse = z.discriminatedUnion("success", [
 
 export type ListStockOutResponse = z.infer<typeof listStockOutResponse>;
 
-export const createStockOutSchema = z.object({
+export const stockOutLineItemSchema = z.object({
   productID: z.uuid(),
-  rate: z.number().gt(0),
   quantity: z.number().min(1),
+  rate: z.number().gt(0),
+});
+export type StockOutLineItemInput = z.infer<typeof stockOutLineItemSchema>;
+
+export const createStockOutBatchSchema = z.object({
   date: z
     .string()
     .regex(
@@ -221,14 +252,20 @@ export const createStockOutSchema = z.object({
     ),
   note: z.string().optional(),
   billNo: z.string().optional(),
+  items: z
+    .array(stockOutLineItemSchema)
+    .min(1, "Add at least one item")
+    .max(100),
 });
-export type CreateStockOutInput = z.infer<typeof createStockOutSchema>;
+export type CreateStockOutBatchInput = z.infer<
+  typeof createStockOutBatchSchema
+>;
 
-export const createStockOutResponse = z.discriminatedUnion("success", [
+export const createStockOutBatchResponse = z.discriminatedUnion("success", [
   z.object({
     success: z.literal(true),
     message: z.string(),
-    data: stockOutSchema,
+    data: z.array(stockOutSchema),
   }),
   z.object({
     success: z.literal(false),
@@ -238,12 +275,11 @@ export const createStockOutResponse = z.discriminatedUnion("success", [
   }),
 ]);
 
-export type CreateStockOutResponse = z.infer<typeof createStockOutResponse>;
+export type CreateStockOutBatchResponse = z.infer<
+  typeof createStockOutBatchResponse
+>;
 
-export const editStockOutSchema = z.object({
-  productID: z.uuid(),
-  rate: z.number().gt(0),
-  quantity: z.number().min(1),
+export const editStockOutSchema = stockOutLineItemSchema.extend({
   date: z
     .string()
     .regex(
@@ -319,10 +355,14 @@ export const listWastageResponse = z.discriminatedUnion("success", [
 
 export type ListWastageResponse = z.infer<typeof listWastageResponse>;
 
-export const createWastageSchema = z.object({
+export const wastageLineItemSchema = z.object({
   productID: z.uuid(),
   quantity: z.number().min(1),
   rate: z.number().gt(0),
+});
+export type WastageLineItemInput = z.infer<typeof wastageLineItemSchema>;
+
+export const createWastageBatchSchema = z.object({
   date: z
     .string()
     .regex(
@@ -330,15 +370,19 @@ export const createWastageSchema = z.object({
       "Date must be in YYYY-MM-DD format",
     ),
   reason: z.string().optional(),
+  items: z
+    .array(wastageLineItemSchema)
+    .min(1, "Add at least one item")
+    .max(100),
 });
 
-export type CreateWastageInput = z.infer<typeof createWastageSchema>;
+export type CreateWastageBatchInput = z.infer<typeof createWastageBatchSchema>;
 
-export const createWastageResponse = z.discriminatedUnion("success", [
+export const createWastageBatchResponse = z.discriminatedUnion("success", [
   z.object({
     success: z.literal(true),
     message: z.string(),
-    data: wastageRecordSchema,
+    data: z.array(wastageRecordSchema),
   }),
   z.object({
     success: z.literal(false),
@@ -348,7 +392,9 @@ export const createWastageResponse = z.discriminatedUnion("success", [
   }),
 ]);
 
-export type CreateWastageResponse = z.infer<typeof createWastageResponse>;
+export type CreateWastageBatchResponse = z.infer<
+  typeof createWastageBatchResponse
+>;
 
 export const deleteWastageResponseSchema = z.discriminatedUnion("success", [
   z.object({
@@ -364,10 +410,7 @@ export const deleteWastageResponseSchema = z.discriminatedUnion("success", [
 
 export type DeleteWastageResponse = z.infer<typeof deleteWastageResponseSchema>;
 
-export const editWastageSchema = z.object({
-  productID: z.uuid(),
-  quantity: z.number().min(1),
-  rate: z.number().gt(0),
+export const editWastageSchema = wastageLineItemSchema.extend({
   date: z
     .string()
     .regex(
