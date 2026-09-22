@@ -42,3 +42,8 @@ yarn-error.log*
 
 
 *.md
+!CLAUDE.md
+
+# Claude Code local rules and per-ticket work logs
+CLAUDE.local.md
+/ticket-logs/
