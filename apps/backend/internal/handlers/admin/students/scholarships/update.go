@@ -140,7 +140,7 @@ func UpdateScholarship(queries repository.StudentsScholarship) gin.HandlerFunc {
 			return
 		}
 
-		newScholarshipAmount := remainingBalance * int64(req.Percent) / 100
+		newScholarshipAmount := utils.PercentToAmount(remainingBalance, req.Percent)
 
 		percent, err := utils.ToNumeric(req.Percent)
 		if err != nil {

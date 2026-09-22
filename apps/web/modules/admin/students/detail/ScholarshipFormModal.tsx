@@ -47,10 +47,11 @@ export function ScholarshipFormModal({
   const isEdit = !!initial;
 
   const handleSubmit = async () => {
-    const validate = studentScholarshipMutationSchema.safeParse({
-      ...form,
+    const payload = {
       percent: Number(form.percent),
-    });
+      note: form.note || undefined,
+    };
+    const validate = studentScholarshipMutationSchema.safeParse(payload);
     if (!validate.success) {
       const tree = z.treeifyError(validate.error).properties;
       setErrors({
@@ -60,7 +61,7 @@ export function ScholarshipFormModal({
       return;
     }
     try {
-      await onSubmit({ ...form, percent: Number(form.percent) });
+      await onSubmit(payload);
     } catch (err) {
       const error = err as APIError;
       if (error.errors?.length) {

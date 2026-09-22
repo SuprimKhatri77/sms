@@ -18,7 +18,8 @@ import (
 type CreateDiscountRequest struct {
 	Type    string  `json:"type" binding:"required,min=1,max=50"`
 	Note    string  `json:"note" binding:"omitempty,min=1,max=100"`
-	Percent float64 `json:"percent" binding:"required,gt=0"`
+	Percent float64 `json:"percent" binding:"omitempty,gt=0,lte=100"`
+	Amount  float64 `json:"amount" binding:"omitempty,gt=0"`
 }
 
 func CreateDiscount(queries repository.StudentDiscounts) gin.HandlerFunc {
@@ -69,6 +70,17 @@ func CreateDiscount(queries repository.StudentDiscounts) gin.HandlerFunc {
 
 		utils.TrimStruct(&req)
 
+		hasPercent := req.Percent > 0
+		hasAmount := req.Amount > 0
+		if hasPercent == hasAmount {
+			c.JSON(http.StatusBadRequest, types.APIResponse{
+				Success: false,
+				Message: "Provide either a percent or a flat amount, not both",
+				Code:    constants.ValidationFailed,
+			})
+			return
+		}
+
 		summary, err := queries.GetStudentFeeSummary(ctx, studentID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, types.APIResponse{
@@ -112,7 +124,24 @@ func CreateDiscount(queries repository.StudentDiscounts) gin.HandlerFunc {
 			return
 		}
 
-		newDiscountAmount := remainingBalance * int64(req.Percent) / 100
+		var newDiscountAmount int64
+		var percentValue float64
+		if hasPercent {
+			newDiscountAmount = utils.PercentToAmount(remainingBalance, req.Percent)
+			percentValue = req.Percent
+		} else {
+			newDiscountAmount = utils.RupeesToPaisa(req.Amount)
+			if newDiscountAmount > remainingBalance {
+				c.JSON(http.StatusBadRequest, types.APIResponse{
+					Success: false,
+					Message: "Discount exceeds outstanding balance",
+					Code:    constants.ValidationFailed,
+				})
+				return
+			}
+			percentValue = utils.AmountToPercent(remainingBalance, newDiscountAmount)
+		}
+
 		if alreadyCovered+newDiscountAmount > effectiveFee {
 			c.JSON(http.StatusBadRequest, types.APIResponse{
 				Success: false,
@@ -122,7 +151,7 @@ func CreateDiscount(queries repository.StudentDiscounts) gin.HandlerFunc {
 			return
 		}
 
-		percent, err := utils.ToNumeric(req.Percent)
+		percent, err := utils.ToNumeric(percentValue)
 		if err != nil {
 			slog.Error("failed to convert percent",
 				"error", err,

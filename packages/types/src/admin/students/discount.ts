@@ -10,7 +10,7 @@ const studentDiscountSchema = z.object({
   createdAt: z.date(),
 });
 
-export const studentDiscountMutationSchema = z.object({
+const discountBaseFields = {
   type: z
     .string({ error: "Discount type is required" })
     .trim()
@@ -23,12 +23,29 @@ export const studentDiscountMutationSchema = z.object({
     .min(1, { error: "Note cannot be empty" })
     .max(100, { error: "Note cannot exceed 100 characters" })
     .optional(),
+};
 
+const percentModeDiscountSchema = z.object({
+  mode: z.literal("percent"),
+  ...discountBaseFields,
   percent: z.coerce
     .number({ error: "Discount percentage is required" })
     .gt(0, { error: "Discount percentage must be greater than 0" })
     .lte(100, { error: "Discount percentage cannot exceed 100" }),
 });
+
+const amountModeDiscountSchema = z.object({
+  mode: z.literal("amount"),
+  ...discountBaseFields,
+  amount: z.coerce
+    .number({ error: "Discount amount is required" })
+    .gt(0, { error: "Discount amount must be greater than 0" }),
+});
+
+export const studentDiscountMutationSchema = z.discriminatedUnion("mode", [
+  percentModeDiscountSchema,
+  amountModeDiscountSchema,
+]);
 
 export type StudentDiscountMutationInput = z.infer<
   typeof studentDiscountMutationSchema
