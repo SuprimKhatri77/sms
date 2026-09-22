@@ -458,6 +458,7 @@ const studentDiscountSchema = z.object({
   amount: z.number(),
   createdAt: z.date(),
   addedByName: z.string(),
+  mode: z.enum(["percent", "amount"]),
 });
 
 export const studentDiscountResponseSchema = z.discriminatedUnion("success", [

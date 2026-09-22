@@ -6,5 +6,6 @@ CREATE TABLE student_discounts (
     percent NUMERIC(5,2) NOT NULL CHECK (percent > 0 AND percent <= 100),
     note TEXT,
     amount BIGINT NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    mode TEXT NOT NULL DEFAULT 'percent' CHECK (mode IN ('percent', 'amount'))
 );

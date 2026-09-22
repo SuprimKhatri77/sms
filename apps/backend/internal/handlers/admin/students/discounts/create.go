@@ -18,7 +18,8 @@ import (
 type CreateDiscountRequest struct {
 	Type    string  `json:"type" binding:"required,min=1,max=50"`
 	Note    string  `json:"note" binding:"omitempty,min=1,max=100"`
-	Percent float64 `json:"percent" binding:"required,gt=0"`
+	Percent float64 `json:"percent" binding:"omitempty,gte=0.01,lte=100"`
+	Amount  float64 `json:"amount" binding:"omitempty,gt=0,lte=10000000"`
 }
 
 func CreateDiscount(queries repository.StudentDiscounts) gin.HandlerFunc {
@@ -69,6 +70,22 @@ func CreateDiscount(queries repository.StudentDiscounts) gin.HandlerFunc {
 
 		utils.TrimStruct(&req)
 
+		hasPercent := req.Percent > 0
+		hasAmount := req.Amount > 0
+		if hasPercent == hasAmount {
+			c.JSON(http.StatusBadRequest, types.APIResponse{
+				Success: false,
+				Message: "Provide either a percent or a flat amount, not both",
+				Code:    constants.ValidationFailed,
+			})
+			return
+		}
+
+		mode := "percent"
+		if !hasPercent {
+			mode = "amount"
+		}
+
 		summary, err := queries.GetStudentFeeSummary(ctx, studentID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, types.APIResponse{
@@ -112,8 +129,19 @@ func CreateDiscount(queries repository.StudentDiscounts) gin.HandlerFunc {
 			return
 		}
 
-		newDiscountAmount := remainingBalance * int64(req.Percent) / 100
-		if alreadyCovered+newDiscountAmount > effectiveFee {
+		var newDiscountAmount int64
+		var percentValue float64
+		if hasPercent {
+			newDiscountAmount = utils.PercentToAmount(remainingBalance, req.Percent)
+			percentValue = req.Percent
+		} else {
+			newDiscountAmount = utils.RupeesToPaisa(req.Amount)
+			percentValue = utils.AmountToPercent(remainingBalance, newDiscountAmount)
+		}
+
+		// remainingBalance is already the room left for this discount alone,
+		// so this single check covers both percent- and amount-mode.
+		if newDiscountAmount > remainingBalance {
 			c.JSON(http.StatusBadRequest, types.APIResponse{
 				Success: false,
 				Message: "Discount exceeds outstanding balance",
@@ -122,7 +150,7 @@ func CreateDiscount(queries repository.StudentDiscounts) gin.HandlerFunc {
 			return
 		}
 
-		percent, err := utils.ToNumeric(req.Percent)
+		percent, err := utils.ToNumeric(percentValue)
 		if err != nil {
 			slog.Error("failed to convert percent",
 				"error", err,
@@ -144,6 +172,7 @@ func CreateDiscount(queries repository.StudentDiscounts) gin.HandlerFunc {
 			Percent:   percent,
 			Amount:    newDiscountAmount,
 			AddedBy:   adminID,
+			Mode:      mode,
 		})
 
 		if err != nil {

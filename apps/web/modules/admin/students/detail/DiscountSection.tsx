@@ -44,10 +44,20 @@ type Props = {
   balanceDue: number;
 };
 
-type CreateStudentDiscountPayload = StudentDiscountMutationInput & {
+type DistributiveOmit<T, K extends PropertyKey> = T extends unknown
+  ? Omit<T, K>
+  : never;
+
+type CreateStudentDiscountPayload = DistributiveOmit<
+  StudentDiscountMutationInput,
+  "mode"
+> & {
   studentID: string;
 };
-type UpdateStudentDiscountPayload = StudentDiscountMutationInput & {
+type UpdateStudentDiscountPayload = DistributiveOmit<
+  StudentDiscountMutationInput,
+  "mode"
+> & {
   studentID: string;
 };
 export function DiscountSection({
@@ -161,12 +171,20 @@ export function DiscountSection({
   };
 
   const handleAdd = async (data: CreateStudentDiscountRequest) => {
-    await addDiscount.mutateAsync({ ...data, studentID: studentID });
+    const payload =
+      data.mode === "percent"
+        ? { type: data.type, note: data.note, percent: data.percent }
+        : { type: data.type, note: data.note, amount: data.amount };
+    await addDiscount.mutateAsync({ ...payload, studentID: studentID });
   };
 
   const handleEdit = async (data: UpdateStudentDiscountRequest) => {
     if (!editTarget) return;
-    await updateDiscount.mutateAsync({ ...data, studentID: studentID });
+    const payload =
+      data.mode === "percent"
+        ? { type: data.type, note: data.note, percent: data.percent }
+        : { type: data.type, note: data.note, amount: data.amount };
+    await updateDiscount.mutateAsync({ ...payload, studentID: studentID });
   };
 
   const actionsAllowed = canPerformStudentActions(currentStatus);
@@ -208,6 +226,7 @@ export function DiscountSection({
       )}
       {showAddModal && (
         <DiscountFormModal
+          balanceDue={balanceDue}
           onSubmit={handleAdd}
           isPending={addDiscount.isPending}
           onCancel={() => setShowAddModal(false)}
@@ -217,9 +236,12 @@ export function DiscountSection({
         <DiscountFormModal
           initial={{
             type: editTarget.type,
+            mode: editTarget.mode,
             percent: Number(editTarget.percent),
+            amount: editTarget.amount,
             note: editTarget.note ?? "",
           }}
+          balanceDue={balanceDue + editTarget.amount / 100}
           isPending={updateDiscount.isPending}
           onSubmit={handleEdit}
           onCancel={() => setEditTarget(null)}

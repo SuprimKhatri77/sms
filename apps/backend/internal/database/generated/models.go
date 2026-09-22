@@ -175,6 +175,7 @@ type StudentDiscount struct {
 	Note      pgtype.Text        `json:"note"`
 	Amount    int64              `json:"amount"`
 	CreatedAt pgtype.Timestamptz `json:"createdAt"`
+	Mode      string             `json:"mode"`
 }
 
 type StudentScholarship struct {
