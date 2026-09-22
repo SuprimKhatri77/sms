@@ -31,7 +31,7 @@ type PaymentRowProps = {
   payment: {
     id: string | number;
     amount: number;
-    addedAt: string;
+    date: string;
     remarks?: string | null;
     addedByName?: string;
     paymentMode?: string | null;
@@ -137,10 +137,10 @@ export function MiddleColumn({
                     payment={{
                       id: p.id,
                       amount: p.amount,
-                      addedAt:
-                        p.addedAt instanceof Date
-                          ? p.addedAt.toISOString()
-                          : String(p.addedAt),
+                      date:
+                        p.date instanceof Date
+                          ? p.date.toISOString()
+                          : String(p.date),
                       remarks: p.remarks,
                       addedByName: p.addedByName,
                       paymentMode: p.paymentMode,

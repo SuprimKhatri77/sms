@@ -147,7 +147,7 @@ export function StudentPaymentsView() {
                     ["Amount", formatNpr(payment.amount / 100)],
                     ["Mode", payment.paymentMode],
                     ["Remarks", payment.remarks?.trim() || "—"],
-                    ["Date", formatFinanceDate(payment.addedAt)],
+                    ["Date", formatFinanceDate(payment.date)],
                   ].map(([label, value]) => (
                     <div
                       key={label as string}

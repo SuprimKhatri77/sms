@@ -12,17 +12,19 @@ import (
 )
 
 const addPayment = `-- name: AddPayment :one
-INSERT INTO payments (student_id, amount, added_by, remarks, payment_mode)
-VALUES ($1, $2, $3, $4, $5)
-RETURNING id, student_id, amount, added_by, added_at, remarks, payment_mode
+INSERT INTO payments (student_id, amount, added_by, remarks, payment_mode, date, bs_date)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
+RETURNING id, student_id, amount, added_by, added_at, date, bs_date, remarks, payment_mode
 `
 
 type AddPaymentParams struct {
-	StudentID   pgtype.UUID `json:"studentId"`
-	Amount      int32       `json:"amount"`
-	AddedBy     pgtype.UUID `json:"addedBy"`
-	Remarks     pgtype.Text `json:"remarks"`
-	PaymentMode string      `json:"paymentMode"`
+	StudentID   pgtype.UUID        `json:"studentId"`
+	Amount      int32              `json:"amount"`
+	AddedBy     pgtype.UUID        `json:"addedBy"`
+	Remarks     pgtype.Text        `json:"remarks"`
+	PaymentMode string             `json:"paymentMode"`
+	Date        pgtype.Timestamptz `json:"date"`
+	BsDate      pgtype.Text        `json:"bsDate"`
 }
 
 func (q *Queries) AddPayment(ctx context.Context, arg AddPaymentParams) (Payment, error) {
@@ -32,6 +34,8 @@ func (q *Queries) AddPayment(ctx context.Context, arg AddPaymentParams) (Payment
 		arg.AddedBy,
 		arg.Remarks,
 		arg.PaymentMode,
+		arg.Date,
+		arg.BsDate,
 	)
 	var i Payment
 	err := row.Scan(
@@ -40,6 +44,8 @@ func (q *Queries) AddPayment(ctx context.Context, arg AddPaymentParams) (Payment
 		&i.Amount,
 		&i.AddedBy,
 		&i.AddedAt,
+		&i.Date,
+		&i.BsDate,
 		&i.Remarks,
 		&i.PaymentMode,
 	)
@@ -68,7 +74,9 @@ SELECT
     p.payment_mode,
     p.remarks,
     p.added_by,
-    p.added_at
+    p.added_at,
+    COALESCE(p.date, p.added_at)::TIMESTAMPTZ AS date,
+    p.bs_date
 FROM students s
 JOIN users u ON u.id = s.student_id
 JOIN payments p ON p.student_id = s.id
@@ -78,9 +86,9 @@ WHERE
         OR u.email ILIKE '%' || $3::TEXT || '%'
         OR s.phone ILIKE '%' || $3::TEXT || '%'
         OR s.reference_no ILIKE '%' || $3::TEXT || '%')
-    AND ($4::TEXT IS NULL OR p.added_at >= $4::TIMESTAMPTZ)
-    AND ($5::TEXT IS NULL OR p.added_at <= ($5::TIMESTAMPTZ + INTERVAL '1 day'))
-ORDER BY p.added_at DESC
+    AND ($4::TEXT IS NULL OR COALESCE(p.date, p.added_at) >= $4::TIMESTAMPTZ)
+    AND ($5::TEXT IS NULL OR COALESCE(p.date, p.added_at) <= ($5::TIMESTAMPTZ + INTERVAL '1 day'))
+ORDER BY COALESCE(p.date, p.added_at) DESC, p.id DESC
 LIMIT $1 OFFSET $2
 `
 
@@ -105,6 +113,8 @@ type GetAllPaymentsRow struct {
 	Remarks     pgtype.Text        `json:"remarks"`
 	AddedBy     pgtype.UUID        `json:"addedBy"`
 	AddedAt     pgtype.Timestamptz `json:"addedAt"`
+	Date        pgtype.Timestamptz `json:"date"`
+	BsDate      pgtype.Text        `json:"bsDate"`
 }
 
 func (q *Queries) GetAllPayments(ctx context.Context, arg GetAllPaymentsParams) ([]GetAllPaymentsRow, error) {
@@ -135,6 +145,8 @@ func (q *Queries) GetAllPayments(ctx context.Context, arg GetAllPaymentsParams) 
 			&i.Remarks,
 			&i.AddedBy,
 			&i.AddedAt,
+			&i.Date,
+			&i.BsDate,
 		); err != nil {
 			return nil, err
 		}
@@ -157,8 +169,8 @@ WHERE
         OR u.email ILIKE '%' || $1::TEXT || '%'
         OR s.phone ILIKE '%' || $1::TEXT || '%'
         OR s.reference_no ILIKE '%' || $1::TEXT || '%')
-    AND ($2::TEXT IS NULL OR p.added_at >= $2::TIMESTAMPTZ)
-    AND ($3::TEXT IS NULL OR p.added_at <= ($3::TIMESTAMPTZ + INTERVAL '1 day'))
+    AND ($2::TEXT IS NULL OR COALESCE(p.date, p.added_at) >= $2::TIMESTAMPTZ)
+    AND ($3::TEXT IS NULL OR COALESCE(p.date, p.added_at) <= ($3::TIMESTAMPTZ + INTERVAL '1 day'))
 `
 
 type GetAllPaymentsCountParams struct {
@@ -185,8 +197,8 @@ WHERE
         OR u.email ILIKE '%' || $1::TEXT || '%'
         OR s.phone ILIKE '%' || $1::TEXT || '%'
         OR s.reference_no ILIKE '%' || $1::TEXT || '%')
-    AND ($2::TEXT IS NULL OR p.added_at >= $2::TIMESTAMPTZ)
-    AND ($3::TEXT IS NULL OR p.added_at <= ($3::TIMESTAMPTZ + INTERVAL '1 day'))
+    AND ($2::TEXT IS NULL OR COALESCE(p.date, p.added_at) >= $2::TIMESTAMPTZ)
+    AND ($3::TEXT IS NULL OR COALESCE(p.date, p.added_at) <= ($3::TIMESTAMPTZ + INTERVAL '1 day'))
 `
 
 type GetAllPaymentsTotalParams struct {
@@ -203,11 +215,21 @@ func (q *Queries) GetAllPaymentsTotal(ctx context.Context, arg GetAllPaymentsTot
 }
 
 const getPaymentsByStudent = `-- name: GetPaymentsByStudent :many
-SELECT p.id, p.student_id, p.amount, p.added_by, p.added_at, p.remarks, p.payment_mode, a.name AS added_by_name
+SELECT
+    p.id,
+    p.student_id,
+    p.amount,
+    p.added_by,
+    p.added_at,
+    COALESCE(p.date, p.added_at)::TIMESTAMPTZ AS date,
+    p.bs_date,
+    p.remarks,
+    p.payment_mode,
+    a.name AS added_by_name
 FROM payments p
 JOIN users a ON a.id = p.added_by
 WHERE p.student_id = $1
-ORDER BY p.added_at ASC
+ORDER BY COALESCE(p.date, p.added_at) ASC
 `
 
 type GetPaymentsByStudentRow struct {
@@ -216,6 +238,8 @@ type GetPaymentsByStudentRow struct {
 	Amount      int32              `json:"amount"`
 	AddedBy     pgtype.UUID        `json:"addedBy"`
 	AddedAt     pgtype.Timestamptz `json:"addedAt"`
+	Date        pgtype.Timestamptz `json:"date"`
+	BsDate      pgtype.Text        `json:"bsDate"`
 	Remarks     pgtype.Text        `json:"remarks"`
 	PaymentMode string             `json:"paymentMode"`
 	AddedByName string             `json:"addedByName"`
@@ -236,6 +260,8 @@ func (q *Queries) GetPaymentsByStudent(ctx context.Context, studentID pgtype.UUI
 			&i.Amount,
 			&i.AddedBy,
 			&i.AddedAt,
+			&i.Date,
+			&i.BsDate,
 			&i.Remarks,
 			&i.PaymentMode,
 			&i.AddedByName,
@@ -251,13 +277,15 @@ func (q *Queries) GetPaymentsByStudent(ctx context.Context, studentID pgtype.UUI
 }
 
 const getStudentPayments = `-- name: GetStudentPayments :many
-SELECT 
+SELECT
 p.id,
 p.amount,
 p.payment_mode,
 p.remarks,
-p.added_at
-FROM payments p WHERE p.student_id = $1 ORDER BY p.added_at ASC
+p.added_at,
+COALESCE(p.date, p.added_at)::TIMESTAMPTZ AS date,
+p.bs_date
+FROM payments p WHERE p.student_id = $1 ORDER BY COALESCE(p.date, p.added_at) ASC
 `
 
 type GetStudentPaymentsRow struct {
@@ -266,6 +294,8 @@ type GetStudentPaymentsRow struct {
 	PaymentMode string             `json:"paymentMode"`
 	Remarks     pgtype.Text        `json:"remarks"`
 	AddedAt     pgtype.Timestamptz `json:"addedAt"`
+	Date        pgtype.Timestamptz `json:"date"`
+	BsDate      pgtype.Text        `json:"bsDate"`
 }
 
 func (q *Queries) GetStudentPayments(ctx context.Context, studentID pgtype.UUID) ([]GetStudentPaymentsRow, error) {
@@ -283,6 +313,8 @@ func (q *Queries) GetStudentPayments(ctx context.Context, studentID pgtype.UUID)
 			&i.PaymentMode,
 			&i.Remarks,
 			&i.AddedAt,
+			&i.Date,
+			&i.BsDate,
 		); err != nil {
 			return nil, err
 		}

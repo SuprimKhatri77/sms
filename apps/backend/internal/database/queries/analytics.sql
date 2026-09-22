@@ -5,8 +5,8 @@ SELECT
     (
         SELECT COALESCE(SUM(amount), 0)::BIGINT
         FROM payments p
-        WHERE (sqlc.narg('from')::TEXT IS NULL OR p.added_at >= sqlc.narg('from')::TIMESTAMPTZ)
-          AND (sqlc.narg('to')::TEXT IS NULL OR p.added_at < (sqlc.narg('to')::TIMESTAMPTZ + INTERVAL '1 day'))
+        WHERE (sqlc.narg('from')::TEXT IS NULL OR COALESCE(p.date, p.added_at) >= sqlc.narg('from')::TIMESTAMPTZ)
+          AND (sqlc.narg('to')::TEXT IS NULL OR COALESCE(p.date, p.added_at) < (sqlc.narg('to')::TIMESTAMPTZ + INTERVAL '1 day'))
     ) AS total_revenue,
     (
         SELECT COALESCE(SUM(amount), 0)::BIGINT
@@ -49,13 +49,13 @@ WHERE (sqlc.narg('from')::TEXT IS NULL OR s.created_at >= sqlc.narg('from')::TIM
 
 -- name: GetMonthlyRevenue :many
 SELECT
-    TO_CHAR(DATE_TRUNC('month', p.added_at), 'Month') AS month,
+    TO_CHAR(DATE_TRUNC('month', COALESCE(p.date, p.added_at)), 'Month') AS month,
     COALESCE(SUM(p.amount), 0)::INTEGER AS amount
 FROM payments p
-WHERE (sqlc.narg('from')::TEXT IS NULL OR p.added_at >= sqlc.narg('from')::TIMESTAMPTZ)
-  AND (sqlc.narg('to')::TEXT IS NULL OR p.added_at < (sqlc.narg('to')::TIMESTAMPTZ + INTERVAL '1 day'))
-GROUP BY DATE_TRUNC('month', p.added_at)
-ORDER BY DATE_TRUNC('month', p.added_at);
+WHERE (sqlc.narg('from')::TEXT IS NULL OR COALESCE(p.date, p.added_at) >= sqlc.narg('from')::TIMESTAMPTZ)
+  AND (sqlc.narg('to')::TEXT IS NULL OR COALESCE(p.date, p.added_at) < (sqlc.narg('to')::TIMESTAMPTZ + INTERVAL '1 day'))
+GROUP BY DATE_TRUNC('month', COALESCE(p.date, p.added_at))
+ORDER BY DATE_TRUNC('month', COALESCE(p.date, p.added_at));
 
 -- name: GetMonthlyAdmissions :many
 SELECT
@@ -120,14 +120,14 @@ ORDER BY DATE_TRUNC('month', created_at);
 -- name: GetRevenueStats :one
 SELECT
     COALESCE(SUM(p.amount) FILTER (
-        WHERE DATE_TRUNC('month', p.added_at) = DATE_TRUNC('month', NOW())
-          AND (sqlc.narg('from')::TEXT IS NULL OR p.added_at >= sqlc.narg('from')::TIMESTAMPTZ)
-          AND (sqlc.narg('to')::TEXT IS NULL OR p.added_at < (sqlc.narg('to')::TIMESTAMPTZ + INTERVAL '1 day'))
+        WHERE DATE_TRUNC('month', COALESCE(p.date, p.added_at)) = DATE_TRUNC('month', NOW())
+          AND (sqlc.narg('from')::TEXT IS NULL OR COALESCE(p.date, p.added_at) >= sqlc.narg('from')::TIMESTAMPTZ)
+          AND (sqlc.narg('to')::TEXT IS NULL OR COALESCE(p.date, p.added_at) < (sqlc.narg('to')::TIMESTAMPTZ + INTERVAL '1 day'))
     ), 0)::INTEGER AS this_month,
     COALESCE(SUM(p.amount) FILTER (
-        WHERE DATE_TRUNC('month', p.added_at) = DATE_TRUNC('month', NOW() - INTERVAL '1 month')
-          AND (sqlc.narg('from')::TEXT IS NULL OR p.added_at >= sqlc.narg('from')::TIMESTAMPTZ)
-          AND (sqlc.narg('to')::TEXT IS NULL OR p.added_at < (sqlc.narg('to')::TIMESTAMPTZ + INTERVAL '1 day'))
+        WHERE DATE_TRUNC('month', COALESCE(p.date, p.added_at)) = DATE_TRUNC('month', NOW() - INTERVAL '1 month')
+          AND (sqlc.narg('from')::TEXT IS NULL OR COALESCE(p.date, p.added_at) >= sqlc.narg('from')::TIMESTAMPTZ)
+          AND (sqlc.narg('to')::TEXT IS NULL OR COALESCE(p.date, p.added_at) < (sqlc.narg('to')::TIMESTAMPTZ + INTERVAL '1 day'))
     ), 0)::INTEGER AS last_month,
     COALESCE((
         SELECT SUM(outstanding)

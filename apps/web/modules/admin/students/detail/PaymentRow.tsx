@@ -12,7 +12,7 @@ export function PaymentRow({
   payment: {
     id: string | number;
     amount: number;
-    addedAt: string;
+    date: string;
     remarks?: string | null;
     addedByName?: string;
     paymentMode?: string | null;
@@ -47,7 +47,7 @@ export function PaymentRow({
             {payment.remarks ?? "Payment"}
             {payment.paymentMode ? ` · ${payment.paymentMode}` : ""}
             {" · "}
-            {new Date(payment.addedAt).toLocaleDateString("en-NP", {
+            {new Date(payment.date).toLocaleDateString("en-NP", {
               day: "2-digit",
               month: "short",
               year: "numeric",

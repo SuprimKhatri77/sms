@@ -271,8 +271,8 @@ JOIN (
 LEFT JOIN (
     SELECT student_id, SUM(amount) AS total_paid
     FROM payments
-    WHERE (sqlc.narg('from_date')::TEXT IS NULL OR added_at >= sqlc.narg('from_date')::TIMESTAMPTZ)
-      AND (sqlc.narg('to_date')::TEXT IS NULL OR added_at <= (sqlc.narg('to_date')::TIMESTAMPTZ + INTERVAL '1 day'))
+    WHERE (sqlc.narg('from_date')::TEXT IS NULL OR COALESCE(date, added_at) >= sqlc.narg('from_date')::TIMESTAMPTZ)
+      AND (sqlc.narg('to_date')::TEXT IS NULL OR COALESCE(date, added_at) <= (sqlc.narg('to_date')::TIMESTAMPTZ + INTERVAL '1 day'))
     GROUP BY student_id
 ) pays ON pays.student_id = s.id
 LEFT JOIN (

@@ -34,7 +34,7 @@ type PaymentRowProps = {
   payment: {
     id: string | number;
     amount: number;
-    addedAt: string;
+    date: string;
     remarks?: string | null;
     addedByName?: string;
     paymentMode?: string | null;

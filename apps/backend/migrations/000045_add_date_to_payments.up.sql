@@ -1,0 +1,2 @@
+ALTER TABLE payments ADD COLUMN date TIMESTAMPTZ;
+ALTER TABLE payments ADD COLUMN bs_date TEXT;
