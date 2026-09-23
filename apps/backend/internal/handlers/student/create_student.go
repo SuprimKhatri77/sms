@@ -75,7 +75,6 @@ func CreateStudent(queries repository.StudentRepository, pool *pgxpool.Pool) gin
 		dobAD, err := time.Parse("2006-01-02", req.DobAD)
 		if err != nil {
 			slog.Warn("invalid dob format",
-				"dob", req.DobBS,
 				"path", c.FullPath(),
 				"ip", c.ClientIP(),
 			)
@@ -89,8 +88,6 @@ func CreateStudent(queries repository.StudentRepository, pool *pgxpool.Pool) gin
 
 		if err := utils.ValidateBSMatchesAD(req.DobBS, dobAD); err != nil {
 			slog.Warn("bs/ad dob mismatch",
-				"dobBs", req.DobBS,
-				"dobAd", req.DobAD,
 				"path", c.FullPath(),
 				"ip", c.ClientIP(),
 			)
