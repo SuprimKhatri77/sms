@@ -12,7 +12,6 @@ import { Toaster } from "sonner";
 import { getBankLedger } from "@/lib/api/bank_ledger";
 import { BankLedgerData, CreateBankLedgerEntryInput } from "@repo/types";
 import { useBankLedgerSummary } from "@/hooks/queries/admin/banks/bank_ledger/useBankLedgerSummary";
-import { useBankAccountsDropdown } from "@/hooks/queries/admin/banks/bank_ledger/useBankAccountsDropdown";
 import { useCreateBankLedgerEntry } from "@/hooks/mutations/admin/bank_ledger/useCreateBankLedgerEntry";
 import { queryKeys } from "@/lib/query-keys";
 import { AdminPageLayout } from "@/components/admin/admin-page-layout";
@@ -92,8 +91,6 @@ function LedgerPageInner() {
     [setSearchParams],
   );
 
-  const accountsQuery = useBankAccountsDropdown();
-
   const summaryQuery = useBankLedgerSummary({
     accountID: accountId,
     bankID: bankId,
@@ -162,7 +159,6 @@ function LedgerPageInner() {
     await createBankLedgerEntry.mutateAsync(data);
   };
 
-  const accounts = accountsQuery.data ?? [];
   const summary = summaryQuery.data ?? null;
   const summaryLoading = summaryQuery.isPending;
 
@@ -188,11 +184,7 @@ function LedgerPageInner() {
           loading={summaryLoading}
         />
 
-        <LedgerFilters
-          accounts={accounts}
-          filters={filters}
-          onChange={handleFilterChange}
-        />
+        <LedgerFilters filters={filters} onChange={handleFilterChange} />
 
         <LedgerTable
           entries={entries}
@@ -212,7 +204,6 @@ function LedgerPageInner() {
       <CreateLedgerEntryForm
         open={formOpen}
         onOpenChange={setFormOpen}
-        accounts={accounts}
         createLedgerEntry={(data) => handleCreateBankLedger(data)}
       />
 

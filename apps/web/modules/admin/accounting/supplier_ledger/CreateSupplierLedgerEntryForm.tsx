@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { BSToAD } from "bikram-sambat-js";
-import { SupplierForDropdown } from "./types";
 import {
   CreateSupplierLedgerEntryInput,
   createSupplierLedgerEntryInput,
@@ -35,7 +34,10 @@ import {
   accountingSelectTriggerClass,
 } from "../shared/accounting-styles";
 import { SearchableSelect } from "../../inventory/shared/SearchableSelect";
-import { useBankAccountSearch } from "../../inventory/shared/useProductSupplierSearch";
+import {
+  useBankAccountSearch,
+  useSupplierSearch,
+} from "../../inventory/shared/useProductSupplierSearch";
 import { useBankAccountsDropdown } from "@/hooks/queries/admin/banks/bank_ledger/useBankAccountsDropdown";
 
 const PAYMENT_TYPE_SUGGESTIONS = [
@@ -48,7 +50,6 @@ const PAYMENT_TYPE_SUGGESTIONS = [
 interface CreateSupplierLedgerEntryFormProps {
   open: boolean;
   loading: boolean;
-  suppliers: SupplierForDropdown[];
   defaultSupplierId?: string;
   onOpenChange: (open: boolean) => void;
   createLedgerEntry: (
@@ -59,12 +60,12 @@ interface CreateSupplierLedgerEntryFormProps {
 export function CreateSupplierLedgerEntryForm({
   open,
   loading,
-  suppliers,
   defaultSupplierId,
   onOpenChange,
   createLedgerEntry,
 }: CreateSupplierLedgerEntryFormProps) {
   const [supplierId, setSupplierId] = useState(defaultSupplierId ?? "");
+  const [supplierLabel, setSupplierLabel] = useState("");
   const [bsDate, setBsDate] = useState("");
   const [adDate, setAdDate] = useState("");
   const [entryType, setEntryType] = useState<"dr" | "cr" | "">("");
@@ -76,6 +77,7 @@ export function CreateSupplierLedgerEntryForm({
   const [errors, setErrors] =
     useState<Partial<Record<keyof CreateSupplierLedgerEntryInput, string>>>();
 
+  const searchSuppliers = useSupplierSearch();
   const searchBankAccounts = useBankAccountSearch();
   const { data: bankAccounts } = useBankAccountsDropdown();
 
@@ -91,6 +93,7 @@ export function CreateSupplierLedgerEntryForm({
 
   const resetForm = () => {
     setSupplierId(defaultSupplierId ?? "");
+    setSupplierLabel("");
     setBsDate("");
     setAdDate("");
     setEntryType("");
@@ -195,24 +198,16 @@ export function CreateSupplierLedgerEntryForm({
         <AccountingFormSection title="Entry details">
           {!defaultSupplierId && (
             <AccountingFormField label="Supplier" required>
-              <Select
+              <SearchableSelect
                 value={supplierId}
-                onValueChange={(v) => v && setSupplierId(v)}
-              >
-                <SelectTrigger className={accountingSelectTriggerClass}>
-                  <SelectValue placeholder="Select supplier">
-                    {suppliers.find((s) => s.id === supplierId)?.companyName ??
-                      "Select supplier"}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {suppliers.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>
-                      {s.companyName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                onChange={(v, label) => {
+                  setSupplierId(v);
+                  setSupplierLabel(label);
+                }}
+                onSearch={searchSuppliers}
+                selectedLabel={supplierLabel}
+                placeholder="Search supplier…"
+              />
             </AccountingFormField>
           )}
 

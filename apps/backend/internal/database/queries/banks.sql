@@ -10,7 +10,10 @@ SELECT * FROM banks WHERE id = $1;
 SELECT * FROM banks WHERE is_default = TRUE;
 
 -- name: ListBanks :many
-SELECT * FROM banks ORDER BY created_at DESC LIMIT $1 OFFSET $2;
+SELECT * FROM banks
+WHERE
+    (sqlc.narg('name')::TEXT IS NULL OR name ILIKE '%' || sqlc.narg('name')::TEXT || '%')
+ORDER BY created_at DESC LIMIT $1 OFFSET $2;
 
 -- name: UpdateBank :one
 UPDATE banks
@@ -28,7 +31,9 @@ UPDATE banks SET is_default = TRUE WHERE id = $1;
 DELETE FROM banks WHERE id = $1;
 
 -- name: GetBanksCount :one
-SELECT COUNT(*) FROM banks;
+SELECT COUNT(*) FROM banks
+WHERE
+    (sqlc.narg('name')::TEXT IS NULL OR name ILIKE '%' || sqlc.narg('name')::TEXT || '%');
 
 -- name: IsBankDefault :one
 SELECT is_default FROM banks WHERE id = $1;

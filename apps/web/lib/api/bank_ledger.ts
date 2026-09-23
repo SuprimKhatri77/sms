@@ -71,6 +71,26 @@ export const getBankAccountsForDropdown = async (): Promise<
   return res.data.data;
 };
 
+type SearchBankAccountsForDropdownParams = {
+  name?: string;
+  bankID?: string;
+  limit: number;
+};
+export const searchBankAccountsForDropdown = async ({
+  name,
+  bankID,
+  limit,
+}: SearchBankAccountsForDropdownParams): Promise<BankAccountForDropdown[]> => {
+  const params = new URLSearchParams();
+  params.append("limit", String(limit));
+  if (name) params.append("name", name);
+  if (bankID && bankID !== "all") params.append("bank_id", bankID);
+  const res = await api.get<GetBankAccountsForDropdownResponse>(
+    `/admin/accounting/banks/accounts/dropdown?${params.toString()}`,
+  );
+  return res.data.data;
+};
+
 type CreateBankLedgerParams = {
   data: CreateBankLedgerEntryInput;
   accountID: string;

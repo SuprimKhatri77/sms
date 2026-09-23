@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import api from "@/lib/axios";
 import {
   GetBankAccountsForDropdownResponse,
+  GetBanksResponse,
   GetProductResponse,
   GetSupplierResponse,
 } from "@repo/types";
@@ -55,6 +56,22 @@ export function useBankAccountSearch() {
         value: a.id,
         label: `${a.bankName} — ${a.accountName}`,
       }));
+    },
+    [],
+  );
+}
+
+export function useBankSearch() {
+  return useCallback(
+    async (q: string): Promise<SearchableSelectOption[]> => {
+      const params = new URLSearchParams();
+      params.set("page", "1");
+      if (q) params.set("name", q);
+      const res = await api.get<GetBanksResponse>(
+        `/admin/accounting/banks?${params.toString()}`,
+      );
+      if (!res.data.success) return [];
+      return res.data.data.map((b) => ({ value: b.id, label: b.name }));
     },
     [],
   );

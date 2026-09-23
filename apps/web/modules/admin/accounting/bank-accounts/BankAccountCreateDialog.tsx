@@ -14,7 +14,6 @@ import {
   adminPrimaryButtonClass,
   adminSecondaryButtonClass,
 } from "@/components/admin/admin-styles";
-import { BanksData } from "@/lib/api/banks";
 import { mapFieldErrors } from "@/utils/api";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -22,14 +21,13 @@ import {
   AccountingFormField,
   AccountingFormSection,
   accountingFieldInputClass,
-  accountingSelectTriggerClass,
 } from "../shared/accounting-styles";
+import { SearchableSelect } from "../../inventory/shared/SearchableSelect";
+import { useBankSearch } from "../../inventory/shared/useProductSupplierSearch";
 
 interface BankAccountCreateDialogProps {
   open: boolean;
   loading: boolean;
-  bankOptions: BanksData["banks"];
-  loadingOptions: boolean;
   onClose: () => void;
   onCreate: (
     payload: CreateBankAccountInput & { bankID: string },
@@ -39,8 +37,6 @@ interface BankAccountCreateDialogProps {
 export function BankAccountCreateDialog({
   open,
   loading,
-  bankOptions,
-  loadingOptions,
   onClose,
   onCreate,
 }: BankAccountCreateDialogProps) {
@@ -48,6 +44,8 @@ export function BankAccountCreateDialog({
     Partial<Record<keyof CreateBankAccountInput, string>>
   >({});
   const [bankID, setBankID] = useState<string>("");
+  const [bankLabel, setBankLabel] = useState("");
+  const searchBanks = useBankSearch();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm({
@@ -67,6 +65,7 @@ export function BankAccountCreateDialog({
         await onCreate({ bankID, ...value });
         formApi.reset();
         setBankID("");
+        setBankLabel("");
         onClose();
       } catch (err) {
         const error = err as AxiosError<APIError>;
@@ -82,6 +81,7 @@ export function BankAccountCreateDialog({
     if (open) {
       form.reset({ accountName: "", accountNumber: "" });
       setBankID("");
+      setBankLabel("");
       setErrors({});
       setTimeout(() => inputRef.current?.focus(), 100);
     }
@@ -90,6 +90,7 @@ export function BankAccountCreateDialog({
   const handleClose = () => {
     form.reset({ accountName: "", accountNumber: "" });
     setBankID("");
+    setBankLabel("");
     setErrors({});
     onClose();
   };
@@ -128,27 +129,18 @@ export function BankAccountCreateDialog({
     >
       <div className="flex flex-col gap-8 px-8 py-10">
         <AccountingFormSection title="Account details">
-          <AccountingFormField
-            label="Bank"
-            htmlFor="create-bank-select"
-            required
-          >
-            <select
-              id="create-bank-select"
+          <AccountingFormField label="Bank" required>
+            <SearchableSelect
               value={bankID}
-              onChange={(e) => setBankID(e.target.value)}
-              disabled={loading || loadingOptions}
-              className={accountingSelectTriggerClass}
-            >
-              <option value="">
-                {loadingOptions ? "Loading banks…" : "Select a bank"}
-              </option>
-              {bankOptions.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.name}
-                </option>
-              ))}
-            </select>
+              onChange={(v, label) => {
+                setBankID(v);
+                setBankLabel(label);
+              }}
+              onSearch={searchBanks}
+              selectedLabel={bankLabel}
+              placeholder="Search bank…"
+              disabled={loading}
+            />
           </AccountingFormField>
 
           <form.Field name="accountName">

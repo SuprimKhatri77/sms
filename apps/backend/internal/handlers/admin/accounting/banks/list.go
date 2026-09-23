@@ -12,6 +12,7 @@ import (
 	db "github.com/suprimkhatri77/sms/backend/internal/database/generated"
 	accountingRepository "github.com/suprimkhatri77/sms/backend/internal/repository/accounting"
 	"github.com/suprimkhatri77/sms/backend/internal/types"
+	"github.com/suprimkhatri77/sms/backend/internal/utils"
 )
 
 const handlerListBanks = "ListBanks"
@@ -34,7 +35,9 @@ func ListBanks(queries accountingRepository.BankRepository) gin.HandlerFunc {
 			return
 		}
 
-		total, err := queries.GetBanksCount(ctx)
+		nameFilter := utils.ToNullableText(c.Query("name"))
+
+		total, err := queries.GetBanksCount(ctx, nameFilter)
 		if err != nil {
 			applog.Error(c, handlerListBanks, "failed to process request",
 				slog.Any(applog.AttrError, err))
@@ -76,6 +79,7 @@ func ListBanks(queries accountingRepository.BankRepository) gin.HandlerFunc {
 		banks, err := queries.ListBanks(ctx, db.ListBanksParams{
 			Limit:  int32(PAGE_LIMIT),
 			Offset: int32(offset),
+			Name:   nameFilter,
 		})
 
 		if err != nil {

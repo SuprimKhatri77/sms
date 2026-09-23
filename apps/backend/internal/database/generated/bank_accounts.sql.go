@@ -236,13 +236,15 @@ WHERE
     ($1::TEXT IS NULL
         OR ba.account_name ILIKE '%' || $1::TEXT || '%'
         OR b.name ILIKE '%' || $1::TEXT || '%')
+    AND ($2::uuid IS NULL OR ba.bank_id = $2::uuid)
 ORDER BY ba.account_name ASC
-LIMIT $2::INT
+LIMIT $3::INT
 `
 
 type ListBankAccountsForDropdownParams struct {
-	Name  pgtype.Text `json:"name"`
-	Limit pgtype.Int4 `json:"limit"`
+	Name   pgtype.Text `json:"name"`
+	BankID pgtype.UUID `json:"bankId"`
+	Limit  pgtype.Int4 `json:"limit"`
 }
 
 type ListBankAccountsForDropdownRow struct {
@@ -255,7 +257,7 @@ type ListBankAccountsForDropdownRow struct {
 }
 
 func (q *Queries) ListBankAccountsForDropdown(ctx context.Context, arg ListBankAccountsForDropdownParams) ([]ListBankAccountsForDropdownRow, error) {
-	rows, err := q.db.Query(ctx, listBankAccountsForDropdown, arg.Name, arg.Limit)
+	rows, err := q.db.Query(ctx, listBankAccountsForDropdown, arg.Name, arg.BankID, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
