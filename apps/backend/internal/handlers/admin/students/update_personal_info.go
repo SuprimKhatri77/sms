@@ -81,6 +81,21 @@ func UpdateStudentPersonalInfo(queries repository.AdminRepository) gin.HandlerFu
 			return
 		}
 
+		if err := utils.ValidateBSMatchesAD(req.DobBS, dob); err != nil {
+			slog.Warn("bs/ad dob mismatch",
+				"dobBs", req.DobBS,
+				"dobAd", req.DobAD,
+				"path", c.FullPath(),
+				"ip", c.ClientIP(),
+			)
+			c.JSON(http.StatusBadRequest, types.APIResponse{
+				Success: false,
+				Message: "BS date and AD date do not match",
+				Code:    constants.ValidationFailed,
+			})
+			return
+		}
+
 		result, err := queries.UpdateStudentPersonalInfo(ctx, db.UpdateStudentPersonalInfoParams{
 			FullName:  req.FullName,
 			Batch:     utils.ToNullableText(req.Batch),

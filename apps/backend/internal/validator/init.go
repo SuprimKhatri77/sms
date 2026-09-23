@@ -6,6 +6,8 @@ import (
 	"sync"
 	"time"
 
+	bs "github.com/suprimkhatri77/go-bs"
+
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
 )
@@ -40,11 +42,8 @@ func Init() {
 		})
 
 		v.RegisterValidation("bs_date", func(fl validator.FieldLevel) bool {
-			matched, _ := regexp.MatchString(
-				`^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[012])$`,
-				fl.Field().String(),
-			)
-			return matched
+			_, err := bs.Parse(fl.Field().String())
+			return err == nil
 		})
 
 		v.RegisterValidation("bank_account_no", func(fl validator.FieldLevel) bool {

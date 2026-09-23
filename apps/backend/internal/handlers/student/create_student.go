@@ -87,6 +87,21 @@ func CreateStudent(queries repository.StudentRepository, pool *pgxpool.Pool) gin
 			return
 		}
 
+		if err := utils.ValidateBSMatchesAD(req.DobBS, dobAD); err != nil {
+			slog.Warn("bs/ad dob mismatch",
+				"dobBs", req.DobBS,
+				"dobAd", req.DobAD,
+				"path", c.FullPath(),
+				"ip", c.ClientIP(),
+			)
+			c.JSON(http.StatusBadRequest, types.APIResponse{
+				Success: false,
+				Message: "BS date and AD date do not match",
+				Code:    constants.ValidationFailed,
+			})
+			return
+		}
+
 		courseUUIDs := make([]pgtype.UUID, 0, len(req.Courses))
 		for _, v := range req.Courses {
 			courseID, err := utils.ConvertToUUID(v)
