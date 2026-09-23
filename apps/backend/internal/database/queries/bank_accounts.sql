@@ -65,6 +65,7 @@ WHERE
     (sqlc.narg('name')::TEXT IS NULL
         OR ba.account_name ILIKE '%' || sqlc.narg('name')::TEXT || '%'
         OR b.name ILIKE '%' || sqlc.narg('name')::TEXT || '%')
+    AND (sqlc.narg('bank_id')::uuid IS NULL OR ba.bank_id = sqlc.narg('bank_id')::uuid)
 ORDER BY ba.account_name ASC
 LIMIT sqlc.narg('limit')::INT;
 

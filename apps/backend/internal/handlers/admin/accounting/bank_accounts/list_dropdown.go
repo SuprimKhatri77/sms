@@ -30,8 +30,9 @@ func ListBankAccountsForDropdown(queries accountingRepository.BankAccountReposit
 		}
 
 		accounts, err := queries.ListBankAccountsForDropdown(ctx, db.ListBankAccountsForDropdownParams{
-			Name:  utils.ToNullableText(c.Query("name")),
-			Limit: limit,
+			Name:   utils.ToNullableText(c.Query("name")),
+			BankID: utils.ToNullableUUID(c.Query("bank_id")),
+			Limit:  limit,
 		})
 		if err != nil {
 			applog.Error(c, handlerListBankAccountsForDropdown, "failed to process request",

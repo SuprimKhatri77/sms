@@ -4,13 +4,11 @@ import {
   CreateBankAccountResponse,
   DeleteBankAccountResponse,
   GetBankAccountResponse,
-  GetBanksResponse,
   SetDefaultBankAccountResponse,
   UpdateBankAccountInput,
   UpdateBankAccountResponse,
 } from "@repo/types";
 import api from "../axios";
-import { BanksData } from "./banks";
 
 export const getBankAccounts = async (
   page: number,
@@ -22,11 +20,6 @@ export const getBankAccounts = async (
     bankAccounts: res.data.data,
     meta: res.data.meta,
   };
-};
-
-export const getBanks = async (): Promise<BanksData["banks"]> => {
-  const res = await api.get<GetBanksResponse>("/admin/accounting/banks");
-  return res.data.data;
 };
 
 type CreateBankAccountParams = {

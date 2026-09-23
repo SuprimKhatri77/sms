@@ -15,7 +15,7 @@ type BankRepository interface {
 	UpdateBank(ctx context.Context, params db.UpdateBankParams) (db.Bank, error)
 	DeleteBank(ctx context.Context, id pgtype.UUID) (pgconn.CommandTag, error)
 	ListBanks(ctx context.Context, params db.ListBanksParams) ([]db.Bank, error)
-	GetBanksCount(ctx context.Context) (int64, error)
+	GetBanksCount(ctx context.Context, name pgtype.Text) (int64, error)
 	GetBankByID(ctx context.Context, id pgtype.UUID) (db.Bank, error)
 }
 

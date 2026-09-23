@@ -1,47 +1,45 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { CalendarDays } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { NepaliDatePicker } from "nepali-datepicker-reactjs";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { BSToAD } from "bikram-sambat-js";
-import { SupplierForDropdown, SupplierLedgerFilters } from "./types";
+import { SupplierLedgerFilters } from "./types";
 import {
   AccountingFilterShell,
   accountingFieldInputClass,
   accountingLabelClass,
-  accountingSelectTriggerClass,
 } from "../shared/accounting-styles";
+import { withAllOption } from "../shared/withAllOption";
+import { SearchableSelect } from "../../inventory/shared/SearchableSelect";
+import { useSupplierSearch } from "../../inventory/shared/useProductSupplierSearch";
 import { useAdminClearFiltersShortcut } from "@/components/admin/admin-shortcut-provider";
 
 interface SupplierLedgerFiltersBarProps {
-  suppliers: SupplierForDropdown[];
   filters: SupplierLedgerFilters;
   onChange: (filters: SupplierLedgerFilters) => void;
 }
 
 export function SupplierLedgerFiltersBar({
-  suppliers,
   filters,
   onChange,
 }: SupplierLedgerFiltersBarProps) {
   const hasFilters =
     filters.supplierId !== "all" || !!filters.fromBsDate || !!filters.toBsDate;
 
-  function handleSupplierChange(value: string) {
-    const selected = suppliers.find((s) => s.id === value);
+  const supplierSearch = useSupplierSearch();
+  const searchSuppliers = useMemo(
+    () => withAllOption(supplierSearch, "All Suppliers"),
+    [supplierSearch],
+  );
+
+  function handleSupplierChange(value: string, label: string) {
     onChange({
       ...filters,
       supplierId: value,
-      supplierName: selected?.companyName ?? "all",
+      supplierName: value === "all" ? "all" : label,
     });
   }
 
@@ -79,27 +77,17 @@ export function SupplierLedgerFiltersBar({
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="flex flex-col gap-2">
           <span className={accountingLabelClass}>Supplier</span>
-          <Select
+          <SearchableSelect
             value={filters.supplierId}
-            onValueChange={(v) => v && handleSupplierChange(v)}
-          >
-            <SelectTrigger className={accountingSelectTriggerClass}>
-              <SelectValue placeholder="All Suppliers">
-                {filters.supplierId === "all"
-                  ? "All Suppliers"
-                  : (suppliers.find((s) => s.id === filters.supplierId)
-                      ?.companyName ?? "All Suppliers")}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Suppliers</SelectItem>
-              {suppliers.map((s) => (
-                <SelectItem key={s.id} value={s.id}>
-                  {s.companyName}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            onChange={handleSupplierChange}
+            onSearch={searchSuppliers}
+            placeholder="Search supplier…"
+            selectedLabel={
+              filters.supplierId === "all"
+                ? "All Suppliers"
+                : filters.supplierName
+            }
+          />
         </div>
 
         <div className="flex flex-col gap-2">

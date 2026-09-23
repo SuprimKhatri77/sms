@@ -56,10 +56,12 @@ func (q *Queries) GetBankByID(ctx context.Context, id pgtype.UUID) (Bank, error)
 
 const getBanksCount = `-- name: GetBanksCount :one
 SELECT COUNT(*) FROM banks
+WHERE
+    ($1::TEXT IS NULL OR name ILIKE '%' || $1::TEXT || '%')
 `
 
-func (q *Queries) GetBanksCount(ctx context.Context) (int64, error) {
-	row := q.db.QueryRow(ctx, getBanksCount)
+func (q *Queries) GetBanksCount(ctx context.Context, name pgtype.Text) (int64, error) {
+	row := q.db.QueryRow(ctx, getBanksCount, name)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -93,16 +95,20 @@ func (q *Queries) IsBankDefault(ctx context.Context, id pgtype.UUID) (bool, erro
 }
 
 const listBanks = `-- name: ListBanks :many
-SELECT id, name, is_default, created_at FROM banks ORDER BY created_at DESC LIMIT $1 OFFSET $2
+SELECT id, name, is_default, created_at FROM banks
+WHERE
+    ($3::TEXT IS NULL OR name ILIKE '%' || $3::TEXT || '%')
+ORDER BY created_at DESC LIMIT $1 OFFSET $2
 `
 
 type ListBanksParams struct {
-	Limit  int32 `json:"limit"`
-	Offset int32 `json:"offset"`
+	Limit  int32       `json:"limit"`
+	Offset int32       `json:"offset"`
+	Name   pgtype.Text `json:"name"`
 }
 
 func (q *Queries) ListBanks(ctx context.Context, arg ListBanksParams) ([]Bank, error) {
-	rows, err := q.db.Query(ctx, listBanks, arg.Limit, arg.Offset)
+	rows, err := q.db.Query(ctx, listBanks, arg.Limit, arg.Offset, arg.Name)
 	if err != nil {
 		return nil, err
 	}

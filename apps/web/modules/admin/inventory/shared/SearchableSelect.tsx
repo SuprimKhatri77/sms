@@ -58,6 +58,7 @@ export function SearchableSelect({
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(null);
   const searchVersionRef = useRef(0);
+  const lastQueryRef = useRef("");
 
   const displayLabel =
     selectedLabel ??
@@ -71,6 +72,7 @@ export function SearchableSelect({
   const doSearch = useCallback(
     async (q: string) => {
       const version = ++searchVersionRef.current;
+      lastQueryRef.current = q;
       setLoading(true);
       try {
         const results = await onSearch(q);
@@ -86,9 +88,14 @@ export function SearchableSelect({
     [onSearch],
   );
 
-  // Load initial options when dropdown opens
+  // Load initial options when dropdown opens, or reload them if the options
+  // still hold the results of a previous (non-empty) search
   useEffect(() => {
-    if (open && options.length === 0 && !loading) {
+    if (
+      open &&
+      (options.length === 0 || lastQueryRef.current !== "") &&
+      !loading
+    ) {
       doSearch("");
     }
   }, [open]);

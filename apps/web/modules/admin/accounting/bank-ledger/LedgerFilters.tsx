@@ -1,25 +1,21 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import { CalendarDays } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { NepaliDatePicker } from "nepali-datepicker-reactjs";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { BSToAD } from "bikram-sambat-js";
 import { BankAccountForDropdown } from "@repo/types";
+import { searchBankAccountsForDropdown } from "@/lib/api/bank_ledger";
 import {
   AccountingFilterShell,
   accountingFieldInputClass,
   accountingLabelClass,
-  accountingSelectTriggerClass,
 } from "../shared/accounting-styles";
+import { withAllOption } from "../shared/withAllOption";
+import { SearchableSelect } from "../../inventory/shared/SearchableSelect";
+import { useBankSearch } from "../../inventory/shared/useProductSupplierSearch";
 import { useAdminClearFiltersShortcut } from "@/components/admin/admin-shortcut-provider";
 
 export type FilterState = {
@@ -34,48 +30,61 @@ export type FilterState = {
 };
 
 interface LedgerFiltersProps {
-  accounts: BankAccountForDropdown[];
   filters: FilterState;
   onChange: (filters: FilterState) => void;
   hideAccountSelector?: boolean;
 }
 
 export function LedgerFilters({
-  accounts,
   filters,
   onChange,
   hideAccountSelector = false,
 }: LedgerFiltersProps) {
-  const banks = Array.from(
-    new Map(
-      accounts.map((a) => [a.bankId, { id: a.bankId, name: a.bankName }]),
-    ).values(),
+  const bankSearch = useBankSearch();
+  const searchBanks = useMemo(
+    () => withAllOption(bankSearch, "All Banks"),
+    [bankSearch],
   );
 
-  const filteredAccounts =
-    filters.bankId === "all"
-      ? accounts
-      : accounts.filter((a) => a.bankId === filters.bankId);
+  // Accounts seen in search results, so picking one can also fill in its bank
+  const accountLookupRef = useRef(new Map<string, BankAccountForDropdown>());
 
-  function handleBankChange(value: string | null) {
-    const selectedBank = banks.find((b) => b.id === value);
-    const currentAccountStillValid = accounts.find(
-      (a) => a.id === filters.accountId && a.bankId === value,
-    );
+  const searchAccounts = useCallback(
+    async (q: string) => {
+      const rows = await searchBankAccountsForDropdown({
+        name: q,
+        bankID: filters.bankId,
+        limit: 10,
+      });
+      for (const a of rows) accountLookupRef.current.set(a.id, a);
+      const options = rows.map((a) => ({
+        value: a.id,
+        label: `${a.accountName} — ${a.bankName}`,
+      }));
+      return q
+        ? options
+        : [{ value: "all", label: "All Accounts" }, ...options];
+    },
+    [filters.bankId],
+  );
+
+  function handleBankChange(value: string, label: string) {
+    const currentAccountStillValid =
+      accountLookupRef.current.get(filters.accountId)?.bankId === value;
     onChange({
       ...filters,
-      bankId: value ?? "all",
-      bankName: selectedBank?.name ?? "all",
+      bankId: value,
+      bankName: value === "all" ? "all" : label,
       accountId: currentAccountStillValid ? filters.accountId : "all",
       accountName: currentAccountStillValid ? filters.accountName : "all",
     });
   }
 
-  function handleAccountChange(value: string | null) {
-    const selectedAccount = accounts.find((a) => a.id === value);
+  function handleAccountChange(value: string) {
+    const selectedAccount = accountLookupRef.current.get(value);
     onChange({
       ...filters,
-      accountId: value ?? "all",
+      accountId: value,
       accountName: selectedAccount?.accountName ?? "all",
       bankId: selectedAccount?.bankId ?? filters.bankId,
       bankName: selectedAccount?.bankName ?? filters.bankName,
@@ -135,54 +144,33 @@ export function LedgerFilters({
       <div className="flex flex-wrap gap-4">
         <div className="flex min-w-[160px] flex-1 flex-col gap-2">
           <span className={accountingLabelClass}>Bank</span>
-          <Select value={filters.bankId} onValueChange={handleBankChange}>
-            <SelectTrigger className={accountingSelectTriggerClass}>
-              <SelectValue placeholder="All Banks">
-                {filters.bankId === "all"
-                  ? "All Banks"
-                  : (banks.find((b) => b.id === filters.bankId)?.name ??
-                    "All Banks")}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Banks</SelectItem>
-              {banks.map((b) => (
-                <SelectItem key={b.id} value={b.id}>
-                  {b.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <SearchableSelect
+            value={filters.bankId}
+            onChange={handleBankChange}
+            onSearch={searchBanks}
+            placeholder="Search bank…"
+            selectedLabel={
+              filters.bankId === "all" ? "All Banks" : filters.bankName
+            }
+          />
         </div>
 
         {!hideAccountSelector && (
           <div className="flex min-w-[160px] flex-1 flex-col gap-2">
             <span className={accountingLabelClass}>Bank Account</span>
-            <Select
+            {/* Remount on bank change so the cached options reload for that bank */}
+            <SearchableSelect
+              key={filters.bankId}
               value={filters.accountId}
-              onValueChange={handleAccountChange}
-            >
-              <SelectTrigger className={accountingSelectTriggerClass}>
-                <SelectValue placeholder="All Accounts">
-                  {filters.accountId === "all"
-                    ? "All Accounts"
-                    : (filteredAccounts.find((a) => a.id === filters.accountId)
-                        ?.accountName ?? "All Accounts")}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Accounts</SelectItem>
-                {filteredAccounts.map((a) => (
-                  <SelectItem key={a.id} value={a.id}>
-                    {a.accountName}
-                    <span className="text-[rgba(47,78,64,0.45)]">
-                      {" "}
-                      — {a.bankName}
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              onChange={handleAccountChange}
+              onSearch={searchAccounts}
+              placeholder="Search account…"
+              selectedLabel={
+                filters.accountId === "all"
+                  ? "All Accounts"
+                  : filters.accountName
+              }
+            />
           </div>
         )}
 

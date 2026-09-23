@@ -27,7 +27,6 @@ import {
   CreateBankAccountInput,
   UpdateBankAccountInput,
 } from "@repo/types";
-import { useBanks } from "@/hooks/queries/admin/banks/bank_accounts/useBanks";
 import { useCreateBankAccount } from "@/hooks/mutations/admin/bank_accounts/useCreateBankAccount";
 import { useUpdateBankAccount } from "@/hooks/mutations/admin/bank_accounts/useUpdateBankAccount";
 import { useDeleteBankAccount } from "@/hooks/mutations/admin/bank_accounts/useDeleteBankAccount";
@@ -56,14 +55,6 @@ export function BankAccountsClient() {
       else if (deleteAccount) setDeleteAccount(null);
     }, [createOpen, editAccount, deleteAccount]),
   );
-
-  const {
-    // isPending: isFetchingBanks,
-    // isError: isBanksError,
-    // error: banksError,
-    // refetch: refetchBanks,
-    data: banksData,
-  } = useBanks();
 
   const createBankAccount = useCreateBankAccount();
   const updateBankAccount = useUpdateBankAccount();
@@ -143,8 +134,6 @@ export function BankAccountsClient() {
       <BankAccountCreateDialog
         open={createOpen}
         loading={createBankAccount.isPending}
-        bankOptions={banksData ?? []}
-        loadingOptions={false}
         onClose={() => setCreateOpen(false)}
         onCreate={handleCreate}
       />

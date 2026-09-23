@@ -10,7 +10,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  BankAccountForDropdown,
   CreateBankLedgerEntryInput,
   createBankLedgerEntrySchema,
 } from "@repo/types";
@@ -35,11 +34,12 @@ import {
   accountingFieldInputClass,
   accountingSelectTriggerClass,
 } from "../shared/accounting-styles";
+import { SearchableSelect } from "../../inventory/shared/SearchableSelect";
+import { useBankAccountSearch } from "../../inventory/shared/useProductSupplierSearch";
 
 interface CreateLedgerEntryFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  accounts: BankAccountForDropdown[];
   defaultAccountId?: string;
   createLedgerEntry: (
     data: CreateBankLedgerEntryInput & { accountID: string },
@@ -49,11 +49,11 @@ interface CreateLedgerEntryFormProps {
 export function CreateLedgerEntryForm({
   open,
   onOpenChange,
-  accounts,
   defaultAccountId,
   createLedgerEntry,
 }: CreateLedgerEntryFormProps) {
   const [bankAccountId, setBankAccountId] = useState(defaultAccountId ?? "");
+  const [bankAccountLabel, setBankAccountLabel] = useState("");
   const [errors, setErrors] = useState<
     Partial<Record<keyof CreateBankLedgerEntryInput, string>>
   >({});
@@ -100,6 +100,7 @@ export function CreateLedgerEntryForm({
 
   function reset() {
     setBankAccountId(defaultAccountId ?? "");
+    setBankAccountLabel("");
     setErrors({});
   }
 
@@ -108,6 +109,8 @@ export function CreateLedgerEntryForm({
     reset();
     onOpenChange(false);
   };
+
+  const searchBankAccounts = useBankAccountSearch();
 
   const showAccountSelector = !defaultAccountId;
 
@@ -161,26 +164,16 @@ export function CreateLedgerEntryForm({
         <AccountingFormSection title="Entry details">
           {showAccountSelector && (
             <AccountingFormField label="Bank Account" required>
-              <Select
+              <SearchableSelect
                 value={bankAccountId}
-                onValueChange={(val) => setBankAccountId(val ?? "")}
-              >
-                <SelectTrigger className={accountingSelectTriggerClass}>
-                  <SelectValue placeholder="Select an account">
-                    {
-                      accounts.find((a) => a.id === bankAccountId)
-                        ?.accountName
-                    }
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {accounts.map((a) => (
-                    <SelectItem key={a.id} value={a.id}>
-                      {a.bankName} — {a.accountName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                onChange={(v, label) => {
+                  setBankAccountId(v);
+                  setBankAccountLabel(label);
+                }}
+                onSearch={searchBankAccounts}
+                selectedLabel={bankAccountLabel}
+                placeholder="Search bank accounts…"
+              />
             </AccountingFormField>
           )}
 

@@ -22,7 +22,6 @@ import { SupplierLedgerData } from "@repo/types";
 import { queryKeys } from "@/lib/query-keys";
 import { getSupplierLedger } from "@/lib/api/supplier_ledger";
 import { useSupplierLedgerSummary } from "@/hooks/queries/admin/suppliers/ledger/useSupplierLedgerSummary";
-import { useSuppliers } from "@/hooks/queries/admin/suppliers/useSuppliers";
 import { useCreateSupplierLedgerEntry } from "@/hooks/queries/admin/suppliers/ledger/useCreateSupplierLedgerEntry";
 import { AdminPageLayout } from "@/components/admin/admin-page-layout";
 import {
@@ -98,8 +97,6 @@ function SupplierLedgerInner() {
     fromDate,
     toDate,
   });
-
-  const suppliersQuery = useSuppliers();
 
   const {
     data,
@@ -184,7 +181,6 @@ function SupplierLedgerInner() {
         />
 
         <SupplierLedgerFiltersBar
-          suppliers={suppliersQuery.data?.suppliers ?? []}
           filters={filters}
           onChange={handleFilterChange}
         />
@@ -228,7 +224,6 @@ function SupplierLedgerInner() {
         open={createOpen}
         onOpenChange={setCreateOpen}
         loading={createSupplierLedgerEntry.isPending}
-        suppliers={suppliersQuery.data?.suppliers ?? []}
         defaultSupplierId={supplierId !== "all" ? supplierId : undefined}
         createLedgerEntry={handleCreate}
       />
