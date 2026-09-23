@@ -75,6 +75,17 @@ func CreateBankLedgerEntry(queries accountingRepository.BankLedgerRepository) gi
 			return
 		}
 
+		if err := utils.ValidateBSMatchesAD(req.BsDate, adDate); err != nil {
+			applog.Warn(c, handlerCreateBankLedgerEntry, "bs/ad date mismatch",
+				slog.Any(applog.AttrError, err))
+			c.JSON(http.StatusBadRequest, types.APIResponse{
+				Success: false,
+				Message: "BS date and AD date do not match",
+				Code:    constants.ValidationFailed,
+			})
+			return
+		}
+
 		entry, err := queries.CreateBankLedgerEntry(ctx, db.CreateBankLedgerEntryParams{
 			BankAccountID: accountID,
 			Amount:        int64(req.Amount * 100),

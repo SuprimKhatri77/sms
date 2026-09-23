@@ -78,6 +78,17 @@ func CreateSupplierLedgerEntry(queries accountingRepository.SupplierLedgerTxRepo
 			return
 		}
 
+		if err := utils.ValidateBSMatchesAD(req.BsDate, adDate); err != nil {
+			applog.Warn(c, handlerCreateSupplierLedgerEntry, "bs/ad date mismatch",
+				slog.Any(applog.AttrError, err))
+			c.JSON(http.StatusBadRequest, types.APIResponse{
+				Success: false,
+				Message: "BS date and AD date do not match",
+				Code:    constants.ValidationFailed,
+			})
+			return
+		}
+
 		tx, err := pool.Begin(ctx)
 		if err != nil {
 			applog.Error(c, handlerCreateSupplierLedgerEntry, "failed to begin transaction",

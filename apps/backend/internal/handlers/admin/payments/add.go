@@ -96,6 +96,19 @@ func AddPayment(queries repository.AdminPaymentTxRepository, pool *pgxpool.Pool)
 			return
 		}
 
+		if err := utils.ValidateBSMatchesAD(req.BsDate, adDate); err != nil {
+			slog.Warn("bs/ad date mismatch",
+				slog.String("handler", "AddPayment"),
+				slog.Any("error", err),
+			)
+			c.JSON(http.StatusBadRequest, types.APIResponse{
+				Success: false,
+				Message: "BS date and AD date do not match",
+				Code:    constants.ValidationFailed,
+			})
+			return
+		}
+
 		tx, err := pool.Begin(ctx)
 		if err != nil {
 			slog.Error("failed to begin transaction",

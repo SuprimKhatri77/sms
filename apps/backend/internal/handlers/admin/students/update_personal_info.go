@@ -69,13 +69,25 @@ func UpdateStudentPersonalInfo(queries repository.AdminRepository) gin.HandlerFu
 		dob, err := time.Parse("2006-01-02", req.DobAD)
 		if err != nil {
 			slog.Warn("invalid dob format",
-				"dob", req.DobAD,
 				"path", c.FullPath(),
 				"ip", c.ClientIP(),
 			)
 			c.JSON(http.StatusBadRequest, types.APIResponse{
 				Success: false,
 				Message: "Invalid date format",
+				Code:    constants.ValidationFailed,
+			})
+			return
+		}
+
+		if err := utils.ValidateBSMatchesAD(req.DobBS, dob); err != nil {
+			slog.Warn("bs/ad dob mismatch",
+				"path", c.FullPath(),
+				"ip", c.ClientIP(),
+			)
+			c.JSON(http.StatusBadRequest, types.APIResponse{
+				Success: false,
+				Message: "BS date and AD date do not match",
 				Code:    constants.ValidationFailed,
 			})
 			return
