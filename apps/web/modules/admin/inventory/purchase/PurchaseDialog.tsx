@@ -49,6 +49,7 @@ type EditFormData = {
   invoiceNo: string;
   note: string;
   productID: string;
+  supplierID: string;
   quantity: string;
   rate: string;
   date: string;
@@ -76,6 +77,7 @@ const emptyEditForm: EditFormData = {
   invoiceNo: "",
   note: "",
   productID: "",
+  supplierID: "",
   quantity: "1",
   rate: "",
   date: "",
@@ -121,12 +123,14 @@ export function PurchaseDialog({
         setEditForm({
           invoiceNo: initialData.invoiceNo ?? "",
           note: initialData.note ?? "",
-          productID: initialData.productID ?? "",
+          productID: initialData.productId ?? "",
+          supplierID: initialData.supplierId ?? "",
           quantity: initialData.qty.toString(),
           rate: (initialData.rate / 100).toString(),
           date: initialData.date ?? "",
         });
         setSelectedProductName(initialData.productName ?? "");
+        setSelectedSupplierName(initialData.supplierName ?? "");
       } else {
         setHeader(emptyHeader);
         setItems([emptyLineItem()]);
@@ -158,6 +162,7 @@ export function PurchaseDialog({
 
     const validateFields = updateStockInSchema.safeParse({
       productID: editForm.productID,
+      supplierID: editForm.supplierID,
       quantity: Number(editForm.quantity),
       rate: Number(editForm.rate),
       note: editForm.note || undefined,
@@ -171,6 +176,7 @@ export function PurchaseDialog({
         note: fieldErrors.note?.[0],
         quantity: fieldErrors.quantity?.[0],
         productID: fieldErrors.productID?.[0],
+        supplierID: fieldErrors.supplierID?.[0],
         rate: fieldErrors.rate?.[0],
         invoiceNo: fieldErrors.invoiceNo?.[0],
         date: fieldErrors.date?.[0],
@@ -298,6 +304,23 @@ export function PurchaseDialog({
         >
           <InventoryFormSection title="Item details">
             <InventoryFormField
+              label="Supplier"
+              required
+              error={editErrors?.supplierID}
+            >
+              <SearchableSelect
+                value={editForm.supplierID}
+                onChange={(v, label) => {
+                  setEditForm((prev) => ({ ...prev, supplierID: v }));
+                  setSelectedSupplierName(label);
+                }}
+                onSearch={searchSuppliers}
+                placeholder="Search supplier…"
+                selectedLabel={selectedSupplierName}
+              />
+            </InventoryFormField>
+
+            <InventoryFormField
               label="Product"
               required
               error={editErrors?.productID}
@@ -319,14 +342,20 @@ export function PurchaseDialog({
               required
               error={editErrors?.date}
             >
-              <input
-                placeholder="2081-01-15"
-                value={editForm.date}
-                onChange={(e) =>
-                  setEditForm((prev) => ({ ...prev, date: e.target.value }))
-                }
-                className={fieldInputClass}
-              />
+              <div className="relative">
+                <CalendarDays
+                  className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-[rgba(47,78,64,0.35)]"
+                  strokeWidth={1.75}
+                />
+                <NepaliDatePicker
+                  inputClassName={cn(inputCls, "rounded-none pl-9")}
+                  value={editForm.date}
+                  onChange={(v: string) =>
+                    setEditForm((prev) => ({ ...prev, date: v }))
+                  }
+                  options={{ calenderLocale: "en", valueLocale: "en" }}
+                />
+              </div>
             </InventoryFormField>
           </InventoryFormSection>
 
@@ -339,7 +368,8 @@ export function PurchaseDialog({
               >
                 <input
                   type="number"
-                  min={1}
+                  min={0.001}
+                  step={0.001}
                   value={editForm.quantity}
                   onChange={(e) =>
                     setEditForm((prev) => ({

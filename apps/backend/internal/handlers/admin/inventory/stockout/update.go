@@ -77,7 +77,8 @@ func UpdateStockOut(queries repository.InventoryRepository) gin.HandlerFunc {
 		_, err = queries.UpdateStockOut(ctx, db.UpdateStockOutParams{
 			ProductID: productID,
 			ID:        stockOutID,
-			Qty:       int32(req.Quantity),
+			Date:      req.Date,
+			Qty:       utils.RoundQty(req.Quantity),
 			Rate:      int32(math.Round(req.Rate * 100)),
 			Note:      utils.ToNullableText(req.Note),
 			BillNo:    utils.ToNullableText(req.BillNo),

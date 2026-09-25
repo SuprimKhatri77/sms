@@ -14,7 +14,7 @@ CREATE TABLE stock_in (
     product_id UUID NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
     date TEXT NOT NULL,
     invoice_no TEXT,                 
-    qty INTEGER NOT NULL CHECK (qty > 0),
+    qty NUMERIC(12,3) NOT NULL CHECK (qty > 0),
     rate INTEGER NOT NULL CHECK (rate > 0),
     note TEXT,
     supplier_id UUID NOT NULL REFERENCES suppliers(id) ON DELETE RESTRICT,
@@ -30,7 +30,7 @@ CREATE TABLE stock_out (
     product_id UUID NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
     date TEXT NOT NULL,              
     bill_no TEXT,                
-    qty INTEGER NOT NULL CHECK (qty > 0),
+    qty NUMERIC(12,3) NOT NULL CHECK (qty > 0),
     rate INTEGER NOT NULL CHECK (rate > 0),
     note TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -45,7 +45,7 @@ CREATE TABLE wastage (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     product_id UUID NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
     date TEXT NOT NULL,              -- BS date string
-    qty INTEGER NOT NULL CHECK (qty > 0),
+    qty NUMERIC(12,3) NOT NULL CHECK (qty > 0),
     rate INTEGER NOT NULL CHECK (rate > 0),
     reason TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()

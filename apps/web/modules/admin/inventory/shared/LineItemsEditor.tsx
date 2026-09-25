@@ -61,11 +61,14 @@ export function LineItemsEditor({
     onChange(items.filter((item) => item.key !== key));
   };
 
-  const total = items.reduce((sum, item) => {
-    const qty = Number(item.quantity) || 0;
-    const rate = Number(item.rate) || 0;
-    return sum + qty * rate;
+  // round each line to whole paisa before summing, the same way the backend
+  // records each line (utils.LineAmount: qty in thousandths x rate in paisa)
+  const totalPaisa = items.reduce((sum, item) => {
+    const qtyThousandths = Math.round((Number(item.quantity) || 0) * 1000);
+    const ratePaisa = Math.round((Number(item.rate) || 0) * 100);
+    return sum + Math.floor((qtyThousandths * ratePaisa + 500) / 1000);
   }, 0);
+  const total = totalPaisa / 100;
 
   return (
     <div className="flex flex-col gap-3">
@@ -109,12 +112,13 @@ export function LineItemsEditor({
                   <td className={cellClass}>
                     <input
                       type="number"
-                      min={1}
+                      min={0.001}
+                      step={0.001}
                       value={item.quantity}
                       onChange={(e) =>
                         updateItem(item.key, { quantity: e.target.value })
                       }
-                      className={cn(inventoryFieldInputClass, "w-24")}
+                      className={cn(inventoryFieldInputClass, "w-28")}
                     />
                     {itemErrors?.quantity ? (
                       <span className="mt-1 block text-xs font-normal normal-case tracking-normal text-[#9a3412]">

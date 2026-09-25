@@ -22,7 +22,7 @@ type CreateStockInParams struct {
 	SupplierID pgtype.UUID `json:"supplierId"`
 	Date       string      `json:"date"`
 	InvoiceNo  pgtype.Text `json:"invoiceNo"`
-	Qty        int32       `json:"qty"`
+	Qty        float64     `json:"qty"`
 	Rate       int32       `json:"rate"`
 	Note       pgtype.Text `json:"note"`
 }
@@ -79,7 +79,7 @@ type GetStockInByIDRow struct {
 	ProductID    pgtype.UUID        `json:"productId"`
 	Date         string             `json:"date"`
 	InvoiceNo    pgtype.Text        `json:"invoiceNo"`
-	Qty          int32              `json:"qty"`
+	Qty          float64            `json:"qty"`
 	Rate         int32              `json:"rate"`
 	Note         pgtype.Text        `json:"note"`
 	SupplierID   pgtype.UUID        `json:"supplierId"`
@@ -175,7 +175,7 @@ type ListStockInRow struct {
 	ProductID    pgtype.UUID        `json:"productId"`
 	Date         string             `json:"date"`
 	InvoiceNo    pgtype.Text        `json:"invoiceNo"`
-	Qty          int32              `json:"qty"`
+	Qty          float64            `json:"qty"`
 	Rate         int32              `json:"rate"`
 	Note         pgtype.Text        `json:"note"`
 	SupplierID   pgtype.UUID        `json:"supplierId"`
@@ -248,7 +248,7 @@ type ListStockInByDateRangeRow struct {
 	ProductID    pgtype.UUID        `json:"productId"`
 	Date         string             `json:"date"`
 	InvoiceNo    pgtype.Text        `json:"invoiceNo"`
-	Qty          int32              `json:"qty"`
+	Qty          float64            `json:"qty"`
 	Rate         int32              `json:"rate"`
 	Note         pgtype.Text        `json:"note"`
 	SupplierID   pgtype.UUID        `json:"supplierId"`
@@ -309,7 +309,7 @@ type ListStockInByProductRow struct {
 	ProductID    pgtype.UUID        `json:"productId"`
 	Date         string             `json:"date"`
 	InvoiceNo    pgtype.Text        `json:"invoiceNo"`
-	Qty          int32              `json:"qty"`
+	Qty          float64            `json:"qty"`
 	Rate         int32              `json:"rate"`
 	Note         pgtype.Text        `json:"note"`
 	SupplierID   pgtype.UUID        `json:"supplierId"`
@@ -370,7 +370,7 @@ type ListStockInBySupplierRow struct {
 	ProductID    pgtype.UUID        `json:"productId"`
 	Date         string             `json:"date"`
 	InvoiceNo    pgtype.Text        `json:"invoiceNo"`
-	Qty          int32              `json:"qty"`
+	Qty          float64            `json:"qty"`
 	Rate         int32              `json:"rate"`
 	Note         pgtype.Text        `json:"note"`
 	SupplierID   pgtype.UUID        `json:"supplierId"`
@@ -426,7 +426,7 @@ type UpdateStockInParams struct {
 	SupplierID pgtype.UUID `json:"supplierId"`
 	Date       string      `json:"date"`
 	InvoiceNo  pgtype.Text `json:"invoiceNo"`
-	Qty        int32       `json:"qty"`
+	Qty        float64     `json:"qty"`
 	Rate       int32       `json:"rate"`
 	Note       pgtype.Text `json:"note"`
 }

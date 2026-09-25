@@ -17,11 +17,11 @@ SELECT
     p.name AS product_name,
     p.unit AS product_unit,
 
-    COALESCE(si.total_qty, 0)::INTEGER AS stock_in_qty,
-    COALESCE(so.total_qty, 0)::INTEGER AS stock_out_qty,
-    COALESCE(w.total_qty, 0)::INTEGER AS wastage_qty,
+    COALESCE(si.total_qty, 0)::NUMERIC(14,3) AS stock_in_qty,
+    COALESCE(so.total_qty, 0)::NUMERIC(14,3) AS stock_out_qty,
+    COALESCE(w.total_qty, 0)::NUMERIC(14,3) AS wastage_qty,
 
-    (COALESCE(si.total_qty, 0) - COALESCE(so.total_qty, 0) - COALESCE(w.total_qty, 0))::INTEGER AS closing_qty,
+    (COALESCE(si.total_qty, 0) - COALESCE(so.total_qty, 0) - COALESCE(w.total_qty, 0))::NUMERIC(14,3) AS closing_qty,
 
     COALESCE(si.total_amount, 0)::NUMERIC(14,2) AS stock_in_amount,
     COALESCE(so.total_amount, 0)::NUMERIC(14,2) AS stock_out_amount,
@@ -33,7 +33,7 @@ FROM products p
 LEFT JOIN (
     SELECT product_id,
            SUM(qty) AS total_qty,
-           SUM(qty * rate) AS total_amount
+           SUM(ROUND(qty * rate)) AS total_amount
     FROM stock_in
     WHERE
         ($1::TEXT IS NULL OR date >= $1::TEXT)
@@ -43,7 +43,7 @@ LEFT JOIN (
 LEFT JOIN (
     SELECT product_id,
            SUM(qty) AS total_qty,
-           SUM(qty * rate) AS total_amount
+           SUM(ROUND(qty * rate)) AS total_amount
     FROM stock_out
     WHERE
         ($1::TEXT IS NULL OR date >= $1::TEXT)
@@ -53,7 +53,7 @@ LEFT JOIN (
 LEFT JOIN (
     SELECT product_id,
            SUM(qty) AS total_qty,
-           SUM(qty * rate) AS total_amount
+           SUM(ROUND(qty * rate)) AS total_amount
     FROM wastage
     WHERE
         ($1::TEXT IS NULL OR date >= $1::TEXT)
@@ -72,10 +72,10 @@ type GetInventorySummaryRow struct {
 	ProductID      pgtype.UUID    `json:"productId"`
 	ProductName    string         `json:"productName"`
 	ProductUnit    string         `json:"productUnit"`
-	StockInQty     int32          `json:"stockInQty"`
-	StockOutQty    int32          `json:"stockOutQty"`
-	WastageQty     int32          `json:"wastageQty"`
-	ClosingQty     int32          `json:"closingQty"`
+	StockInQty     pgtype.Numeric `json:"stockInQty"`
+	StockOutQty    pgtype.Numeric `json:"stockOutQty"`
+	WastageQty     pgtype.Numeric `json:"wastageQty"`
+	ClosingQty     pgtype.Numeric `json:"closingQty"`
 	StockInAmount  pgtype.Numeric `json:"stockInAmount"`
 	StockOutAmount pgtype.Numeric `json:"stockOutAmount"`
 	WastageAmount  pgtype.Numeric `json:"wastageAmount"`
@@ -120,24 +120,24 @@ SELECT
     p.name AS product_name,
     p.unit AS product_unit,
 
-    COALESCE(SUM(si.qty), 0)::INTEGER                           AS stock_in_qty,
-    COALESCE(SUM(so.qty), 0)::INTEGER                           AS stock_out_qty,
-    COALESCE(SUM(w.qty), 0)::INTEGER                            AS wastage_qty,
+    COALESCE(SUM(si.qty), 0)::NUMERIC(14,3)                      AS stock_in_qty,
+    COALESCE(SUM(so.qty), 0)::NUMERIC(14,3)                      AS stock_out_qty,
+    COALESCE(SUM(w.qty), 0)::NUMERIC(14,3)                       AS wastage_qty,
 
     (
         COALESCE(SUM(si.qty), 0) -
         COALESCE(SUM(so.qty), 0) -
         COALESCE(SUM(w.qty), 0)
-    )::INTEGER                                                   AS closing_qty,
+    )::NUMERIC(14,3)                                             AS closing_qty,
 
-    COALESCE(SUM(si.qty * si.rate), 0)::NUMERIC(14,2)           AS stock_in_amount,
-    COALESCE(SUM(so.qty * so.rate), 0)::NUMERIC(14,2)           AS stock_out_amount,
-    COALESCE(SUM(w.qty * w.rate), 0)::NUMERIC(14,2)             AS wastage_amount,
+    COALESCE(SUM(ROUND(si.qty * si.rate)), 0)::NUMERIC(14,2)     AS stock_in_amount,
+    COALESCE(SUM(ROUND(so.qty * so.rate)), 0)::NUMERIC(14,2)     AS stock_out_amount,
+    COALESCE(SUM(ROUND(w.qty * w.rate)), 0)::NUMERIC(14,2)       AS wastage_amount,
 
     (
-        COALESCE(SUM(si.qty * si.rate), 0) -
-        COALESCE(SUM(so.qty * so.rate), 0) -
-        COALESCE(SUM(w.qty * w.rate), 0)
+        COALESCE(SUM(ROUND(si.qty * si.rate)), 0) -
+        COALESCE(SUM(ROUND(so.qty * so.rate)), 0) -
+        COALESCE(SUM(ROUND(w.qty * w.rate)), 0)
     )::NUMERIC(14,2)                                             AS closing_amount
 
 FROM products p
@@ -157,10 +157,10 @@ type GetInventorySummaryByDateRangeRow struct {
 	ProductID      pgtype.UUID    `json:"productId"`
 	ProductName    string         `json:"productName"`
 	ProductUnit    string         `json:"productUnit"`
-	StockInQty     int32          `json:"stockInQty"`
-	StockOutQty    int32          `json:"stockOutQty"`
-	WastageQty     int32          `json:"wastageQty"`
-	ClosingQty     int32          `json:"closingQty"`
+	StockInQty     pgtype.Numeric `json:"stockInQty"`
+	StockOutQty    pgtype.Numeric `json:"stockOutQty"`
+	WastageQty     pgtype.Numeric `json:"wastageQty"`
+	ClosingQty     pgtype.Numeric `json:"closingQty"`
 	StockInAmount  pgtype.Numeric `json:"stockInAmount"`
 	StockOutAmount pgtype.Numeric `json:"stockOutAmount"`
 	WastageAmount  pgtype.Numeric `json:"wastageAmount"`
@@ -205,24 +205,24 @@ SELECT
     p.name AS product_name,
     p.unit AS product_unit,
 
-    COALESCE(SUM(si.qty), 0)::INTEGER                           AS stock_in_qty,
-    COALESCE(SUM(so.qty), 0)::INTEGER                           AS stock_out_qty,
-    COALESCE(SUM(w.qty), 0)::INTEGER                            AS wastage_qty,
+    COALESCE(SUM(si.qty), 0)::NUMERIC(14,3)                      AS stock_in_qty,
+    COALESCE(SUM(so.qty), 0)::NUMERIC(14,3)                      AS stock_out_qty,
+    COALESCE(SUM(w.qty), 0)::NUMERIC(14,3)                       AS wastage_qty,
 
     (
         COALESCE(SUM(si.qty), 0) -
         COALESCE(SUM(so.qty), 0) -
         COALESCE(SUM(w.qty), 0)
-    )::INTEGER                                                   AS closing_qty,
+    )::NUMERIC(14,3)                                             AS closing_qty,
 
-    COALESCE(SUM(si.qty * si.rate), 0)::NUMERIC(14,2)           AS stock_in_amount,
-    COALESCE(SUM(so.qty * so.rate), 0)::NUMERIC(14,2)           AS stock_out_amount,
-    COALESCE(SUM(w.qty * w.rate), 0)::NUMERIC(14,2)             AS wastage_amount,
+    COALESCE(SUM(ROUND(si.qty * si.rate)), 0)::NUMERIC(14,2)     AS stock_in_amount,
+    COALESCE(SUM(ROUND(so.qty * so.rate)), 0)::NUMERIC(14,2)     AS stock_out_amount,
+    COALESCE(SUM(ROUND(w.qty * w.rate)), 0)::NUMERIC(14,2)       AS wastage_amount,
 
     (
-        COALESCE(SUM(si.qty * si.rate), 0) -
-        COALESCE(SUM(so.qty * so.rate), 0) -
-        COALESCE(SUM(w.qty * w.rate), 0)
+        COALESCE(SUM(ROUND(si.qty * si.rate)), 0) -
+        COALESCE(SUM(ROUND(so.qty * so.rate)), 0) -
+        COALESCE(SUM(ROUND(w.qty * w.rate)), 0)
     )::NUMERIC(14,2)                                             AS closing_amount
 
 FROM products p
@@ -237,10 +237,10 @@ type GetInventorySummaryByProductRow struct {
 	ProductID      pgtype.UUID    `json:"productId"`
 	ProductName    string         `json:"productName"`
 	ProductUnit    string         `json:"productUnit"`
-	StockInQty     int32          `json:"stockInQty"`
-	StockOutQty    int32          `json:"stockOutQty"`
-	WastageQty     int32          `json:"wastageQty"`
-	ClosingQty     int32          `json:"closingQty"`
+	StockInQty     pgtype.Numeric `json:"stockInQty"`
+	StockOutQty    pgtype.Numeric `json:"stockOutQty"`
+	WastageQty     pgtype.Numeric `json:"wastageQty"`
+	ClosingQty     pgtype.Numeric `json:"closingQty"`
 	StockInAmount  pgtype.Numeric `json:"stockInAmount"`
 	StockOutAmount pgtype.Numeric `json:"stockOutAmount"`
 	WastageAmount  pgtype.Numeric `json:"wastageAmount"`

@@ -76,7 +76,7 @@ func UpdateWastage(queries repository.InventoryRepository) gin.HandlerFunc {
 			ProductID: productID,
 			Date:      req.Date,
 			Rate:      int32(math.Round(req.Rate * 100)),
-			Qty:       int32(req.Quantity),
+			Qty:       utils.RoundQty(req.Quantity),
 			Reason:    utils.ToNullableText(req.Reason),
 			ID:        wastageID,
 		})

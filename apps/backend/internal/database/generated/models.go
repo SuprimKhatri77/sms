@@ -117,7 +117,7 @@ type StockIn struct {
 	ProductID  pgtype.UUID        `json:"productId"`
 	Date       string             `json:"date"`
 	InvoiceNo  pgtype.Text        `json:"invoiceNo"`
-	Qty        int32              `json:"qty"`
+	Qty        float64            `json:"qty"`
 	Rate       int32              `json:"rate"`
 	Note       pgtype.Text        `json:"note"`
 	SupplierID pgtype.UUID        `json:"supplierId"`
@@ -129,7 +129,7 @@ type StockOut struct {
 	ProductID pgtype.UUID        `json:"productId"`
 	Date      string             `json:"date"`
 	BillNo    pgtype.Text        `json:"billNo"`
-	Qty       int32              `json:"qty"`
+	Qty       float64            `json:"qty"`
 	Rate      int32              `json:"rate"`
 	Note      pgtype.Text        `json:"note"`
 	CreatedAt pgtype.Timestamptz `json:"createdAt"`
@@ -225,7 +225,7 @@ type Wastage struct {
 	ID        pgtype.UUID        `json:"id"`
 	ProductID pgtype.UUID        `json:"productId"`
 	Date      string             `json:"date"`
-	Qty       int32              `json:"qty"`
+	Qty       float64            `json:"qty"`
 	Rate      int32              `json:"rate"`
 	Reason    pgtype.Text        `json:"reason"`
 	CreatedAt pgtype.Timestamptz `json:"createdAt"`
