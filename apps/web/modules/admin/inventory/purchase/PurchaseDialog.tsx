@@ -342,14 +342,20 @@ export function PurchaseDialog({
               required
               error={editErrors?.date}
             >
-              <input
-                placeholder="2081-01-15"
-                value={editForm.date}
-                onChange={(e) =>
-                  setEditForm((prev) => ({ ...prev, date: e.target.value }))
-                }
-                className={fieldInputClass}
-              />
+              <div className="relative">
+                <CalendarDays
+                  className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-[rgba(47,78,64,0.35)]"
+                  strokeWidth={1.75}
+                />
+                <NepaliDatePicker
+                  inputClassName={cn(inputCls, "rounded-none pl-9")}
+                  value={editForm.date}
+                  onChange={(v: string) =>
+                    setEditForm((prev) => ({ ...prev, date: v }))
+                  }
+                  options={{ calenderLocale: "en", valueLocale: "en" }}
+                />
+              </div>
             </InventoryFormField>
           </InventoryFormSection>
 

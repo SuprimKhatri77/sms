@@ -84,9 +84,14 @@ const adDateSchema = z
     /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/,
     "Date must be in YYYY-MM-DD format",
   );
+// BS months can have 32 days; whether a day exists in its month is checked by
+// the backend (bs_date validator)
 const bsDateSchema = z
   .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, "BS date must be in YYYY-MM-DD format");
+  .regex(
+    /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[0-2])$/,
+    "BS date must be in YYYY-MM-DD format",
+  );
 
 // qty matches the NUMERIC(12,3) qty columns; rate is rupees stored as paisa.
 const quantitySchema = z
@@ -278,12 +283,7 @@ export const stockOutLineItemSchema = z.object({
 export type StockOutLineItemInput = z.infer<typeof stockOutLineItemSchema>;
 
 export const createStockOutBatchSchema = z.object({
-  date: z
-    .string()
-    .regex(
-      /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/,
-      "Date must be in YYYY-MM-DD format",
-    ),
+  date: bsDateSchema,
   note: z.string().optional(),
   billNo: z.string().optional(),
   items: z
@@ -314,12 +314,7 @@ export type CreateStockOutBatchResponse = z.infer<
 >;
 
 export const editStockOutSchema = stockOutLineItemSchema.extend({
-  date: z
-    .string()
-    .regex(
-      /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/,
-      "Date must be in YYYY-MM-DD format",
-    ),
+  date: bsDateSchema,
   note: z.string().optional(),
   billNo: z.string().optional(),
 });
@@ -397,12 +392,7 @@ export const wastageLineItemSchema = z.object({
 export type WastageLineItemInput = z.infer<typeof wastageLineItemSchema>;
 
 export const createWastageBatchSchema = z.object({
-  date: z
-    .string()
-    .regex(
-      /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/,
-      "Date must be in YYYY-MM-DD format",
-    ),
+  date: bsDateSchema,
   reason: z.string().optional(),
   items: z
     .array(wastageLineItemSchema)
@@ -445,12 +435,7 @@ export const deleteWastageResponseSchema = z.discriminatedUnion("success", [
 export type DeleteWastageResponse = z.infer<typeof deleteWastageResponseSchema>;
 
 export const editWastageSchema = wastageLineItemSchema.extend({
-  date: z
-    .string()
-    .regex(
-      /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/,
-      "Date must be in YYYY-MM-DD format",
-    ),
+  date: bsDateSchema,
   reason: z.string().optional(),
 });
 
