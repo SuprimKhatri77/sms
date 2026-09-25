@@ -27,7 +27,7 @@ func Parse(err error, obj any) []types.AppError {
 	for _, fe := range ve {
 		jsonField := getJSONFieldName(obj, fe)
 		errs = append(errs, types.AppError{
-			Code:    mapTagToCode(fe.Tag()),
+			Code:    mapTagToCode(fe),
 			Field:   normalizeField(obj, fe),
 			Message: buildMessage(fe, jsonField),
 		})
@@ -40,13 +40,19 @@ func normalizeField(obj any, fe validator.FieldError) string {
 	return getJSONFieldName(obj, fe)
 }
 
-func mapTagToCode(tag string) string {
-	switch tag {
+func mapTagToCode(fe validator.FieldError) string {
+	switch fe.Tag() {
 	case "required":
 		return "REQUIRED_FIELD"
 	case "min":
+		if isNumericKind(fe.Kind()) {
+			return "OUT_OF_RANGE"
+		}
 		return "TOO_SHORT"
 	case "max":
+		if isNumericKind(fe.Kind()) {
+			return "OUT_OF_RANGE"
+		}
 		return "TOO_LONG"
 	case "email":
 		return "INVALID_EMAIL"
@@ -82,13 +88,19 @@ func buildMessage(fe validator.FieldError, jsonField string) string {
 	case "required":
 		return fmt.Sprintf("%s is required", jsonField)
 	case "min":
-		if fe.Kind() == reflect.Slice {
+		switch {
+		case isCollectionKind(fe.Kind()):
 			return fmt.Sprintf("%s must have at least %s item(s)", jsonField, fe.Param())
+		case isNumericKind(fe.Kind()):
+			return fmt.Sprintf("%s must be at least %s", jsonField, fe.Param())
 		}
 		return fmt.Sprintf("%s must be at least %s characters", jsonField, fe.Param())
 	case "max":
-		if fe.Kind() == reflect.Slice {
+		switch {
+		case isCollectionKind(fe.Kind()):
 			return fmt.Sprintf("%s cannot have more than %s item(s)", jsonField, fe.Param())
+		case isNumericKind(fe.Kind()):
+			return fmt.Sprintf("%s cannot exceed %s", jsonField, fe.Param())
 		}
 		return fmt.Sprintf("%s cannot exceed %s characters", jsonField, fe.Param())
 	case "email":
@@ -124,6 +136,22 @@ func buildMessage(fe validator.FieldError, jsonField string) string {
 	default:
 		return fmt.Sprintf("%s is invalid", jsonField)
 	}
+}
+
+// min/max mean a value bound for numbers, a length for strings and an item
+// count for slices/arrays/maps — the message and code have to match.
+func isNumericKind(k reflect.Kind) bool {
+	switch k {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
+		reflect.Float32, reflect.Float64:
+		return true
+	}
+	return false
+}
+
+func isCollectionKind(k reflect.Kind) bool {
+	return k == reflect.Slice || k == reflect.Array || k == reflect.Map
 }
 
 func getJSONFieldName(obj any, fe validator.FieldError) string {
