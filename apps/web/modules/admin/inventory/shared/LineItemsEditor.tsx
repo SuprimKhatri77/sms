@@ -41,6 +41,9 @@ type Props = {
 };
 
 const cellClass = "px-2 py-2 align-top";
+// the header row is hidden on phones, so each qty/rate cell shows its own label
+const mobileLabelClass =
+  "mb-1 block font-(family-name:--font-dm-sans) text-[10px] font-semibold uppercase tracking-widest text-[rgba(47,78,64,0.45)] sm:hidden";
 
 export function LineItemsEditor({
   items,
@@ -73,8 +76,10 @@ export function LineItemsEditor({
   return (
     <div className="flex flex-col gap-3">
       <div className="border border-[rgba(47,78,64,0.18)]">
-        <table className="w-full border-collapse">
-          <thead>
+        {/* phones: each row is a grid (product full width, then qty / rate /
+            remove); sm and up: a regular table */}
+        <table className="block w-full border-collapse sm:table">
+          <thead className="hidden sm:table-header-group">
             <tr>
               <th className={inventoryThClass}>Product</th>
               <th className={inventoryThClass}>Qty</th>
@@ -82,15 +87,15 @@ export function LineItemsEditor({
               <th className={inventoryThClass} />
             </tr>
           </thead>
-          <tbody>
+          <tbody className="block sm:table-row-group">
             {items.map((item) => {
               const itemErrors = errors?.[item.key];
               return (
                 <tr
                   key={item.key}
-                  className="border-b border-[rgba(47,78,64,0.08)] last:border-b-0"
+                  className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] border-b border-[rgba(47,78,64,0.08)] last:border-b-0 sm:table-row"
                 >
-                  <td className={cellClass}>
+                  <td className={cn(cellClass, "col-span-3 sm:table-cell")}>
                     <SearchableSelect
                       value={item.productID}
                       onChange={(value, label) =>
@@ -110,15 +115,17 @@ export function LineItemsEditor({
                     ) : null}
                   </td>
                   <td className={cellClass}>
+                    <span className={mobileLabelClass}>Qty</span>
                     <input
                       type="number"
+                      aria-label="Quantity"
                       min={0.001}
                       step={0.001}
                       value={item.quantity}
                       onChange={(e) =>
                         updateItem(item.key, { quantity: e.target.value })
                       }
-                      className={cn(inventoryFieldInputClass, "w-28")}
+                      className={cn(inventoryFieldInputClass, "w-full sm:w-28")}
                     />
                     {itemErrors?.quantity ? (
                       <span className="mt-1 block text-xs font-normal normal-case tracking-normal text-[#9a3412]">
@@ -127,15 +134,17 @@ export function LineItemsEditor({
                     ) : null}
                   </td>
                   <td className={cellClass}>
+                    <span className={mobileLabelClass}>Rate (Rs.)</span>
                     <input
                       type="number"
+                      aria-label="Rate (Rs.)"
                       min={0.01}
                       step={0.01}
                       value={item.rate}
                       onChange={(e) =>
                         updateItem(item.key, { rate: e.target.value })
                       }
-                      className={cn(inventoryFieldInputClass, "w-28")}
+                      className={cn(inventoryFieldInputClass, "w-full sm:w-28")}
                     />
                     {itemErrors?.rate ? (
                       <span className="mt-1 block text-xs font-normal normal-case tracking-normal text-[#9a3412]">
@@ -144,11 +153,20 @@ export function LineItemsEditor({
                     ) : null}
                   </td>
                   <td className={cn(cellClass, "text-right")}>
+                    {/* phones: a blank label + py-3 (38px input - 14px icon) / 2
+                        keeps the button level with the inputs, even when
+                        error text makes the row taller */}
+                    <span
+                      aria-hidden
+                      className={cn(mobileLabelClass, "invisible")}
+                    >
+                      &nbsp;
+                    </span>
                     <button
                       type="button"
                       onClick={() => removeItem(item.key)}
                       disabled={items.length <= 1}
-                      className="text-[rgba(47,78,64,0.45)] hover:text-[#9a3412] disabled:cursor-not-allowed disabled:opacity-30"
+                      className="py-3 text-[rgba(47,78,64,0.45)] hover:text-[#9a3412] disabled:cursor-not-allowed disabled:opacity-30 sm:py-0"
                       aria-label="Remove item"
                     >
                       <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} />
