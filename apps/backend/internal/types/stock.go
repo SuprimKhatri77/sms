@@ -4,15 +4,15 @@ type UpdateStockInRequest struct {
 	ProductID string  `json:"productID" binding:"required,uuid"`
 	Date      string  `json:"date" binding:"required"`
 	InvoiceNo string  `json:"invoiceNo" binding:"omitempty"`
-	Quantity  int     `json:"quantity" binding:"required,min=1,max=10000000"`
-	Rate      float64 `json:"rate" binding:"required,gt=0"`
+	Quantity  float64 `json:"quantity" binding:"required,min=0.001,max=10000000"`
+	Rate      float64 `json:"rate" binding:"required,min=0.01,max=999999.99"`
 	Note      string  `json:"note" binding:"omitempty"`
 }
 
 type SaleLineItem struct {
 	ProductID string  `json:"productID" binding:"required,uuid"`
-	Quantity  int     `json:"quantity" binding:"required,min=1,max=10000000"`
-	Rate      float64 `json:"rate" binding:"required,gt=0"`
+	Quantity  float64 `json:"quantity" binding:"required,min=0.001,max=10000000"`
+	Rate      float64 `json:"rate" binding:"required,min=0.01,max=999999.99"`
 }
 
 type CreateSaleBatchRequest struct {
@@ -26,15 +26,15 @@ type UpdateStockOutRequest struct {
 	ProductID string  `json:"productID" binding:"required,uuid"`
 	Date      string  `json:"date" binding:"required"`
 	BillNo    string  `json:"billNo" binding:"omitempty"`
-	Quantity  int     `json:"quantity" binding:"required,min=1,max=10000000"`
-	Rate      float64 `json:"rate" binding:"required,gt=0"`
+	Quantity  float64 `json:"quantity" binding:"required,min=0.001,max=10000000"`
+	Rate      float64 `json:"rate" binding:"required,min=0.01,max=999999.99"`
 	Note      string  `json:"note" binding:"omitempty"`
 }
 
 type WastageLineItem struct {
 	ProductID string  `json:"productID" binding:"required,uuid"`
-	Quantity  int     `json:"quantity" binding:"required,min=1,max=10000000"`
-	Rate      float64 `json:"rate" binding:"required,gt=0"`
+	Quantity  float64 `json:"quantity" binding:"required,min=0.001,max=10000000"`
+	Rate      float64 `json:"rate" binding:"required,min=0.01,max=999999.99"`
 }
 
 type CreateWastageBatchRequest struct {
@@ -44,8 +44,8 @@ type CreateWastageBatchRequest struct {
 }
 type UpdateWastageRequest struct {
 	ProductID string  `json:"productID" binding:"required,uuid"`
-	Quantity  int     `json:"quantity" binding:"required,min=1,max=10000000"`
+	Quantity  float64 `json:"quantity" binding:"required,min=0.001,max=10000000"`
 	Date      string  `json:"date" binding:"required"`
-	Rate      float64 `json:"rate" binding:"required,gt=0"`
+	Rate      float64 `json:"rate" binding:"required,min=0.01,max=999999.99"`
 	Reason    string  `json:"reason" binding:"omitempty"`
 }

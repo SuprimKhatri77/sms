@@ -68,7 +68,7 @@ func CreateStockOut(queries repository.InventoryTxRepository, pool *pgxpool.Pool
 
 			stockOut, err := qtx.CreateStockOut(ctx, db.CreateStockOutParams{
 				ProductID: productID,
-				Qty:       int32(item.Quantity),
+				Qty:       utils.RoundQty(item.Quantity),
 				Rate:      int32(math.Round(item.Rate * 100)),
 				Date:      req.Date,
 				Note:      utils.ToNullableText(req.Note),

@@ -21,7 +21,7 @@ type CreateStockOutParams struct {
 	ProductID pgtype.UUID `json:"productId"`
 	Date      string      `json:"date"`
 	BillNo    pgtype.Text `json:"billNo"`
-	Qty       int32       `json:"qty"`
+	Qty       float64     `json:"qty"`
 	Rate      int32       `json:"rate"`
 	Note      pgtype.Text `json:"note"`
 }
@@ -74,7 +74,7 @@ type GetStockOutByIDRow struct {
 	ProductID   pgtype.UUID        `json:"productId"`
 	Date        string             `json:"date"`
 	BillNo      pgtype.Text        `json:"billNo"`
-	Qty         int32              `json:"qty"`
+	Qty         float64            `json:"qty"`
 	Rate        int32              `json:"rate"`
 	Note        pgtype.Text        `json:"note"`
 	CreatedAt   pgtype.Timestamptz `json:"createdAt"`
@@ -159,7 +159,7 @@ type ListStockOutRow struct {
 	ProductID   pgtype.UUID        `json:"productId"`
 	Date        string             `json:"date"`
 	BillNo      pgtype.Text        `json:"billNo"`
-	Qty         int32              `json:"qty"`
+	Qty         float64            `json:"qty"`
 	Rate        int32              `json:"rate"`
 	Note        pgtype.Text        `json:"note"`
 	CreatedAt   pgtype.Timestamptz `json:"createdAt"`
@@ -221,7 +221,7 @@ type ListStockOutByBillNoRow struct {
 	ProductID   pgtype.UUID        `json:"productId"`
 	Date        string             `json:"date"`
 	BillNo      pgtype.Text        `json:"billNo"`
-	Qty         int32              `json:"qty"`
+	Qty         float64            `json:"qty"`
 	Rate        int32              `json:"rate"`
 	Note        pgtype.Text        `json:"note"`
 	CreatedAt   pgtype.Timestamptz `json:"createdAt"`
@@ -281,7 +281,7 @@ type ListStockOutByDateRangeRow struct {
 	ProductID   pgtype.UUID        `json:"productId"`
 	Date        string             `json:"date"`
 	BillNo      pgtype.Text        `json:"billNo"`
-	Qty         int32              `json:"qty"`
+	Qty         float64            `json:"qty"`
 	Rate        int32              `json:"rate"`
 	Note        pgtype.Text        `json:"note"`
 	CreatedAt   pgtype.Timestamptz `json:"createdAt"`
@@ -336,7 +336,7 @@ type ListStockOutByProductRow struct {
 	ProductID   pgtype.UUID        `json:"productId"`
 	Date        string             `json:"date"`
 	BillNo      pgtype.Text        `json:"billNo"`
-	Qty         int32              `json:"qty"`
+	Qty         float64            `json:"qty"`
 	Rate        int32              `json:"rate"`
 	Note        pgtype.Text        `json:"note"`
 	CreatedAt   pgtype.Timestamptz `json:"createdAt"`
@@ -387,7 +387,7 @@ type UpdateStockOutParams struct {
 	ProductID pgtype.UUID `json:"productId"`
 	Date      string      `json:"date"`
 	BillNo    pgtype.Text `json:"billNo"`
-	Qty       int32       `json:"qty"`
+	Qty       float64     `json:"qty"`
 	Rate      int32       `json:"rate"`
 	Note      pgtype.Text `json:"note"`
 }

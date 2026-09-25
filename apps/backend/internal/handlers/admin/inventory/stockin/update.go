@@ -77,7 +77,7 @@ func UpdateStockIn(queries repository.InventoryRepository) gin.HandlerFunc {
 			ID:        stockID,
 			ProductID: productID,
 			Rate:      int32(math.Round(req.Rate * 100)),
-			Qty:       int32(req.Quantity),
+			Qty:       utils.RoundQty(req.Quantity),
 			Note:      utils.ToNullableText(req.Note),
 			InvoiceNo: utils.ToNullableText(req.InvoiceNo),
 			Date:      req.Date,

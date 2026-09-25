@@ -20,7 +20,7 @@ RETURNING id, product_id, date, qty, rate, reason, created_at
 type CreateWastageParams struct {
 	ProductID pgtype.UUID `json:"productId"`
 	Date      string      `json:"date"`
-	Qty       int32       `json:"qty"`
+	Qty       float64     `json:"qty"`
 	Rate      int32       `json:"rate"`
 	Reason    pgtype.Text `json:"reason"`
 }
@@ -70,7 +70,7 @@ type GetWastageByIDRow struct {
 	ID          pgtype.UUID        `json:"id"`
 	ProductID   pgtype.UUID        `json:"productId"`
 	Date        string             `json:"date"`
-	Qty         int32              `json:"qty"`
+	Qty         float64            `json:"qty"`
 	Rate        int32              `json:"rate"`
 	Reason      pgtype.Text        `json:"reason"`
 	CreatedAt   pgtype.Timestamptz `json:"createdAt"`
@@ -149,7 +149,7 @@ type ListWastageRow struct {
 	ID          pgtype.UUID        `json:"id"`
 	ProductID   pgtype.UUID        `json:"productId"`
 	Date        string             `json:"date"`
-	Qty         int32              `json:"qty"`
+	Qty         float64            `json:"qty"`
 	Rate        int32              `json:"rate"`
 	Reason      pgtype.Text        `json:"reason"`
 	CreatedAt   pgtype.Timestamptz `json:"createdAt"`
@@ -214,7 +214,7 @@ type ListWastageByDateRangeRow struct {
 	ID          pgtype.UUID        `json:"id"`
 	ProductID   pgtype.UUID        `json:"productId"`
 	Date        string             `json:"date"`
-	Qty         int32              `json:"qty"`
+	Qty         float64            `json:"qty"`
 	Rate        int32              `json:"rate"`
 	Reason      pgtype.Text        `json:"reason"`
 	CreatedAt   pgtype.Timestamptz `json:"createdAt"`
@@ -267,7 +267,7 @@ type ListWastageByProductRow struct {
 	ID          pgtype.UUID        `json:"id"`
 	ProductID   pgtype.UUID        `json:"productId"`
 	Date        string             `json:"date"`
-	Qty         int32              `json:"qty"`
+	Qty         float64            `json:"qty"`
 	Rate        int32              `json:"rate"`
 	Reason      pgtype.Text        `json:"reason"`
 	CreatedAt   pgtype.Timestamptz `json:"createdAt"`
@@ -316,7 +316,7 @@ type UpdateWastageParams struct {
 	ID        pgtype.UUID `json:"id"`
 	ProductID pgtype.UUID `json:"productId"`
 	Date      string      `json:"date"`
-	Qty       int32       `json:"qty"`
+	Qty       float64     `json:"qty"`
 	Rate      int32       `json:"rate"`
 	Reason    pgtype.Text `json:"reason"`
 }

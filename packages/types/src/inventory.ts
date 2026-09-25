@@ -88,10 +88,22 @@ const bsDateSchema = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/, "BS date must be in YYYY-MM-DD format");
 
+// qty matches the NUMERIC(12,3) qty columns; rate is rupees stored as paisa.
+const quantitySchema = z
+  .number()
+  .min(0.001, "Quantity must be at least 0.001")
+  .max(10000000, "Quantity can be at most 10000000")
+  .multipleOf(0.001, "Quantity can have at most 3 decimal places");
+const rateSchema = z
+  .number()
+  .min(0.01, "Rate must be at least 0.01")
+  .max(999999.99, "Rate can be at most 999999.99")
+  .multipleOf(0.01, "Rate can have at most 2 decimal places");
+
 export const stockInLineItemSchema = z.object({
   productID: z.uuid(),
-  quantity: z.number().min(1),
-  rate: z.number().gt(0),
+  quantity: quantitySchema,
+  rate: rateSchema,
 });
 
 export const updateStockInSchema = stockInLineItemSchema.extend({
@@ -109,7 +121,26 @@ export const createStockInBatchSchema = z.object({
   items: z
     .array(stockInLineItemSchema)
     .min(1, "Add at least one item")
-    .max(100),
+    .max(100)
+    .superRefine((items, ctx) => {
+      // each line becomes a supplier ledger credit, which must be at least
+      // 1 paisa — same integer check as utils.LineAmount on the backend
+      items.forEach((item, i) => {
+        const qtyThousandths = Math.round(item.quantity * 1000);
+        const ratePaisa = Math.round(item.rate * 100);
+        if (
+          qtyThousandths >= 1 &&
+          ratePaisa >= 1 &&
+          qtyThousandths * ratePaisa < 500
+        ) {
+          ctx.addIssue({
+            code: "custom",
+            path: [i, "quantity"],
+            message: "Line total (qty x rate) must be at least Rs. 0.01",
+          });
+        }
+      });
+    }),
 });
 
 export type StockInLineItemInput = z.infer<typeof stockInLineItemSchema>;
@@ -238,8 +269,8 @@ export type ListStockOutResponse = z.infer<typeof listStockOutResponse>;
 
 export const stockOutLineItemSchema = z.object({
   productID: z.uuid(),
-  quantity: z.number().min(1),
-  rate: z.number().gt(0),
+  quantity: quantitySchema,
+  rate: rateSchema,
 });
 export type StockOutLineItemInput = z.infer<typeof stockOutLineItemSchema>;
 
@@ -327,7 +358,7 @@ const wastageRecordSchema = z.object({
   productID: z.uuid(),
   productName: z.string(),
   productUnit: z.string(),
-  qty: z.number().min(1),
+  qty: z.number().gt(0),
   date: z.string(),
   rate: z.number().gt(0),
   reason: z.string().optional(),
@@ -357,8 +388,8 @@ export type ListWastageResponse = z.infer<typeof listWastageResponse>;
 
 export const wastageLineItemSchema = z.object({
   productID: z.uuid(),
-  quantity: z.number().min(1),
-  rate: z.number().gt(0),
+  quantity: quantitySchema,
+  rate: rateSchema,
 });
 export type WastageLineItemInput = z.infer<typeof wastageLineItemSchema>;
 

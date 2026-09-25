@@ -4,11 +4,11 @@ SELECT
     p.name AS product_name,
     p.unit AS product_unit,
 
-    COALESCE(si.total_qty, 0)::INTEGER AS stock_in_qty,
-    COALESCE(so.total_qty, 0)::INTEGER AS stock_out_qty,
-    COALESCE(w.total_qty, 0)::INTEGER AS wastage_qty,
+    COALESCE(si.total_qty, 0)::NUMERIC(14,3) AS stock_in_qty,
+    COALESCE(so.total_qty, 0)::NUMERIC(14,3) AS stock_out_qty,
+    COALESCE(w.total_qty, 0)::NUMERIC(14,3) AS wastage_qty,
 
-    (COALESCE(si.total_qty, 0) - COALESCE(so.total_qty, 0) - COALESCE(w.total_qty, 0))::INTEGER AS closing_qty,
+    (COALESCE(si.total_qty, 0) - COALESCE(so.total_qty, 0) - COALESCE(w.total_qty, 0))::NUMERIC(14,3) AS closing_qty,
 
     COALESCE(si.total_amount, 0)::NUMERIC(14,2) AS stock_in_amount,
     COALESCE(so.total_amount, 0)::NUMERIC(14,2) AS stock_out_amount,
@@ -20,7 +20,7 @@ FROM products p
 LEFT JOIN (
     SELECT product_id,
            SUM(qty) AS total_qty,
-           SUM(qty * rate) AS total_amount
+           SUM(ROUND(qty * rate)) AS total_amount
     FROM stock_in
     WHERE
         (sqlc.narg('from')::TEXT IS NULL OR date >= sqlc.narg('from')::TEXT)
@@ -30,7 +30,7 @@ LEFT JOIN (
 LEFT JOIN (
     SELECT product_id,
            SUM(qty) AS total_qty,
-           SUM(qty * rate) AS total_amount
+           SUM(ROUND(qty * rate)) AS total_amount
     FROM stock_out
     WHERE
         (sqlc.narg('from')::TEXT IS NULL OR date >= sqlc.narg('from')::TEXT)
@@ -40,7 +40,7 @@ LEFT JOIN (
 LEFT JOIN (
     SELECT product_id,
            SUM(qty) AS total_qty,
-           SUM(qty * rate) AS total_amount
+           SUM(ROUND(qty * rate)) AS total_amount
     FROM wastage
     WHERE
         (sqlc.narg('from')::TEXT IS NULL OR date >= sqlc.narg('from')::TEXT)
@@ -55,24 +55,24 @@ SELECT
     p.name AS product_name,
     p.unit AS product_unit,
 
-    COALESCE(SUM(si.qty), 0)::INTEGER                           AS stock_in_qty,
-    COALESCE(SUM(so.qty), 0)::INTEGER                           AS stock_out_qty,
-    COALESCE(SUM(w.qty), 0)::INTEGER                            AS wastage_qty,
+    COALESCE(SUM(si.qty), 0)::NUMERIC(14,3)                      AS stock_in_qty,
+    COALESCE(SUM(so.qty), 0)::NUMERIC(14,3)                      AS stock_out_qty,
+    COALESCE(SUM(w.qty), 0)::NUMERIC(14,3)                       AS wastage_qty,
 
     (
         COALESCE(SUM(si.qty), 0) -
         COALESCE(SUM(so.qty), 0) -
         COALESCE(SUM(w.qty), 0)
-    )::INTEGER                                                   AS closing_qty,
+    )::NUMERIC(14,3)                                             AS closing_qty,
 
-    COALESCE(SUM(si.qty * si.rate), 0)::NUMERIC(14,2)           AS stock_in_amount,
-    COALESCE(SUM(so.qty * so.rate), 0)::NUMERIC(14,2)           AS stock_out_amount,
-    COALESCE(SUM(w.qty * w.rate), 0)::NUMERIC(14,2)             AS wastage_amount,
+    COALESCE(SUM(ROUND(si.qty * si.rate)), 0)::NUMERIC(14,2)     AS stock_in_amount,
+    COALESCE(SUM(ROUND(so.qty * so.rate)), 0)::NUMERIC(14,2)     AS stock_out_amount,
+    COALESCE(SUM(ROUND(w.qty * w.rate)), 0)::NUMERIC(14,2)       AS wastage_amount,
 
     (
-        COALESCE(SUM(si.qty * si.rate), 0) -
-        COALESCE(SUM(so.qty * so.rate), 0) -
-        COALESCE(SUM(w.qty * w.rate), 0)
+        COALESCE(SUM(ROUND(si.qty * si.rate)), 0) -
+        COALESCE(SUM(ROUND(so.qty * so.rate)), 0) -
+        COALESCE(SUM(ROUND(w.qty * w.rate)), 0)
     )::NUMERIC(14,2)                                             AS closing_amount
 
 FROM products p
@@ -88,24 +88,24 @@ SELECT
     p.name AS product_name,
     p.unit AS product_unit,
 
-    COALESCE(SUM(si.qty), 0)::INTEGER                           AS stock_in_qty,
-    COALESCE(SUM(so.qty), 0)::INTEGER                           AS stock_out_qty,
-    COALESCE(SUM(w.qty), 0)::INTEGER                            AS wastage_qty,
+    COALESCE(SUM(si.qty), 0)::NUMERIC(14,3)                      AS stock_in_qty,
+    COALESCE(SUM(so.qty), 0)::NUMERIC(14,3)                      AS stock_out_qty,
+    COALESCE(SUM(w.qty), 0)::NUMERIC(14,3)                       AS wastage_qty,
 
     (
         COALESCE(SUM(si.qty), 0) -
         COALESCE(SUM(so.qty), 0) -
         COALESCE(SUM(w.qty), 0)
-    )::INTEGER                                                   AS closing_qty,
+    )::NUMERIC(14,3)                                             AS closing_qty,
 
-    COALESCE(SUM(si.qty * si.rate), 0)::NUMERIC(14,2)           AS stock_in_amount,
-    COALESCE(SUM(so.qty * so.rate), 0)::NUMERIC(14,2)           AS stock_out_amount,
-    COALESCE(SUM(w.qty * w.rate), 0)::NUMERIC(14,2)             AS wastage_amount,
+    COALESCE(SUM(ROUND(si.qty * si.rate)), 0)::NUMERIC(14,2)     AS stock_in_amount,
+    COALESCE(SUM(ROUND(so.qty * so.rate)), 0)::NUMERIC(14,2)     AS stock_out_amount,
+    COALESCE(SUM(ROUND(w.qty * w.rate)), 0)::NUMERIC(14,2)       AS wastage_amount,
 
     (
-        COALESCE(SUM(si.qty * si.rate), 0) -
-        COALESCE(SUM(so.qty * so.rate), 0) -
-        COALESCE(SUM(w.qty * w.rate), 0)
+        COALESCE(SUM(ROUND(si.qty * si.rate)), 0) -
+        COALESCE(SUM(ROUND(so.qty * so.rate)), 0) -
+        COALESCE(SUM(ROUND(w.qty * w.rate)), 0)
     )::NUMERIC(14,2)                                             AS closing_amount
 
 FROM products p

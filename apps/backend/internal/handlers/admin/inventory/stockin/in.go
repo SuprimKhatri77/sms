@@ -26,8 +26,8 @@ const handlerCreateStockIn = "CreateStockIn"
 
 type PurchaseLineItem struct {
 	ProductID string  `json:"productID" binding:"required,uuid"`
-	Quantity  int     `json:"quantity" binding:"required,min=1,max=10000000"`
-	Rate      float64 `json:"rate" binding:"required,gt=0"`
+	Quantity  float64 `json:"quantity" binding:"required,min=0.001,max=10000000"`
+	Rate      float64 `json:"rate" binding:"required,min=0.01,max=999999.99"`
 }
 
 type CreateStockInRequest struct {
@@ -92,6 +92,21 @@ func CreateStockIn(queries repository.InventoryTxRepository, pool *pgxpool.Pool)
 			})
 			return
 		}
+
+		// each line becomes a supplier ledger credit, which must be > 0 paisa;
+		// with decimal qty a tiny line (e.g. 0.001 x Rs 0.01) would round to 0
+		for _, item := range req.Items {
+			if utils.LineAmount(utils.RoundQty(item.Quantity), int32(math.Round(item.Rate*100))) < 1 {
+				applog.Warn(c, handlerCreateStockIn, "line amount below 1 paisa")
+				c.JSON(http.StatusBadRequest, types.APIResponse{
+					Success: false,
+					Message: "Each item's total (qty x rate) must be at least Rs. 0.01",
+					Code:    constants.ValidationFailed,
+				})
+				return
+			}
+		}
+
 		tx, err := pool.Begin(ctx)
 		if err != nil {
 			applog.Error(c, handlerCreateStockIn, "failed to process request",
@@ -130,7 +145,7 @@ func CreateStockIn(queries repository.InventoryTxRepository, pool *pgxpool.Pool)
 				Note:       utils.ToNullableText(req.Note),
 				InvoiceNo:  utils.ToNullableText(req.InvoiceNo),
 				Rate:       int32(math.Round(item.Rate * 100)),
-				Qty:        int32(item.Quantity),
+				Qty:        utils.RoundQty(item.Quantity),
 				Date:       req.BsDate,
 				SupplierID: supplierID,
 			})
@@ -173,7 +188,7 @@ func CreateStockIn(queries repository.InventoryTxRepository, pool *pgxpool.Pool)
 				Date:        pgtype.Timestamptz{Time: adDate, Valid: true},
 				BsDate:      req.BsDate,
 				EntryType:   "cr",
-				Amount:      int64(math.Round(float64(item.Quantity) * item.Rate * 100)),
+				Amount:      utils.LineAmount(stockIn.Qty, stockIn.Rate),
 				Description: pgtype.Text{String: desc, Valid: true},
 				StockInID:   stockIn.ID,
 			})

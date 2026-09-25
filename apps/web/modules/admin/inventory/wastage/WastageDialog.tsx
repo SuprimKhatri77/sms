@@ -318,7 +318,8 @@ export function WastageDialog({
               >
                 <input
                   type="number"
-                  min={1}
+                  min={0.001}
+                  step={0.001}
                   value={editForm.quantity}
                   onChange={(e) =>
                     setEditForm((prev) => ({

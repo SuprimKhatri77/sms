@@ -71,7 +71,7 @@ func CreateWastage(queries repository.InventoryTxRepository, pool *pgxpool.Pool)
 				Date:      req.Date,
 				Rate:      int32(math.Round(item.Rate * 100)),
 				Reason:    utils.ToNullableText(req.Reason),
-				Qty:       int32(item.Quantity),
+				Qty:       utils.RoundQty(item.Quantity),
 			})
 			if err != nil {
 				applog.Error(c, handlerCreateWastage, "failed to process request",
