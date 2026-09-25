@@ -109,7 +109,7 @@ export function SaleDialog({
         setEditForm({
           billNo: initialData.billNo ?? "",
           note: initialData.note ?? "",
-          productID: initialData.productID ?? "",
+          productID: initialData.productId ?? "",
           quantity: initialData.qty.toString(),
           rate: (initialData.rate / 100).toString(),
           date: initialData.date ?? "",

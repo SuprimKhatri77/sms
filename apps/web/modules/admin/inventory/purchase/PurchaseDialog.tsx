@@ -49,6 +49,7 @@ type EditFormData = {
   invoiceNo: string;
   note: string;
   productID: string;
+  supplierID: string;
   quantity: string;
   rate: string;
   date: string;
@@ -76,6 +77,7 @@ const emptyEditForm: EditFormData = {
   invoiceNo: "",
   note: "",
   productID: "",
+  supplierID: "",
   quantity: "1",
   rate: "",
   date: "",
@@ -121,12 +123,14 @@ export function PurchaseDialog({
         setEditForm({
           invoiceNo: initialData.invoiceNo ?? "",
           note: initialData.note ?? "",
-          productID: initialData.productID ?? "",
+          productID: initialData.productId ?? "",
+          supplierID: initialData.supplierId ?? "",
           quantity: initialData.qty.toString(),
           rate: (initialData.rate / 100).toString(),
           date: initialData.date ?? "",
         });
         setSelectedProductName(initialData.productName ?? "");
+        setSelectedSupplierName(initialData.supplierName ?? "");
       } else {
         setHeader(emptyHeader);
         setItems([emptyLineItem()]);
@@ -158,6 +162,7 @@ export function PurchaseDialog({
 
     const validateFields = updateStockInSchema.safeParse({
       productID: editForm.productID,
+      supplierID: editForm.supplierID,
       quantity: Number(editForm.quantity),
       rate: Number(editForm.rate),
       note: editForm.note || undefined,
@@ -171,6 +176,7 @@ export function PurchaseDialog({
         note: fieldErrors.note?.[0],
         quantity: fieldErrors.quantity?.[0],
         productID: fieldErrors.productID?.[0],
+        supplierID: fieldErrors.supplierID?.[0],
         rate: fieldErrors.rate?.[0],
         invoiceNo: fieldErrors.invoiceNo?.[0],
         date: fieldErrors.date?.[0],
@@ -297,6 +303,23 @@ export function PurchaseDialog({
           className="flex flex-col gap-10 px-8 py-10"
         >
           <InventoryFormSection title="Item details">
+            <InventoryFormField
+              label="Supplier"
+              required
+              error={editErrors?.supplierID}
+            >
+              <SearchableSelect
+                value={editForm.supplierID}
+                onChange={(v, label) => {
+                  setEditForm((prev) => ({ ...prev, supplierID: v }));
+                  setSelectedSupplierName(label);
+                }}
+                onSearch={searchSuppliers}
+                placeholder="Search supplier…"
+                selectedLabel={selectedSupplierName}
+              />
+            </InventoryFormField>
+
             <InventoryFormField
               label="Product"
               required

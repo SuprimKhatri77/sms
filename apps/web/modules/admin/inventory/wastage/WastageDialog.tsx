@@ -105,7 +105,7 @@ export function WastageDialog({
       if (initialData) {
         setEditForm({
           reason: initialData.reason ?? "",
-          productID: initialData.productID ?? "",
+          productID: initialData.productId ?? "",
           quantity: initialData.qty.toString(),
           rate: (initialData.rate / 100).toString(),
           date: initialData.date ?? "",

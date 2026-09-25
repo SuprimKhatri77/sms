@@ -55,6 +55,20 @@ func (q *Queries) CreateSupplierLedgerEntry(ctx context.Context, arg CreateSuppl
 	return i, err
 }
 
+const deleteStockInLedgerCredit = `-- name: DeleteStockInLedgerCredit :exec
+DELETE FROM supplier_ledger sl
+USING stock_in si
+WHERE si.id = $1
+    AND sl.stock_in_id = si.id
+    AND sl.entry_type = 'cr'
+    AND sl.created_at = si.created_at
+`
+
+func (q *Queries) DeleteStockInLedgerCredit(ctx context.Context, id pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, deleteStockInLedgerCredit, id)
+	return err
+}
+
 const deleteSupplierLedgerEntry = `-- name: DeleteSupplierLedgerEntry :exec
 DELETE FROM supplier_ledger WHERE id = $1
 `
@@ -379,4 +393,46 @@ func (q *Queries) ListSupplierLedgerBySupplier(ctx context.Context, arg ListSupp
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateStockInLedgerCredit = `-- name: UpdateStockInLedgerCredit :execrows
+
+UPDATE supplier_ledger sl
+SET supplier_id = $1,
+    date = $2,
+    bs_date = $3,
+    amount = $4,
+    description = $5
+FROM stock_in si
+WHERE si.id = $6
+    AND sl.stock_in_id = si.id
+    AND sl.entry_type = 'cr'
+    AND sl.created_at = si.created_at
+`
+
+type UpdateStockInLedgerCreditParams struct {
+	SupplierID  pgtype.UUID        `json:"supplierId"`
+	Date        pgtype.Timestamptz `json:"date"`
+	BsDate      string             `json:"bsDate"`
+	Amount      int64              `json:"amount"`
+	Description pgtype.Text        `json:"description"`
+	StockInID   pgtype.UUID        `json:"stockInId"`
+}
+
+// The credit auto-created with a purchase is inserted in the same transaction
+// as its stock_in row, so it shares the stock_in's created_at. Matching on
+// that keeps these two queries off any manual entries linked to the purchase.
+func (q *Queries) UpdateStockInLedgerCredit(ctx context.Context, arg UpdateStockInLedgerCreditParams) (int64, error) {
+	result, err := q.db.Exec(ctx, updateStockInLedgerCredit,
+		arg.SupplierID,
+		arg.Date,
+		arg.BsDate,
+		arg.Amount,
+		arg.Description,
+		arg.StockInID,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }

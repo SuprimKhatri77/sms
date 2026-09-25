@@ -39,6 +39,15 @@ type CreateStockInRequest struct {
 	Items      []PurchaseLineItem `json:"items" binding:"required,min=1,max=100,dive"`
 }
 
+// ledgerDescription is the description on the supplier ledger credit
+// auto-recorded for a purchase; also rebuilt when the purchase is edited.
+func ledgerDescription(invoiceNo string) string {
+	if invoiceNo != "" {
+		return fmt.Sprintf("Stock received - Invoice %s", invoiceNo)
+	}
+	return "Stock received - auto recorded"
+}
+
 func CreateStockIn(queries repository.InventoryTxRepository, pool *pgxpool.Pool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
@@ -121,10 +130,7 @@ func CreateStockIn(queries repository.InventoryTxRepository, pool *pgxpool.Pool)
 		defer tx.Rollback(ctx)
 		qtx := queries.WithTx(tx)
 
-		desc := "Stock received - auto recorded"
-		if req.InvoiceNo != "" {
-			desc = fmt.Sprintf("Stock received - Invoice %s", req.InvoiceNo)
-		}
+		desc := ledgerDescription(req.InvoiceNo)
 
 		stockIns := make([]db.StockIn, 0, len(req.Items))
 		for _, item := range req.Items {

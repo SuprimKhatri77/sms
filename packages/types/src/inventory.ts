@@ -107,7 +107,8 @@ export const stockInLineItemSchema = z.object({
 });
 
 export const updateStockInSchema = stockInLineItemSchema.extend({
-  date: adDateSchema,
+  supplierID: z.uuid({ error: "Supplier is required" }),
+  date: bsDateSchema,
   note: optionalString,
   invoiceNo: optionalString,
 });
@@ -149,7 +150,7 @@ export type CreateStockInBatchInput = z.infer<typeof createStockInBatchSchema>;
 
 const stockInSchema = z.object({
   id: z.uuid(),
-  productID: z.uuid(),
+  productId: z.uuid(),
   rate: z.number(),
   qty: z.number(),
   date: z.string(),
@@ -199,6 +200,8 @@ export const listStockInResponse = z.discriminatedUnion("success", [
       stockInSchema.extend({
         productUnit: z.string(),
         productName: z.string(),
+        supplierId: z.uuid(),
+        supplierName: z.string(),
       }),
     ),
     meta: z.object({
@@ -233,7 +236,7 @@ export type DeleteStockInResponse = z.infer<typeof deleteStockInResponseSchema>;
 
 const stockOutSchema = z.object({
   id: z.uuid(),
-  productID: z.uuid(),
+  productId: z.uuid(),
   rate: z.number(),
   qty: z.number(),
   date: z.string(),
@@ -355,7 +358,7 @@ export type DeleteStockOutResponse = z.infer<
 
 const wastageRecordSchema = z.object({
   id: z.uuid(),
-  productID: z.uuid(),
+  productId: z.uuid(),
   productName: z.string(),
   productUnit: z.string(),
   qty: z.number().gt(0),

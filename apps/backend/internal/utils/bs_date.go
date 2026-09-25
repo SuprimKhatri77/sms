@@ -28,3 +28,20 @@ func ValidateBSMatchesAD(bsDateStr string, adDate time.Time) error {
 
 	return nil
 }
+
+// BSToAD converts a BS date string (YYYY-MM-DD) to its AD date at UTC
+// midnight — the same shape time.Parse("2006-01-02", ...) gives the AD date
+// the create-purchase flow stores on its supplier ledger entry.
+func BSToAD(bsDateStr string) (time.Time, error) {
+	bsParsed, err := bs.Parse(bsDateStr)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	ad, err := bs.BSToAD(bsParsed)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	return time.Date(ad.Year(), ad.Month(), ad.Day(), 0, 0, 0, 0, time.UTC), nil
+}

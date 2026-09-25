@@ -7,6 +7,7 @@ import (
 	"github.com/suprimkhatri77/sms/backend/internal/pkg/applog"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/suprimkhatri77/sms/backend/internal/constants"
 	"github.com/suprimkhatri77/sms/backend/internal/repository"
 	"github.com/suprimkhatri77/sms/backend/internal/types"
@@ -15,7 +16,7 @@ import (
 
 const handlerDeleteStockIn = "DeleteStockIn"
 
-func DeleteStockIn(queries repository.InventoryRepository) gin.HandlerFunc {
+func DeleteStockIn(queries repository.InventoryTxRepository, pool *pgxpool.Pool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
 
@@ -42,13 +43,50 @@ func DeleteStockIn(queries repository.InventoryRepository) gin.HandlerFunc {
 			return
 		}
 
-		err = queries.DeleteStockIn(ctx, stockID)
+		tx, err := pool.Begin(ctx)
 		if err != nil {
 			applog.Error(c, handlerDeleteStockIn, "failed to process request",
 				slog.Any(applog.AttrError, err))
 			c.JSON(http.StatusInternalServerError, types.APIResponse{
 				Success: false,
+				Message: "Failed to begin transaction",
+				Code:    constants.InternalServerError,
+			})
+			return
+		}
+		defer tx.Rollback(ctx)
+		qtx := queries.WithTx(tx)
+
+		// remove the purchase's auto-recorded supplier ledger credit with it;
+		// manual entries linked to the purchase stay (stock_in_id -> NULL)
+		if err := qtx.DeleteStockInLedgerCredit(ctx, stockID); err != nil {
+			applog.Error(c, handlerDeleteStockIn, "failed to process request",
+				slog.Any(applog.AttrError, err))
+			c.JSON(http.StatusInternalServerError, types.APIResponse{
+				Success: false,
 				Message: "Failed to process request",
+				Code:    constants.InternalServerError,
+			})
+			return
+		}
+
+		if err := qtx.DeleteStockIn(ctx, stockID); err != nil {
+			applog.Error(c, handlerDeleteStockIn, "failed to process request",
+				slog.Any(applog.AttrError, err))
+			c.JSON(http.StatusInternalServerError, types.APIResponse{
+				Success: false,
+				Message: "Failed to process request",
+				Code:    constants.InternalServerError,
+			})
+			return
+		}
+
+		if err := tx.Commit(ctx); err != nil {
+			applog.Error(c, handlerDeleteStockIn, "failed to process request",
+				slog.Any(applog.AttrError, err))
+			c.JSON(http.StatusInternalServerError, types.APIResponse{
+				Success: false,
+				Message: "Failed to commit transaction",
 				Code:    constants.InternalServerError,
 			})
 			return

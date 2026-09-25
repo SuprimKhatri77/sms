@@ -45,7 +45,11 @@ type InventoryRepository interface {
 type InventoryTxRepository interface {
 	WithTx(tx pgx.Tx) InventoryTxRepository
 	CreateStockIn(ctx context.Context, params db.CreateStockInParams) (db.StockIn, error)
+	UpdateStockIn(ctx context.Context, params db.UpdateStockInParams) (db.StockIn, error)
+	DeleteStockIn(ctx context.Context, id pgtype.UUID) error
 	CreateSupplierLedgerEntry(ctx context.Context, params db.CreateSupplierLedgerEntryParams) (db.SupplierLedger, error)
+	UpdateStockInLedgerCredit(ctx context.Context, params db.UpdateStockInLedgerCreditParams) (int64, error)
+	DeleteStockInLedgerCredit(ctx context.Context, stockInID pgtype.UUID) error
 	CreateStockOut(ctx context.Context, params db.CreateStockOutParams) (db.StockOut, error)
 	CreateWastage(ctx context.Context, params db.CreateWastageParams) (db.Wastage, error)
 }
@@ -66,8 +70,20 @@ func (r *inventoryTxRepository) WithTx(tx pgx.Tx) InventoryTxRepository {
 func (r *inventoryTxRepository) CreateStockIn(ctx context.Context, params db.CreateStockInParams) (db.StockIn, error) {
 	return r.queries.CreateStockIn(ctx, params)
 }
+func (r *inventoryTxRepository) UpdateStockIn(ctx context.Context, params db.UpdateStockInParams) (db.StockIn, error) {
+	return r.queries.UpdateStockIn(ctx, params)
+}
+func (r *inventoryTxRepository) DeleteStockIn(ctx context.Context, id pgtype.UUID) error {
+	return r.queries.DeleteStockIn(ctx, id)
+}
 func (r *inventoryTxRepository) CreateSupplierLedgerEntry(ctx context.Context, params db.CreateSupplierLedgerEntryParams) (db.SupplierLedger, error) {
 	return r.queries.CreateSupplierLedgerEntry(ctx, params)
+}
+func (r *inventoryTxRepository) UpdateStockInLedgerCredit(ctx context.Context, params db.UpdateStockInLedgerCreditParams) (int64, error) {
+	return r.queries.UpdateStockInLedgerCredit(ctx, params)
+}
+func (r *inventoryTxRepository) DeleteStockInLedgerCredit(ctx context.Context, stockInID pgtype.UUID) error {
+	return r.queries.DeleteStockInLedgerCredit(ctx, stockInID)
 }
 func (r *inventoryTxRepository) CreateStockOut(ctx context.Context, params db.CreateStockOutParams) (db.StockOut, error) {
 	return r.queries.CreateStockOut(ctx, params)

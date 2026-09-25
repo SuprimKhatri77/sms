@@ -76,3 +76,28 @@ WHERE
 -- name: DeleteSupplierLedgerEntry :exec
 DELETE FROM supplier_ledger WHERE id = $1;
 
+
+-- The credit auto-created with a purchase is inserted in the same transaction
+-- as its stock_in row, so it shares the stock_in's created_at. Matching on
+-- that keeps these two queries off any manual entries linked to the purchase.
+
+-- name: UpdateStockInLedgerCredit :execrows
+UPDATE supplier_ledger sl
+SET supplier_id = @supplier_id,
+    date = @date,
+    bs_date = @bs_date,
+    amount = @amount,
+    description = @description
+FROM stock_in si
+WHERE si.id = @stock_in_id
+    AND sl.stock_in_id = si.id
+    AND sl.entry_type = 'cr'
+    AND sl.created_at = si.created_at;
+
+-- name: DeleteStockInLedgerCredit :exec
+DELETE FROM supplier_ledger sl
+USING stock_in si
+WHERE si.id = $1
+    AND sl.stock_in_id = si.id
+    AND sl.entry_type = 'cr'
+    AND sl.created_at = si.created_at;

@@ -21,8 +21,8 @@ func setupAdminInventoryRoutes(admin *gin.RouterGroup, cfg config.Config) {
 
 	inv.GET("/purchase", adminInventoryStockIn.ListStockIn(cfg.Queries))
 	inv.POST("/purchase", adminInventoryStockIn.CreateStockIn(repository.NewInventoryTxRepository(cfg.Queries, cfg.PgxPool), cfg.PgxPool))
-	inv.PUT("/purchase/:stockID", adminInventoryStockIn.UpdateStockIn(cfg.Queries))
-	inv.DELETE("/purchase/:stockID", adminInventoryStockIn.DeleteStockIn(cfg.Queries))
+	inv.PUT("/purchase/:stockID", adminInventoryStockIn.UpdateStockIn(repository.NewInventoryTxRepository(cfg.Queries, cfg.PgxPool), cfg.PgxPool))
+	inv.DELETE("/purchase/:stockID", adminInventoryStockIn.DeleteStockIn(repository.NewInventoryTxRepository(cfg.Queries, cfg.PgxPool), cfg.PgxPool))
 
 	inv.GET("/sales", adminInventoryStockOut.ListStockOut(cfg.Queries))
 	inv.POST("/sales", adminInventoryStockOut.CreateStockOut(repository.NewInventoryTxRepository(cfg.Queries, cfg.PgxPool), cfg.PgxPool))
