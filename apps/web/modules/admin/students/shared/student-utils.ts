@@ -10,6 +10,20 @@ export function formatNpr(amount: number): string {
   }).format(amount);
 }
 
+// Label for a payment's mode. A "cash_and_bank" payment is shown as
+// "Cash + Bank", with the paisa split per ledger when it's passed in.
+export function formatPaymentMode(
+  mode: string | null | undefined,
+  cashAmount?: number,
+  bankAmount?: number,
+): string {
+  if (mode?.toLowerCase() !== "cash_and_bank") return mode ?? "—";
+  if (cashAmount === undefined || bankAmount === undefined) {
+    return "Cash + Bank";
+  }
+  return `Cash + Bank (Cash ${formatNpr(cashAmount / 100)} · Bank ${formatNpr(bankAmount / 100)})`;
+}
+
 export function getInitials(name: string): string {
   return name
     .split(" ")

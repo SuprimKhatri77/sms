@@ -38,6 +38,8 @@ type PaymentRowProps = {
     remarks?: string | null;
     addedByName?: string;
     paymentMode?: string | null;
+    cashAmount?: number;
+    bankAmount?: number;
   };
   student: {
     referenceNo: string;

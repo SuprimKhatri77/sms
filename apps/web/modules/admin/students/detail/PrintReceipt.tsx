@@ -1,4 +1,5 @@
 import { siteInfo } from "@/utils/site-info";
+import { formatPaymentMode } from "../shared/student-utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Payment {
@@ -8,6 +9,8 @@ interface Payment {
   remarks?: string | null;
   addedByName?: string;
   paymentMode?: string | null;
+  cashAmount?: number; // in paisa, split of a cash_and_bank payment
+  bankAmount?: number;
 }
 
 interface Student {
@@ -169,7 +172,7 @@ function buildReceiptHTML(
     <!-- Payment Mode -->
     <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #f0ede8;">
       <span style="font-size:12px;color:rgba(47,78,64,0.55);">Payment Mode</span>
-      <span style="font-size:12px;font-weight:600;color:#2d4a3e;">${payment.paymentMode ?? "—"}</span>
+      <span style="font-size:12px;font-weight:600;color:#2d4a3e;">${formatPaymentMode(payment.paymentMode, payment.cashAmount, payment.bankAmount)}</span>
     </div>
 
     <!-- Received by -->
