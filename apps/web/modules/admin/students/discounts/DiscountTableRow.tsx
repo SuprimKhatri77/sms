@@ -4,8 +4,8 @@ import { useRouter } from "next/navigation";
 import type { DiscountListItem } from "../shared/student-finance-list-types";
 import { StudentFinanceStudentCell } from "../shared/StudentFinanceStudentCell";
 import {
+  formatDiscountPercent,
   formatFinanceDate,
-  formatFinancePercent,
 } from "../shared/student-finance-list-utils";
 import { formatNpr } from "../shared/student-utils";
 import {
@@ -43,7 +43,7 @@ export function DiscountTableRow({ discount }: { discount: DiscountListItem }) {
       </td>
       <td className={`${financeTdClass} text-right ${columnCellClass.percent}`}>
         <span className="font-(family-name:--font-dm-sans) text-sm tabular-nums text-[rgba(47,78,64,0.75)]">
-          {formatFinancePercent(discount.percent)}
+          {formatDiscountPercent(discount.mode, discount.percent)}
         </span>
       </td>
       <td className={`${financeTdClass} ${columnCellClass.amount}`}>

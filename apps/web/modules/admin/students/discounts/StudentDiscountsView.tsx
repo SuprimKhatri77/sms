@@ -22,8 +22,8 @@ import {
   StudentFinanceTableSkeleton,
 } from "../shared/StudentFinanceTableSkeleton";
 import {
+  formatDiscountPercent,
   formatFinanceDate,
-  formatFinancePercent,
 } from "../shared/student-finance-list-utils";
 import { parseStudentFinanceFilters } from "../shared/student-date-filter-utils";
 import { formatNpr } from "../shared/student-utils";
@@ -152,7 +152,10 @@ export function StudentDiscountsView() {
                 <div className="flex flex-col gap-1.5 pl-[52px]">
                   {[
                     ["Type", formatDiscountType(discount.type)],
-                    ["Percent", formatFinancePercent(discount.percent)],
+                    [
+                      "Percent",
+                      formatDiscountPercent(discount.mode, discount.percent),
+                    ],
                     ["Amount", formatNpr(discount.amount / 100)],
                     ["Note", discount.note?.trim() || "—"],
                     ["Date", formatFinanceDate(discount.createdAt)],

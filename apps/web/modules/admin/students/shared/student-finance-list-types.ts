@@ -49,6 +49,7 @@ export interface DiscountListItem extends StudentFinanceRecordStudent {
   discountId: string;
   amount: number;
   percent: number | string;
+  mode: "percent" | "amount";
   type: string;
   note?: string | null;
   createdAt: string;

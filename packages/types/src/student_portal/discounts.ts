@@ -12,6 +12,7 @@ export const getStudentDiscountsResponseSchema = z.discriminatedUnion(
           note: z.string(),
           amount: z.number(),
           percent: z.number(),
+          mode: z.enum(["percent", "amount"]),
           createdAt: z.string(),
         }),
       ),

@@ -216,7 +216,7 @@ export function DiscountFormModal({
         required={form.mode === "amount"}
         hint={
           form.mode === "amount"
-            ? "Must be greater than 0"
+            ? "Must be at least Rs 0.01"
             : "Computed from percent"
         }
       >

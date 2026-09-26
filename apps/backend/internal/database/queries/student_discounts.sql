@@ -39,6 +39,7 @@ note,
 type,
 percent,
 amount,
+mode,
 created_at
 FROM student_discounts
 WHERE student_id = $1;
@@ -57,6 +58,7 @@ SELECT
     sd.percent,
     sd.type,
     sd.note,
+    sd.mode,
     sd.created_at
 FROM students s
 JOIN users u ON u.id = s.student_id
