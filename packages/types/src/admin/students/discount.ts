@@ -39,7 +39,7 @@ const amountModeDiscountSchema = z.object({
   ...discountBaseFields,
   amount: z.coerce
     .number({ error: "Discount amount is required" })
-    .gt(0, { error: "Discount amount must be greater than 0" })
+    .min(0.01, { error: "Discount amount must be at least Rs 0.01" })
     .lte(10000000, { error: "Discount amount is unrealistically large" }),
 });
 

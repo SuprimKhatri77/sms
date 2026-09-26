@@ -20,7 +20,7 @@ import (
 )
 
 type AddPaymentRequest struct {
-	Amount        float64 `json:"amount" binding:"required,gt=0"`
+	Amount        float64 `json:"amount" binding:"required,min=0.01"`
 	PaymentMode   string  `json:"paymentMode" binding:"required,notblank,min=1,max=50"`
 	Remarks       string  `json:"remarks,omitempty" binding:"omitempty,notblank,min=1,max=200"`
 	BsDate        string  `json:"bsDate" binding:"required,bs_date"`

@@ -65,8 +65,8 @@ export const createCashLedgerEntrySchema = z.object({
     .string()
     .min(1, { error: "Amount is required" })
     .refine((val) => !isNaN(Number(val)), { error: "Amount must be a number" })
-    .refine((val) => Number(val) > 0, {
-      error: "Amount must be greater than 0",
+    .refine((val) => Number(val) >= 0.01, {
+      error: "Amount must be at least Rs 0.01",
     })
     .refine((val) => Number(val) <= 1000000000, {
       error: "Amount must not exceed Rs. 1,00,00,000",

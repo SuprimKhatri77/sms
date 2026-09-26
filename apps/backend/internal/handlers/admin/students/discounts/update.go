@@ -20,7 +20,7 @@ type UpdateDiscountRequest struct {
 	Type      string  `json:"type" binding:"required,min=1,max=50"`
 	Note      string  `json:"note" binding:"omitempty,min=1,max=100"`
 	Percent   float64 `json:"percent" binding:"omitempty,gte=0.01,lte=100"`
-	Amount    float64 `json:"amount" binding:"omitempty,gt=0,lte=10000000"`
+	Amount    float64 `json:"amount" binding:"omitempty,min=0.01,lte=10000000"`
 }
 
 func UpdateDiscount(queries repository.StudentDiscounts) gin.HandlerFunc {

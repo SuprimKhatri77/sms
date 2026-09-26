@@ -35,7 +35,7 @@ type CreateSupplierLedgerEntryRequest struct {
 	Date          string  `json:"date" binding:"required,date_format"`
 	BsDate        string  `json:"bsDate" binding:"required,bs_date"`
 	EntryType     string  `json:"entryType" binding:"required,oneof=cr dr"`
-	Amount        float64 `json:"amount" binding:"required,gt=0,lte=10000000"`
+	Amount        float64 `json:"amount" binding:"required,min=0.01,lte=10000000"`
 	Description   string  `json:"description" binding:"omitempty,notblank,min=5,max=200"`
 	StockInID     string  `json:"stockInID" binding:"omitempty,uuid"`
 	PaymentType   string  `json:"paymentType" binding:"required_if=EntryType dr,omitempty,notblank,min=2,max=100"`
