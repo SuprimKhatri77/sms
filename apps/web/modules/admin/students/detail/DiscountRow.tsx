@@ -3,6 +3,7 @@ import { IconBtn } from "./IconButton";
 import { StudentDiscountResponse } from "@repo/types";
 import { detailInsetClass } from "./detail-styles";
 import { formatNpr } from "../shared/student-utils";
+import { formatDiscountPercent } from "../shared/student-finance-list-utils";
 
 type Discount = Extract<
   StudentDiscountResponse,
@@ -30,7 +31,7 @@ export function DiscountRow({
             {discount.type}
           </span>
           <span className="font-(family-name:--font-dm-sans) text-sm font-bold text-(--brand-green)">
-            {discount.percent}%
+            {formatDiscountPercent(discount.mode, discount.percent)}
           </span>
         </div>
         <div className="flex items-center gap-0.5">

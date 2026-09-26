@@ -75,6 +75,7 @@ SELECT
     sd.percent,
     sd.type,
     sd.note,
+    sd.mode,
     sd.created_at
 FROM students s
 JOIN users u ON u.id = s.student_id
@@ -111,6 +112,7 @@ type GetAllStudentDiscountsRow struct {
 	Percent     pgtype.Numeric     `json:"percent"`
 	Type        string             `json:"type"`
 	Note        pgtype.Text        `json:"note"`
+	Mode        string             `json:"mode"`
 	CreatedAt   pgtype.Timestamptz `json:"createdAt"`
 }
 
@@ -141,6 +143,7 @@ func (q *Queries) GetAllStudentDiscounts(ctx context.Context, arg GetAllStudentD
 			&i.Percent,
 			&i.Type,
 			&i.Note,
+			&i.Mode,
 			&i.CreatedAt,
 		); err != nil {
 			return nil, err
@@ -238,6 +241,7 @@ note,
 type,
 percent,
 amount,
+mode,
 created_at
 FROM student_discounts
 WHERE student_id = $1
@@ -249,6 +253,7 @@ type GetStudentDiscountsRow struct {
 	Type      string             `json:"type"`
 	Percent   pgtype.Numeric     `json:"percent"`
 	Amount    int64              `json:"amount"`
+	Mode      string             `json:"mode"`
 	CreatedAt pgtype.Timestamptz `json:"createdAt"`
 }
 
@@ -267,6 +272,7 @@ func (q *Queries) GetStudentDiscounts(ctx context.Context, studentID pgtype.UUID
 			&i.Type,
 			&i.Percent,
 			&i.Amount,
+			&i.Mode,
 			&i.CreatedAt,
 		); err != nil {
 			return nil, err

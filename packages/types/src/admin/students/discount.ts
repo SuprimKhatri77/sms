@@ -5,7 +5,7 @@ const studentDiscountSchema = z.object({
   studentID: z.uuid(),
   type: z.string(),
   note: z.string().optional(),
-  percent: z.number().gt(0).lte(100),
+  percent: z.number().gte(0).lte(100),
   amount: z.number().gte(0),
   createdAt: z.date(),
 });

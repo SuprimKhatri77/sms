@@ -35,6 +35,7 @@ interface DiscountItem {
   id: string;
   type: string;
   percent: number;
+  mode: "percent" | "amount";
   amount: number;
   note: string | null;
   createdAt: string;
@@ -112,7 +113,9 @@ function DiscountRow({ discount }: { discount: DiscountItem }) {
             "border border-[rgba(194,138,79,0.2)] bg-[rgba(194,138,79,0.08)] px-2 py-0.5 text-(--brand-brown)",
           )}
         >
-          {discount.percent}% off
+          {discount.mode === "amount"
+            ? "Flat discount"
+            : `${discount.percent}% off`}
         </span>
       </div>
     </div>
