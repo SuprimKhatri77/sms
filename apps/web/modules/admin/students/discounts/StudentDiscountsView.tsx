@@ -6,6 +6,7 @@ import Link from "next/link";
 import { DiscountTableRow } from "./DiscountTableRow";
 import { useStudentDiscountsList } from "@/hooks/queries/admin/students/useStudentDiscountsList";
 import { AdminPageLayout } from "@/components/admin/admin-page-layout";
+import { AdminExportMenu } from "@/components/admin/admin-export-menu";
 import {
   StudentFinanceSummary,
   formatSummaryNpr,
@@ -70,9 +71,19 @@ export function StudentDiscountsView() {
       description="All discounts applied across students — filter by date or search by student details."
       maxWidth="wide"
       action={
-        <Link href="/admin/students" className={adminSecondaryButtonClass}>
-          All Students
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link href="/admin/students" className={adminSecondaryButtonClass}>
+            All Students
+          </Link>
+          <AdminExportMenu
+            path="/admin/students/discounts/export"
+            filters={{
+              from: urlFilters.from,
+              to: urlFilters.to,
+              search: urlFilters.search,
+            }}
+          />
+        </div>
       }
     >
       <StudentFinanceSummary

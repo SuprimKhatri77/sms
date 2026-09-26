@@ -8,6 +8,7 @@ const (
 	InvalidPageParam    = "INVALID_PAGE_PARAMETER"
 	InvalidIDFormat     = "INVALID_ID_FORMAT"
 	InvalidQueryParam   = "INVALID_QUERY_PARAM"
+	ExportTooLarge      = "EXPORT_TOO_LARGE"
 
 	// auth
 	InvalidCredentials  = "INVALID_CREDENTIALS"

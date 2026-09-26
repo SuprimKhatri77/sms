@@ -22,6 +22,7 @@ import { useDebounce } from "../analytics/hooks/useDebounce";
 import { StudentCard } from "./StudentCard";
 import { useStudentBatches } from "@/hooks/queries/admin/students/useStudentBtaches";
 import { AdminPageLayout } from "@/components/admin/admin-page-layout";
+import { AdminExportMenu } from "@/components/admin/admin-export-menu";
 import { useAdminRefreshShortcut, useAdminClearFiltersShortcut, useAdminFocusSearchShortcut } from "@/components/admin/admin-shortcut-provider";
 import { useAdminQueryRefresh } from "@/hooks/useAdminQueryRefresh";
 import {
@@ -187,6 +188,16 @@ export default function StudentsPage() {
             <TrendingUp size={14} />
             Sales
           </Link>
+          <AdminExportMenu
+            path="/admin/students/export"
+            filters={{
+              q: debouncedSearch,
+              status: statusFilter !== "all" ? statusFilter : "",
+              course: courseFilter !== "all" ? courseFilter : "",
+              shift: shiftFilter !== "all" ? shiftFilter : "",
+              batch: batchFilter !== "all" ? batchFilter : "",
+            }}
+          />
         </div>
       }
     >

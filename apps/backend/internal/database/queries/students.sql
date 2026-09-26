@@ -93,7 +93,7 @@ WHERE
     )
 GROUP BY s.id
 ORDER BY s.created_at DESC
-LIMIT $1 OFFSET $2;
+LIMIT sqlc.narg('limit')::INT OFFSET sqlc.arg('offset')::INT;
 
 -- name: GetStudentsCount :one
 SELECT COUNT(DISTINCT s.id)
@@ -163,7 +163,7 @@ WHERE s.status IN ('active', 'completed')
   AND (sqlc.narg('to_date')::TEXT IS NULL OR s.created_at <= (sqlc.narg('to_date')::TIMESTAMPTZ + INTERVAL '1 day'))
   AND (sqlc.narg('search')::TEXT IS NULL OR u.name ILIKE '%' || sqlc.narg('search')::TEXT || '%' OR u.email ILIKE '%' || sqlc.narg('search')::TEXT || '%')
 ORDER BY outstanding DESC
-LIMIT $1 OFFSET $2;
+LIMIT sqlc.narg('limit')::INT OFFSET sqlc.arg('offset')::INT;
 
 -- name: GetOutstandingFeesCount :one
 SELECT COUNT(*)::BIGINT AS total
@@ -290,7 +290,7 @@ WHERE s.status IN ('active', 'completed')
   AND (sqlc.narg('to_date')::TEXT IS NULL OR s.created_at <= (sqlc.narg('to_date')::TIMESTAMPTZ + INTERVAL '1 day'))
   AND (sqlc.narg('search')::TEXT IS NULL OR u.name ILIKE '%' || sqlc.narg('search')::TEXT || '%' OR u.email ILIKE '%' || sqlc.narg('search')::TEXT || '%')
 ORDER BY total_paid DESC
-LIMIT $1 OFFSET $2;
+LIMIT sqlc.narg('limit')::INT OFFSET sqlc.arg('offset')::INT;
 
 -- name: GetSalesRevenueTotal :one
 SELECT COALESCE(SUM(fees.total_fee), 0)::BIGINT AS total_collected

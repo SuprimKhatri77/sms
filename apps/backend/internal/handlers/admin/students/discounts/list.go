@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/suprimkhatri77/sms/backend/internal/pkg/applog"
 
 	"github.com/gin-gonic/gin"
@@ -160,7 +161,7 @@ func ListAllStudentDiscounts(queries repository.AdminRepository) gin.HandlerFunc
 		offset := pageLimit * (params.Page - 1)
 
 		discounts, err := queries.GetAllStudentDiscounts(ctx, db.GetAllStudentDiscountsParams{
-			Limit:  int32(pageLimit),
+			Limit:  pgtype.Int4{Int32: int32(pageLimit), Valid: true},
 			Offset: int32(offset),
 			From:   utils.ToNullableText(params.From),
 			To:     utils.ToNullableText(params.To),

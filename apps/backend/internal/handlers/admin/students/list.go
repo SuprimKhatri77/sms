@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/suprimkhatri77/sms/backend/internal/pkg/applog"
 
 	"github.com/gin-gonic/gin"
@@ -74,7 +75,7 @@ func ListStudents(queries repository.AdminRepository) gin.HandlerFunc {
 		offset := PAGE_LIMIT * (pageFromParams - 1)
 
 		students, err := queries.ListStudents(ctx, db.ListStudentsParams{
-			Limit:  PAGE_LIMIT,
+			Limit:  pgtype.Int4{Int32: PAGE_LIMIT, Valid: true},
 			Offset: int32(offset),
 			Status: status,
 			Shift:  shift,

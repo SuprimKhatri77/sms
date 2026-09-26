@@ -27,7 +27,7 @@ func CORS(cfg *config.Config) gin.HandlerFunc {
 		"Authorization", "Accept",
 	}
 
-	config.ExposeHeaders = []string{"Content-Length"}
+	config.ExposeHeaders = []string{"Content-Length", "Content-Disposition"}
 
 	return cors.New(config)
 }

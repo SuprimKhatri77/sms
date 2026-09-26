@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/suprimkhatri77/sms/backend/internal/constants"
 	db "github.com/suprimkhatri77/sms/backend/internal/database/generated"
 	"github.com/suprimkhatri77/sms/backend/internal/repository"
@@ -92,7 +93,7 @@ func ListOutstandingStudentsDue(queries repository.AdminRepository) gin.HandlerF
 		g.Go(func() error {
 			var err error
 			students, err = queries.GetStudentsWithOutstandingFees(gCtx, db.GetStudentsWithOutstandingFeesParams{
-				Limit:    LIMIT,
+				Limit:    pgtype.Int4{Int32: LIMIT, Valid: true},
 				Offset:   int32(offset),
 				FromDate: utils.ToNullableText(params.From),
 				ToDate:   utils.ToNullableText(params.To),

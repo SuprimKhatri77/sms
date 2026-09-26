@@ -14,6 +14,7 @@ import { StudentTableRow, StudentTableSkeleton } from "./StudentTableRow";
 import { ErrorState } from "./OustandingError";
 import { EmptyState } from "./OustandingEmpty";
 import { AdminPageLayout } from "@/components/admin/admin-page-layout";
+import { AdminExportMenu } from "@/components/admin/admin-export-menu";
 import {
   StudentFinanceSummary,
   formatSummaryNpr,
@@ -56,9 +57,19 @@ export function OutstandingStudentsView() {
       description="Students with pending fee balances — click any row to open their profile."
       maxWidth="wide"
       action={
-        <Link href="/admin/students" className={adminSecondaryButtonClass}>
-          All Students
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link href="/admin/students" className={adminSecondaryButtonClass}>
+            All Students
+          </Link>
+          <AdminExportMenu
+            path="/admin/students/outstanding/export"
+            filters={{
+              from: filters.from,
+              to: filters.to,
+              search: filters.search,
+            }}
+          />
+        </div>
       }
     >
       <StudentFinanceSummary
