@@ -15,6 +15,7 @@ import { CashLedgerFilters } from "./CashLedgerFilter";
 import { useCreateCashLedgerEntry } from "@/hooks/mutations/admin/cash_ledger/useCreateCashLedgerEntry";
 import { useCashLedgerSummary } from "@/hooks/queries/admin/cash_ledger/useCashLedger";
 import { AdminPageLayout } from "@/components/admin/admin-page-layout";
+import { AdminExportMenu } from "@/components/admin/admin-export-menu";
 import {
   useAdminEscapeShortcut,
   useAdminNewShortcut,
@@ -137,14 +138,23 @@ function CashLedgerPageInner() {
       description="All cash transactions recorded across the academy"
       maxWidth="wide"
       action={
-        <button
-          type="button"
-          onClick={() => setFormOpen(true)}
-          className={adminPrimaryButtonClass}
-        >
-          <Plus size={15} strokeWidth={2.5} />
-          New Entry
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <AdminExportMenu
+            path="/admin/accounting/cash-ledger/export"
+            filters={{
+              from_ad: fromDate ?? "",
+              to_ad: toDate ?? "",
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => setFormOpen(true)}
+            className={adminPrimaryButtonClass}
+          >
+            <Plus size={15} strokeWidth={2.5} />
+            New Entry
+          </button>
+        </div>
       }
     >
       <div className="space-y-6">

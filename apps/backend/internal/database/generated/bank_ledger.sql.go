@@ -232,21 +232,21 @@ FROM bank_ledger bl
 JOIN bank_accounts ba ON ba.id = bl.bank_account_id
 JOIN banks b ON b.id = ba.bank_id
 WHERE
-    ($3::uuid IS NULL OR bl.bank_account_id = $3::uuid)
-    AND ($4::uuid IS NULL OR ba.bank_id = $4::uuid)
-    AND ($5::date IS NULL OR bl.date >= $5::timestamptz)
-    AND ($6::date IS NULL OR bl.date <= $6::timestamptz)
+    ($1::uuid IS NULL OR bl.bank_account_id = $1::uuid)
+    AND ($2::uuid IS NULL OR ba.bank_id = $2::uuid)
+    AND ($3::date IS NULL OR bl.date >= $3::timestamptz)
+    AND ($4::date IS NULL OR bl.date <= $4::timestamptz)
 ORDER BY bl.date DESC
-LIMIT $1 OFFSET $2
+LIMIT $6::INT OFFSET $5::INT
 `
 
 type ListBankLedgerParams struct {
-	Limit         int32       `json:"limit"`
-	Offset        int32       `json:"offset"`
 	BankAccountID pgtype.UUID `json:"bankAccountId"`
 	BankID        pgtype.UUID `json:"bankId"`
 	FromDate      pgtype.Date `json:"fromDate"`
 	ToDate        pgtype.Date `json:"toDate"`
+	Offset        int32       `json:"offset"`
+	Limit         pgtype.Int4 `json:"limit"`
 }
 
 type ListBankLedgerRow struct {
@@ -266,12 +266,12 @@ type ListBankLedgerRow struct {
 
 func (q *Queries) ListBankLedger(ctx context.Context, arg ListBankLedgerParams) ([]ListBankLedgerRow, error) {
 	rows, err := q.db.Query(ctx, listBankLedger,
-		arg.Limit,
-		arg.Offset,
 		arg.BankAccountID,
 		arg.BankID,
 		arg.FromDate,
 		arg.ToDate,
+		arg.Offset,
+		arg.Limit,
 	)
 	if err != nil {
 		return nil, err

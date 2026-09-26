@@ -220,6 +220,32 @@ func cellText(v any) string {
 	}
 }
 
+// DebitCredit places a ledger entry's amount in the Debit or Credit column
+// by its entry type ("dr" or "cr"), leaving the other column blank.
+func DebitCredit(entryType string, paisa int64) (debit, credit any) {
+	if entryType == "dr" {
+		return Money(paisa), ""
+	}
+	return "", Money(paisa)
+}
+
+// EntryTypeLabel is the D/C column text for a ledger entry type.
+func EntryTypeLabel(entryType string) string {
+	switch entryType {
+	case "dr":
+		return "Dr"
+	case "cr":
+		return "Cr"
+	}
+	return entryType
+}
+
+// Rupees formats paisa with thousands separators for a meta line, e.g. a
+// ledger's balance ("1,234.50").
+func Rupees(paisa int64) string {
+	return formatRupees(paisa, true)
+}
+
 // rightAligned reports whether a column holds numbers (money or plain).
 func (col Column) rightAligned() bool {
 	return col.Money || col.Numeric

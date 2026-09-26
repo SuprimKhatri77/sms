@@ -29,7 +29,7 @@ WHERE
     AND (sqlc.narg('from_date')::date IS NULL OR bl.date >= sqlc.narg('from_date')::timestamptz)
     AND (sqlc.narg('to_date')::date IS NULL OR bl.date <= sqlc.narg('to_date')::timestamptz)
 ORDER BY bl.date DESC
-LIMIT $1 OFFSET $2;
+LIMIT sqlc.narg('limit')::INT OFFSET sqlc.arg('offset')::INT;
 
 -- name: ListBankLedgerByAccount :many
 SELECT

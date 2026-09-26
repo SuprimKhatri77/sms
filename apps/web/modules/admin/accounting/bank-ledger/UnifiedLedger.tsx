@@ -15,6 +15,7 @@ import { useBankLedgerSummary } from "@/hooks/queries/admin/banks/bank_ledger/us
 import { useCreateBankLedgerEntry } from "@/hooks/mutations/admin/bank_ledger/useCreateBankLedgerEntry";
 import { queryKeys } from "@/lib/query-keys";
 import { AdminPageLayout } from "@/components/admin/admin-page-layout";
+import { AdminExportMenu } from "@/components/admin/admin-export-menu";
 import {
   useAdminEscapeShortcut,
   useAdminNewShortcut,
@@ -168,14 +169,25 @@ function LedgerPageInner() {
       description="All financial transactions across every bank account"
       maxWidth="wide"
       action={
-        <button
-          type="button"
-          onClick={() => setFormOpen(true)}
-          className={adminPrimaryButtonClass}
-        >
-          <Plus size={15} strokeWidth={2.5} />
-          New Entry
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <AdminExportMenu
+            path="/admin/accounting/banks/ledger/export"
+            filters={{
+              bank_id: bankId !== "all" ? bankId : "",
+              account_id: accountId !== "all" ? accountId : "",
+              from_date: fromDate ?? "",
+              to_date: toDate ?? "",
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => setFormOpen(true)}
+            className={adminPrimaryButtonClass}
+          >
+            <Plus size={15} strokeWidth={2.5} />
+            New Entry
+          </button>
+        </div>
       }
     >
       <div className="space-y-6">
