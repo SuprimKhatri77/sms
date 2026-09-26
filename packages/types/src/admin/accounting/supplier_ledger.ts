@@ -61,8 +61,8 @@ export const createSupplierLedgerEntryInput = z
     entryType: z.enum(["cr", "dr"]),
     amount: z
       .number()
-      .gt(0, {
-        error: "Amount must be greater than 0",
+      .min(0.01, {
+        error: "Amount must be at least Rs 0.01",
       })
       .lte(10000000, {
         error: "Amount must not exceed Rs. 1,00,00,000",

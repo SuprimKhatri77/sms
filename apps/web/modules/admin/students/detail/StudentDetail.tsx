@@ -106,13 +106,18 @@ export default function StudentDetailPage({
   useAdminRefreshShortcut(useAdminRouterRefresh());
   useAdminBackShortcut(useCallback(() => router.push("/admin/students"), [router]));
 
-  const totalPaid = payments.reduce((s, p) => s + p.amount, 0) / 100;
-  const totalFee = courses.reduce((s, c) => s + c.feeAtEnrollment, 0) / 100;
-  const discountAmount = discounts.reduce((s, d) => s + d.amount, 0) / 100;
-  const scholarshipAmount = scholarships?.amount
-    ? scholarships.amount / 100
-    : 0;
-  const balanceDue = totalFee - totalPaid - discountAmount - scholarshipAmount;
+  // Sum and subtract in paisa, then convert once, so the balance has no float
+  // error (e.g. 1.0999999999985448 instead of 1.1).
+  const totalPaidPaisa = payments.reduce((s, p) => s + p.amount, 0);
+  const totalFeePaisa = courses.reduce((s, c) => s + c.feeAtEnrollment, 0);
+  const discountPaisa = discounts.reduce((s, d) => s + d.amount, 0);
+  const scholarshipPaisa = scholarships?.amount ?? 0;
+  const totalPaid = totalPaidPaisa / 100;
+  const totalFee = totalFeePaisa / 100;
+  const discountAmount = discountPaisa / 100;
+  const scholarshipAmount = scholarshipPaisa / 100;
+  const balanceDue =
+    (totalFeePaisa - totalPaidPaisa - discountPaisa - scholarshipPaisa) / 100;
 
   const paymentDisabled =
     balanceDue <= 0 || !canPerformStudentActions(currentStatus);

@@ -33,8 +33,8 @@ import { useBankAccountSearch } from "../../inventory/shared/useProductSupplierS
 import { useBankAccountsDropdown } from "@/hooks/queries/admin/banks/bank_ledger/useBankAccountsDropdown";
 
 const modalSchema = z.object({
-  amount: z.number().gt(0, {
-    error: "Amount must be greater than 0",
+  amount: z.number().min(0.01, {
+    error: "Amount must be at least Rs 0.01",
   }),
   remarks: z
     .string()
