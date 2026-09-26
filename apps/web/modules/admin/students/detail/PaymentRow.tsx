@@ -1,7 +1,7 @@
 import { CheckCircle2, Printer } from "lucide-react";
 import { usePrintReceipt } from "./PrintReceipt";
 import { detailInsetClass } from "./detail-styles";
-import { formatNpr } from "../shared/student-utils";
+import { formatNpr, formatPaymentMode } from "../shared/student-utils";
 import { adminIconButtonClass } from "@/components/admin/admin-styles";
 
 export function PaymentRow({
@@ -16,6 +16,8 @@ export function PaymentRow({
     remarks?: string | null;
     addedByName?: string;
     paymentMode?: string | null;
+    cashAmount?: number;
+    bankAmount?: number;
   };
   student: {
     referenceNo: string;
@@ -45,7 +47,9 @@ export function PaymentRow({
           </p>
           <p className="truncate font-(family-name:--font-dm-sans) text-xs text-[rgba(47,78,64,0.5)]">
             {payment.remarks ?? "Payment"}
-            {payment.paymentMode ? ` · ${payment.paymentMode}` : ""}
+            {payment.paymentMode
+              ? ` · ${formatPaymentMode(payment.paymentMode, payment.cashAmount, payment.bankAmount)}`
+              : ""}
             {" · "}
             {new Date(payment.date).toLocaleDateString("en-NP", {
               day: "2-digit",

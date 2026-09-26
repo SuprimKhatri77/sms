@@ -35,6 +35,8 @@ type PaymentRowProps = {
     remarks?: string | null;
     addedByName?: string;
     paymentMode?: string | null;
+    cashAmount?: number;
+    bankAmount?: number;
   };
   student: {
     referenceNo: string;
@@ -144,6 +146,8 @@ export function MiddleColumn({
                       remarks: p.remarks,
                       addedByName: p.addedByName,
                       paymentMode: p.paymentMode,
+                      cashAmount: p.cashAmount,
+                      bankAmount: p.bankAmount,
                     }}
                     student={student}
                     receiptNo={originalIdx + 1}

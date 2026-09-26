@@ -122,6 +122,8 @@ export const studentPaymentDetailsResponseSchema = z.discriminatedUnion(
           amount: z.number(),
           addedByName: z.string(),
           paymentMode: z.string(),
+          cashAmount: z.number(),
+          bankAmount: z.number(),
         }),
       ),
     }),
@@ -173,6 +175,11 @@ export const addPaymentSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   bsDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   bankAccountID: z.uuid().optional(),
+  // cash part of a "cash_and_bank" payment; the bank part is amount - cash
+  cashAmount: z
+    .number()
+    .min(0.01, { error: "Cash part must be at least Rs 0.01" })
+    .optional(),
 });
 
 export type AddPayment = z.infer<typeof addPaymentSchema>;

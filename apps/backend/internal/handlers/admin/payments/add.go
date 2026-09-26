@@ -27,7 +27,12 @@ type AddPaymentRequest struct {
 	BsDate        string  `json:"bsDate" binding:"required,bs_date"`
 	Date          string  `json:"date" binding:"required,date_format"`
 	BankAccountID string  `json:"bankAccountID" binding:"omitempty,uuid"`
+	// Cash part of a "cash_and_bank" payment; the bank part is the rest of
+	// Amount, so the two can't disagree with the total.
+	CashAmount float64 `json:"cashAmount" binding:"required_if=PaymentMode cash_and_bank,omitempty,min=0.01,lte=10000000"`
 }
+
+const paymentModeCashAndBank = "cash_and_bank"
 
 func AddPayment(queries repository.AdminPaymentTxRepository, pool *pgxpool.Pool) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -172,6 +177,44 @@ func AddPayment(queries repository.AdminPaymentTxRepository, pool *pgxpool.Pool)
 			return
 		}
 
+		isCash := strings.EqualFold(req.PaymentMode, "cash")
+		isBank := strings.EqualFold(req.PaymentMode, "bank")
+		isSplit := strings.EqualFold(req.PaymentMode, paymentModeCashAndBank)
+
+		var cashPart, bankPart int64
+		if isSplit {
+			cashPart = utils.RupeesToPaisa(req.CashAmount)
+			bankPart = amount - cashPart
+			// required_if on CashAmount only matches the exact lowercase mode;
+			// this also covers e.g. "Cash_And_Bank" sent without a cash part.
+			if cashPart < 1 {
+				c.JSON(http.StatusBadRequest, types.APIResponse{
+					Success: false,
+					Message: "Cash part is required",
+					Code:    constants.ValidationFailed,
+					Errors: []types.AppError{{
+						Code:    "REQUIRED_FIELD",
+						Field:   "cashAmount",
+						Message: "Cash part is required",
+					}},
+				})
+				return
+			}
+			if bankPart < 1 {
+				c.JSON(http.StatusBadRequest, types.APIResponse{
+					Success: false,
+					Message: "Cash part must be less than the total",
+					Code:    constants.ValidationFailed,
+					Errors: []types.AppError{{
+						Code:    "OUT_OF_RANGE",
+						Field:   "cashAmount",
+						Message: "Cash part must be less than the total",
+					}},
+				})
+				return
+			}
+		}
+
 		student, err := qtx.GetStudentByID(ctx, studentID)
 
 		if err != nil {
@@ -267,10 +310,12 @@ func AddPayment(queries repository.AdminPaymentTxRepository, pool *pgxpool.Pool)
 			slog.Int("amount", int(amount)),
 		)
 
-		if strings.EqualFold(req.PaymentMode, "cash") {
-
-			_, err = qtx.CreateCashLedgerEntry(ctx, db.CreateCashLedgerEntryParams{
-				Amount:      amount,
+		// recordCash and recordBank book this payment's money into the cash or
+		// bank ledger; on failure they write the error response and return
+		// false, and the deferred rollback undoes the payment too.
+		recordCash := func(amt int64) bool {
+			_, err := qtx.CreateCashLedgerEntry(ctx, db.CreateCashLedgerEntryParams{
+				Amount:      amt,
 				EntryType:   "cr",
 				Description: pgtype.Text{String: "Student payment - auto recorded", Valid: true},
 				PaymentID:   payment.ID,
@@ -289,11 +334,15 @@ func AddPayment(queries repository.AdminPaymentTxRepository, pool *pgxpool.Pool)
 					Message: "Failed to process request",
 					Code:    constants.InternalServerError,
 				})
-				return
+				return false
 			}
-		} else {
+			return true
+		}
+
+		recordBank := func(amt int64) bool {
 			var bankAccountID pgtype.UUID
-			if strings.EqualFold(req.PaymentMode, "bank") && req.BankAccountID != "" {
+			var err error
+			if (isBank || isSplit) && req.BankAccountID != "" {
 				bankAccountID, err = utils.ConvertToUUID(req.BankAccountID)
 				if err != nil {
 					slog.Warn("invalid bank account id format",
@@ -306,7 +355,7 @@ func AddPayment(queries repository.AdminPaymentTxRepository, pool *pgxpool.Pool)
 						Message: "Invalid ID format",
 						Code:    constants.InvalidIDFormat,
 					})
-					return
+					return false
 				}
 			} else {
 				bankAccountID, err = qtx.GetDefaultBankAccountID(ctx)
@@ -321,18 +370,18 @@ func AddPayment(queries repository.AdminPaymentTxRepository, pool *pgxpool.Pool)
 							Message: "No default bank account configured. Please set a default bank account first.",
 							Code:    constants.NoDefaultBankAccount,
 						})
-						return
+						return false
 					}
 					c.JSON(http.StatusInternalServerError, types.APIResponse{
 						Success: false,
 						Message: "Failed to process request",
 						Code:    constants.InternalServerError,
 					})
-					return
+					return false
 				}
 			}
 			_, err = qtx.CreateBankLedgerEntry(ctx, db.CreateBankLedgerEntryParams{
-				Amount:        amount,
+				Amount:        amt,
 				EntryType:     "cr",
 				Description:   pgtype.Text{String: "Student payment - auto recorded", Valid: true},
 				PaymentID:     payment.ID,
@@ -354,14 +403,14 @@ func AddPayment(queries repository.AdminPaymentTxRepository, pool *pgxpool.Pool)
 							Message: "Bank account not found",
 							Code:    constants.BankAccountNotFound,
 						})
-						return
+						return false
 					case "bank_ledger_payment_id_fkey":
 						c.JSON(http.StatusNotFound, types.APIResponse{
 							Success: false,
 							Message: "Payment not found",
 							Code:    constants.PaymentNotFound,
 						})
-						return
+						return false
 					}
 				}
 				slog.Error("failed to create bank ledger entry",
@@ -375,9 +424,24 @@ func AddPayment(queries repository.AdminPaymentTxRepository, pool *pgxpool.Pool)
 					Message: "Failed to process request",
 					Code:    constants.InternalServerError,
 				})
+				return false
+			}
+			return true
+		}
+
+		switch {
+		case isCash:
+			if !recordCash(amount) {
 				return
 			}
-
+		case isSplit:
+			if !recordCash(cashPart) || !recordBank(bankPart) {
+				return
+			}
+		default:
+			if !recordBank(amount) {
+				return
+			}
 		}
 
 		if err := tx.Commit(ctx); err != nil {

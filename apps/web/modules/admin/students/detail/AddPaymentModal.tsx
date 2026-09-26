@@ -12,6 +12,7 @@ import {
   Banknote,
   Building2,
   CalendarDays,
+  Coins,
   CreditCard,
   Plus,
   Smartphone,
@@ -32,28 +33,54 @@ import { SearchableSelect } from "../../inventory/shared/SearchableSelect";
 import { useBankAccountSearch } from "../../inventory/shared/useProductSupplierSearch";
 import { useBankAccountsDropdown } from "@/hooks/queries/admin/banks/bank_ledger/useBankAccountsDropdown";
 
-const modalSchema = z.object({
-  amount: z.number().min(0.01, {
-    error: "Amount must be at least Rs 0.01",
-  }),
-  remarks: z
-    .string()
-    .min(3)
-    .max(100, {
-      error: "Remarks must be less than 100 characters",
-    })
-    .optional(),
-  paymentMode: z.string().min(2).max(60, {
-    error: "Payment mode must be less than 60 characters",
-  }),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, {
-    error: "AD date must be in YYYY-MM-DD format",
-  }),
-  bsDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, {
-    error: "BS date must be in YYYY-MM-DD format",
-  }),
-  bankAccountID: z.uuid().optional(),
-});
+const CASH_AND_BANK = "cash_and_bank";
+
+const modalSchema = z
+  .object({
+    amount: z.number().min(0.01, {
+      error: "Amount must be at least Rs 0.01",
+    }),
+    remarks: z
+      .string()
+      .min(3)
+      .max(100, {
+        error: "Remarks must be less than 100 characters",
+      })
+      .optional(),
+    paymentMode: z.string().min(2).max(60, {
+      error: "Payment mode must be less than 60 characters",
+    }),
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, {
+      error: "AD date must be in YYYY-MM-DD format",
+    }),
+    bsDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, {
+      error: "BS date must be in YYYY-MM-DD format",
+    }),
+    bankAccountID: z.uuid().optional(),
+    cashAmount: z
+      .number()
+      .min(0.01, { error: "Cash part must be at least Rs 0.01" })
+      .optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.paymentMode !== CASH_AND_BANK) return;
+    if (data.cashAmount === undefined) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Enter the cash part",
+        path: ["cashAmount"],
+      });
+      return;
+    }
+    // the bank part is the rest of the total; compare in paisa
+    if (Math.round(data.amount * 100) - Math.round(data.cashAmount * 100) < 1) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Cash part must be less than the total",
+        path: ["cashAmount"],
+      });
+    }
+  });
 type AddPaymentModal = z.infer<typeof modalSchema>;
 
 type AddPaymentModalErrors = {
@@ -63,6 +90,7 @@ type AddPaymentModalErrors = {
   date?: string;
   bsDate?: string;
   bankAccountID?: string;
+  cashAmount?: string;
 };
 
 type PaymentModeOption = {
@@ -76,6 +104,7 @@ const defaultPaymentModes: PaymentModeOption[] = [
   { value: "esewa", label: "eSewa", icon: Smartphone },
   { value: "fonepay", label: "FonePay", icon: Smartphone },
   { value: "bank", label: "Bank", icon: Building2 },
+  { value: CASH_AND_BANK, label: "Cash + Bank", icon: Coins },
 ];
 
 function getToday() {
@@ -109,6 +138,7 @@ export function AddPaymentModal({
   const [amount, setAmount] = useState("");
   const [remarks, setRemarks] = useState("");
   const [paymentMode, setPaymentMode] = useState("");
+  const [cashAmount, setCashAmount] = useState("");
   const [error, setError] = useState<AddPaymentModalErrors>({});
   const [isAddingNewMode, setIsAddingNewMode] = useState(false);
   const [newModeInput, setNewModeInput] = useState("");
@@ -119,7 +149,9 @@ export function AddPaymentModal({
   const searchBankAccounts = useBankAccountSearch();
   const { data: bankAccounts } = useBankAccountsDropdown();
 
-  const isBankMode = paymentMode === "bank";
+  const isSplitMode = paymentMode === CASH_AND_BANK;
+  // a split payment books its bank part to a bank account too
+  const isBankMode = paymentMode === "bank" || isSplitMode;
   const defaultBankAccount = bankAccounts?.find((a) => a.isDefault);
   const effectiveBankAccountId =
     bankAccountId || (isBankMode ? (defaultBankAccount?.id ?? "") : "");
@@ -128,6 +160,9 @@ export function AddPaymentModal({
     (isBankMode && defaultBankAccount
       ? `${defaultBankAccount.bankName} — ${defaultBankAccount.accountName}`
       : "");
+
+  const bankPartPaisa =
+    Math.round(Number(amount) * 100) - Math.round(Number(cashAmount) * 100);
 
   const [bsDate, setBsDate] = useState(() => getToday().bs);
   const [adDate, setAdDate] = useState(() => getToday().ad);
@@ -143,6 +178,7 @@ export function AddPaymentModal({
     setAmount("");
     setRemarks("");
     setPaymentMode("");
+    setCashAmount("");
     setError({});
     setIsAddingNewMode(false);
     setNewModeInput("");
@@ -172,6 +208,8 @@ export function AddPaymentModal({
       date: adDate,
       bsDate: bsDate,
       bankAccountID: isBankMode ? effectiveBankAccountId : undefined,
+      cashAmount:
+        isSplitMode && cashAmount !== "" ? Number(cashAmount) : undefined,
     });
 
     if (!result.success) {
@@ -182,6 +220,7 @@ export function AddPaymentModal({
         paymentMode: tree?.paymentMode?.errors[0],
         date: tree?.date?.errors[0],
         bsDate: tree?.bsDate?.errors[0],
+        cashAmount: tree?.cashAmount?.errors[0],
       });
       return;
     }
@@ -204,13 +243,16 @@ export function AddPaymentModal({
   const handleAddNewMode = () => {
     const trimmed = newModeInput.trim();
     if (!trimmed) return;
-    const newEntry: PaymentModeOption = {
-      value: trimmed.toLowerCase().replace(/\s+/g, "_"),
-      label: trimmed,
-      icon: CreditCard,
-    };
-    setPaymentModes((prev) => [...prev, newEntry]);
-    setPaymentMode(newEntry.value);
+    const value = trimmed.toLowerCase().replace(/\s+/g, "_");
+    // "Cash" or "Cash and Bank" typed by hand selects the built-in option,
+    // so it gets the right ledger handling instead of a duplicate chip.
+    if (!paymentModes.some((m) => m.value === value)) {
+      setPaymentModes((prev) => [
+        ...prev,
+        { value, label: trimmed, icon: CreditCard },
+      ]);
+    }
+    setPaymentMode(value);
     setIsAddingNewMode(false);
     setNewModeInput("");
     setError((prev) => ({ ...prev, paymentMode: undefined }));
@@ -312,6 +354,7 @@ export function AddPaymentModal({
                   type="button"
                   onClick={() => {
                     setPaymentMode(mode.value);
+                    if (mode.value !== CASH_AND_BANK) setCashAmount("");
                     setIsAddingNewMode(false);
                     setError((prev) => ({ ...prev, paymentMode: undefined }));
                   }}
@@ -364,6 +407,43 @@ export function AddPaymentModal({
               );
             })}
           </div>
+
+          {isSplitMode && (
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <label className="flex flex-col gap-1.5">
+                <span className="font-(family-name:--font-dm-sans) text-xs text-[rgba(47,78,64,0.6)]">
+                  Cash part (NPR)
+                </span>
+                <input
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  inputMode="decimal"
+                  placeholder="0"
+                  value={cashAmount}
+                  onChange={(e) => {
+                    setCashAmount(e.target.value);
+                    setError((prev) => ({ ...prev, cashAmount: undefined }));
+                  }}
+                  className={cn(
+                    inputCls,
+                    error.cashAmount && "border-[#9a3412]",
+                  )}
+                />
+              </label>
+              <div className="flex flex-col gap-1.5">
+                <span className="font-(family-name:--font-dm-sans) text-xs text-[rgba(47,78,64,0.6)]">
+                  Bank part
+                </span>
+                <p className="py-2 font-(family-name:--font-dm-sans) text-sm font-semibold tabular-nums text-(--brand-green)">
+                  {amount !== "" && cashAmount !== "" && bankPartPaisa > 0
+                    ? formatNpr(bankPartPaisa / 100)
+                    : "—"}
+                </p>
+              </div>
+            </div>
+          )}
+          {isSplitMode && <FieldError message={error.cashAmount} />}
 
           {isBankMode && (
             <div className="mt-4">

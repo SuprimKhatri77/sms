@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import type { PaymentListItem } from "../shared/student-finance-list-types";
 import { StudentFinanceStudentCell } from "../shared/StudentFinanceStudentCell";
 import { formatFinanceDate } from "../shared/student-finance-list-utils";
-import { formatNpr } from "../shared/student-utils";
+import { formatNpr, formatPaymentMode } from "../shared/student-utils";
 import {
   financeTdClass,
   PAYMENT_TABLE_COLUMNS,
@@ -36,7 +36,7 @@ export function PaymentTableRow({ payment }: { payment: PaymentListItem }) {
       </td>
       <td className={`${financeTdClass} ${columnCellClass.mode}`}>
         <span className="font-(family-name:--font-dm-sans) text-sm text-[rgba(47,78,64,0.75)]">
-          {payment.paymentMode}
+          {formatPaymentMode(payment.paymentMode)}
         </span>
       </td>
       <td className={`${financeTdClass} ${columnCellClass.remarks}`}>

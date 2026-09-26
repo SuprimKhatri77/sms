@@ -23,7 +23,7 @@ import {
 } from "../shared/StudentFinanceTableSkeleton";
 import { formatFinanceDate } from "../shared/student-finance-list-utils";
 import { parseStudentFinanceFilters } from "../shared/student-date-filter-utils";
-import { formatNpr } from "../shared/student-utils";
+import { formatNpr, formatPaymentMode } from "../shared/student-utils";
 import { adminSecondaryButtonClass } from "@/components/admin/admin-styles";
 import { useAdminRefreshShortcut } from "@/components/admin/admin-shortcut-provider";
 import { useAdminQueryRefresh } from "@/hooks/useAdminQueryRefresh";
@@ -145,7 +145,7 @@ export function StudentPaymentsView() {
                 <div className="flex flex-col gap-1.5 pl-[52px]">
                   {[
                     ["Amount", formatNpr(payment.amount / 100)],
-                    ["Mode", payment.paymentMode],
+                    ["Mode", formatPaymentMode(payment.paymentMode)],
                     ["Remarks", payment.remarks?.trim() || "—"],
                     ["Date", formatFinanceDate(payment.date)],
                   ].map(([label, value]) => (
