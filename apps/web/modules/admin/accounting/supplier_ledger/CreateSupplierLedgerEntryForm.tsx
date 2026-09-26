@@ -81,7 +81,9 @@ export function CreateSupplierLedgerEntryForm({
   const searchBankAccounts = useBankAccountSearch();
   const { data: bankAccounts } = useBankAccountsDropdown();
 
-  const isBankMode = paymentType.trim().toLowerCase() === "bank";
+  // Only a payment (dr) moves money, so only a payment takes a payment type.
+  const isPayment = entryType === "dr";
+  const isBankMode = isPayment && paymentType.trim().toLowerCase() === "bank";
   const defaultBankAccount = bankAccounts?.find((a) => a.isDefault);
   const effectiveBankAccountId =
     bankAccountId || (isBankMode ? (defaultBankAccount?.id ?? "") : "");
@@ -127,7 +129,7 @@ export function CreateSupplierLedgerEntryForm({
       entryType: entryType as "dr" | "cr",
       amount: Number(amountRs),
       description: description,
-      paymentType,
+      paymentType: isPayment ? paymentType : undefined,
       bankAccountID: isBankMode ? effectiveBankAccountId : undefined,
     });
     if (!validateFields.success) {
@@ -250,7 +252,15 @@ export function CreateSupplierLedgerEntryForm({
             >
               <Select
                 value={entryType}
-                onValueChange={(v) => setEntryType(v as "dr" | "cr")}
+                onValueChange={(v) => {
+                  setEntryType(v as "dr" | "cr");
+                  if (v === "cr") {
+                    setPaymentType("");
+                    setBankAccountId("");
+                    setBankAccountLabel("");
+                    setErrors((prev) => ({ ...prev, paymentType: undefined }));
+                  }
+                }}
               >
                 <SelectTrigger className={accountingSelectTriggerClass}>
                   <SelectValue placeholder="Select type" />
@@ -294,55 +304,57 @@ export function CreateSupplierLedgerEntryForm({
             </div>
           </AccountingFormField>
 
-          <AccountingFormField
-            label="Payment Type"
-            htmlFor="supplier-payment-type"
-            required
-            error={errors?.paymentType}
-          >
-            <input
-              id="supplier-payment-type"
-              type="text"
-              placeholder="Type a custom payment method…"
-              value={paymentType}
-              onChange={(e) => {
-                setPaymentType(e.target.value);
-                setErrors((prev) => ({ ...prev, paymentType: undefined }));
-              }}
-              className={cn(
-                accountingFieldInputClass,
-                errors?.paymentType && "border-[#9a3412]",
-              )}
-            />
-            <div className="mt-2.5 flex flex-wrap gap-2">
-              {PAYMENT_TYPE_SUGGESTIONS.map((option) => {
-                const isSelected =
-                  paymentType.trim().toLowerCase() === option.value;
+          {isPayment && (
+            <AccountingFormField
+              label="Payment Type"
+              htmlFor="supplier-payment-type"
+              required
+              error={errors?.paymentType}
+            >
+              <input
+                id="supplier-payment-type"
+                type="text"
+                placeholder="Type a custom payment method…"
+                value={paymentType}
+                onChange={(e) => {
+                  setPaymentType(e.target.value);
+                  setErrors((prev) => ({ ...prev, paymentType: undefined }));
+                }}
+                className={cn(
+                  accountingFieldInputClass,
+                  errors?.paymentType && "border-[#9a3412]",
+                )}
+              />
+              <div className="mt-2.5 flex flex-wrap gap-2">
+                {PAYMENT_TYPE_SUGGESTIONS.map((option) => {
+                  const isSelected =
+                    paymentType.trim().toLowerCase() === option.value;
 
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => {
-                      setPaymentType(option.value);
-                      setErrors((prev) => ({
-                        ...prev,
-                        paymentType: undefined,
-                      }));
-                    }}
-                    className={cn(
-                      "border px-3 py-1.5 font-(family-name:--font-dm-sans) text-xs font-semibold uppercase tracking-[0.06em] transition-colors",
-                      isSelected
-                        ? "border-(--brand-green) bg-(--brand-green) text-white"
-                        : "border-[rgba(47,78,64,0.18)] bg-white text-[rgba(47,78,64,0.65)] hover:border-(--brand-green) hover:text-(--brand-green)",
-                    )}
-                  >
-                    {option.label}
-                  </button>
-                );
-              })}
-            </div>
-          </AccountingFormField>
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => {
+                        setPaymentType(option.value);
+                        setErrors((prev) => ({
+                          ...prev,
+                          paymentType: undefined,
+                        }));
+                      }}
+                      className={cn(
+                        "border px-3 py-1.5 font-(family-name:--font-dm-sans) text-xs font-semibold uppercase tracking-[0.06em] transition-colors",
+                        isSelected
+                          ? "border-(--brand-green) bg-(--brand-green) text-white"
+                          : "border-[rgba(47,78,64,0.18)] bg-white text-[rgba(47,78,64,0.65)] hover:border-(--brand-green) hover:text-(--brand-green)",
+                      )}
+                    >
+                      {option.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </AccountingFormField>
+          )}
 
           {isBankMode && (
             <AccountingFormField label="Bank Account" required>
