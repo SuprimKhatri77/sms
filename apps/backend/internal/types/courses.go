@@ -19,12 +19,12 @@ type CoursesResponse struct {
 type CreateCourse struct {
 	Name     string  `json:"name" binding:"required,notblank,min=2,max=50"`
 	IsActive *bool   `json:"isActive" binding:"required"`
-	Fee      float64 `json:"fee" binding:"required,min=0.01"`
+	Fee      float64 `json:"fee" binding:"required,min=0.01,max=10000000"`
 }
 type UpdateCourse struct {
 	Name     string  `json:"name" binding:"required,notblank,min=2,max=50"`
 	IsActive *bool   `json:"isActive" binding:"required"`
-	Fee      float64 `json:"fee" binding:"required,min=0.01"`
+	Fee      float64 `json:"fee" binding:"required,min=0.01,max=10000000"`
 }
 
 type ToggleCourseStatus struct {

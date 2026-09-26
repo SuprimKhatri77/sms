@@ -183,7 +183,10 @@ export type AddPaymentResponse = z.infer<typeof addPaymentResponseSchema>;
 export const createCourseSchema = z.object({
   name: z.string().min(2).max(50),
   isActive: z.boolean(),
-  fee: z.number().min(0.01, { error: "Fee must be at least Rs 0.01" }),
+  fee: z
+    .number()
+    .min(0.01, { error: "Fee must be at least Rs 0.01" })
+    .max(10000000, { error: "Fee must not exceed Rs. 1,00,00,000" }),
 });
 
 export const createCourseResponseSchema = z.discriminatedUnion("success", [
@@ -211,7 +214,10 @@ export type CreateCourseResponse = z.infer<typeof createCourseResponseSchema>;
 export const updateCourseSchema = z.object({
   name: z.string().min(2).max(50),
   isActive: z.boolean(),
-  fee: z.number().min(0.01, { error: "Fee must be at least Rs 0.01" }),
+  fee: z
+    .number()
+    .min(0.01, { error: "Fee must be at least Rs 0.01" })
+    .max(10000000, { error: "Fee must not exceed Rs. 1,00,00,000" }),
   id: z.uuid(),
 });
 
