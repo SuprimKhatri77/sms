@@ -2,8 +2,10 @@ package supplierledger
 
 import (
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/suprimkhatri77/sms/backend/internal/pkg/applog"
@@ -23,6 +25,12 @@ import (
 
 const handlerCreateSupplierLedgerEntry = "CreateSupplierLedgerEntry"
 
+// paymentDescription is the description on the cash/bank ledger debit
+// auto-recorded when a supplier is paid.
+func paymentDescription(companyName string) string {
+	return fmt.Sprintf("Supplier payment - %s", companyName)
+}
+
 type CreateSupplierLedgerEntryRequest struct {
 	Date          string  `json:"date" binding:"required,date_format"`
 	BsDate        string  `json:"bsDate" binding:"required,bs_date"`
@@ -30,7 +38,7 @@ type CreateSupplierLedgerEntryRequest struct {
 	Amount        float64 `json:"amount" binding:"required,gt=0,lte=10000000"`
 	Description   string  `json:"description" binding:"omitempty,notblank,min=5,max=200"`
 	StockInID     string  `json:"stockInID" binding:"omitempty,uuid"`
-	PaymentType   string  `json:"paymentType" binding:"required,notblank,min=2,max=100"`
+	PaymentType   string  `json:"paymentType" binding:"required_if=EntryType dr,omitempty,notblank,min=2,max=100"`
 	BankAccountID string  `json:"bankAccountID" binding:"omitempty,uuid"`
 }
 
@@ -104,13 +112,41 @@ func CreateSupplierLedgerEntry(queries accountingRepository.SupplierLedgerTxRepo
 
 		qtx := queries.WithTx(tx)
 
+		supplier, err := qtx.GetSupplierByID(ctx, supplierID)
+		if err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				applog.Warn(c, handlerCreateSupplierLedgerEntry, "resource not found")
+				c.JSON(http.StatusNotFound, types.APIResponse{
+					Success: false,
+					Message: "Supplier not found",
+					Code:    constants.SupplierNotFound,
+				})
+				return
+			}
+			applog.Error(c, handlerCreateSupplierLedgerEntry, "failed to get supplier",
+				slog.Any(applog.AttrError, err))
+			c.JSON(http.StatusInternalServerError, types.APIResponse{
+				Success: false,
+				Message: "Failed to create supplier ledger entry",
+				Code:    constants.InternalServerError,
+			})
+			return
+		}
+
+		// A credit only records what we owe the supplier; no money moves, so
+		// it carries no payment type (same as the credits stock-in records).
+		isPayment := req.EntryType == "dr"
+		if !isPayment {
+			req.PaymentType = ""
+		}
+
 		_, err = qtx.CreateSupplierLedgerEntry(ctx, db.CreateSupplierLedgerEntryParams{
 			SupplierID:  supplierID,
 			Date:        pgtype.Timestamptz{Time: adDate, Valid: true},
 			BsDate:      req.BsDate,
 			StockInID:   utils.ToNullableUUID(req.StockInID),
 			Description: utils.ToNullableText(req.Description),
-			Amount:      int64(req.Amount * 100),
+			Amount:      utils.RupeesToPaisa(req.Amount),
 			EntryType:   req.EntryType,
 			PaymentType: req.PaymentType,
 		})
@@ -150,29 +186,26 @@ func CreateSupplierLedgerEntry(queries accountingRepository.SupplierLedgerTxRepo
 						return
 					}
 				}
-				applog.Error(c, handlerCreateSupplierLedgerEntry, "failed to process request",
-					slog.Any(applog.AttrError, err),
-				)
-				c.JSON(http.StatusInternalServerError, types.APIResponse{
-					Success: false,
-					Message: "Failed to process request",
-					Code:    constants.InternalServerError,
-				})
-				return
 			}
-
+			applog.Error(c, handlerCreateSupplierLedgerEntry, "failed to process request",
+				slog.Any(applog.AttrError, err),
+			)
+			c.JSON(http.StatusInternalServerError, types.APIResponse{
+				Success: false,
+				Message: "Failed to process request",
+				Code:    constants.InternalServerError,
+			})
+			return
 		}
 
-		counterEntryType := "cr"
-		if req.EntryType == "cr" {
-			counterEntryType = "dr"
-		}
-
-		if req.PaymentType == "cash" {
+		// Cash and bank ledgers read like a statement (cr = money in, dr =
+		// money out), so paying a supplier is a dr there too. Only payments
+		// move money; a credit records nothing in cash or bank.
+		if isPayment && strings.EqualFold(req.PaymentType, "cash") {
 			_, err = qtx.CreateCashLedgerEntry(ctx, db.CreateCashLedgerEntryParams{
-				Amount:      int64(req.Amount * 100),
-				EntryType:   counterEntryType,
-				Description: pgtype.Text{String: "Supplier payment - auto recorded", Valid: true},
+				Amount:      utils.RupeesToPaisa(req.Amount),
+				EntryType:   "dr",
+				Description: pgtype.Text{String: paymentDescription(supplier.CompanyName), Valid: true},
 				BsDate:      req.BsDate,
 				Date:        pgtype.Timestamptz{Time: adDate, Valid: true},
 			})
@@ -254,9 +287,9 @@ func CreateSupplierLedgerEntry(queries accountingRepository.SupplierLedgerTxRepo
 				return
 			}
 
-		} else {
+		} else if isPayment {
 			var bankAccountID pgtype.UUID
-			if req.PaymentType == "bank" && req.BankAccountID != "" {
+			if strings.EqualFold(req.PaymentType, "bank") && req.BankAccountID != "" {
 				bankAccountID, err = utils.ConvertToUUID(req.BankAccountID)
 				if err != nil {
 					applog.Warn(c, handlerCreateSupplierLedgerEntry, "invalid request",
@@ -292,10 +325,10 @@ func CreateSupplierLedgerEntry(queries accountingRepository.SupplierLedgerTxRepo
 				}
 			}
 			_, err = qtx.CreateBankLedgerEntry(ctx, db.CreateBankLedgerEntryParams{
-				Amount:        int64(req.Amount * 100),
+				Amount:        utils.RupeesToPaisa(req.Amount),
 				BankAccountID: bankAccountID,
-				EntryType:     counterEntryType,
-				Description:   pgtype.Text{String: "Supplier payment - auto recorded", Valid: true},
+				EntryType:     "dr",
+				Description:   pgtype.Text{String: paymentDescription(supplier.CompanyName), Valid: true},
 				BsDate:        req.BsDate,
 				Date:          pgtype.Timestamptz{Time: adDate, Valid: true},
 			})

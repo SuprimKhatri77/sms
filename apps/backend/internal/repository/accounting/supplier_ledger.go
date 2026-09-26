@@ -18,6 +18,7 @@ type SupplierLedgerRepository interface {
 
 type SupplierLedgerTxRepository interface {
 	WithTx(tx pgx.Tx) SupplierLedgerTxRepository
+	GetSupplierByID(ctx context.Context, id pgtype.UUID) (db.Supplier, error)
 	CreateSupplierLedgerEntry(ctx context.Context, params db.CreateSupplierLedgerEntryParams) (db.SupplierLedger, error)
 	CreateCashLedgerEntry(ctx context.Context, params db.CreateCashLedgerEntryParams) (db.CashLedger, error)
 	CreateBankLedgerEntry(ctx context.Context, params db.CreateBankLedgerEntryParams) (db.BankLedger, error)
@@ -35,6 +36,10 @@ func NewSupplierLedgerTxRepository(queries *db.Queries, pool *pgxpool.Pool) Supp
 
 func (r *supplierLedgerTxRepository) WithTx(tx pgx.Tx) SupplierLedgerTxRepository {
 	return &supplierLedgerTxRepository{queries: r.queries.WithTx(tx), pool: r.pool}
+}
+
+func (r *supplierLedgerTxRepository) GetSupplierByID(ctx context.Context, id pgtype.UUID) (db.Supplier, error) {
+	return r.queries.GetSupplierByID(ctx, id)
 }
 
 func (r *supplierLedgerTxRepository) CreateSupplierLedgerEntry(ctx context.Context, params db.CreateSupplierLedgerEntryParams) (db.SupplierLedger, error) {

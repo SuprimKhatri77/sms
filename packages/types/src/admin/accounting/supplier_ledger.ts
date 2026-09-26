@@ -50,35 +50,47 @@ export type GetSupplierLedgerSummaryResponse = z.infer<
   typeof getSupplierLedgerSummaryResponse
 >;
 
-export const createSupplierLedgerEntryInput = z.object({
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, {
-    error: "AD date must be in YYYY-MM-DD format",
-  }),
-  bsDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, {
-    error: "BS date must be in YYYY-MM-DD format",
-  }),
-  entryType: z.enum(["cr", "dr"]),
-  amount: z
-    .number()
-    .gt(0, {
-      error: "Amount must be greater than 0",
-    })
-    .lte(10000000, {
-      error: "Amount must not exceed Rs. 1,00,00,000",
+export const createSupplierLedgerEntryInput = z
+  .object({
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, {
+      error: "AD date must be in YYYY-MM-DD format",
     }),
-  description: z
-    .string()
-    .trim()
-    .min(5, { error: "Description must be at least 5 characters" })
-    .max(200, { error: "Description must be 200 characters or less" })
-    .optional(),
-  paymentType: z
-    .string()
-    .trim()
-    .min(2, { error: "Payment type is required" })
-    .max(100, { error: "Payment type must be 100 characters or less" }),
-  bankAccountID: z.uuid().optional(),
-});
+    bsDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, {
+      error: "BS date must be in YYYY-MM-DD format",
+    }),
+    entryType: z.enum(["cr", "dr"]),
+    amount: z
+      .number()
+      .gt(0, {
+        error: "Amount must be greater than 0",
+      })
+      .lte(10000000, {
+        error: "Amount must not exceed Rs. 1,00,00,000",
+      }),
+    description: z
+      .string()
+      .trim()
+      .min(5, { error: "Description must be at least 5 characters" })
+      .max(200, { error: "Description must be 200 characters or less" })
+      .optional(),
+    paymentType: z
+      .string()
+      .trim()
+      .min(2, { error: "Payment type is required" })
+      .max(100, { error: "Payment type must be 100 characters or less" })
+      .optional(),
+    bankAccountID: z.uuid().optional(),
+  })
+  .superRefine((data, ctx) => {
+    // Only a payment (dr) moves money, so only a payment needs a payment type.
+    if (data.entryType === "dr" && !data.paymentType) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Payment type is required",
+        path: ["paymentType"],
+      });
+    }
+  });
 
 export type CreateSupplierLedgerEntryInput = z.infer<
   typeof createSupplierLedgerEntryInput
