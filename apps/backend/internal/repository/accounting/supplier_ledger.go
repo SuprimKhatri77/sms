@@ -14,6 +14,7 @@ type SupplierLedgerRepository interface {
 	ListSupplierLedger(ctx context.Context, params db.ListSupplierLedgerParams) ([]db.ListSupplierLedgerRow, error)
 	GetSupplierLedgerSummary(ctx context.Context, params db.GetSupplierLedgerSummaryParams) (db.GetSupplierLedgerSummaryRow, error)
 	GetSupplierLedgerCount(ctx context.Context, params db.GetSupplierLedgerCountParams) (int64, error)
+	GetSupplierByID(ctx context.Context, id pgtype.UUID) (db.Supplier, error)
 }
 
 type SupplierLedgerTxRepository interface {

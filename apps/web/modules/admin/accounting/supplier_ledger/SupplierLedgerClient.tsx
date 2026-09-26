@@ -24,6 +24,7 @@ import { getSupplierLedger } from "@/lib/api/supplier_ledger";
 import { useSupplierLedgerSummary } from "@/hooks/queries/admin/suppliers/ledger/useSupplierLedgerSummary";
 import { useCreateSupplierLedgerEntry } from "@/hooks/queries/admin/suppliers/ledger/useCreateSupplierLedgerEntry";
 import { AdminPageLayout } from "@/components/admin/admin-page-layout";
+import { AdminExportMenu } from "@/components/admin/admin-export-menu";
 import {
   useAdminEscapeShortcut,
   useAdminNewShortcut,
@@ -164,14 +165,24 @@ function SupplierLedgerInner() {
       description="Track purchases and payments across all suppliers"
       maxWidth="wide"
       action={
-        <button
-          type="button"
-          onClick={() => setCreateOpen(true)}
-          className={adminPrimaryButtonClass}
-        >
-          <Plus size={15} strokeWidth={2.5} />
-          New Entry
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <AdminExportMenu
+            path="/admin/accounting/suppliers/ledger/export"
+            filters={{
+              supplier_id: supplierId !== "all" ? supplierId : "",
+              from_date: fromDate ?? "",
+              to_date: toDate ?? "",
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => setCreateOpen(true)}
+            className={adminPrimaryButtonClass}
+          >
+            <Plus size={15} strokeWidth={2.5} />
+            New Entry
+          </button>
+        </div>
       }
     >
       <div className="space-y-6">

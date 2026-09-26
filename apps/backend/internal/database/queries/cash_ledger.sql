@@ -12,7 +12,7 @@ WHERE
     (sqlc.narg('from_date')::date IS NULL OR date >= sqlc.narg('from_date')::timestamptz)
     AND (sqlc.narg('to_date')::date IS NULL OR date <= sqlc.narg('to_date')::timestamptz)
 ORDER BY date DESC
-LIMIT $1 OFFSET $2;
+LIMIT sqlc.narg('limit')::INT OFFSET sqlc.arg('offset')::INT;
 
 
 -- name: ListCashLedgerByDateRange :many

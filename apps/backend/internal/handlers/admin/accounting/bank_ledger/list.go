@@ -132,7 +132,7 @@ func ListBankLedger(queries accountingRepository.BankLedgerRepository) gin.Handl
 		offset := PAGE_LIMIT * (int64(page) - 1)
 
 		list, err := queries.ListBankLedger(ctx, db.ListBankLedgerParams{
-			Limit:         int32(PAGE_LIMIT),
+			Limit:         pgtype.Int4{Int32: int32(PAGE_LIMIT), Valid: true},
 			Offset:        int32(offset),
 			BankAccountID: accountID,
 			BankID:        bankID,

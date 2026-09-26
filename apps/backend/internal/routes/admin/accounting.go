@@ -25,6 +25,7 @@ func setupAdminAccountingRoutes(admin *gin.RouterGroup, cfg config.Config) {
 
 	// bank ledger
 	b.GET("/ledger", bankledger.ListBankLedger(cfg.Queries))
+	b.GET("/ledger/export", bankledger.ExportBankLedger(cfg.Queries))
 	b.GET("/ledger/summary", bankledger.GetBankLedgerSummary(cfg.Queries))
 	b.POST("/ledger/:accountID", bankledger.CreateBankLedgerEntry(cfg.Queries))
 
@@ -39,6 +40,7 @@ func setupAdminAccountingRoutes(admin *gin.RouterGroup, cfg config.Config) {
 	// cash ledger
 	cash := accounting.Group("/cash-ledger")
 	cash.GET("", cashledger.ListCashLedger(cfg.Queries))
+	cash.GET("/export", cashledger.ExportCashLedger(cfg.Queries))
 	cash.GET("/summary", cashledger.GetCashLedgerSummary(cfg.Queries))
 	cash.POST("", cashledger.CreateCashLedgerEntry(cfg.Queries))
 
@@ -51,6 +53,7 @@ func setupAdminAccountingRoutes(admin *gin.RouterGroup, cfg config.Config) {
 
 	// supplier ledger
 	sup.GET("/ledger", supplierledger.ListSupplierLedger(cfg.Queries))
+	sup.GET("/ledger/export", supplierledger.ExportSupplierLedger(cfg.Queries))
 	sup.GET("/ledger/summary", supplierledger.GetSupplierLedgerSummary(cfg.Queries))
 	sup.POST("/:supplierID/ledger", supplierledger.CreateSupplierLedgerEntry(cfg.SupplierLedgerRepo, cfg.PgxPool))
 }

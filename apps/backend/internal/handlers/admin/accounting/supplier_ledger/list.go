@@ -8,6 +8,7 @@ import (
 	"github.com/suprimkhatri77/sms/backend/internal/pkg/applog"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/suprimkhatri77/sms/backend/internal/constants"
 	db "github.com/suprimkhatri77/sms/backend/internal/database/generated"
 	accountingRepository "github.com/suprimkhatri77/sms/backend/internal/repository/accounting"
@@ -96,7 +97,7 @@ func ListSupplierLedger(queries accountingRepository.SupplierLedgerRepository) g
 		offset := (page - 1) * PAGE_LIMIT
 
 		supplierLedgers, err := queries.ListSupplierLedger(ctx, db.ListSupplierLedgerParams{
-			Limit:      PAGE_LIMIT,
+			Limit:      pgtype.Int4{Int32: PAGE_LIMIT, Valid: true},
 			Offset:     int32(offset),
 			SupplierID: utils.ToNullableUUID(filters.SupplierID),
 			FromDate:   utils.ToNullableDate(filters.FromDate),

@@ -22,7 +22,7 @@ WHERE
     AND (sqlc.narg('from_date')::date IS NULL OR sl.date >= sqlc.narg('from_date')::timestamptz)
     AND (sqlc.narg('to_date')::date IS NULL OR sl.date <= sqlc.narg('to_date')::timestamptz)
 ORDER BY sl.date DESC
-LIMIT $1 OFFSET $2;
+LIMIT sqlc.narg('limit')::INT OFFSET sqlc.arg('offset')::INT;
 
 
 -- name: ListSupplierLedgerBySupplier :many

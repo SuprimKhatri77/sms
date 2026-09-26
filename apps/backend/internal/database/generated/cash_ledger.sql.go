@@ -130,25 +130,25 @@ func (q *Queries) GetCashLedgerSummary(ctx context.Context, arg GetCashLedgerSum
 const listCashLedger = `-- name: ListCashLedger :many
 SELECT id, date, bs_date, entry_type, amount, description, payment_id, created_at FROM cash_ledger
 WHERE
-    ($3::date IS NULL OR date >= $3::timestamptz)
-    AND ($4::date IS NULL OR date <= $4::timestamptz)
+    ($1::date IS NULL OR date >= $1::timestamptz)
+    AND ($2::date IS NULL OR date <= $2::timestamptz)
 ORDER BY date DESC
-LIMIT $1 OFFSET $2
+LIMIT $4::INT OFFSET $3::INT
 `
 
 type ListCashLedgerParams struct {
-	Limit    int32       `json:"limit"`
-	Offset   int32       `json:"offset"`
 	FromDate pgtype.Date `json:"fromDate"`
 	ToDate   pgtype.Date `json:"toDate"`
+	Offset   int32       `json:"offset"`
+	Limit    pgtype.Int4 `json:"limit"`
 }
 
 func (q *Queries) ListCashLedger(ctx context.Context, arg ListCashLedgerParams) ([]CashLedger, error) {
 	rows, err := q.db.Query(ctx, listCashLedger,
-		arg.Limit,
-		arg.Offset,
 		arg.FromDate,
 		arg.ToDate,
+		arg.Offset,
+		arg.Limit,
 	)
 	if err != nil {
 		return nil, err

@@ -204,19 +204,19 @@ SELECT
 FROM supplier_ledger sl
 JOIN suppliers s ON s.id = sl.supplier_id
 WHERE
-    ($3::uuid IS NULL OR sl.supplier_id = $3::uuid)
-    AND ($4::date IS NULL OR sl.date >= $4::timestamptz)
-    AND ($5::date IS NULL OR sl.date <= $5::timestamptz)
+    ($1::uuid IS NULL OR sl.supplier_id = $1::uuid)
+    AND ($2::date IS NULL OR sl.date >= $2::timestamptz)
+    AND ($3::date IS NULL OR sl.date <= $3::timestamptz)
 ORDER BY sl.date DESC
-LIMIT $1 OFFSET $2
+LIMIT $5::INT OFFSET $4::INT
 `
 
 type ListSupplierLedgerParams struct {
-	Limit      int32       `json:"limit"`
-	Offset     int32       `json:"offset"`
 	SupplierID pgtype.UUID `json:"supplierId"`
 	FromDate   pgtype.Date `json:"fromDate"`
 	ToDate     pgtype.Date `json:"toDate"`
+	Offset     int32       `json:"offset"`
+	Limit      pgtype.Int4 `json:"limit"`
 }
 
 type ListSupplierLedgerRow struct {
@@ -235,11 +235,11 @@ type ListSupplierLedgerRow struct {
 
 func (q *Queries) ListSupplierLedger(ctx context.Context, arg ListSupplierLedgerParams) ([]ListSupplierLedgerRow, error) {
 	rows, err := q.db.Query(ctx, listSupplierLedger,
-		arg.Limit,
-		arg.Offset,
 		arg.SupplierID,
 		arg.FromDate,
 		arg.ToDate,
+		arg.Offset,
+		arg.Limit,
 	)
 	if err != nil {
 		return nil, err

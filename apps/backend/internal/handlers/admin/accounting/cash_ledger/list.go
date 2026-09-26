@@ -8,6 +8,7 @@ import (
 	"github.com/suprimkhatri77/sms/backend/internal/pkg/applog"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/suprimkhatri77/sms/backend/internal/constants"
 	db "github.com/suprimkhatri77/sms/backend/internal/database/generated"
 	accountingRepository "github.com/suprimkhatri77/sms/backend/internal/repository/accounting"
@@ -94,7 +95,7 @@ func ListCashLedger(queries accountingRepository.CashLedgerRepository) gin.Handl
 		offset := PAGE_LIMIT * (int64(page) - 1)
 
 		list, err := queries.ListCashLedger(ctx, db.ListCashLedgerParams{
-			Limit:    int32(PAGE_LIMIT),
+			Limit:    pgtype.Int4{Int32: int32(PAGE_LIMIT), Valid: true},
 			Offset:   int32(offset),
 			FromDate: utils.ToNullableDate(filter.FromAD),
 			ToDate:   utils.ToNullableDate(filter.ToAD),
