@@ -73,7 +73,7 @@ func CreateCashLedgerEntry(queries accountingRepository.CashLedgerRepository) gi
 		}
 
 		entry, err := queries.CreateCashLedgerEntry(ctx, db.CreateCashLedgerEntryParams{
-			Amount:      int64(req.Amount * 100),
+			Amount:      utils.RupeesToPaisa(req.Amount),
 			EntryType:   req.EntryType,
 			Description: utils.ToNullableText(req.Description),
 			BsDate:      req.BsDate,

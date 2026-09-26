@@ -34,9 +34,8 @@ func AmountToPercent(base int64, amount int64) float64 {
 }
 
 // RupeesToPaisa converts an admin-entered Rupee amount into integer paisa,
-// rounding to the nearest paisa (not truncating, unlike the existing
-// int32(req.Amount*100) pattern in payments/add.go — that file is out of
-// scope for this change; this is a new call site using correct rounding).
+// rounding to the nearest paisa. Truncating instead (int64(rupees*100))
+// loses a paisa to float error, e.g. 19.99*100 = 1998.9999999999998.
 func RupeesToPaisa(rupees float64) int64 {
 	return int64(math.Round(rupees * 100))
 }

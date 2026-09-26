@@ -68,7 +68,7 @@ func UpdateCourse(queries repository.AdminRepository) gin.HandlerFunc {
 
 		_, err = queries.UpdateCourse(ctx, db.UpdateCourseParams{
 			Name:     strings.ToLower(req.Name),
-			Fee:      int32(req.Fee * 100),
+			Fee:      int32(utils.RupeesToPaisa(req.Fee)),
 			ID:       courseID,
 			IsActive: *req.IsActive,
 		})

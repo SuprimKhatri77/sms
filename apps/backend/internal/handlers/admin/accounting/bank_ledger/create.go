@@ -88,7 +88,7 @@ func CreateBankLedgerEntry(queries accountingRepository.BankLedgerRepository) gi
 
 		entry, err := queries.CreateBankLedgerEntry(ctx, db.CreateBankLedgerEntryParams{
 			BankAccountID: accountID,
-			Amount:        int64(req.Amount * 100),
+			Amount:        utils.RupeesToPaisa(req.Amount),
 			EntryType:     req.EntryType,
 			Description:   utils.ToNullableText(req.Description),
 			BsDate:        req.BsDate,

@@ -161,7 +161,8 @@ func AddPayment(queries repository.AdminPaymentTxRepository, pool *pgxpool.Pool)
 			return
 		}
 
-		if req.Amount*100 > float64(remaining) {
+		amount := utils.RupeesToPaisa(req.Amount)
+		if amount > remaining {
 			c.JSON(http.StatusBadRequest, types.APIResponse{
 				Success: false,
 				Message: "Payment amount is greater than outstanding fees",
@@ -198,8 +199,6 @@ func AddPayment(queries repository.AdminPaymentTxRepository, pool *pgxpool.Pool)
 			return
 		}
 
-		amount := int32(req.Amount * 100)
-
 		slog.Info("adding payment",
 			slog.String("handler", "AddPayment"),
 			slog.String("student_id", studentIDFromParams),
@@ -209,7 +208,7 @@ func AddPayment(queries repository.AdminPaymentTxRepository, pool *pgxpool.Pool)
 
 		payment, err := qtx.AddPayment(ctx, db.AddPaymentParams{
 			StudentID:   studentID,
-			Amount:      amount,
+			Amount:      int32(amount),
 			Remarks:     utils.ToNullableText(req.Remarks),
 			AddedBy:     addedBy,
 			PaymentMode: req.PaymentMode,
@@ -270,7 +269,7 @@ func AddPayment(queries repository.AdminPaymentTxRepository, pool *pgxpool.Pool)
 		if req.PaymentMode == "cash" {
 
 			_, err = qtx.CreateCashLedgerEntry(ctx, db.CreateCashLedgerEntryParams{
-				Amount:      int64(amount),
+				Amount:      amount,
 				EntryType:   "cr",
 				Description: pgtype.Text{String: "Student payment - auto recorded", Valid: true},
 				PaymentID:   payment.ID,
@@ -332,7 +331,7 @@ func AddPayment(queries repository.AdminPaymentTxRepository, pool *pgxpool.Pool)
 				}
 			}
 			_, err = qtx.CreateBankLedgerEntry(ctx, db.CreateBankLedgerEntryParams{
-				Amount:        int64(amount),
+				Amount:        amount,
 				EntryType:     "cr",
 				Description:   pgtype.Text{String: "Student payment - auto recorded", Valid: true},
 				PaymentID:     payment.ID,

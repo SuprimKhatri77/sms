@@ -45,7 +45,7 @@ func CreateCourse(queries repository.AdminRepository) gin.HandlerFunc {
 		course, err := queries.CreateCourse(ctx, db.CreateCourseParams{
 			Name:     strings.ToLower(req.Name),
 			IsActive: *req.IsActive,
-			Fee:      int32(req.Fee * 100),
+			Fee:      int32(utils.RupeesToPaisa(req.Fee)),
 			Slug:     slug,
 		})
 
