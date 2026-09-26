@@ -8,6 +8,7 @@ import { SaleDialog } from "./SaleDialog";
 import { ConfirmDialog } from "../shared/ConfirmDialog";
 import { useDebounce } from "@/modules/admin/analytics/hooks/useDebounce";
 import { AdminPageLayout } from "@/components/admin/admin-page-layout";
+import { AdminExportMenu } from "@/components/admin/admin-export-menu";
 import {
   useAdminEscapeShortcut,
   useAdminClearFiltersShortcut,
@@ -251,14 +252,25 @@ export function SaleClient() {
       description="Record outgoing inventory and sales."
       maxWidth="wide"
       action={
-        <button
-          type="button"
-          onClick={openCreate}
-          className={adminPrimaryButtonClass}
-        >
-          <Plus size={16} />
-          Add Sale
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <AdminExportMenu
+            path="/admin/inventory/sales/export"
+            filters={{
+              search: debouncedSearch.trim(),
+              from: dateFrom,
+              to: dateTo,
+              sort_by_rate: priceSort,
+            }}
+          />
+          <button
+            type="button"
+            onClick={openCreate}
+            className={adminPrimaryButtonClass}
+          >
+            <Plus size={16} />
+            Add Sale
+          </button>
+        </div>
       }
     >
       <InventoryTransactionFilters

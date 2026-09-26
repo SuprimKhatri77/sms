@@ -22,6 +22,7 @@ import axios from "axios";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useDebounce } from "../../analytics/hooks/useDebounce";
 import { AdminPageLayout } from "@/components/admin/admin-page-layout";
+import { AdminExportMenu } from "@/components/admin/admin-export-menu";
 import {
   useAdminEscapeShortcut,
   useAdminClearFiltersShortcut,
@@ -241,16 +242,27 @@ export function PurchaseClient() {
       description="Track all incoming inventory and purchase records."
       maxWidth="wide"
       action={
-        <button
-          type="button"
-          onClick={() => {
-            openCreate();
-          }}
-          className={adminPrimaryButtonClass}
-        >
-          <Plus size={16} />
-          Add Purchase
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <AdminExportMenu
+            path="/admin/inventory/purchase/export"
+            filters={{
+              search: debouncedSearch.trim(),
+              from: dateFrom,
+              to: dateTo,
+              sort_by_rate: priceSort,
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => {
+              openCreate();
+            }}
+            className={adminPrimaryButtonClass}
+          >
+            <Plus size={16} />
+            Add Purchase
+          </button>
+        </div>
       }
     >
       <InventoryTransactionFilters

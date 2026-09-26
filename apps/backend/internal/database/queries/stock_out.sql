@@ -29,7 +29,7 @@ ORDER BY
     CASE WHEN sqlc.narg('sort_by_rate')::TEXT = 'asc' THEN so.rate END ASC,
     CASE WHEN sqlc.narg('sort_by_rate')::TEXT = 'desc' THEN so.rate END DESC,
     so.created_at DESC
-LIMIT $1 OFFSET $2;
+LIMIT sqlc.narg('limit')::INT OFFSET sqlc.arg('offset')::INT;
 
 
 -- name: ListStockOutByProduct :many

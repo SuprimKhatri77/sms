@@ -35,7 +35,7 @@ ORDER BY
     CASE WHEN sqlc.narg('sort_by_rate')::TEXT = 'asc' THEN si.rate END ASC,
     CASE WHEN sqlc.narg('sort_by_rate')::TEXT = 'desc' THEN si.rate END DESC,
     si.created_at DESC
-LIMIT $1 OFFSET $2;
+LIMIT sqlc.narg('limit')::INT OFFSET sqlc.arg('offset')::INT;
 
 -- name: ListStockInByProduct :many
 SELECT

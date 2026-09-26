@@ -8,6 +8,7 @@ import { NepaliDatePicker } from "nepali-datepicker-reactjs";
 import { inputCls } from "../../students/detail/shared/utils";
 import { cn } from "@/lib/utils";
 import { AdminPageLayout } from "@/components/admin/admin-page-layout";
+import { AdminExportMenu } from "@/components/admin/admin-export-menu";
 import {
   useAdminEscapeShortcut,
   useAdminClearFiltersShortcut,
@@ -366,10 +367,20 @@ export function ProductsClient() {
       description="Manage your product catalogue — add, edit, or remove products."
       maxWidth="wide"
       action={
-        <button type="button" onClick={handleCreate} className={adminPrimaryButtonClass}>
-          <Plus className="h-4 w-4" />
-          Add Product
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <AdminExportMenu
+            path="/admin/inventory/products/export"
+            filters={{
+              name: debouncedSearch.trim(),
+              from: dateFrom ? BSToAD(dateFrom) : "",
+              to: dateTo ? BSToAD(dateTo) : "",
+            }}
+          />
+          <button type="button" onClick={handleCreate} className={adminPrimaryButtonClass}>
+            <Plus className="h-4 w-4" />
+            Add Product
+          </button>
+        </div>
       }
     >
       <InventoryFilterShell

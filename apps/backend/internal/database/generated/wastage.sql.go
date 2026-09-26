@@ -126,23 +126,23 @@ SELECT
 FROM wastage w
 JOIN products p ON p.id = w.product_id
 WHERE
-    ($3::TEXT IS NULL OR p.name ILIKE '%' || $3::TEXT || '%')
-    AND ($4::TEXT IS NULL OR w.date >= $4::TEXT)
-    AND ($5::TEXT IS NULL OR w.date <= $5::TEXT)
+    ($1::TEXT IS NULL OR p.name ILIKE '%' || $1::TEXT || '%')
+    AND ($2::TEXT IS NULL OR w.date >= $2::TEXT)
+    AND ($3::TEXT IS NULL OR w.date <= $3::TEXT)
 ORDER BY
-    CASE WHEN $6::TEXT = 'asc' THEN w.rate END ASC,
-    CASE WHEN $6::TEXT = 'desc' THEN w.rate END DESC,
+    CASE WHEN $4::TEXT = 'asc' THEN w.rate END ASC,
+    CASE WHEN $4::TEXT = 'desc' THEN w.rate END DESC,
     w.created_at DESC
-LIMIT $1 OFFSET $2
+LIMIT $6::INT OFFSET $5::INT
 `
 
 type ListWastageParams struct {
-	Limit       int32       `json:"limit"`
-	Offset      int32       `json:"offset"`
 	ProductName pgtype.Text `json:"productName"`
 	From        pgtype.Text `json:"from"`
 	To          pgtype.Text `json:"to"`
 	SortByRate  pgtype.Text `json:"sortByRate"`
+	Offset      int32       `json:"offset"`
+	Limit       pgtype.Int4 `json:"limit"`
 }
 
 type ListWastageRow struct {
@@ -159,12 +159,12 @@ type ListWastageRow struct {
 
 func (q *Queries) ListWastage(ctx context.Context, arg ListWastageParams) ([]ListWastageRow, error) {
 	rows, err := q.db.Query(ctx, listWastage,
-		arg.Limit,
-		arg.Offset,
 		arg.ProductName,
 		arg.From,
 		arg.To,
 		arg.SortByRate,
+		arg.Offset,
+		arg.Limit,
 	)
 	if err != nil {
 		return nil, err

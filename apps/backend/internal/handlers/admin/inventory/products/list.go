@@ -8,6 +8,7 @@ import (
 	"github.com/suprimkhatri77/sms/backend/internal/pkg/applog"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/suprimkhatri77/sms/backend/internal/constants"
 	db "github.com/suprimkhatri77/sms/backend/internal/database/generated"
 	"github.com/suprimkhatri77/sms/backend/internal/repository"
@@ -115,7 +116,7 @@ func ListProducts(queries repository.InventoryRepository) gin.HandlerFunc {
 		offset := limit * (page - 1)
 
 		products, err := queries.ListProducts(ctx, db.ListProductsParams{
-			Limit:  int32(limit),
+			Limit:  pgtype.Int4{Int32: int32(limit), Valid: true},
 			Offset: int32(offset),
 			Name:   utils.ToNullableText(filter.Name),
 			From:   utils.ToNullableDate(filter.From),

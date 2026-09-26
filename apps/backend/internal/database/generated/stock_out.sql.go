@@ -133,25 +133,25 @@ SELECT
 FROM stock_out so
 JOIN products p ON p.id = so.product_id
 WHERE
-    ($3::TEXT IS NULL OR (
-    p.name ILIKE '%' || $3::TEXT || '%'
-    OR so.bill_no ILIKE '%' || $3::TEXT || '%'))
-    AND ($4::TEXT IS NULL OR so.date >= $4::TEXT)
-    AND ($5::TEXT IS NULL OR so.date <= $5::TEXT)
+    ($1::TEXT IS NULL OR (
+    p.name ILIKE '%' || $1::TEXT || '%'
+    OR so.bill_no ILIKE '%' || $1::TEXT || '%'))
+    AND ($2::TEXT IS NULL OR so.date >= $2::TEXT)
+    AND ($3::TEXT IS NULL OR so.date <= $3::TEXT)
 ORDER BY
-    CASE WHEN $6::TEXT = 'asc' THEN so.rate END ASC,
-    CASE WHEN $6::TEXT = 'desc' THEN so.rate END DESC,
+    CASE WHEN $4::TEXT = 'asc' THEN so.rate END ASC,
+    CASE WHEN $4::TEXT = 'desc' THEN so.rate END DESC,
     so.created_at DESC
-LIMIT $1 OFFSET $2
+LIMIT $6::INT OFFSET $5::INT
 `
 
 type ListStockOutParams struct {
-	Limit      int32       `json:"limit"`
-	Offset     int32       `json:"offset"`
 	Search     pgtype.Text `json:"search"`
 	From       pgtype.Text `json:"from"`
 	To         pgtype.Text `json:"to"`
 	SortByRate pgtype.Text `json:"sortByRate"`
+	Offset     int32       `json:"offset"`
+	Limit      pgtype.Int4 `json:"limit"`
 }
 
 type ListStockOutRow struct {
@@ -169,12 +169,12 @@ type ListStockOutRow struct {
 
 func (q *Queries) ListStockOut(ctx context.Context, arg ListStockOutParams) ([]ListStockOutRow, error) {
 	rows, err := q.db.Query(ctx, listStockOut,
-		arg.Limit,
-		arg.Offset,
 		arg.Search,
 		arg.From,
 		arg.To,
 		arg.SortByRate,
+		arg.Offset,
+		arg.Limit,
 	)
 	if err != nil {
 		return nil, err
