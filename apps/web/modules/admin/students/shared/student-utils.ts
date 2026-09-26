@@ -1,9 +1,12 @@
 export function formatNpr(amount: number): string {
+  // Whole rupees stay "NPR 25,000"; paisa are shown only when there are some,
+  // so e.g. a Rs 0.40 balance doesn't render as "NPR 0".
+  const fractionDigits = Math.round(amount * 100) % 100 !== 0 ? 2 : 0;
   return new Intl.NumberFormat("en-NP", {
     style: "currency",
     currency: "NPR",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
   }).format(amount);
 }
 
