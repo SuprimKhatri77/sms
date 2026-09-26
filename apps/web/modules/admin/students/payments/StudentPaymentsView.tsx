@@ -6,6 +6,7 @@ import Link from "next/link";
 import { PaymentTableRow } from "./PaymentTableRow";
 import { useStudentPaymentsList } from "@/hooks/queries/admin/students/useStudentPaymentsList";
 import { AdminPageLayout } from "@/components/admin/admin-page-layout";
+import { AdminExportMenu } from "@/components/admin/admin-export-menu";
 import {
   StudentFinanceSummary,
   formatSummaryNpr,
@@ -63,9 +64,19 @@ export function StudentPaymentsView() {
       description="All fee payments across students — filter by date or search by name, email, or reference."
       maxWidth="wide"
       action={
-        <Link href="/admin/students" className={adminSecondaryButtonClass}>
-          All Students
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link href="/admin/students" className={adminSecondaryButtonClass}>
+            All Students
+          </Link>
+          <AdminExportMenu
+            path="/admin/students/payments/export"
+            filters={{
+              from: urlFilters.from,
+              to: urlFilters.to,
+              search: urlFilters.search,
+            }}
+          />
+        </div>
       }
     >
       <StudentFinanceSummary

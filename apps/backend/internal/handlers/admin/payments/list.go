@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/suprimkhatri77/sms/backend/internal/constants"
 	db "github.com/suprimkhatri77/sms/backend/internal/database/generated"
 	"github.com/suprimkhatri77/sms/backend/internal/pkg/applog"
@@ -99,7 +100,7 @@ func ListPayments(queries repository.AdminRepository) gin.HandlerFunc {
 		offset := pageLimit * (params.Page - 1)
 
 		payments, err := queries.GetAllPayments(ctx, db.GetAllPaymentsParams{
-			Limit:  int32(pageLimit),
+			Limit:  pgtype.Int4{Int32: int32(pageLimit), Valid: true},
 			Offset: int32(offset),
 			From:   utils.ToNullableText(params.From),
 			To:     utils.ToNullableText(params.To),

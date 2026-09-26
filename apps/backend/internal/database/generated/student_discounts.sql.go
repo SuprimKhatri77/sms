@@ -81,23 +81,23 @@ FROM students s
 JOIN users u ON u.id = s.student_id
 JOIN student_discounts sd ON sd.student_id = s.id
 WHERE
-    ($3::TEXT IS NULL
-        OR s.full_name ILIKE '%' || $3::TEXT || '%'
-        OR u.email ILIKE '%' || $3::TEXT || '%'
-        OR s.phone ILIKE '%' || $3::TEXT || '%'
-        OR s.reference_no ILIKE '%' || $3::TEXT || '%')
-    AND ($4::TEXT IS NULL OR sd.created_at >= $4::TIMESTAMPTZ)
-    AND ($5::TEXT IS NULL OR sd.created_at <= ($5::TIMESTAMPTZ + INTERVAL '1 day'))
+    ($1::TEXT IS NULL
+        OR s.full_name ILIKE '%' || $1::TEXT || '%'
+        OR u.email ILIKE '%' || $1::TEXT || '%'
+        OR s.phone ILIKE '%' || $1::TEXT || '%'
+        OR s.reference_no ILIKE '%' || $1::TEXT || '%')
+    AND ($2::TEXT IS NULL OR sd.created_at >= $2::TIMESTAMPTZ)
+    AND ($3::TEXT IS NULL OR sd.created_at <= ($3::TIMESTAMPTZ + INTERVAL '1 day'))
 ORDER BY sd.created_at DESC
-LIMIT $1 OFFSET $2
+LIMIT $5::INT OFFSET $4::INT
 `
 
 type GetAllStudentDiscountsParams struct {
-	Limit  int32       `json:"limit"`
-	Offset int32       `json:"offset"`
 	Search pgtype.Text `json:"search"`
 	From   pgtype.Text `json:"from"`
 	To     pgtype.Text `json:"to"`
+	Offset int32       `json:"offset"`
+	Limit  pgtype.Int4 `json:"limit"`
 }
 
 type GetAllStudentDiscountsRow struct {
@@ -118,11 +118,11 @@ type GetAllStudentDiscountsRow struct {
 
 func (q *Queries) GetAllStudentDiscounts(ctx context.Context, arg GetAllStudentDiscountsParams) ([]GetAllStudentDiscountsRow, error) {
 	rows, err := q.db.Query(ctx, getAllStudentDiscounts,
-		arg.Limit,
-		arg.Offset,
 		arg.Search,
 		arg.From,
 		arg.To,
+		arg.Offset,
+		arg.Limit,
 	)
 	if err != nil {
 		return nil, err

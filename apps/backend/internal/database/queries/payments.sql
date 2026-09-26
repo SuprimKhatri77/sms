@@ -71,7 +71,7 @@ WHERE
     AND (sqlc.narg('from')::TEXT IS NULL OR COALESCE(p.date, p.added_at) >= sqlc.narg('from')::TIMESTAMPTZ)
     AND (sqlc.narg('to')::TEXT IS NULL OR COALESCE(p.date, p.added_at) <= (sqlc.narg('to')::TIMESTAMPTZ + INTERVAL '1 day'))
 ORDER BY COALESCE(p.date, p.added_at) DESC, p.id DESC
-LIMIT $1 OFFSET $2;
+LIMIT sqlc.narg('limit')::INT OFFSET sqlc.arg('offset')::INT;
 
 -- name: GetAllPaymentsCount :one
 SELECT COUNT(*)::BIGINT

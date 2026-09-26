@@ -267,8 +267,8 @@ JOIN (
 LEFT JOIN (
     SELECT student_id, SUM(amount) AS total_paid
     FROM payments
-    WHERE ($3::TEXT IS NULL OR COALESCE(date, added_at) >= $3::TIMESTAMPTZ)
-      AND ($4::TEXT IS NULL OR COALESCE(date, added_at) <= ($4::TIMESTAMPTZ + INTERVAL '1 day'))
+    WHERE ($1::TEXT IS NULL OR COALESCE(date, added_at) >= $1::TIMESTAMPTZ)
+      AND ($2::TEXT IS NULL OR COALESCE(date, added_at) <= ($2::TIMESTAMPTZ + INTERVAL '1 day'))
     GROUP BY student_id
 ) pays ON pays.student_id = s.id
 LEFT JOIN (
@@ -282,19 +282,19 @@ LEFT JOIN (
     GROUP BY student_id
 ) scholarships ON scholarships.student_id = s.id
 WHERE s.status IN ('active', 'completed')
-  AND ($3::TEXT IS NULL OR s.created_at >= $3::TIMESTAMPTZ)
-  AND ($4::TEXT IS NULL OR s.created_at <= ($4::TIMESTAMPTZ + INTERVAL '1 day'))
-  AND ($5::TEXT IS NULL OR u.name ILIKE '%' || $5::TEXT || '%' OR u.email ILIKE '%' || $5::TEXT || '%')
+  AND ($1::TEXT IS NULL OR s.created_at >= $1::TIMESTAMPTZ)
+  AND ($2::TEXT IS NULL OR s.created_at <= ($2::TIMESTAMPTZ + INTERVAL '1 day'))
+  AND ($3::TEXT IS NULL OR u.name ILIKE '%' || $3::TEXT || '%' OR u.email ILIKE '%' || $3::TEXT || '%')
 ORDER BY total_paid DESC
-LIMIT $1 OFFSET $2
+LIMIT $5::INT OFFSET $4::INT
 `
 
 type GetSalesRevenueParams struct {
-	Limit    int32       `json:"limit"`
-	Offset   int32       `json:"offset"`
 	FromDate pgtype.Text `json:"fromDate"`
 	ToDate   pgtype.Text `json:"toDate"`
 	Search   pgtype.Text `json:"search"`
+	Offset   int32       `json:"offset"`
+	Limit    pgtype.Int4 `json:"limit"`
 }
 
 type GetSalesRevenueRow struct {
@@ -311,11 +311,11 @@ type GetSalesRevenueRow struct {
 
 func (q *Queries) GetSalesRevenue(ctx context.Context, arg GetSalesRevenueParams) ([]GetSalesRevenueRow, error) {
 	rows, err := q.db.Query(ctx, getSalesRevenue,
-		arg.Limit,
-		arg.Offset,
 		arg.FromDate,
 		arg.ToDate,
 		arg.Search,
+		arg.Offset,
+		arg.Limit,
 	)
 	if err != nil {
 		return nil, err
@@ -771,19 +771,19 @@ WHERE s.status IN ('active', 'completed')
         - COALESCE(discounts.total_discount, 0)
         - COALESCE(scholarships.total_scholarship, 0)
       ) > 0
-  AND ($3::TEXT IS NULL OR s.created_at >= $3::TIMESTAMPTZ)
-  AND ($4::TEXT IS NULL OR s.created_at <= ($4::TIMESTAMPTZ + INTERVAL '1 day'))
-  AND ($5::TEXT IS NULL OR u.name ILIKE '%' || $5::TEXT || '%' OR u.email ILIKE '%' || $5::TEXT || '%')
+  AND ($1::TEXT IS NULL OR s.created_at >= $1::TIMESTAMPTZ)
+  AND ($2::TEXT IS NULL OR s.created_at <= ($2::TIMESTAMPTZ + INTERVAL '1 day'))
+  AND ($3::TEXT IS NULL OR u.name ILIKE '%' || $3::TEXT || '%' OR u.email ILIKE '%' || $3::TEXT || '%')
 ORDER BY outstanding DESC
-LIMIT $1 OFFSET $2
+LIMIT $5::INT OFFSET $4::INT
 `
 
 type GetStudentsWithOutstandingFeesParams struct {
-	Limit    int32       `json:"limit"`
-	Offset   int32       `json:"offset"`
 	FromDate pgtype.Text `json:"fromDate"`
 	ToDate   pgtype.Text `json:"toDate"`
 	Search   pgtype.Text `json:"search"`
+	Offset   int32       `json:"offset"`
+	Limit    pgtype.Int4 `json:"limit"`
 }
 
 type GetStudentsWithOutstandingFeesRow struct {
@@ -800,11 +800,11 @@ type GetStudentsWithOutstandingFeesRow struct {
 
 func (q *Queries) GetStudentsWithOutstandingFees(ctx context.Context, arg GetStudentsWithOutstandingFeesParams) ([]GetStudentsWithOutstandingFeesRow, error) {
 	rows, err := q.db.Query(ctx, getStudentsWithOutstandingFees,
-		arg.Limit,
-		arg.Offset,
 		arg.FromDate,
 		arg.ToDate,
 		arg.Search,
+		arg.Offset,
+		arg.Limit,
 	)
 	if err != nil {
 		return nil, err
@@ -852,29 +852,29 @@ FROM students s
 LEFT JOIN student_courses sc ON sc.student_id = s.id
 LEFT JOIN courses c ON c.id = sc.course_id
 WHERE
-    ($3::text = '' OR s.status = $3::text)
-    AND ($4::text = '' OR s.shift = $4::text)
-    AND ($5::text = '' OR s.batch = $5::text)
-    AND ($6::text = '' OR c.name ILIKE $6::text)
+    ($1::text = '' OR s.status = $1::text)
+    AND ($2::text = '' OR s.shift = $2::text)
+    AND ($3::text = '' OR s.batch = $3::text)
+    AND ($4::text = '' OR c.name ILIKE $4::text)
     AND (
-        $7::text = ''
-        OR s.full_name ILIKE '%' || $7 || '%'
-        OR s.reference_no ILIKE '%' || $7 || '%'
-        OR s.phone ILIKE '%' || $7 || '%'
+        $5::text = ''
+        OR s.full_name ILIKE '%' || $5 || '%'
+        OR s.reference_no ILIKE '%' || $5 || '%'
+        OR s.phone ILIKE '%' || $5 || '%'
     )
 GROUP BY s.id
 ORDER BY s.created_at DESC
-LIMIT $1 OFFSET $2
+LIMIT $7::INT OFFSET $6::INT
 `
 
 type ListStudentsParams struct {
-	Limit  int32  `json:"limit"`
-	Offset int32  `json:"offset"`
-	Status string `json:"status"`
-	Shift  string `json:"shift"`
-	Batch  string `json:"batch"`
-	Course string `json:"course"`
-	Search string `json:"search"`
+	Status string      `json:"status"`
+	Shift  string      `json:"shift"`
+	Batch  string      `json:"batch"`
+	Course string      `json:"course"`
+	Search string      `json:"search"`
+	Offset int32       `json:"offset"`
+	Limit  pgtype.Int4 `json:"limit"`
 }
 
 type ListStudentsRow struct {
@@ -891,13 +891,13 @@ type ListStudentsRow struct {
 
 func (q *Queries) ListStudents(ctx context.Context, arg ListStudentsParams) ([]ListStudentsRow, error) {
 	rows, err := q.db.Query(ctx, listStudents,
-		arg.Limit,
-		arg.Offset,
 		arg.Status,
 		arg.Shift,
 		arg.Batch,
 		arg.Course,
 		arg.Search,
+		arg.Offset,
+		arg.Limit,
 	)
 	if err != nil {
 		return nil, err

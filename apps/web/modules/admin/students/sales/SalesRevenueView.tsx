@@ -9,6 +9,7 @@ import type { APIResponse, SalesFilters, SalesResponse } from "./types/sales";
 import { SalesTableRow, SalesTableSkeleton } from "./SalesTableRow";
 import { EmptyState, ErrorState } from "./EmptyState";
 import { AdminPageLayout } from "@/components/admin/admin-page-layout";
+import { AdminExportMenu } from "@/components/admin/admin-export-menu";
 import {
   StudentFinanceSummary,
   formatSummaryNpr,
@@ -48,9 +49,18 @@ export function SalesRevenueView() {
       description="Fee collections across all students — filter by date range to review collections."
       maxWidth="wide"
       action={
-        <Link href="/admin/students" className={adminSecondaryButtonClass}>
-          All Students
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link href="/admin/students" className={adminSecondaryButtonClass}>
+            All Students
+          </Link>
+          <AdminExportMenu
+            path="/admin/students/sales/export"
+            filters={{
+              from: filters.from,
+              to: filters.to,
+            }}
+          />
+        </div>
       }
     >
       <StudentFinanceSummary

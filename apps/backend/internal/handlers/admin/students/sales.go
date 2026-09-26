@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/suprimkhatri77/sms/backend/internal/constants"
 	db "github.com/suprimkhatri77/sms/backend/internal/database/generated"
 	"github.com/suprimkhatri77/sms/backend/internal/repository"
@@ -100,7 +101,7 @@ func ListSalesRevenueForStudents(queries repository.AdminRepository) gin.Handler
 			var err error
 
 			students, err = queries.GetSalesRevenue(gCtx, db.GetSalesRevenueParams{
-				Limit:    LIMIT,
+				Limit:    pgtype.Int4{Int32: LIMIT, Valid: true},
 				Offset:   int32(offset),
 				Search:   utils.ToNullableText(params.Search),
 				FromDate: utils.ToNullableText(params.From),

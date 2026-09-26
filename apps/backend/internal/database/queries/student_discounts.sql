@@ -72,7 +72,7 @@ WHERE
     AND (sqlc.narg('from')::TEXT IS NULL OR sd.created_at >= sqlc.narg('from')::TIMESTAMPTZ)
     AND (sqlc.narg('to')::TEXT IS NULL OR sd.created_at <= (sqlc.narg('to')::TIMESTAMPTZ + INTERVAL '1 day'))
 ORDER BY sd.created_at DESC
-LIMIT $1 OFFSET $2;
+LIMIT sqlc.narg('limit')::INT OFFSET sqlc.arg('offset')::INT;
 
 -- name: GetAllStudentDiscountsCount :one
 SELECT COUNT(*)::BIGINT
