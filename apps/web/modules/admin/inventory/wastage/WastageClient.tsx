@@ -9,6 +9,7 @@ import { WastageTable } from "./WastageTable";
 import { WastageDialog } from "./WastageDialog";
 import { ConfirmDialog } from "../shared/ConfirmDialog";
 import { AdminPageLayout } from "@/components/admin/admin-page-layout";
+import { AdminExportMenu } from "@/components/admin/admin-export-menu";
 import {
   useAdminEscapeShortcut,
   useAdminClearFiltersShortcut,
@@ -251,14 +252,25 @@ export function WastageClient() {
       description="Track damaged, expired, or lost inventory."
       maxWidth="wide"
       action={
-        <button
-          type="button"
-          onClick={openCreate}
-          className={adminPrimaryButtonClass}
-        >
-          <Plus size={16} />
-          Log Wastage
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <AdminExportMenu
+            path="/admin/inventory/wastages/export"
+            filters={{
+              product_name: debouncedSearch.trim(),
+              from: dateFrom,
+              to: dateTo,
+              sort_by_rate: priceSort,
+            }}
+          />
+          <button
+            type="button"
+            onClick={openCreate}
+            className={adminPrimaryButtonClass}
+          >
+            <Plus size={16} />
+            Log Wastage
+          </button>
+        </div>
       }
     >
       <InventoryTransactionFilters

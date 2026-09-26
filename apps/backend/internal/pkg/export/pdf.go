@@ -69,7 +69,7 @@ func writePDF(w io.Writer, t Table) error {
 	}
 
 	align := func(i int) string {
-		if t.Columns[i].Money {
+		if t.Columns[i].rightAligned() {
 			return "R"
 		}
 		return "L"

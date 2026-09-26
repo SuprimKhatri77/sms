@@ -12,6 +12,7 @@ import { NepaliDatePicker } from "nepali-datepicker-reactjs";
 import { inputCls } from "../../students/detail/shared/utils";
 import { cn } from "@/lib/utils";
 import { AdminPageLayout } from "@/components/admin/admin-page-layout";
+import { AdminExportMenu } from "@/components/admin/admin-export-menu";
 import { adminPrimaryButtonClass } from "@/components/admin/admin-styles";
 import { InventoryFilterShell } from "../shared/InventoryFilterShell";
 import { inventoryLabelClass } from "../shared/inventory-styles";
@@ -61,6 +62,15 @@ export function SummaryClient() {
       title="Inventory Summary"
       description="Overview of stock levels and valuations across all products."
       maxWidth="wide"
+      action={
+        <AdminExportMenu
+          path="/admin/inventory/summary/export"
+          filters={{
+            from: fromDate,
+            to: toDate,
+          }}
+        />
+      }
     >
       <InventoryFilterShell
         title="Date Range (BS)"

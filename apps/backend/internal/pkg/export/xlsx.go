@@ -82,7 +82,7 @@ func writeXLSX(w io.Writer, t Table) error {
 	headerRow := row
 	for i, col := range t.Columns {
 		style := headerStyle
-		if col.Money {
+		if col.rightAligned() {
 			style = headerMoneyStyle
 		}
 		if err := setCell(f, sheet, i+1, row, col.Header, style); err != nil {
@@ -102,6 +102,12 @@ func writeXLSX(w io.Writer, t Table) error {
 		for i, v := range cells {
 			if m, ok := v.(Money); ok {
 				if err := setCell(f, sheet, i+1, row, float64(m)/100, moneyStyle); err != nil {
+					return err
+				}
+				continue
+			}
+			if n, ok := v.(Number); ok {
+				if err := setCell(f, sheet, i+1, row, float64(n), textStyle); err != nil {
 					return err
 				}
 				continue

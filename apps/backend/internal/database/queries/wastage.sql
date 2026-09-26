@@ -27,7 +27,7 @@ ORDER BY
     CASE WHEN sqlc.narg('sort_by_rate')::TEXT = 'asc' THEN w.rate END ASC,
     CASE WHEN sqlc.narg('sort_by_rate')::TEXT = 'desc' THEN w.rate END DESC,
     w.created_at DESC
-LIMIT $1 OFFSET $2;
+LIMIT sqlc.narg('limit')::INT OFFSET sqlc.arg('offset')::INT;
 
 -- name: ListWastageByProduct :many
 SELECT

@@ -8,6 +8,7 @@ import (
 	"github.com/suprimkhatri77/sms/backend/internal/pkg/applog"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/suprimkhatri77/sms/backend/internal/constants"
 	db "github.com/suprimkhatri77/sms/backend/internal/database/generated"
 	"github.com/suprimkhatri77/sms/backend/internal/repository"
@@ -97,7 +98,7 @@ func ListWastageStock(queries repository.InventoryRepository) gin.HandlerFunc {
 		offset := LIMIT * (page - 1)
 
 		wastageList, err := queries.ListWastage(ctx, db.ListWastageParams{
-			Limit:       LIMIT,
+			Limit:       pgtype.Int4{Int32: LIMIT, Valid: true},
 			Offset:      int32(offset),
 			ProductName: utils.ToNullableText(filter.ProductName),
 			From:        utils.ToNullableText(filter.From),

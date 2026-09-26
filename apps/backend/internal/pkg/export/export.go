@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -29,16 +30,22 @@ const MaxRows = 50000
 // in rupees (a numeric cell in XLSX, "1234.50" in CSV, "1,234.50" in PDF).
 type Money int64
 
+// Number is a plain numeric value such as a quantity. It is written as a
+// number cell in XLSX and without trailing zeros elsewhere ("5", "1.25").
+type Number float64
+
 type Column struct {
 	Header string
 	Money  bool
+	// Numeric right-aligns a column of Number cells, as Money columns are.
+	Numeric bool
 	// Width is the column's relative width, in characters: used as the XLSX
 	// column width and as the column's share of the PDF page width.
 	Width float64
 }
 
 // Table is what gets exported. Each row holds one cell per column; a cell
-// is either a string or Money. Totals, when set, is written as a final bold
+// is a string, Money or Number. Totals, when set, is written as a final bold
 // row with the same shape.
 type Table struct {
 	Title   string
@@ -66,6 +73,20 @@ func DateBS(t time.Time) string {
 		return ""
 	}
 	return d.String()
+}
+
+// DateFromBS converts a stored BS "YYYY-MM-DD" date to its AD date in the
+// same format, or "" if it can't be parsed or converted.
+func DateFromBS(bsDate string) string {
+	d, err := bs.Parse(bsDate)
+	if err != nil {
+		return ""
+	}
+	ad, err := bs.BSToAD(d)
+	if err != nil {
+		return ""
+	}
+	return ad.Format("2006-01-02")
 }
 
 // Filters joins the non-empty filter descriptions into a meta line, e.g.
@@ -107,6 +128,31 @@ func DateRange(from, to string) string {
 		return "Up to " + to
 	}
 	return ""
+}
+
+// BSDateRange is DateRange for a from/to pair of BS YYYY-MM-DD dates (the
+// inventory filters), each followed by its AD date.
+func BSDateRange(from, to string) string {
+	from, to = withAD(from), withAD(to)
+	switch {
+	case from != "" && to != "":
+		return fmt.Sprintf("From %s to %s", from, to)
+	case from != "":
+		return "From " + from
+	case to != "":
+		return "Up to " + to
+	}
+	return ""
+}
+
+// withAD turns a BS "YYYY-MM-DD" into "YYYY-MM-DD (AD YYYY-MM-DD)", leaving
+// it as is if it can't be converted.
+func withAD(bsDate string) string {
+	ad := DateFromBS(bsDate)
+	if ad == "" {
+		return bsDate
+	}
+	return fmt.Sprintf("%s (AD %s)", bsDate, ad)
 }
 
 // withBS turns an AD "YYYY-MM-DD" into "YYYY-MM-DD (BS YYYY-MM-DD)", leaving
@@ -167,9 +213,16 @@ func cellText(v any) string {
 		return val
 	case Money:
 		return formatRupees(int64(val), false)
+	case Number:
+		return strconv.FormatFloat(float64(val), 'f', -1, 64)
 	default:
 		return fmt.Sprint(val)
 	}
+}
+
+// rightAligned reports whether a column holds numbers (money or plain).
+func (col Column) rightAligned() bool {
+	return col.Money || col.Numeric
 }
 
 // formatRupees formats paisa as rupees with two decimals, optionally with

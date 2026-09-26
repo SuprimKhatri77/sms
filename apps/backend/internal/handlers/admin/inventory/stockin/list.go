@@ -8,6 +8,7 @@ import (
 	"github.com/suprimkhatri77/sms/backend/internal/pkg/applog"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/suprimkhatri77/sms/backend/internal/constants"
 	db "github.com/suprimkhatri77/sms/backend/internal/database/generated"
 	"github.com/suprimkhatri77/sms/backend/internal/repository"
@@ -98,7 +99,7 @@ func ListStockIn(queries repository.InventoryRepository) gin.HandlerFunc {
 
 		stockList, err := queries.ListStockIn(ctx, db.ListStockInParams{
 			Offset:     int32(offset),
-			Limit:      LIMIT,
+			Limit:      pgtype.Int4{Int32: LIMIT, Valid: true},
 			Search:     utils.ToNullableText(filter.Search),
 			From:       utils.ToNullableText(filter.From),
 			To:         utils.ToNullableText(filter.To),

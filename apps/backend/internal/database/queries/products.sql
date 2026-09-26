@@ -34,7 +34,7 @@ WHERE
     AND (sqlc.narg('from')::DATE IS NULL OR created_at::DATE >= sqlc.narg('from')::DATE)
     AND (sqlc.narg('to')::DATE IS NULL OR created_at::DATE <= sqlc.narg('to')::DATE)
 ORDER BY name ASC
-LIMIT $1 OFFSET $2;
+LIMIT sqlc.narg('limit')::INT OFFSET sqlc.arg('offset')::INT;
 
 -- name: GetProductCount :one
 SELECT COUNT(*) FROM products

@@ -116,28 +116,28 @@ func (q *Queries) GetProductCount(ctx context.Context, arg GetProductCountParams
 const listProducts = `-- name: ListProducts :many
 SELECT id, name, unit, created_at FROM products
 WHERE
-    ($3::TEXT IS NULL OR name ILIKE '%' || $3::TEXT || '%')
-    AND ($4::DATE IS NULL OR created_at::DATE >= $4::DATE)
-    AND ($5::DATE IS NULL OR created_at::DATE <= $5::DATE)
+    ($1::TEXT IS NULL OR name ILIKE '%' || $1::TEXT || '%')
+    AND ($2::DATE IS NULL OR created_at::DATE >= $2::DATE)
+    AND ($3::DATE IS NULL OR created_at::DATE <= $3::DATE)
 ORDER BY name ASC
-LIMIT $1 OFFSET $2
+LIMIT $5::INT OFFSET $4::INT
 `
 
 type ListProductsParams struct {
-	Limit  int32       `json:"limit"`
-	Offset int32       `json:"offset"`
 	Name   pgtype.Text `json:"name"`
 	From   pgtype.Date `json:"from"`
 	To     pgtype.Date `json:"to"`
+	Offset int32       `json:"offset"`
+	Limit  pgtype.Int4 `json:"limit"`
 }
 
 func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]Product, error) {
 	rows, err := q.db.Query(ctx, listProducts,
-		arg.Limit,
-		arg.Offset,
 		arg.Name,
 		arg.From,
 		arg.To,
+		arg.Offset,
+		arg.Limit,
 	)
 	if err != nil {
 		return nil, err
