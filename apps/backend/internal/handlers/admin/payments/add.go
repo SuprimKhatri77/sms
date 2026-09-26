@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -266,7 +267,7 @@ func AddPayment(queries repository.AdminPaymentTxRepository, pool *pgxpool.Pool)
 			slog.Int("amount", int(amount)),
 		)
 
-		if req.PaymentMode == "cash" {
+		if strings.EqualFold(req.PaymentMode, "cash") {
 
 			_, err = qtx.CreateCashLedgerEntry(ctx, db.CreateCashLedgerEntryParams{
 				Amount:      amount,
@@ -292,7 +293,7 @@ func AddPayment(queries repository.AdminPaymentTxRepository, pool *pgxpool.Pool)
 			}
 		} else {
 			var bankAccountID pgtype.UUID
-			if req.PaymentMode == "bank" && req.BankAccountID != "" {
+			if strings.EqualFold(req.PaymentMode, "bank") && req.BankAccountID != "" {
 				bankAccountID, err = utils.ConvertToUUID(req.BankAccountID)
 				if err != nil {
 					slog.Warn("invalid bank account id format",
