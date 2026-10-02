@@ -22,7 +22,6 @@ type LedgerRepository interface {
 type LedgerTxRepository interface {
 	WithTx(tx pgx.Tx) LedgerTxRepository
 	GetSupplierByID(ctx context.Context, id pgtype.UUID) (db.Supplier, error)
-	GetDefaultBankAccountID(ctx context.Context) (pgtype.UUID, error)
 	CreateLedgerEntry(ctx context.Context, params db.CreateLedgerEntryParams) (db.LedgerEntry, error)
 	GetLedgerEntryByID(ctx context.Context, id pgtype.UUID) (db.GetLedgerEntryByIDRow, error)
 	GetLedgerEntryForUpdate(ctx context.Context, id pgtype.UUID) (db.LedgerEntry, error)
@@ -47,10 +46,6 @@ func (r *ledgerTxRepository) WithTx(tx pgx.Tx) LedgerTxRepository {
 
 func (r *ledgerTxRepository) GetSupplierByID(ctx context.Context, id pgtype.UUID) (db.Supplier, error) {
 	return r.queries.GetSupplierByID(ctx, id)
-}
-
-func (r *ledgerTxRepository) GetDefaultBankAccountID(ctx context.Context) (pgtype.UUID, error) {
-	return r.queries.GetDefaultBankAccountID(ctx)
 }
 
 func (r *ledgerTxRepository) CreateLedgerEntry(ctx context.Context, params db.CreateLedgerEntryParams) (db.LedgerEntry, error) {

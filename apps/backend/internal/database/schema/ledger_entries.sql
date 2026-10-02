@@ -23,7 +23,8 @@ CREATE TABLE ledger_entries (
     CONSTRAINT ledger_entries_source_check CHECK (source IN ('manual', 'purchase', 'student_payment', 'supplier_payment')),
     CONSTRAINT ledger_entries_entry_type_check CHECK (entry_type IN ('dr', 'cr')),
     CONSTRAINT ledger_entries_amount_check CHECK (amount > 0),
-    CONSTRAINT ledger_entries_payment_type_check CHECK (payment_type IS NULL OR btrim(payment_type) <> ''),
+    -- how a supplier payment was made (000055 limited it to cash or bank)
+    CONSTRAINT ledger_entries_payment_type_check CHECK (payment_type IS NULL OR payment_type IN ('cash', 'bank')),
 
     -- each ledger type's shape
     CONSTRAINT ledger_entries_cash_shape CHECK (ledger_type <> 'cash' OR (bank_account_id IS NULL AND supplier_id IS NULL)),

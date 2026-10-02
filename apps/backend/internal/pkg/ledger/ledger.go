@@ -35,8 +35,8 @@ type Spec struct {
 	Party Party
 	// AccountGroup lets an entry be tagged with an account group.
 	AccountGroup bool
-	// PaymentType is how a payment was made; a debit with one also records
-	// the matching cash/bank debit (see CounterLedger).
+	// PaymentType is how a payment was made, cash or bank; a debit with one
+	// also records the matching cash/bank debit (see CounterLedger).
 	PaymentType bool
 	// StockLink lets an entry point at the purchase it's about.
 	StockLink bool
@@ -99,15 +99,19 @@ func Validate(ledgerType string, f Fields) []FieldError {
 	return errs
 }
 
-// CounterLedger is where a supplier payment's money went out from. Cash
-// payments leave the cash ledger; every other payment type (bank, cheque,
-// esewa, ...) leaves a bank account. Only a "bank" payment uses the account
-// the user picked, the rest use the default account.
-func CounterLedger(paymentType string) (ledgerType string, usesChosenAccount bool) {
-	if strings.EqualFold(paymentType, "cash") {
-		return TypeCash, false
+// Payment types a supplier payment can have.
+const (
+	PaymentCash = "cash"
+	PaymentBank = "bank"
+)
+
+// CounterLedger is where a supplier payment's money went out from: the cash
+// ledger for a cash payment, a bank account for a bank one.
+func CounterLedger(paymentType string) string {
+	if paymentType == PaymentCash {
+		return TypeCash
 	}
-	return TypeBank, strings.EqualFold(paymentType, "bank")
+	return TypeBank
 }
 
 // RecordsPayment reports whether a supplier entry is a payment that also

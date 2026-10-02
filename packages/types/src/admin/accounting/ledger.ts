@@ -39,6 +39,10 @@ export const LEDGER_TYPES: Record<
   },
 };
 
+/** how a supplier payment was made; it's booked in that ledger too */
+export const ledgerPaymentTypeValues = ["cash", "bank"] as const;
+export type LedgerPaymentType = (typeof ledgerPaymentTypeValues)[number];
+
 export const ledgerSourceValues = [
   "manual",
   "purchase",
@@ -137,10 +141,7 @@ export const ledgerEntryInputSchema = z
     supplierID: z.uuid().optional(),
     accountGroupID: z.uuid().optional(),
     paymentType: z
-      .string()
-      .trim()
-      .min(2, { error: "Payment type is required" })
-      .max(100, { error: "Payment type must be 100 characters or less" })
+      .enum(ledgerPaymentTypeValues, { error: "Choose cash or bank" })
       .optional(),
     /** kept as-is when editing an entry that links to a purchase */
     stockInID: z.uuid().optional(),
@@ -165,7 +166,7 @@ export const ledgerEntryInputSchema = z
     if (spec.paymentType && data.entryType === "dr" && !data.paymentType) {
       ctx.addIssue({
         code: "custom",
-        message: "Payment type is required",
+        message: "Choose cash or bank",
         path: ["paymentType"],
       });
     }

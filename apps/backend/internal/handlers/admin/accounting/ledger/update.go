@@ -115,6 +115,8 @@ func UpdateLedgerEntry(queries accountingRepository.LedgerTxRepository, pool *pg
 			// kept as recorded, so the entry stays recognisable as one whose
 			// cash/bank side is a separate, unlinked entry
 			in.PaymentType = existing.PaymentType.String
+		} else if rejectMissingPaidFromAccount(c, handlerUpdateLedgerEntry, in) {
+			return
 		}
 
 		entry, err := qtx.UpdateLedgerEntry(ctx, db.UpdateLedgerEntryParams{

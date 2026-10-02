@@ -15,6 +15,7 @@ import {
   type AccountGroup,
   type LedgerEntry,
   type LedgerEntryInput,
+  type LedgerPaymentType,
   type LedgerType,
 } from "@repo/types";
 import {
@@ -49,12 +50,15 @@ import {
   useSupplierSearch,
 } from "../../inventory/shared/useProductSupplierSearch";
 
-const PAYMENT_TYPE_SUGGESTIONS = [
-  { value: "cash", label: "Cash" },
-  { value: "bank", label: "Bank" },
-  { value: "cheque", label: "Cheque" },
-  { value: "esewa", label: "eSewa" },
-] as const;
+// a supplier payment is booked in the cash ledger or against a bank account
+const PAYMENT_OPTIONS: {
+  value: LedgerPaymentType;
+  label: string;
+  hint: string;
+}[] = [
+  { value: "cash", label: "Cash", hint: "Recorded as cash out" },
+  { value: "bank", label: "Bank", hint: "Recorded against a bank account" },
+];
 
 const ENTRY_TYPE_LABELS: Record<LedgerType, { cr: string; dr: string }> = {
   cash: { cr: "Credit — Cash in", dr: "Debit — Cash out" },
@@ -127,7 +131,11 @@ export function LedgerEntryDialog({
   const [amountRs, setAmountRs] = useState(
     entry ? String(entry.amount / 100) : "",
   );
-  const [paymentType, setPaymentType] = useState(entry?.paymentType ?? "");
+  const [paymentType, setPaymentType] = useState<LedgerPaymentType | "">(
+    entry?.paymentType === "cash" || entry?.paymentType === "bank"
+      ? entry.paymentType
+      : "",
+  );
   const [accountGroupId, setAccountGroupId] = useState(
     entry?.accountGroupId ?? "",
   );
@@ -139,11 +147,10 @@ export function LedgerEntryDialog({
   const searchBankAccounts = useBankAccountSearch();
   const { data: bankAccounts } = useBankAccountsDropdown();
 
-  // Only a supplier payment (a debit) moves money, so only it has a payment
-  // type; a "bank" payment also says which account it left from.
+  // Only a supplier payment (a debit) moves money, so only it is paid by
+  // cash or bank; a bank payment also says which account it left from.
   const isSupplierPayment = !!spec?.paymentType && entryType === "dr";
-  const isBankPayment =
-    isSupplierPayment && paymentType.trim().toLowerCase() === "bank";
+  const isBankPayment = isSupplierPayment && paymentType === "bank";
   const needsBankAccount = spec?.party === "bankAccount" || isBankPayment;
   const defaultBankAccount = bankAccounts?.find((a) => a.isDefault);
   const effectiveBankAccountId =
@@ -195,6 +202,13 @@ export function LedgerEntryDialog({
       setErrors({ ledgerType: "Choose a ledger" });
       return;
     }
+    // A bank payment says which account the money left from. Not checked in
+    // the shared schema: an unlinked older payment keeps its separate
+    // cash/bank entry, so it has no account to pick here.
+    if (isBankPayment && !isUnlinkedPayment && !effectiveBankAccountId) {
+      setErrors({ bankAccountID: "Choose the bank account it was paid from" });
+      return;
+    }
     const parsed = ledgerEntryInputSchema.safeParse({
       ledgerType,
       date: adDate,
@@ -204,13 +218,14 @@ export function LedgerEntryDialog({
       description: description.trim() || undefined,
       supplierID:
         spec?.party === "supplier" ? supplierId || undefined : undefined,
-      bankAccountID: needsBankAccount
-        ? effectiveBankAccountId || undefined
-        : undefined,
+      bankAccountID:
+        needsBankAccount && !isUnlinkedPayment
+          ? effectiveBankAccountId || undefined
+          : undefined,
       accountGroupID: spec?.accountGroup
         ? accountGroupId || undefined
         : undefined,
-      paymentType: isSupplierPayment ? paymentType : undefined,
+      paymentType: isSupplierPayment ? paymentType || undefined : undefined,
       // a link to a purchase isn't edited here; keep it
       stockInID: entry?.stockInId ?? undefined,
     });
@@ -470,59 +485,69 @@ export function LedgerEntryDialog({
 
               {isSupplierPayment && (
                 <AccountingFormField
-                  label="Payment type"
-                  htmlFor="ledger-payment-type"
+                  label="Paid by"
                   required
                   error={errors.paymentType}
                 >
-                  <input
-                    id="ledger-payment-type"
-                    type="text"
-                    placeholder="Type a custom payment method…"
-                    value={paymentType}
-                    disabled={isUnlinkedPayment}
-                    onChange={(e) => {
-                      setPaymentType(e.target.value);
-                      clearError("paymentType");
-                    }}
-                    className={cn(
-                      accountingFieldInputClass,
-                      errors.paymentType && "border-[#9a3412]",
-                    )}
-                  />
-                  {!isUnlinkedPayment && (
-                    <div className="mt-2.5 flex flex-wrap gap-2">
-                      {PAYMENT_TYPE_SUGGESTIONS.map((option) => {
-                        const isSelected =
-                          paymentType.trim().toLowerCase() === option.value;
-                        return (
-                          <button
-                            key={option.value}
-                            type="button"
-                            onClick={() => {
+                  <div
+                    role="radiogroup"
+                    aria-label="Paid by"
+                    className="grid grid-cols-2 gap-3"
+                  >
+                    {PAYMENT_OPTIONS.map((option) => {
+                      const checked = paymentType === option.value;
+                      return (
+                        <label
+                          key={option.value}
+                          className={cn(
+                            "flex cursor-pointer items-start gap-3 border px-4 py-3 transition-colors has-focus-visible:ring-2 has-focus-visible:ring-(--brand-green)/30",
+                            checked
+                              ? "border-(--brand-green) bg-[rgba(47,78,64,0.05)]"
+                              : "border-[rgba(47,78,64,0.18)] bg-white hover:border-(--brand-green)",
+                            isUnlinkedPayment &&
+                              "cursor-not-allowed opacity-60 hover:border-[rgba(47,78,64,0.18)]",
+                            errors.paymentType &&
+                              !checked &&
+                              "border-[#9a3412]",
+                          )}
+                        >
+                          <input
+                            type="radio"
+                            name="ledger-payment-type"
+                            value={option.value}
+                            checked={checked}
+                            disabled={isUnlinkedPayment}
+                            onChange={() => {
                               setPaymentType(option.value);
                               clearError("paymentType");
                             }}
+                            className="sr-only"
+                          />
+                          <span
+                            aria-hidden
                             className={cn(
-                              "border px-3 py-1.5 font-(family-name:--font-dm-sans) text-xs font-semibold uppercase tracking-[0.06em] transition-colors",
-                              isSelected
-                                ? "border-(--brand-green) bg-(--brand-green) text-white"
-                                : "border-[rgba(47,78,64,0.18)] bg-white text-[rgba(47,78,64,0.65)] hover:border-(--brand-green) hover:text-(--brand-green)",
+                              "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border",
+                              checked
+                                ? "border-(--brand-green)"
+                                : "border-[rgba(47,78,64,0.35)]",
                             )}
                           >
-                            {option.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                  {!isUnlinkedPayment && paymentType && !isBankPayment && (
-                    <p className="mt-1.5 font-(family-name:--font-dm-sans) text-xs text-[rgba(47,78,64,0.5)]">
-                      {paymentType.trim().toLowerCase() === "cash"
-                        ? "Also recorded as cash out in the cash ledger."
-                        : "Also recorded as money out of the default bank account."}
-                    </p>
-                  )}
+                            {checked && (
+                              <span className="h-2 w-2 rounded-full bg-(--brand-green)" />
+                            )}
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block font-(family-name:--font-dm-sans) text-sm font-semibold text-(--brand-ink)">
+                              {option.label}
+                            </span>
+                            <span className="mt-0.5 block font-(family-name:--font-dm-sans) text-xs text-[rgba(47,78,64,0.55)]">
+                              {option.hint}
+                            </span>
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
                 </AccountingFormField>
               )}
 

@@ -37,7 +37,7 @@ type LedgerEntryRequest struct {
 	BankAccountID  string  `json:"bankAccountID" binding:"omitempty,uuid"`
 	SupplierID     string  `json:"supplierID" binding:"omitempty,uuid"`
 	AccountGroupID string  `json:"accountGroupID" binding:"omitempty,uuid"`
-	PaymentType    string  `json:"paymentType" binding:"omitempty,notblank,min=2,max=100"`
+	PaymentType    string  `json:"paymentType" binding:"omitempty,oneof=cash bank"`
 	StockInID      string  `json:"stockInID" binding:"omitempty,uuid"`
 }
 
@@ -153,9 +153,21 @@ func bindLedgerEntryRequest(c *gin.Context, handlerName string) (ledgerEntryInpu
 	return in, true
 }
 
-// errNoDefaultBankAccount is returned when a supplier payment needs the
-// default bank account and none is set.
-var errNoDefaultBankAccount = errors.New("no default bank account configured")
+// rejectMissingPaidFromAccount refuses a supplier payment by bank that
+// doesn't say which account the money left from. It reports whether it
+// refused.
+func rejectMissingPaidFromAccount(c *gin.Context, handlerName string, in ledgerEntryInput) bool {
+	if !ledgertypes.RecordsPayment(in.LedgerType, in.EntryType, in.PaymentType) ||
+		in.PaymentType != ledgertypes.PaymentBank || in.BankAccountID.Valid {
+		return false
+	}
+	rejectFields(c, handlerName, []types.AppError{{
+		Code:    constants.InvalidLedgerFields,
+		Field:   "bankAccountID",
+		Message: "Choose the bank account it was paid from",
+	}})
+	return true
+}
 
 // paymentDescription is the description on the cash/bank debit recorded when
 // a supplier is paid.
@@ -173,20 +185,10 @@ func recordSupplierPayment(ctx context.Context, qtx accountingRepository.LedgerT
 		return err
 	}
 
-	counterType, usesChosenAccount := ledgertypes.CounterLedger(in.PaymentType)
+	counterType := ledgertypes.CounterLedger(in.PaymentType)
 	var bankAccountID pgtype.UUID
 	if counterType == ledgertypes.TypeBank {
-		if usesChosenAccount && in.BankAccountID.Valid {
-			bankAccountID = in.BankAccountID
-		} else {
-			bankAccountID, err = qtx.GetDefaultBankAccountID(ctx)
-			if errors.Is(err, pgx.ErrNoRows) {
-				return errNoDefaultBankAccount
-			}
-			if err != nil {
-				return err
-			}
-		}
+		bankAccountID = in.BankAccountID
 	}
 
 	_, err = qtx.CreateLedgerEntry(ctx, db.CreateLedgerEntryParams{
@@ -207,16 +209,6 @@ func recordSupplierPayment(ctx context.Context, qtx accountingRepository.LedgerT
 // to user-facing responses. The FKs double as the "does it exist" checks, so a
 // row deleted mid-request is still reported cleanly.
 func respondLedgerWriteError(c *gin.Context, handlerName string, err error) {
-	if errors.Is(err, errNoDefaultBankAccount) {
-		applog.Warn(c, handlerName, "no default bank account")
-		c.JSON(http.StatusNotFound, types.APIResponse{
-			Success: false,
-			Message: "No default bank account configured",
-			Code:    constants.NoDefaultBankAccount,
-		})
-		return
-	}
-
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) && pgErr.Code == "23503" {
 		var field, message, code string

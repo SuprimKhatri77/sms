@@ -27,14 +27,14 @@ func entryBankAccount(in ledgerEntryInput) pgtype.UUID {
 }
 
 // CreateLedgerEntry records a manual entry in any ledger. A supplier payment
-// (a supplier debit with a payment type) also records the matching cash or
+// (a supplier debit paid by cash or bank) also records the matching cash or
 // bank debit in the same transaction, linked to it.
 func CreateLedgerEntry(queries accountingRepository.LedgerTxRepository, pool *pgxpool.Pool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
 
 		in, ok := bindLedgerEntryRequest(c, handlerCreateLedgerEntry)
-		if !ok {
+		if !ok || rejectMissingPaidFromAccount(c, handlerCreateLedgerEntry, in) {
 			return
 		}
 

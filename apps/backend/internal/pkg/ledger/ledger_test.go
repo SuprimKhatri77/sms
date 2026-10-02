@@ -48,23 +48,11 @@ func TestValidate(t *testing.T) {
 }
 
 func TestCounterLedger(t *testing.T) {
-	tests := []struct {
-		paymentType string
-		ledgerType  string
-		chosen      bool
-	}{
-		{"cash", TypeCash, false},
-		{"Cash", TypeCash, false},
-		{"bank", TypeBank, true},
-		{"BANK", TypeBank, true},
-		{"cheque", TypeBank, false},
-		{"esewa", TypeBank, false},
+	if got := CounterLedger(PaymentCash); got != TypeCash {
+		t.Errorf("CounterLedger(cash) = %q, want %q", got, TypeCash)
 	}
-	for _, tt := range tests {
-		ledgerType, chosen := CounterLedger(tt.paymentType)
-		if ledgerType != tt.ledgerType || chosen != tt.chosen {
-			t.Errorf("CounterLedger(%q) = %q, %v; want %q, %v", tt.paymentType, ledgerType, chosen, tt.ledgerType, tt.chosen)
-		}
+	if got := CounterLedger(PaymentBank); got != TypeBank {
+		t.Errorf("CounterLedger(bank) = %q, want %q", got, TypeBank)
 	}
 }
 
