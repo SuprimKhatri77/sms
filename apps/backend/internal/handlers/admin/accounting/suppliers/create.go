@@ -42,7 +42,7 @@ func CreateSupplier(queries accountingRepository.SuppliersRepository) gin.Handle
 			return
 		}
 
-		utils.TrimStruct(req)
+		utils.TrimStruct(&req)
 
 		supplier, err := queries.CreateSupplier(ctx, db.CreateSupplierParams{
 			CompanyName: req.CompanyName,

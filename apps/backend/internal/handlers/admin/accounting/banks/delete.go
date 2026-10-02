@@ -9,6 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/suprimkhatri77/sms/backend/internal/constants"
 	accountingRepository "github.com/suprimkhatri77/sms/backend/internal/repository/accounting"
 	"github.com/suprimkhatri77/sms/backend/internal/types"
@@ -83,6 +84,17 @@ func DeleteBank(queries accountingRepository.BankRepository) gin.HandlerFunc {
 
 		result, err := queries.DeleteBank(ctx, bankID)
 		if err != nil {
+			var pgErr *pgconn.PgError
+			if errors.As(err, &pgErr) && pgErr.Code == "23503" && pgErr.ConstraintName == "bank_accounts_bank_id_fkey" {
+				applog.Warn(c, handlerDeleteBank, "conflict",
+					slog.Any(applog.AttrError, err))
+				c.JSON(http.StatusConflict, types.APIResponse{
+					Success: false,
+					Message: "Cannot delete a bank that has accounts. Delete its accounts first.",
+					Code:    constants.BankHasAccounts,
+				})
+				return
+			}
 			applog.Error(c, handlerDeleteBank, "failed to process request",
 				slog.Any(applog.AttrError, err))
 			c.JSON(http.StatusInternalServerError, types.APIResponse{

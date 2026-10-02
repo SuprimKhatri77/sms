@@ -24,7 +24,12 @@ export function BankAccountDeleteDialog({
       onCancel={onClose}
       onConfirm={async () => {
         if (!account) return;
-        await onConfirm(account.id);
+        try {
+          await onConfirm(account.id);
+        } catch {
+          // The delete mutation already toasts why it failed (e.g. the
+          // record is still in use); retrying won't help, so just close.
+        }
         onClose();
       }}
     />

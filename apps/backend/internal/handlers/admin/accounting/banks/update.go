@@ -8,6 +8,7 @@ import (
 	"github.com/suprimkhatri77/sms/backend/internal/pkg/applog"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/suprimkhatri77/sms/backend/internal/constants"
 	db "github.com/suprimkhatri77/sms/backend/internal/database/generated"
@@ -106,6 +107,17 @@ func UpdateBank(queries accountingRepository.BankRepository) gin.HandlerFunc {
 					return
 				}
 
+			}
+
+			if errors.Is(err, pgx.ErrNoRows) {
+				applog.Warn(c, handlerUpdateBank, "resource not found",
+					slog.Any(applog.AttrError, err))
+				c.JSON(http.StatusNotFound, types.APIResponse{
+					Success: false,
+					Message: "Bank not found",
+					Code:    constants.BankNotFound,
+				})
+				return
 			}
 
 			applog.Error(c, handlerUpdateBank, "failed to process request",

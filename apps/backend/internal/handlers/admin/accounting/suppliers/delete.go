@@ -1,12 +1,14 @@
 package suppliers
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
 
 	"github.com/suprimkhatri77/sms/backend/internal/pkg/applog"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/suprimkhatri77/sms/backend/internal/constants"
 	accountingRepository "github.com/suprimkhatri77/sms/backend/internal/repository/accounting"
 	"github.com/suprimkhatri77/sms/backend/internal/types"
@@ -34,6 +36,29 @@ func DeleteSupplier(queries accountingRepository.SuppliersRepository) gin.Handle
 
 		result, err := queries.DeleteSupplier(ctx, supplierID)
 		if err != nil {
+			var pgErr *pgconn.PgError
+			if errors.As(err, &pgErr) && pgErr.Code == "23503" {
+				switch pgErr.ConstraintName {
+				case "supplier_ledger_supplier_id_fkey":
+					applog.Warn(c, handlerDeleteSupplier, "conflict",
+						slog.Any(applog.AttrError, err))
+					c.JSON(http.StatusConflict, types.APIResponse{
+						Success: false,
+						Message: "Cannot delete a supplier that has ledger entries",
+						Code:    constants.SupplierHasLedgerEntries,
+					})
+					return
+				case "stock_in_supplier_id_fkey":
+					applog.Warn(c, handlerDeleteSupplier, "conflict",
+						slog.Any(applog.AttrError, err))
+					c.JSON(http.StatusConflict, types.APIResponse{
+						Success: false,
+						Message: "Cannot delete a supplier that has purchase records",
+						Code:    constants.SupplierHasPurchases,
+					})
+					return
+				}
+			}
 			applog.Error(c, handlerDeleteSupplier, "failed to process request",
 				slog.Any(applog.AttrError, err))
 			c.JSON(http.StatusInternalServerError, types.APIResponse{

@@ -24,7 +24,12 @@ export function SupplierDeleteDialog({
       onCancel={onClose}
       onConfirm={async () => {
         if (!supplier) return;
-        await onConfirm(supplier.id);
+        try {
+          await onConfirm(supplier.id);
+        } catch {
+          // The delete mutation already toasts why it failed (e.g. the
+          // record is still in use); retrying won't help, so just close.
+        }
         onClose();
       }}
     />

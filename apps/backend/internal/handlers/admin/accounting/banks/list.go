@@ -35,6 +35,18 @@ func ListBanks(queries accountingRepository.BankRepository) gin.HandlerFunc {
 			return
 		}
 
+		// page <= 0 would make a negative OFFSET, which Postgres rejects.
+		if page <= 0 {
+			applog.Warn(c, handlerListBanks, "invalid request",
+				slog.Int("page", page))
+			c.JSON(http.StatusBadRequest, types.APIResponse{
+				Success: false,
+				Message: "Invalid page parameter",
+				Code:    constants.InvalidPageParam,
+			})
+			return
+		}
+
 		nameFilter := utils.ToNullableText(c.Query("name"))
 
 		total, err := queries.GetBanksCount(ctx, nameFilter)

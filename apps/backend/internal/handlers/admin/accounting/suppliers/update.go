@@ -8,6 +8,7 @@ import (
 	"github.com/suprimkhatri77/sms/backend/internal/pkg/applog"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/suprimkhatri77/sms/backend/internal/constants"
 	db "github.com/suprimkhatri77/sms/backend/internal/database/generated"
@@ -98,6 +99,16 @@ func UpdateSupplier(queries accountingRepository.SuppliersRepository) gin.Handle
 					})
 					return
 				}
+			}
+			if errors.Is(err, pgx.ErrNoRows) {
+				applog.Warn(c, handlerUpdateSupplier, "resource not found",
+					slog.Any(applog.AttrError, err))
+				c.JSON(http.StatusNotFound, types.APIResponse{
+					Success: false,
+					Message: "Supplier not found",
+					Code:    constants.SupplierNotFound,
+				})
+				return
 			}
 			applog.Error(c, handlerUpdateSupplier, "failed to process request",
 				slog.Any(applog.AttrError, err),
