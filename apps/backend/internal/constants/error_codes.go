@@ -75,6 +75,7 @@ const (
 	BankNotFound             = "BANK_NOT_FOUND"
 	CannotDeleteDefaultBank  = "CANNOT_DELETE_DEFAULT_BANK"
 	CannotUnsetDefaultBank   = "CANNOT_UNSET_DEFAULT_BANK"
+	BankHasAccounts          = "BANK_HAS_ACCOUNTS"
 
 	// bank accounts
 	BankAccountAlreadyExists        = "BANK_ACCOUNT_ALREADY_EXISTS"
@@ -91,6 +92,9 @@ const (
 	SupplierNotFound     = "SUPPLIER_NOT_FOUND"
 	MissingSupplierID    = "MISSING_SUPPLIER_ID"
 	StockNotFound        = "STOCK_NOT_FOUND"
+
+	SupplierHasLedgerEntries = "SUPPLIER_HAS_LEDGER_ENTRIES"
+	SupplierHasPurchases     = "SUPPLIER_HAS_PURCHASES"
 
 	// primary heads
 	PrimaryHeadAlreadyExists     = "PRIMARY_HEAD_ALREADY_EXISTS"

@@ -81,7 +81,7 @@ func SetDefaultBank(queries accountingRepository.BankTxRepository, pool *pgxpool
 			)
 			c.JSON(http.StatusInternalServerError, types.APIResponse{
 				Success: false,
-				Message: "Failed to process requets",
+				Message: "Failed to process request",
 				Code:    constants.InternalServerError,
 			})
 			return
@@ -142,7 +142,7 @@ func SetDefaultBank(queries accountingRepository.BankTxRepository, pool *pgxpool
 		}
 
 		c.JSON(http.StatusOK, types.APIResponse{
-			Success: false,
+			Success: true,
 			Message: "Bank updated to be default",
 		})
 
