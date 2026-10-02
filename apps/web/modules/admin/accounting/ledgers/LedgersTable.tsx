@@ -22,12 +22,18 @@ const SOURCE_LABELS: Partial<Record<LedgerSource, string>> = {
   supplier_payment: "Auto · supplier payment",
 };
 
+// how a supplier payment was made
+const PAYMENT_TYPE_LABELS: Record<string, string> = {
+  cash: "Cash",
+  bank: "Bank",
+};
+
 const th = accountingStickyThClass;
 // fixed columns (cells pad 20px a side) so the narration wraps instead of
 // pushing the actions off screen; below the min width (phones) the table
 // scrolls sideways
 const tableClass =
-  "w-full min-w-[960px] table-fixed border-separate border-spacing-0 text-left text-sm";
+  "w-full min-w-[1080px] table-fixed border-separate border-spacing-0 text-left text-sm";
 const muted = "text-[rgba(47,78,64,0.2)]";
 const badgeClass =
   "inline-block border px-1.5 py-0.5 font-(family-name:--font-dm-sans) text-[10px] font-semibold uppercase tracking-[0.06em]";
@@ -54,7 +60,7 @@ export function LedgersTable({
   onEdit,
   onDelete,
 }: LedgersTableProps) {
-  const colSpan = canManage ? 8 : 7;
+  const colSpan = canManage ? 9 : 8;
   const totalDebit = entries
     .filter((e) => e.entryType === "dr")
     .reduce((s, e) => s + e.amount, 0);
@@ -78,7 +84,8 @@ export function LedgersTable({
             <col style={{ width: 64 }} />
             <col style={{ width: 120 }} />
             <col style={{ width: 112 }} />
-            <col style={{ width: "24%" }} />
+            <col style={{ width: "20%" }} />
+            <col style={{ width: 136 }} />
             <col style={{ width: 124 }} />
             <col style={{ width: 124 }} />
             <col />
@@ -90,6 +97,7 @@ export function LedgersTable({
               <th className={th}>Date (BS)</th>
               <th className={th}>Ledger</th>
               <th className={th}>Party</th>
+              <th className={th}>Paid by</th>
               <th className={`${th} text-right`}>Debit (Rs.)</th>
               <th className={`${th} text-right`}>Credit (Rs.)</th>
               <th className={th}>Narration</th>
@@ -137,6 +145,26 @@ export function LedgersTable({
                       </div>
                     )}
                   </td>
+                  <td className={`${accountingTdClass} truncate`}>
+                    {entry.paymentType ? (
+                      <>
+                        <div>
+                          {PAYMENT_TYPE_LABELS[entry.paymentType] ??
+                            entry.paymentType}
+                        </div>
+                        {entry.paidFromAccountName && (
+                          <div
+                            className="mt-0.5 truncate text-xs text-[rgba(47,78,64,0.5)]"
+                            title={entry.paidFromAccountName}
+                          >
+                            {entry.paidFromAccountName}
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <span className={muted}>—</span>
+                    )}
+                  </td>
                   <td
                     className={`${accountingTdClass} whitespace-nowrap text-right font-mono text-xs tabular-nums ${isDebit ? "text-[#9a3412]" : muted}`}
                   >
@@ -154,25 +182,13 @@ export function LedgersTable({
                     <div className="whitespace-normal wrap-break-word">
                       {entry.description ?? <span className={muted}>—</span>}
                     </div>
-                    {(sourceLabel || entry.paymentType) && (
-                      <div className="mt-1 flex flex-wrap gap-1.5">
-                        {entry.paymentType && (
-                          <span
-                            className={`${badgeClass} border-[rgba(47,78,64,0.12)] text-[rgba(47,78,64,0.6)]`}
-                          >
-                            Paid by {entry.paymentType}
-                            {entry.paidFromAccountName
-                              ? ` · ${entry.paidFromAccountName}`
-                              : ""}
-                          </span>
-                        )}
-                        {sourceLabel && (
-                          <span
-                            className={`${badgeClass} border-[rgba(47,78,64,0.12)] bg-[rgba(47,78,64,0.04)] text-[rgba(47,78,64,0.55)]`}
-                          >
-                            {sourceLabel}
-                          </span>
-                        )}
+                    {sourceLabel && (
+                      <div className="mt-1">
+                        <span
+                          className={`${badgeClass} border-[rgba(47,78,64,0.12)] bg-[rgba(47,78,64,0.04)] text-[rgba(47,78,64,0.55)]`}
+                        >
+                          {sourceLabel}
+                        </span>
                       </div>
                     )}
                   </td>
@@ -224,7 +240,7 @@ export function LedgersTable({
             )}
             <tr className={accountingStickyTfootRowClass}>
               <td
-                colSpan={4}
+                colSpan={5}
                 className="whitespace-nowrap px-5 py-2 text-right font-(family-name:--font-dm-sans) uppercase tracking-[0.08em] text-[rgba(47,78,64,0.55)]"
               >
                 Loaded total ({entries.length} of {totalCount})
