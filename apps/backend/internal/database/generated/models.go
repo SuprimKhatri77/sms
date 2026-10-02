@@ -8,6 +8,16 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type AccountGroup struct {
+	ID            pgtype.UUID        `json:"id"`
+	ParentID      pgtype.UUID        `json:"parentId"`
+	PrimaryHeadID pgtype.UUID        `json:"primaryHeadId"`
+	Name          string             `json:"name"`
+	Code          pgtype.Text        `json:"code"`
+	Description   pgtype.Text        `json:"description"`
+	CreatedAt     pgtype.Timestamptz `json:"createdAt"`
+}
+
 type Bank struct {
 	ID        pgtype.UUID        `json:"id"`
 	Name      string             `json:"name"`
@@ -88,6 +98,15 @@ type Payment struct {
 	BsDate      string             `json:"bsDate"`
 	Remarks     pgtype.Text        `json:"remarks"`
 	PaymentMode string             `json:"paymentMode"`
+}
+
+type PrimaryHead struct {
+	ID          pgtype.UUID        `json:"id"`
+	ParentID    pgtype.UUID        `json:"parentId"`
+	Name        string             `json:"name"`
+	Code        pgtype.Text        `json:"code"`
+	Description pgtype.Text        `json:"description"`
+	CreatedAt   pgtype.Timestamptz `json:"createdAt"`
 }
 
 type Product struct {
