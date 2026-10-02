@@ -21,10 +21,13 @@ import { useUpdatePrimaryHead } from "@/hooks/mutations/admin/primary_heads/useU
 import { useDeletePrimaryHead } from "@/hooks/mutations/admin/primary_heads/useDeletePrimaryHead";
 
 import { accountingTableWrapClass } from "../shared/accounting-styles";
-import { HierarchyTable } from "../shared/HierarchyTable";
-import { HierarchyToolbar } from "../shared/HierarchyToolbar";
-import { HierarchyError, HierarchySkeleton } from "../shared/HierarchyStates";
-import { useHierarchyView } from "../shared/useHierarchyView";
+import { HierarchyTable } from "@/components/admin/hierarchy/HierarchyTable";
+import { HierarchyToolbar } from "@/components/admin/hierarchy/HierarchyToolbar";
+import {
+  HierarchyError,
+  HierarchySkeleton,
+} from "@/components/admin/hierarchy/HierarchyStates";
+import { useHierarchyView } from "@/components/admin/hierarchy/useHierarchyView";
 import { EmptyState } from "../../inventory/shared/EmptyState";
 import { ConfirmDialog } from "../../inventory/shared/ConfirmDialog";
 import { PrimaryHeadFormDialog } from "./PrimaryHeadFormDialog";

@@ -16,9 +16,11 @@ WHERE w.id = $1;
 SELECT
     w.*,
     p.name AS product_name,
-    p.unit AS product_unit
+    p.unit AS product_unit,
+    cp.path AS category_path
 FROM wastage w
 JOIN products p ON p.id = w.product_id
+LEFT JOIN product_category_paths cp ON cp.category_id = p.category_id
 WHERE
     (sqlc.narg('product_name')::TEXT IS NULL OR p.name ILIKE '%' || sqlc.narg('product_name')::TEXT || '%')
     AND (sqlc.narg('from')::TEXT IS NULL OR w.date >= sqlc.narg('from')::TEXT)

@@ -1,6 +1,6 @@
 -- name: CreateProduct :one
-INSERT INTO products (name, unit)
-VALUES ($1, $2)
+INSERT INTO products (name, unit, category_id)
+VALUES ($1, $2, $3)
 RETURNING *;
 
 -- name: GetProductByID :one
@@ -13,11 +13,11 @@ WHERE name = $1;
 
 -- name: UpdateProduct :one
 UPDATE products
-SET name = $2, unit = $3
+SET name = $2, unit = $3, category_id = $4
 WHERE id = $1
 RETURNING *;
 
--- name: DeleteProduct :exec
+-- name: DeleteProduct :execresult
 DELETE FROM products
 WHERE id = $1;
 
@@ -28,7 +28,11 @@ ORDER BY created_at DESC
 LIMIT 1;
 
 -- name: ListProducts :many
-SELECT * FROM products
+SELECT
+    products.*,
+    cp.path AS category_path
+FROM products
+LEFT JOIN product_category_paths cp ON cp.category_id = products.category_id
 WHERE
     (sqlc.narg('name')::TEXT IS NULL OR name ILIKE '%' || sqlc.narg('name')::TEXT || '%')
     AND (sqlc.narg('from')::DATE IS NULL OR created_at::DATE >= sqlc.narg('from')::DATE)

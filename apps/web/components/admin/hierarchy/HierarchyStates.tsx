@@ -1,7 +1,7 @@
 "use client";
 
 import { AlertCircle } from "lucide-react";
-import { accountingTableWrapClass } from "./accounting-styles";
+import { accountingTableWrapClass } from "@/modules/admin/accounting/shared/accounting-styles";
 
 export function HierarchySkeleton() {
   return (

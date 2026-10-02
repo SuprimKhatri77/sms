@@ -29,7 +29,7 @@ import {
   getPathLabel,
   getSubtreeIds,
   ROOT_OPTION_VALUE,
-} from "../shared/tree";
+} from "@/components/admin/hierarchy/tree";
 
 const ROOT_GROUP_LABEL = "None (top-level group)";
 const NO_HEAD_LABEL = "No primary head";

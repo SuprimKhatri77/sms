@@ -247,6 +247,16 @@ export {
 } from "./admin/accounting/supplier_ledger";
 
 export {
+  productCategoryInputSchema,
+  type ProductCategory,
+  type ProductCategoryInput,
+  type GetProductCategoriesResponse,
+  type CreateProductCategoryResponse,
+  type UpdateProductCategoryResponse,
+  type DeleteProductCategoryResponse,
+} from "./admin/inventory/product_categories";
+
+export {
   primaryHeadInputSchema,
   type PrimaryHead,
   type PrimaryHeadInput,

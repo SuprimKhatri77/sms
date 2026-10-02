@@ -110,10 +110,24 @@ type PrimaryHead struct {
 }
 
 type Product struct {
-	ID        pgtype.UUID        `json:"id"`
-	Name      string             `json:"name"`
-	Unit      string             `json:"unit"`
-	CreatedAt pgtype.Timestamptz `json:"createdAt"`
+	ID         pgtype.UUID        `json:"id"`
+	Name       string             `json:"name"`
+	Unit       string             `json:"unit"`
+	CreatedAt  pgtype.Timestamptz `json:"createdAt"`
+	CategoryID pgtype.UUID        `json:"categoryId"`
+}
+
+type ProductCategory struct {
+	ID          pgtype.UUID        `json:"id"`
+	ParentID    pgtype.UUID        `json:"parentId"`
+	Name        string             `json:"name"`
+	Description pgtype.Text        `json:"description"`
+	CreatedAt   pgtype.Timestamptz `json:"createdAt"`
+}
+
+type ProductCategoryPath struct {
+	CategoryID pgtype.UUID `json:"categoryId"`
+	Path       string      `json:"path"`
 }
 
 type RefreshToken struct {

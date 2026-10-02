@@ -3,6 +3,7 @@ SELECT
     p.id AS product_id,
     p.name AS product_name,
     p.unit AS product_unit,
+    cp.path AS category_path,
 
     COALESCE(si.total_qty, 0)::NUMERIC(14,3) AS stock_in_qty,
     COALESCE(so.total_qty, 0)::NUMERIC(14,3) AS stock_out_qty,
@@ -17,6 +18,7 @@ SELECT
     (COALESCE(si.total_amount, 0) - COALESCE(so.total_amount, 0) - COALESCE(w.total_amount, 0))::NUMERIC(14,2) AS closing_amount
 
 FROM products p
+LEFT JOIN product_category_paths cp ON cp.category_id = p.category_id
 LEFT JOIN (
     SELECT product_id,
            SUM(qty) AS total_qty,

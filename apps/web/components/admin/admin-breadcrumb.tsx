@@ -26,6 +26,7 @@ const LABELS: Record<string, string> = {
   courses: "Courses",
   inventory: "Inventory",
   products: "Products",
+  categories: "Categories",
   purchase: "Purchase",
   wastage: "Wastage",
   summary: "Summary",

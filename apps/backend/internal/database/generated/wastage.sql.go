@@ -122,9 +122,11 @@ const listWastage = `-- name: ListWastage :many
 SELECT
     w.id, w.product_id, w.date, w.qty, w.rate, w.reason, w.created_at,
     p.name AS product_name,
-    p.unit AS product_unit
+    p.unit AS product_unit,
+    cp.path AS category_path
 FROM wastage w
 JOIN products p ON p.id = w.product_id
+LEFT JOIN product_category_paths cp ON cp.category_id = p.category_id
 WHERE
     ($1::TEXT IS NULL OR p.name ILIKE '%' || $1::TEXT || '%')
     AND ($2::TEXT IS NULL OR w.date >= $2::TEXT)
@@ -146,15 +148,16 @@ type ListWastageParams struct {
 }
 
 type ListWastageRow struct {
-	ID          pgtype.UUID        `json:"id"`
-	ProductID   pgtype.UUID        `json:"productId"`
-	Date        string             `json:"date"`
-	Qty         float64            `json:"qty"`
-	Rate        int32              `json:"rate"`
-	Reason      pgtype.Text        `json:"reason"`
-	CreatedAt   pgtype.Timestamptz `json:"createdAt"`
-	ProductName string             `json:"productName"`
-	ProductUnit string             `json:"productUnit"`
+	ID           pgtype.UUID        `json:"id"`
+	ProductID    pgtype.UUID        `json:"productId"`
+	Date         string             `json:"date"`
+	Qty          float64            `json:"qty"`
+	Rate         int32              `json:"rate"`
+	Reason       pgtype.Text        `json:"reason"`
+	CreatedAt    pgtype.Timestamptz `json:"createdAt"`
+	ProductName  string             `json:"productName"`
+	ProductUnit  string             `json:"productUnit"`
+	CategoryPath pgtype.Text        `json:"categoryPath"`
 }
 
 func (q *Queries) ListWastage(ctx context.Context, arg ListWastageParams) ([]ListWastageRow, error) {
@@ -183,6 +186,7 @@ func (q *Queries) ListWastage(ctx context.Context, arg ListWastageParams) ([]Lis
 			&i.CreatedAt,
 			&i.ProductName,
 			&i.ProductUnit,
+			&i.CategoryPath,
 		); err != nil {
 			return nil, err
 		}

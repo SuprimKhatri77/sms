@@ -1,12 +1,14 @@
 package products
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
 
 	"github.com/suprimkhatri77/sms/backend/internal/pkg/applog"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/suprimkhatri77/sms/backend/internal/constants"
 	"github.com/suprimkhatri77/sms/backend/internal/repository"
 	"github.com/suprimkhatri77/sms/backend/internal/types"
@@ -42,14 +44,37 @@ func DeleteProduct(queries repository.InventoryRepository) gin.HandlerFunc {
 			return
 		}
 
-		err = queries.DeleteProduct(ctx, productID)
+		result, err := queries.DeleteProduct(ctx, productID)
 		if err != nil {
+			// stock_in, stock_out and wastage all reference products with
+			// ON DELETE RESTRICT.
+			var pgErr *pgconn.PgError
+			if errors.As(err, &pgErr) && pgErr.Code == "23503" {
+				applog.Warn(c, handlerDeleteProduct, "conflict",
+					slog.Any(applog.AttrError, err))
+				c.JSON(http.StatusConflict, types.APIResponse{
+					Success: false,
+					Message: "Cannot delete a product that has purchase, sale or wastage records",
+					Code:    constants.ProductHasTransactions,
+				})
+				return
+			}
 			applog.Error(c, handlerDeleteProduct, "failed to process request",
 				slog.Any(applog.AttrError, err))
 			c.JSON(http.StatusInternalServerError, types.APIResponse{
 				Success: false,
 				Message: "Failed to process request",
 				Code:    constants.InternalServerError,
+			})
+			return
+		}
+
+		if result.RowsAffected() == 0 {
+			applog.Warn(c, handlerDeleteProduct, "resource not found")
+			c.JSON(http.StatusNotFound, types.APIResponse{
+				Success: false,
+				Message: "Product not found",
+				Code:    constants.ProductNotFound,
 			})
 			return
 		}

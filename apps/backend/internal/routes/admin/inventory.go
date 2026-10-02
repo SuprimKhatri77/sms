@@ -2,6 +2,7 @@ package admin
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/suprimkhatri77/sms/backend/internal/handlers/admin/inventory/categories"
 	"github.com/suprimkhatri77/sms/backend/internal/handlers/admin/inventory/products"
 	adminInventoryStockIn "github.com/suprimkhatri77/sms/backend/internal/handlers/admin/inventory/stockin"
 	adminInventoryStockOut "github.com/suprimkhatri77/sms/backend/internal/handlers/admin/inventory/stockout"
@@ -13,6 +14,11 @@ import (
 
 func setupAdminInventoryRoutes(admin *gin.RouterGroup, cfg config.Config) {
 	inv := admin.Group("/inventory")
+
+	inv.GET("/categories", categories.ListProductCategories(cfg.Queries))
+	inv.POST("/categories", categories.CreateProductCategory(cfg.Queries))
+	inv.PUT("/categories/:categoryID", categories.UpdateProductCategory(repository.NewProductCategoryTxRepository(cfg.Queries), cfg.PgxPool))
+	inv.DELETE("/categories/:categoryID", categories.DeleteProductCategory(cfg.Queries))
 
 	inv.GET("/products", products.ListProducts(cfg.Queries))
 	inv.GET("/products/export", products.ExportProducts(cfg.Queries))

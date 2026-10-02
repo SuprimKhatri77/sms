@@ -22,11 +22,17 @@ import { useUpdateAccountGroup } from "@/hooks/mutations/admin/account_groups/us
 import { useDeleteAccountGroup } from "@/hooks/mutations/admin/account_groups/useDeleteAccountGroup";
 
 import { accountingTableWrapClass } from "../shared/accounting-styles";
-import { HierarchyTable, type HierarchyColumn } from "../shared/HierarchyTable";
-import { HierarchyToolbar } from "../shared/HierarchyToolbar";
-import { HierarchyError, HierarchySkeleton } from "../shared/HierarchyStates";
-import { useHierarchyView } from "../shared/useHierarchyView";
-import { getPathLabel } from "../shared/tree";
+import {
+  HierarchyTable,
+  type HierarchyColumn,
+} from "@/components/admin/hierarchy/HierarchyTable";
+import { HierarchyToolbar } from "@/components/admin/hierarchy/HierarchyToolbar";
+import {
+  HierarchyError,
+  HierarchySkeleton,
+} from "@/components/admin/hierarchy/HierarchyStates";
+import { useHierarchyView } from "@/components/admin/hierarchy/useHierarchyView";
+import { getPathLabel } from "@/components/admin/hierarchy/tree";
 import { EmptyState } from "../../inventory/shared/EmptyState";
 import { ConfirmDialog } from "../../inventory/shared/ConfirmDialog";
 import { AccountGroupFormDialog } from "./AccountGroupFormDialog";

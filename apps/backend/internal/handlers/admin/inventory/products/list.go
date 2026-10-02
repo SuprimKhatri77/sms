@@ -91,7 +91,7 @@ func ListProducts(queries repository.InventoryRepository) gin.HandlerFunc {
 		if total == 0 {
 			c.JSON(http.StatusOK, types.APIResponse{
 				Success: true,
-				Data:    []db.Product{},
+				Data:    []db.ListProductsRow{},
 				Meta: &types.PaginationMeta{
 					Total:      int(total),
 					Limit:      limit,
@@ -134,7 +134,7 @@ func ListProducts(queries repository.InventoryRepository) gin.HandlerFunc {
 		}
 
 		if len(products) == 0 {
-			products = []db.Product{}
+			products = []db.ListProductsRow{}
 		}
 
 		c.JSON(http.StatusOK, types.APIResponse{

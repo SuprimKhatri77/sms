@@ -3,10 +3,12 @@ CREATE TABLE products (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL UNIQUE,
     unit TEXT NOT NULL DEFAULT 'pieces',
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    category_id UUID CONSTRAINT products_category_id_fkey REFERENCES product_categories(id) ON DELETE RESTRICT
 );
 
 CREATE INDEX idx_products_name ON products(name);
+CREATE INDEX idx_products_category_id ON products(category_id);
 
 -- stock_in (purchases / stock received)
 CREATE TABLE stock_in (

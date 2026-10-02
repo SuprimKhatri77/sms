@@ -11,6 +11,7 @@ import {
   inventoryTdClass,
   inventoryThClass,
 } from "../shared/inventory-styles";
+import { CategoryCell } from "../shared/CategoryCell";
 
 type InventorySummaryRow = Extract<
   InventorySummaryResponse,
@@ -44,6 +45,7 @@ export function SummaryTable({ data }: Props) {
 
   const headers = [
     "Product",
+    "Category",
     "Unit",
     "Purchase (Qty)",
     "Purchase (Amt)",
@@ -77,6 +79,7 @@ export function SummaryTable({ data }: Props) {
                 <td className={`${inventoryTdClass} font-medium`}>
                   {row.productName}
                 </td>
+                <CategoryCell path={row.categoryPath} />
                 <td className={`${inventoryTdClass} text-xs text-[rgba(47,78,64,0.55)]`}>
                   {row.productUnit}
                 </td>
@@ -104,7 +107,7 @@ export function SummaryTable({ data }: Props) {
           <tfoot>
             <tr className="bg-[rgba(47,78,64,0.04)]">
               <td
-                colSpan={2}
+                colSpan={3}
                 className="px-5 py-4 font-(family-name:--font-dm-sans) text-xs font-bold uppercase tracking-[0.08em] text-(--brand-green)"
               >
                 Totals

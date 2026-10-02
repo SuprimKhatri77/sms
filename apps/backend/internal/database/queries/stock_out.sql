@@ -16,9 +16,11 @@ WHERE so.id = $1;
 SELECT
     so.*,
     p.name AS product_name,
-    p.unit AS product_unit
+    p.unit AS product_unit,
+    cp.path AS category_path
 FROM stock_out so
 JOIN products p ON p.id = so.product_id
+LEFT JOIN product_category_paths cp ON cp.category_id = p.category_id
 WHERE
     (sqlc.narg('search')::TEXT IS NULL OR (
     p.name ILIKE '%' || sqlc.narg('search')::TEXT || '%'

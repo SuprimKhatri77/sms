@@ -142,10 +142,12 @@ SELECT
     si.id, si.product_id, si.date, si.invoice_no, si.qty, si.rate, si.note, si.supplier_id, si.created_at,
     p.name AS product_name,
     p.unit AS product_unit,
+    cp.path AS category_path,
     s.company_name AS supplier_name
 FROM stock_in si
 JOIN products p ON p.id = si.product_id
 JOIN suppliers s ON s.id = si.supplier_id
+LEFT JOIN product_category_paths cp ON cp.category_id = p.category_id
 WHERE
     ($1::TEXT IS NULL OR (
         p.name ILIKE '%' || $1::TEXT || '%'
@@ -182,6 +184,7 @@ type ListStockInRow struct {
 	CreatedAt    pgtype.Timestamptz `json:"createdAt"`
 	ProductName  string             `json:"productName"`
 	ProductUnit  string             `json:"productUnit"`
+	CategoryPath pgtype.Text        `json:"categoryPath"`
 	SupplierName string             `json:"supplierName"`
 }
 
@@ -213,6 +216,7 @@ func (q *Queries) ListStockIn(ctx context.Context, arg ListStockInParams) ([]Lis
 			&i.CreatedAt,
 			&i.ProductName,
 			&i.ProductUnit,
+			&i.CategoryPath,
 			&i.SupplierName,
 		); err != nil {
 			return nil, err

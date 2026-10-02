@@ -129,9 +129,11 @@ const listStockOut = `-- name: ListStockOut :many
 SELECT
     so.id, so.product_id, so.date, so.bill_no, so.qty, so.rate, so.note, so.created_at,
     p.name AS product_name,
-    p.unit AS product_unit
+    p.unit AS product_unit,
+    cp.path AS category_path
 FROM stock_out so
 JOIN products p ON p.id = so.product_id
+LEFT JOIN product_category_paths cp ON cp.category_id = p.category_id
 WHERE
     ($1::TEXT IS NULL OR (
     p.name ILIKE '%' || $1::TEXT || '%'
@@ -155,16 +157,17 @@ type ListStockOutParams struct {
 }
 
 type ListStockOutRow struct {
-	ID          pgtype.UUID        `json:"id"`
-	ProductID   pgtype.UUID        `json:"productId"`
-	Date        string             `json:"date"`
-	BillNo      pgtype.Text        `json:"billNo"`
-	Qty         float64            `json:"qty"`
-	Rate        int32              `json:"rate"`
-	Note        pgtype.Text        `json:"note"`
-	CreatedAt   pgtype.Timestamptz `json:"createdAt"`
-	ProductName string             `json:"productName"`
-	ProductUnit string             `json:"productUnit"`
+	ID           pgtype.UUID        `json:"id"`
+	ProductID    pgtype.UUID        `json:"productId"`
+	Date         string             `json:"date"`
+	BillNo       pgtype.Text        `json:"billNo"`
+	Qty          float64            `json:"qty"`
+	Rate         int32              `json:"rate"`
+	Note         pgtype.Text        `json:"note"`
+	CreatedAt    pgtype.Timestamptz `json:"createdAt"`
+	ProductName  string             `json:"productName"`
+	ProductUnit  string             `json:"productUnit"`
+	CategoryPath pgtype.Text        `json:"categoryPath"`
 }
 
 func (q *Queries) ListStockOut(ctx context.Context, arg ListStockOutParams) ([]ListStockOutRow, error) {
@@ -194,6 +197,7 @@ func (q *Queries) ListStockOut(ctx context.Context, arg ListStockOutParams) ([]L
 			&i.CreatedAt,
 			&i.ProductName,
 			&i.ProductUnit,
+			&i.CategoryPath,
 		); err != nil {
 			return nil, err
 		}

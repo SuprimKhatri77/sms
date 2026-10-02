@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import {
   AccountingFilterShell,
   accountingLabelClass,
-} from "./accounting-styles";
+} from "@/modules/admin/accounting/shared/accounting-styles";
 
 type HierarchyToolbarProps = {
   id: string;
@@ -18,6 +18,8 @@ type HierarchyToolbarProps = {
   onSearchChange: (value: string) => void;
   searchRef: RefObject<HTMLInputElement | null>;
   placeholder: string;
+  /** Defaults to the fields searched in hierarchies that have codes. */
+  label?: string;
   onExpandAll: () => void;
   onCollapseAll: () => void;
 };
@@ -28,6 +30,7 @@ export function HierarchyToolbar({
   onSearchChange,
   searchRef,
   placeholder,
+  label = "Name, code or description",
   onExpandAll,
   onCollapseAll,
 }: HierarchyToolbarProps) {
@@ -41,7 +44,7 @@ export function HierarchyToolbar({
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div className="flex min-w-0 flex-col gap-1.5 md:w-96">
           <label className={accountingLabelClass} htmlFor={id}>
-            Name, code or description
+            {label}
           </label>
           <div className="relative w-full">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[rgba(47,78,64,0.35)]" />

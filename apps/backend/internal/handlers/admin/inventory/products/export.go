@@ -89,6 +89,7 @@ func ExportProducts(queries repository.InventoryRepository) gin.HandlerFunc {
 		for _, p := range products {
 			rows = append(rows, []any{
 				p.Name,
+				p.CategoryPath.String,
 				p.Unit,
 				export.DateAD(p.CreatedAt.Time),
 				export.DateBS(p.CreatedAt.Time),
@@ -103,12 +104,13 @@ func ExportProducts(queries repository.InventoryRepository) gin.HandlerFunc {
 			),
 			Columns: []export.Column{
 				{Header: "Name", Width: 32},
+				{Header: "Category", Width: 28},
 				{Header: "Unit", Width: 14},
 				{Header: "Created (AD)", Width: 14},
 				{Header: "Created (BS)", Width: 14},
 			},
 			Rows:   rows,
-			Totals: []any{fmt.Sprintf("Total: %d products", len(rows)), "", "", ""},
+			Totals: []any{fmt.Sprintf("Total: %d products", len(rows)), "", "", "", ""},
 		}
 
 		if err := export.Write(c, export.Format(params.Format), "products", table); err != nil {

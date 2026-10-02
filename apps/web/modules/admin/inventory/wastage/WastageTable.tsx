@@ -16,6 +16,7 @@ import {
   inventoryTdClass,
   inventoryThClass,
 } from "../shared/inventory-styles";
+import { CategoryCell } from "../shared/CategoryCell";
 
 type Wastage = Extract<ListWastageResponse, { success: true }>["data"][number];
 
@@ -32,6 +33,7 @@ type Props = {
 
 const headers = [
   "Product",
+  "Category",
   "Date (BS)",
   "Qty",
   "Rate",
@@ -83,6 +85,7 @@ export function WastageTable({
                 <td className={`${inventoryTdClass} font-medium`}>
                   {row.productName}
                 </td>
+                <CategoryCell path={row.categoryPath} />
                 <td className={`${inventoryTdClass} text-[rgba(47,78,64,0.6)]`}>
                   {row.date}
                 </td>
