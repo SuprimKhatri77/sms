@@ -11,9 +11,9 @@ export type SearchableSelectOption = {
   label: string;
 };
 
-const DROPDOWN_ESTIMATED_HEIGHT = 200;
+export const DROPDOWN_ESTIMATED_HEIGHT = 200;
 
-function getScrollParent(node: HTMLElement | null): HTMLElement | null {
+export function getScrollParent(node: HTMLElement | null): HTMLElement | null {
   let el = node?.parentElement ?? null;
   while (el) {
     const { overflowY } = getComputedStyle(el);

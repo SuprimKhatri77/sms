@@ -12,13 +12,6 @@ import {
   type BankAccountForDropdown,
   type LedgerType,
 } from "@repo/types";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { searchBankAccountsForDropdown } from "@/lib/api/bank_accounts";
 import type { LedgerFilterParams } from "@/lib/api/ledgers";
@@ -31,10 +24,13 @@ import {
   AccountingFilterShell,
   accountingFieldInputClass,
   accountingLabelClass,
-  accountingSelectTriggerClass,
 } from "../shared/accounting-styles";
 import { withAllOption } from "../shared/withAllOption";
 import { SearchableSelect } from "../../inventory/shared/SearchableSelect";
+import {
+  StaticSelect,
+  type StaticSelectOption,
+} from "../../inventory/shared/StaticSelect";
 import {
   useBankSearch,
   useSupplierSearch,
@@ -64,8 +60,19 @@ export const EMPTY_LEDGER_FILTERS: LedgerFilterState = {
   toBsDate: "",
 };
 
-const ALL = "all";
-const ALL_LEDGERS_LABEL = "All ledgers";
+const ALL = "all" as const;
+const LEDGER_FILTER_OPTIONS: StaticSelectOption<LedgerType | typeof ALL>[] = [
+  { value: ALL, label: "All ledgers" },
+  ...ledgerTypeValues.map((t) => ({ value: t, label: LEDGER_TYPES[t].label })),
+];
+
+// one column per field shown, so the bank filters (ledger, bank, account and
+// two dates) still fit on one line on a wide screen
+const GRID_COLUMNS: Record<number, string> = {
+  3: "lg:grid-cols-3",
+  4: "lg:grid-cols-4",
+  5: "lg:grid-cols-5",
+};
 
 interface LedgersFiltersProps {
   filters: LedgerFilterState;
@@ -123,8 +130,7 @@ export function LedgersFilters({
   );
 
   // a different ledger has different parties, so its own filters start over
-  function handleTypeChange(value: string | null) {
-    if (!value) return;
+  function handleTypeChange(value: LedgerType | typeof ALL) {
     onChange({
       ...EMPTY_LEDGER_FILTERS,
       ledgerType: value === ALL ? "" : (value as LedgerType),
@@ -176,6 +182,13 @@ export function LedgersFilters({
     }
   }
 
+  // ledger + its party pickers + from/to dates
+  const partyFieldCount =
+    spec?.party === "bankAccount"
+      ? 2
+      : (spec?.party === "supplier" ? 1 : 0) + (spec?.accountGroup ? 1 : 0);
+  const fieldCount = 1 + partyFieldCount + 2;
+
   const hasActiveFilters = Object.entries(filters).some(([, v]) => !!v);
   const handleClear = useCallback(
     () => onChange(EMPTY_LEDGER_FILTERS),
@@ -188,32 +201,20 @@ export function LedgersFilters({
       hasActiveFilters={hasActiveFilters}
       onClear={handleClear}
     >
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div
+        className={cn(
+          "grid grid-cols-1 gap-4 sm:grid-cols-2",
+          GRID_COLUMNS[fieldCount],
+        )}
+      >
         <div className="flex min-w-0 flex-col gap-2">
           <span className={accountingLabelClass}>Ledger</span>
-          <Select
+          <StaticSelect
+            aria-label="Ledger"
             value={filters.ledgerType || ALL}
-            onValueChange={handleTypeChange}
-          >
-            <SelectTrigger
-              className={accountingSelectTriggerClass}
-              aria-label="Ledger"
-            >
-              <SelectValue>
-                {filters.ledgerType
-                  ? LEDGER_TYPES[filters.ledgerType].label
-                  : ALL_LEDGERS_LABEL}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL}>{ALL_LEDGERS_LABEL}</SelectItem>
-              {ledgerTypeValues.map((t) => (
-                <SelectItem key={t} value={t}>
-                  {LEDGER_TYPES[t].label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            onChange={handleTypeChange}
+            options={LEDGER_FILTER_OPTIONS}
+          />
         </div>
 
         {spec?.party === "supplier" && (

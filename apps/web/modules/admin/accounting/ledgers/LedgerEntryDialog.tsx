@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import { CalendarDays } from "lucide-react";
+import { Banknote, CalendarDays, Landmark, Truck, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { NepaliDatePicker } from "nepali-datepicker-reactjs";
 import { BSToAD } from "bikram-sambat-js";
@@ -18,13 +18,6 @@ import {
   type LedgerPaymentType,
   type LedgerType,
 } from "@repo/types";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { mapFieldErrors } from "@/utils/api";
 import { AdminDrawer } from "@/components/admin/admin-drawer";
@@ -42,32 +35,63 @@ import {
   AccountingFormField,
   AccountingFormSection,
   accountingFieldInputClass,
-  accountingSelectTriggerClass,
 } from "../shared/accounting-styles";
+import { ChoiceCards, type ChoiceCardOption } from "../shared/ChoiceCards";
 import { SearchableSelect } from "../../inventory/shared/SearchableSelect";
 import {
   useBankAccountSearch,
   useSupplierSearch,
 } from "../../inventory/shared/useProductSupplierSearch";
 
+const LEDGER_CARD_DETAILS: Record<
+  LedgerType,
+  Pick<ChoiceCardOption<LedgerType>, "hint" | "icon">
+> = {
+  cash: { hint: "Cash in hand, in or out", icon: Wallet },
+  bank: { hint: "Money in or out of a bank account", icon: Landmark },
+  supplier: { hint: "Purchases owed and payments made", icon: Truck },
+};
+
+const LEDGER_OPTIONS: ChoiceCardOption<LedgerType>[] = ledgerTypeValues.map(
+  (t) => ({
+    value: t,
+    label: LEDGER_TYPES[t].label,
+    ...LEDGER_CARD_DETAILS[t],
+  }),
+);
+
 // a supplier payment is booked in the cash ledger or against a bank account
-const PAYMENT_OPTIONS: {
-  value: LedgerPaymentType;
-  label: string;
-  hint: string;
-}[] = [
-  { value: "cash", label: "Cash", hint: "Recorded as cash out" },
-  { value: "bank", label: "Bank", hint: "Recorded against a bank account" },
+const PAYMENT_OPTIONS: ChoiceCardOption<LedgerPaymentType>[] = [
+  {
+    value: "cash",
+    label: "Cash",
+    hint: "Recorded as cash out",
+    icon: Banknote,
+  },
+  {
+    value: "bank",
+    label: "Bank",
+    hint: "Recorded against a bank account",
+    icon: Landmark,
+  },
 ];
 
-const ENTRY_TYPE_LABELS: Record<LedgerType, { cr: string; dr: string }> = {
-  cash: { cr: "Credit — Cash in", dr: "Debit — Cash out" },
-  bank: { cr: "Credit — Money in", dr: "Debit — Money out" },
-  supplier: {
-    cr: "Credit — Purchase / payable added",
-    dr: "Debit — Payment made to supplier",
-  },
-};
+// what a credit and a debit mean in each ledger
+const ENTRY_TYPE_OPTIONS: Record<LedgerType, ChoiceCardOption<"cr" | "dr">[]> =
+  {
+    cash: [
+      { value: "cr", label: "Credit", hint: "Cash in" },
+      { value: "dr", label: "Debit", hint: "Cash out" },
+    ],
+    bank: [
+      { value: "cr", label: "Credit", hint: "Money in" },
+      { value: "dr", label: "Debit", hint: "Money out" },
+    ],
+    supplier: [
+      { value: "cr", label: "Credit", hint: "Purchase / amount owed" },
+      { value: "dr", label: "Debit", hint: "Payment to the supplier" },
+    ],
+  };
 
 const NO_GROUP_LABEL = "No account group";
 
@@ -183,9 +207,8 @@ export function LedgerEntryDialog({
   const clearError = (field: keyof LedgerEntryInput) =>
     setErrors((prev) => ({ ...prev, [field]: undefined }));
 
-  function handleLedgerTypeChange(value: string | null) {
-    if (!value) return;
-    setLedgerType(value as LedgerType);
+  function handleLedgerTypeChange(value: LedgerType) {
+    setLedgerType(value);
     // the other ledger's party and supplier-only fields don't carry over
     setSupplierId("");
     setSupplierLabel("");
@@ -259,7 +282,7 @@ export function LedgerEntryDialog({
       open={open}
       onOpenChange={onOpenChange}
       variant="modal"
-      className="sm:max-w-xl"
+      className="sm:max-w-2xl"
       title={isEdit ? "Edit Ledger Entry" : "New Ledger Entry"}
       description={
         isEdit
@@ -290,44 +313,29 @@ export function LedgerEntryDialog({
       <form
         id="ledger-entry-form"
         onSubmit={handleSubmit}
-        className="flex flex-col gap-8 px-8 py-10"
+        className="flex flex-col gap-8 px-8 py-8"
       >
-        <AccountingFormSection title="Entry details">
+        <AccountingFormSection title="Entry">
           <AccountingFormField
             label="Ledger"
             required
             error={errors.ledgerType}
           >
-            <Select
+            <ChoiceCards
+              name="ledger-type"
+              label="Ledger"
               value={ledgerType}
-              onValueChange={handleLedgerTypeChange}
+              onChange={handleLedgerTypeChange}
+              options={LEDGER_OPTIONS}
               disabled={isEdit}
-            >
-              <SelectTrigger
-                className={accountingSelectTriggerClass}
-                aria-label="Ledger"
-              >
-                <SelectValue placeholder="Choose a ledger">
-                  {ledgerType
-                    ? LEDGER_TYPES[ledgerType].label
-                    : "Choose a ledger"}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {ledgerTypeValues.map((t) => (
-                  <SelectItem key={t} value={t}>
-                    {LEDGER_TYPES[t].label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              invalid={!!errors.ledgerType}
+            />
             {isEdit && (
               <p className="mt-1.5 font-(family-name:--font-dm-sans) text-xs text-[rgba(47,78,64,0.5)]">
                 To move an entry to another ledger, delete it and add it there.
               </p>
             )}
           </AccountingFormField>
-
           {spec?.party === "supplier" && (
             <AccountingFormField
               label="Supplier"
@@ -367,82 +375,65 @@ export function LedgerEntryDialog({
               />
             </AccountingFormField>
           )}
+        </AccountingFormSection>
 
-          {spec && (
-            <>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <AccountingFormField
-                  label="Date (BS)"
-                  required
-                  error={errors.bsDate}
-                >
-                  <div className="relative">
-                    <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-[rgba(47,78,64,0.4)]">
-                      <CalendarDays className="h-4 w-4" strokeWidth={1.75} />
-                    </span>
-                    <NepaliDatePicker
-                      inputClassName={cn(
-                        accountingFieldInputClass,
-                        "pl-9",
-                        errors.bsDate && "border-[#9a3412]",
-                      )}
-                      value={bsDate}
-                      onChange={(v: string) => {
-                        setBsDate(v);
-                        clearError("bsDate");
-                        try {
-                          setAdDate(BSToAD(v));
-                        } catch (err) {
-                          toast.error(
-                            err instanceof Error ? err.message : "Invalid date",
-                          );
-                        }
-                      }}
-                      options={{ calenderLocale: "en", valueLocale: "en" }}
-                    />
-                  </div>
-                </AccountingFormField>
+        {spec && ledgerType && (
+          <AccountingFormSection title="Amount">
+            <AccountingFormField
+              label="Entry type"
+              required
+              error={errors.entryType}
+            >
+              <ChoiceCards
+                name="ledger-entry-type"
+                label="Entry type"
+                value={entryType}
+                onChange={(v) => {
+                  setEntryType(v);
+                  clearError("entryType");
+                  if (v === "cr") {
+                    setPaymentType("");
+                    clearError("paymentType");
+                  }
+                }}
+                options={ENTRY_TYPE_OPTIONS[ledgerType]}
+                disabled={isUnlinkedPayment}
+                invalid={!!errors.entryType}
+              />
+            </AccountingFormField>
 
-                <AccountingFormField
-                  label="Entry type"
-                  required
-                  error={errors.entryType}
-                >
-                  <Select
-                    value={entryType}
-                    disabled={isUnlinkedPayment}
-                    onValueChange={(v) => {
-                      setEntryType(v as "dr" | "cr");
-                      clearError("entryType");
-                      if (v === "cr") {
-                        setPaymentType("");
-                        clearError("paymentType");
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <AccountingFormField
+                label="Date (BS)"
+                required
+                error={errors.bsDate}
+              >
+                <div className="relative">
+                  <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-[rgba(47,78,64,0.4)]">
+                    <CalendarDays className="h-4 w-4" strokeWidth={1.75} />
+                  </span>
+                  <NepaliDatePicker
+                    inputClassName={cn(
+                      accountingFieldInputClass,
+                      "pl-9",
+                      errors.bsDate && "border-[#9a3412]",
+                    )}
+                    value={bsDate}
+                    onChange={(v: string) => {
+                      setBsDate(v);
+                      clearError("bsDate");
+                      try {
+                        setAdDate(BSToAD(v));
+                      } catch (err) {
+                        toast.error(
+                          err instanceof Error ? err.message : "Invalid date",
+                        );
                       }
                     }}
-                  >
-                    <SelectTrigger
-                      className={accountingSelectTriggerClass}
-                      aria-label="Entry type"
-                    >
-                      <SelectValue placeholder="Select type">
-                        {entryType
-                          ? ENTRY_TYPE_LABELS[ledgerType as LedgerType][
-                              entryType
-                            ]
-                          : "Select type"}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="cr">
-                        {ENTRY_TYPE_LABELS[ledgerType as LedgerType].cr}
-                      </SelectItem>
-                      <SelectItem value="dr">
-                        {ENTRY_TYPE_LABELS[ledgerType as LedgerType].dr}
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </AccountingFormField>
-              </div>
+                    options={{ calenderLocale: "en", valueLocale: "en" }}
+                  />
+                </div>
+              </AccountingFormField>
 
               <AccountingFormField
                 label="Amount (Rs.)"
@@ -474,154 +465,113 @@ export function LedgerEntryDialog({
                   />
                 </div>
               </AccountingFormField>
+            </div>
 
-              {isUnlinkedPayment && (
-                <p className="-mt-3 font-(family-name:--font-dm-sans) text-xs text-[#9a3412]">
-                  This payment was recorded before cash/bank entries were linked
-                  to payments, so its amount, type and payment type are fixed.
-                  Delete it and enter it again to change them.
-                </p>
-              )}
+            {isUnlinkedPayment && (
+              <p className="font-(family-name:--font-dm-sans) text-xs text-[#9a3412]">
+                This payment was recorded before cash/bank entries were linked
+                to payments, so its amount, type and payment method are fixed.
+                Delete it and enter it again to change them.
+              </p>
+            )}
+          </AccountingFormSection>
+        )}
 
-              {isSupplierPayment && (
-                <AccountingFormField
-                  label="Paid by"
-                  required
-                  error={errors.paymentType}
-                >
-                  <div
-                    role="radiogroup"
-                    aria-label="Paid by"
-                    className="grid grid-cols-2 gap-3"
-                  >
-                    {PAYMENT_OPTIONS.map((option) => {
-                      const checked = paymentType === option.value;
-                      return (
-                        <label
-                          key={option.value}
-                          className={cn(
-                            "flex cursor-pointer items-start gap-3 border px-4 py-3 transition-colors has-focus-visible:ring-2 has-focus-visible:ring-(--brand-green)/30",
-                            checked
-                              ? "border-(--brand-green) bg-[rgba(47,78,64,0.05)]"
-                              : "border-[rgba(47,78,64,0.18)] bg-white hover:border-(--brand-green)",
-                            isUnlinkedPayment &&
-                              "cursor-not-allowed opacity-60 hover:border-[rgba(47,78,64,0.18)]",
-                            errors.paymentType &&
-                              !checked &&
-                              "border-[#9a3412]",
-                          )}
-                        >
-                          <input
-                            type="radio"
-                            name="ledger-payment-type"
-                            value={option.value}
-                            checked={checked}
-                            disabled={isUnlinkedPayment}
-                            onChange={() => {
-                              setPaymentType(option.value);
-                              clearError("paymentType");
-                            }}
-                            className="sr-only"
-                          />
-                          <span
-                            aria-hidden
-                            className={cn(
-                              "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border",
-                              checked
-                                ? "border-(--brand-green)"
-                                : "border-[rgba(47,78,64,0.35)]",
-                            )}
-                          >
-                            {checked && (
-                              <span className="h-2 w-2 rounded-full bg-(--brand-green)" />
-                            )}
-                          </span>
-                          <span className="min-w-0">
-                            <span className="block font-(family-name:--font-dm-sans) text-sm font-semibold text-(--brand-ink)">
-                              {option.label}
-                            </span>
-                            <span className="mt-0.5 block font-(family-name:--font-dm-sans) text-xs text-[rgba(47,78,64,0.55)]">
-                              {option.hint}
-                            </span>
-                          </span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                </AccountingFormField>
-              )}
+        {isSupplierPayment && (
+          <AccountingFormSection title="Payment">
+            <AccountingFormField
+              label="Paid by"
+              required
+              error={errors.paymentType}
+            >
+              <ChoiceCards
+                name="ledger-payment-type"
+                label="Paid by"
+                value={paymentType}
+                onChange={(v) => {
+                  setPaymentType(v);
+                  clearError("paymentType");
+                }}
+                options={PAYMENT_OPTIONS}
+                disabled={isUnlinkedPayment}
+                invalid={!!errors.paymentType}
+              />
+            </AccountingFormField>
 
-              {isBankPayment && !isUnlinkedPayment && (
-                <AccountingFormField
-                  label="Paid from account"
-                  required
-                  error={errors.bankAccountID}
-                >
-                  <SearchableSelect
-                    value={effectiveBankAccountId}
-                    onChange={(v, label) => {
-                      setBankAccountId(v);
-                      setBankAccountLabel(label);
-                      clearError("bankAccountID");
-                    }}
-                    onSearch={searchBankAccounts}
-                    selectedLabel={effectiveBankAccountLabel}
-                    placeholder="Search bank accounts…"
-                  />
-                </AccountingFormField>
-              )}
-
-              {spec.accountGroup && (
-                <AccountingFormField
-                  label="Account group"
-                  optional
-                  error={errors.accountGroupID}
-                >
-                  <SearchableSelect
-                    value={accountGroupId || ROOT_OPTION_VALUE}
-                    onChange={(v) => {
-                      setAccountGroupId(v === ROOT_OPTION_VALUE ? "" : v);
-                      clearError("accountGroupID");
-                    }}
-                    onSearch={searchGroups}
-                    selectedLabel={
-                      accountGroupId
-                        ? getPathLabel(groupsById, accountGroupId) ||
-                          entry?.accountGroupName ||
-                          ""
-                        : NO_GROUP_LABEL
-                    }
-                    placeholder="Search groups…"
-                    debounceMs={0}
-                  />
-                </AccountingFormField>
-              )}
-
+            {isBankPayment && !isUnlinkedPayment && (
               <AccountingFormField
-                label="Narration"
-                htmlFor="ledger-description"
-                optional
-                error={errors.description}
+                label="Paid from account"
+                required
+                error={errors.bankAccountID}
               >
-                <textarea
-                  id="ledger-description"
-                  placeholder="e.g. Payment for Invoice #1023"
-                  rows={3}
-                  value={description}
-                  onChange={(e) => {
-                    setDescription(e.target.value);
-                    clearError("description");
+                <SearchableSelect
+                  value={effectiveBankAccountId}
+                  onChange={(v, label) => {
+                    setBankAccountId(v);
+                    setBankAccountLabel(label);
+                    clearError("bankAccountID");
                   }}
-                  className={cn(
-                    accountingFieldInputClass,
-                    "resize-none",
-                    errors.description && "border-[#9a3412]",
-                  )}
+                  onSearch={searchBankAccounts}
+                  selectedLabel={effectiveBankAccountLabel}
+                  placeholder="Search bank accounts…"
                 />
               </AccountingFormField>
-            </>
-          )}
-        </AccountingFormSection>
+            )}
+          </AccountingFormSection>
+        )}
+
+        {spec && (
+          <AccountingFormSection title="Details">
+            {spec.accountGroup && (
+              <AccountingFormField
+                label="Account group"
+                optional
+                error={errors.accountGroupID}
+              >
+                <SearchableSelect
+                  value={accountGroupId || ROOT_OPTION_VALUE}
+                  onChange={(v) => {
+                    setAccountGroupId(v === ROOT_OPTION_VALUE ? "" : v);
+                    clearError("accountGroupID");
+                  }}
+                  onSearch={searchGroups}
+                  selectedLabel={
+                    accountGroupId
+                      ? getPathLabel(groupsById, accountGroupId) ||
+                        entry?.accountGroupName ||
+                        ""
+                      : NO_GROUP_LABEL
+                  }
+                  placeholder="Search groups…"
+                  debounceMs={0}
+                />
+              </AccountingFormField>
+            )}
+
+            <AccountingFormField
+              label="Narration"
+              htmlFor="ledger-description"
+              optional
+              error={errors.description}
+            >
+              <textarea
+                id="ledger-description"
+                placeholder="e.g. Payment for Invoice #1023"
+                rows={3}
+                value={description}
+                onChange={(e) => {
+                  setDescription(e.target.value);
+                  clearError("description");
+                }}
+                className={cn(
+                  accountingFieldInputClass,
+                  "resize-none",
+                  errors.description && "border-[#9a3412]",
+                )}
+              />
+            </AccountingFormField>
+          </AccountingFormSection>
+        )}
       </form>
     </AdminDrawer>
   );

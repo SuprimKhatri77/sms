@@ -1,6 +1,11 @@
 "use client";
 
-import { Loader2, Pencil, Trash2 } from "lucide-react";
+import { Loader2, Lock, Pencil, Trash2 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { LEDGER_TYPES, type LedgerEntry, type LedgerSource } from "@repo/types";
 import {
   adminDangerIconButtonClass,
@@ -20,6 +25,18 @@ const SOURCE_LABELS: Partial<Record<LedgerSource, string>> = {
   purchase: "Auto · purchase",
   student_payment: "Auto · student payment",
   supplier_payment: "Auto · supplier payment",
+};
+
+// why an automatic entry has no Edit/Delete, and where to change it (the
+// API's pkg/ledger.LockedMessage says the same)
+const LOCKED_MESSAGES: Record<LedgerSource, string> = {
+  manual: "",
+  purchase:
+    "Recorded by a purchase. Edit or delete the purchase and this follows.",
+  student_payment:
+    "Recorded by a student payment, so it can't be changed here.",
+  supplier_payment:
+    "The cash/bank side of a supplier payment. Edit or delete the supplier entry and this follows.",
 };
 
 // how a supplier payment was made
@@ -218,6 +235,32 @@ export function LedgersTable({
                               strokeWidth={1.75}
                             />
                           </button>
+                        </div>
+                      )}
+                      {entry.source !== "manual" && (
+                        <div className="flex justify-end">
+                          <Tooltip>
+                            <TooltipTrigger
+                              render={
+                                <span
+                                  tabIndex={0}
+                                  aria-label={LOCKED_MESSAGES[entry.source]}
+                                  className="inline-flex h-8 w-8 items-center justify-center text-[rgba(47,78,64,0.35)] outline-none focus-visible:ring-2 focus-visible:ring-(--brand-green)/30"
+                                >
+                                  <Lock
+                                    className="h-3.5 w-3.5"
+                                    strokeWidth={1.75}
+                                  />
+                                </span>
+                              }
+                            />
+                            <TooltipContent
+                              side="left"
+                              className="max-w-[240px]"
+                            >
+                              {LOCKED_MESSAGES[entry.source]}
+                            </TooltipContent>
+                          </Tooltip>
                         </div>
                       )}
                     </td>
