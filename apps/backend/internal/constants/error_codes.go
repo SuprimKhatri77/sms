@@ -92,6 +92,24 @@ const (
 	MissingSupplierID    = "MISSING_SUPPLIER_ID"
 	StockNotFound        = "STOCK_NOT_FOUND"
 
+	// primary heads
+	PrimaryHeadAlreadyExists     = "PRIMARY_HEAD_ALREADY_EXISTS"
+	PrimaryHeadCodeAlreadyExists = "PRIMARY_HEAD_CODE_ALREADY_EXISTS"
+	PrimaryHeadNotFound          = "PRIMARY_HEAD_NOT_FOUND"
+	ParentPrimaryHeadNotFound    = "PARENT_PRIMARY_HEAD_NOT_FOUND"
+	PrimaryHeadCircularParent    = "PRIMARY_HEAD_CIRCULAR_PARENT"
+	PrimaryHeadHasSubHeads       = "PRIMARY_HEAD_HAS_SUB_HEADS"
+	PrimaryHeadHasAccountGroups  = "PRIMARY_HEAD_HAS_ACCOUNT_GROUPS"
+
+	// account groups
+	AccountGroupAlreadyExists     = "ACCOUNT_GROUP_ALREADY_EXISTS"
+	AccountGroupCodeAlreadyExists = "ACCOUNT_GROUP_CODE_ALREADY_EXISTS"
+	AccountGroupNotFound          = "ACCOUNT_GROUP_NOT_FOUND"
+	ParentAccountGroupNotFound    = "PARENT_ACCOUNT_GROUP_NOT_FOUND"
+	AccountGroupCircularParent    = "ACCOUNT_GROUP_CIRCULAR_PARENT"
+	AccountGroupHasSubGroups      = "ACCOUNT_GROUP_HAS_SUB_GROUPS"
+	SubGroupCannotHavePrimaryHead = "SUB_GROUP_CANNOT_HAVE_PRIMARY_HEAD"
+
 	// certificates
 	CertificateAlreadyExists = "CERTIFICATE_ALREADY_EXISTS"
 	CertificateNotFound      = "CERTIFICATE_NOT_FOUND"
