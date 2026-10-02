@@ -34,6 +34,8 @@ import {
   Wallet,
   Percent,
   GraduationCap,
+  FolderTree,
+  Network,
 } from "lucide-react";
 import { siteInfo } from "@/utils/site-info";
 
@@ -118,6 +120,8 @@ const navSections = [
   {
     label: "Accounting",
     items: [
+      { title: "Primary Heads", url: "/primary-heads", icon: <Network /> },
+      { title: "Account Groups", url: "/account-groups", icon: <FolderTree /> },
       {
         title: "Banks",
         url: "/banks",

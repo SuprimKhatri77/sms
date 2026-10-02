@@ -33,6 +33,8 @@ const LABELS: Record<string, string> = {
   ledger: "Ledger",
   suppliers: "Suppliers",
   "cash-ledger": "Cash Ledger",
+  "primary-heads": "Primary Heads",
+  "account-groups": "Account Groups",
   "certificate-preview": "Certificate Preview",
   certificate: "Certificate",
 };

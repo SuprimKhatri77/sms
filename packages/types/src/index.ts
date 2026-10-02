@@ -247,6 +247,26 @@ export {
 } from "./admin/accounting/supplier_ledger";
 
 export {
+  primaryHeadInputSchema,
+  type PrimaryHead,
+  type PrimaryHeadInput,
+  type GetPrimaryHeadsResponse,
+  type CreatePrimaryHeadResponse,
+  type UpdatePrimaryHeadResponse,
+  type DeletePrimaryHeadResponse,
+} from "./admin/accounting/primary_heads";
+
+export {
+  accountGroupInputSchema,
+  type AccountGroup,
+  type AccountGroupInput,
+  type GetAccountGroupsResponse,
+  type CreateAccountGroupResponse,
+  type UpdateAccountGroupResponse,
+  type DeleteAccountGroupResponse,
+} from "./admin/accounting/account_groups";
+
+export {
   type BatchResponse,
   type GetDistinctBatchesResponse,
 } from "./admin/students/batch";
