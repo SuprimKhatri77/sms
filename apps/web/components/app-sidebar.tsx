@@ -35,6 +35,7 @@ import {
   Percent,
   GraduationCap,
   FolderTree,
+  Tags,
   Network,
 } from "lucide-react";
 import { siteInfo } from "@/utils/site-info";
@@ -103,6 +104,7 @@ const navSections = [
     label: "Inventory",
     items: [
       { title: "Products", url: "/inventory/products", icon: <Package /> },
+      { title: "Categories", url: "/inventory/categories", icon: <Tags /> },
       {
         title: "Purchase",
         url: "/inventory/purchase",

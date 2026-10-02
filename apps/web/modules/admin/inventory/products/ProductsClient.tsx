@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { CalendarDays, Plus, Search } from "lucide-react";
 import { useDebounce } from "@/modules/admin/analytics/hooks/useDebounce";
@@ -35,6 +35,7 @@ import {
   CreateProductResponse,
   DeleteProductResponse,
   GetProductResponse,
+  ProductCategory,
   UpdateProductResponse,
 } from "@repo/types";
 import ProductsLoading from "./ProductsLoading";
@@ -43,8 +44,14 @@ import api from "@/lib/axios";
 import axios from "axios";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { BSToAD } from "bikram-sambat-js";
+import { useProductCategories } from "@/hooks/queries/admin/product_categories/useProductCategories";
+import { invalidateInventoryCategoryViews } from "@/lib/inventory-cache";
+import { queryKeys } from "@/lib/query-keys";
+import { getPathLabel } from "@/components/admin/hierarchy/tree";
 
 type Product = Extract<GetProductResponse, { success: true }>["data"][number];
+
+const NO_CATEGORIES: ProductCategory[] = [];
 
 export function ProductsClient() {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -109,6 +116,14 @@ export function ProductsClient() {
     staleTime: 10 * 1000 * 60,
     gcTime: 20 * 60 * 1000,
   });
+  const { data: categories = NO_CATEGORIES } = useProductCategories();
+  const categoriesById = useMemo(
+    () => new Map(categories.map((c) => [c.id, c])),
+    [categories],
+  );
+  const categoryPathFor = (categoryId: string) =>
+    categoryId ? getPathLabel(categoriesById, categoryId) || null : null;
+
   const createProduct = useMutation({
     mutationFn: async (data: CreateProductInput) => {
       try {
@@ -136,6 +151,8 @@ export function ProductsClient() {
         name: data.name,
         unit: data.unit,
         createdAt: new Date(),
+        categoryId: data.categoryId || null,
+        categoryPath: categoryPathFor(data.categoryId),
       };
 
       queryClient.setQueryData<GetProductResponse>(
@@ -160,7 +177,12 @@ export function ProductsClient() {
           return {
             ...old,
             data: old.data.map((p) =>
-              p.id === context.optimisticProduct.id ? { ...result.data } : p,
+              p.id === context.optimisticProduct.id
+                ? {
+                    ...result.data,
+                    categoryPath: context.optimisticProduct.categoryPath,
+                  }
+                : p,
             ),
           };
         },
@@ -177,6 +199,10 @@ export function ProductsClient() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-inventory-products"] });
+      // Category product counts change too.
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.productCategories.all,
+      });
     },
   });
 
@@ -210,6 +236,8 @@ export function ProductsClient() {
         name: data.name,
         unit: data.unit,
         createdAt: editingProduct?.createdAt ?? new Date(),
+        categoryId: data.categoryId || null,
+        categoryPath: categoryPathFor(data.categoryId),
       };
 
       queryClient.setQueryData<GetProductResponse>(
@@ -239,7 +267,9 @@ export function ProductsClient() {
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-inventory-products"] });
+      // The product's category path also shows on purchase, sales, wastage
+      // and summary, and category product counts may change.
+      invalidateInventoryCategoryViews(queryClient);
     },
   });
 
@@ -256,8 +286,9 @@ export function ProductsClient() {
       await queryClient.cancelQueries({
         queryKey: ["admin-inventory-products", page],
       });
-      const previousProducts = queryClient.getQueryData([
+      const previousProducts = queryClient.getQueryData<GetProductResponse>([
         "admin-inventory-products",
+        page,
       ]);
 
       queryClient.setQueryData<GetProductResponse>(
@@ -276,16 +307,23 @@ export function ProductsClient() {
       toast.success(result.message);
       setIsDeleting(false);
     },
-    onError: (__, _, context) => {
+    onError: (error, _, context) => {
       if (context?.previousProducts) {
         queryClient.setQueryData(
           ["admin-inventory-products", page],
           context.previousProducts,
         );
       }
+      // e.g. the product still has purchase or sale records.
+      toast.error(error.message ?? "Something went wrong");
+      setIsDeleting(false);
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-inventory-products"] });
+      // Category product counts change too.
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.productCategories.all,
+      });
     },
   });
 
@@ -475,6 +513,7 @@ export function ProductsClient() {
         onClose={() => setDialogOpen(false)}
         onSubmit={handleSubmit}
         editingProduct={editingProduct}
+        categories={categories}
       />
 
       <ConfirmDialog

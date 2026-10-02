@@ -56,6 +56,16 @@ const (
 	ProductNotFound      = "PRODUCT_NOT_FOUND"
 	MissingProductID     = "MISSING_PRODUCT_ID"
 
+	ProductHasTransactions = "PRODUCT_HAS_TRANSACTIONS"
+
+	// product categories
+	ProductCategoryAlreadyExists = "PRODUCT_CATEGORY_ALREADY_EXISTS"
+	ProductCategoryNotFound      = "PRODUCT_CATEGORY_NOT_FOUND"
+	ParentProductCategoryMissing = "PARENT_PRODUCT_CATEGORY_NOT_FOUND"
+	ProductCategoryCircular      = "PRODUCT_CATEGORY_CIRCULAR_PARENT"
+	ProductCategoryHasChildren   = "PRODUCT_CATEGORY_HAS_SUB_CATEGORIES"
+	ProductCategoryHasProducts   = "PRODUCT_CATEGORY_HAS_PRODUCTS"
+
 	MissingStockID = "MISSING_STOCK_ID"
 
 	MissingWastageID = "MISSING_WASTAGE_ID"

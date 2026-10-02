@@ -39,8 +39,9 @@ func CreateProduct(queries repository.InventoryRepository) gin.HandlerFunc {
 		utils.TrimStruct(&req)
 
 		product, err := queries.CreateProduct(ctx, db.CreateProductParams{
-			Name: req.Name,
-			Unit: req.Unit,
+			Name:       req.Name,
+			Unit:       req.Unit,
+			CategoryID: utils.ToNullableUUID(req.CategoryID),
 		})
 
 		if err != nil {
@@ -52,6 +53,21 @@ func CreateProduct(queries repository.InventoryRepository) gin.HandlerFunc {
 					Success: false,
 					Message: "Product already exists",
 					Code:    constants.ProductAlreadyExists,
+				})
+				return
+			}
+			if errors.As(err, &pgErr) && pgErr.Code == "23503" && pgErr.ConstraintName == "products_category_id_fkey" {
+				applog.Warn(c, handlerCreateProduct, "category not found",
+					slog.Any(applog.AttrError, err))
+				c.JSON(http.StatusBadRequest, types.APIResponse{
+					Success: false,
+					Message: "Category not found",
+					Code:    constants.ProductCategoryNotFound,
+					Errors: []types.AppError{{
+						Code:    constants.ProductCategoryNotFound,
+						Field:   "categoryId",
+						Message: "Category not found",
+					}},
 				})
 				return
 			}

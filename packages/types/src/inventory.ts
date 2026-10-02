@@ -6,12 +6,16 @@ export const productSchema = z.object({
   name: z.string(),
   unit: z.string(),
   createdAt: z.date(),
+  categoryId: z.uuid().nullable(),
 });
+
+// Full category path ("Clothing › Men › Pants"); null when uncategorised.
+const categoryPathSchema = z.string().nullable();
 
 export const getProductsResponseSchema = z.discriminatedUnion("success", [
   z.object({
     success: z.literal(true),
-    data: z.array(productSchema),
+    data: z.array(productSchema.extend({ categoryPath: categoryPathSchema })),
     meta: z.object({
       total: z.number(),
       totalPages: z.number(),
@@ -31,6 +35,8 @@ export type GetProductResponse = z.infer<typeof getProductsResponseSchema>;
 export const createProductSchema = z.object({
   name: z.string().min(1, "Name is required").max(50),
   unit: z.string().min(1, "unit is required").max(20),
+  // "" means no category.
+  categoryId: z.uuid().or(z.literal("")),
 });
 
 export const createProductResponseSchema = z.discriminatedUnion("success", [
@@ -205,6 +211,7 @@ export const listStockInResponse = z.discriminatedUnion("success", [
       stockInSchema.extend({
         productUnit: z.string(),
         productName: z.string(),
+        categoryPath: categoryPathSchema,
         supplierId: z.uuid(),
         supplierName: z.string(),
       }),
@@ -257,6 +264,7 @@ export const listStockOutResponse = z.discriminatedUnion("success", [
       stockOutSchema.extend({
         productUnit: z.string(),
         productName: z.string(),
+        categoryPath: categoryPathSchema,
       }),
     ),
     meta: z.object({
@@ -356,6 +364,7 @@ const wastageRecordSchema = z.object({
   productId: z.uuid(),
   productName: z.string(),
   productUnit: z.string(),
+  categoryPath: categoryPathSchema,
   qty: z.number().gt(0),
   date: z.string(),
   rate: z.number().gt(0),
@@ -461,6 +470,7 @@ export const inventorySummarySchema = z.object({
   productId: z.uuid(),
   productName: z.string(),
   productUnit: z.string(),
+  categoryPath: categoryPathSchema,
   stockInQty: z.number(),
   stockOutQty: z.number(),
   wastageQty: z.number(),

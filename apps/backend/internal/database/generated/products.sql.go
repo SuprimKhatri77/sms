@@ -8,40 +8,42 @@ package db
 import (
 	"context"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createProduct = `-- name: CreateProduct :one
-INSERT INTO products (name, unit)
-VALUES ($1, $2)
-RETURNING id, name, unit, created_at
+INSERT INTO products (name, unit, category_id)
+VALUES ($1, $2, $3)
+RETURNING id, name, unit, created_at, category_id
 `
 
 type CreateProductParams struct {
-	Name string `json:"name"`
-	Unit string `json:"unit"`
+	Name       string      `json:"name"`
+	Unit       string      `json:"unit"`
+	CategoryID pgtype.UUID `json:"categoryId"`
 }
 
 func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (Product, error) {
-	row := q.db.QueryRow(ctx, createProduct, arg.Name, arg.Unit)
+	row := q.db.QueryRow(ctx, createProduct, arg.Name, arg.Unit, arg.CategoryID)
 	var i Product
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
 		&i.Unit,
 		&i.CreatedAt,
+		&i.CategoryID,
 	)
 	return i, err
 }
 
-const deleteProduct = `-- name: DeleteProduct :exec
+const deleteProduct = `-- name: DeleteProduct :execresult
 DELETE FROM products
 WHERE id = $1
 `
 
-func (q *Queries) DeleteProduct(ctx context.Context, id pgtype.UUID) error {
-	_, err := q.db.Exec(ctx, deleteProduct, id)
-	return err
+func (q *Queries) DeleteProduct(ctx context.Context, id pgtype.UUID) (pgconn.CommandTag, error) {
+	return q.db.Exec(ctx, deleteProduct, id)
 }
 
 const getLatestStockInRateForProduct = `-- name: GetLatestStockInRateForProduct :one
@@ -59,7 +61,7 @@ func (q *Queries) GetLatestStockInRateForProduct(ctx context.Context, productID 
 }
 
 const getProductByID = `-- name: GetProductByID :one
-SELECT id, name, unit, created_at FROM products
+SELECT id, name, unit, created_at, category_id FROM products
 WHERE id = $1
 `
 
@@ -71,12 +73,13 @@ func (q *Queries) GetProductByID(ctx context.Context, id pgtype.UUID) (Product, 
 		&i.Name,
 		&i.Unit,
 		&i.CreatedAt,
+		&i.CategoryID,
 	)
 	return i, err
 }
 
 const getProductByName = `-- name: GetProductByName :one
-SELECT id, name, unit, created_at FROM products
+SELECT id, name, unit, created_at, category_id FROM products
 WHERE name = $1
 `
 
@@ -88,6 +91,7 @@ func (q *Queries) GetProductByName(ctx context.Context, name string) (Product, e
 		&i.Name,
 		&i.Unit,
 		&i.CreatedAt,
+		&i.CategoryID,
 	)
 	return i, err
 }
@@ -114,7 +118,11 @@ func (q *Queries) GetProductCount(ctx context.Context, arg GetProductCountParams
 }
 
 const listProducts = `-- name: ListProducts :many
-SELECT id, name, unit, created_at FROM products
+SELECT
+    products.id, products.name, products.unit, products.created_at, products.category_id,
+    cp.path AS category_path
+FROM products
+LEFT JOIN product_category_paths cp ON cp.category_id = products.category_id
 WHERE
     ($1::TEXT IS NULL OR name ILIKE '%' || $1::TEXT || '%')
     AND ($2::DATE IS NULL OR created_at::DATE >= $2::DATE)
@@ -131,7 +139,16 @@ type ListProductsParams struct {
 	Limit  pgtype.Int4 `json:"limit"`
 }
 
-func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]Product, error) {
+type ListProductsRow struct {
+	ID           pgtype.UUID        `json:"id"`
+	Name         string             `json:"name"`
+	Unit         string             `json:"unit"`
+	CreatedAt    pgtype.Timestamptz `json:"createdAt"`
+	CategoryID   pgtype.UUID        `json:"categoryId"`
+	CategoryPath pgtype.Text        `json:"categoryPath"`
+}
+
+func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]ListProductsRow, error) {
 	rows, err := q.db.Query(ctx, listProducts,
 		arg.Name,
 		arg.From,
@@ -143,14 +160,16 @@ func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]P
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Product
+	var items []ListProductsRow
 	for rows.Next() {
-		var i Product
+		var i ListProductsRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Name,
 			&i.Unit,
 			&i.CreatedAt,
+			&i.CategoryID,
+			&i.CategoryPath,
 		); err != nil {
 			return nil, err
 		}
@@ -164,25 +183,32 @@ func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]P
 
 const updateProduct = `-- name: UpdateProduct :one
 UPDATE products
-SET name = $2, unit = $3
+SET name = $2, unit = $3, category_id = $4
 WHERE id = $1
-RETURNING id, name, unit, created_at
+RETURNING id, name, unit, created_at, category_id
 `
 
 type UpdateProductParams struct {
-	ID   pgtype.UUID `json:"id"`
-	Name string      `json:"name"`
-	Unit string      `json:"unit"`
+	ID         pgtype.UUID `json:"id"`
+	Name       string      `json:"name"`
+	Unit       string      `json:"unit"`
+	CategoryID pgtype.UUID `json:"categoryId"`
 }
 
 func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error) {
-	row := q.db.QueryRow(ctx, updateProduct, arg.ID, arg.Name, arg.Unit)
+	row := q.db.QueryRow(ctx, updateProduct,
+		arg.ID,
+		arg.Name,
+		arg.Unit,
+		arg.CategoryID,
+	)
 	var i Product
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
 		&i.Unit,
 		&i.CreatedAt,
+		&i.CategoryID,
 	)
 	return i, err
 }

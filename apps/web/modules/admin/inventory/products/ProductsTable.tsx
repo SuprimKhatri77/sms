@@ -14,6 +14,7 @@ import {
   inventoryTdClass,
   inventoryThClass,
 } from "../shared/inventory-styles";
+import { CategoryCell } from "../shared/CategoryCell";
 
 type Product = Extract<GetProductResponse, { success: true }>["data"][number];
 
@@ -35,6 +36,7 @@ export function ProductsTable({
           <thead>
             <tr>
               <th className={inventoryThClass}>Name</th>
+              <th className={inventoryThClass}>Category</th>
               <th className={inventoryThClass}>Unit</th>
               <th className={inventoryThClass}>Created</th>
               <th className={`${inventoryThClass} text-right`}>Actions</th>
@@ -49,6 +51,7 @@ export function ProductsTable({
                 <td className={`${inventoryTdClass} font-medium`}>
                   {product.name}
                 </td>
+                <CategoryCell path={product.categoryPath} />
                 <td className={`${inventoryTdClass} text-[rgba(47,78,64,0.6)]`}>
                   {product.unit}
                 </td>

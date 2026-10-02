@@ -95,6 +95,7 @@ func ExportWastage(queries repository.InventoryRepository) gin.HandlerFunc {
 			amount := utils.LineAmount(w.Qty, w.Rate)
 			rows = append(rows, []any{
 				w.ProductName,
+				w.CategoryPath.String,
 				export.Number(w.Qty),
 				w.ProductUnit,
 				export.Money(w.Rate),
@@ -115,6 +116,7 @@ func ExportWastage(queries repository.InventoryRepository) gin.HandlerFunc {
 			),
 			Columns: []export.Column{
 				{Header: "Product", Width: 24},
+				{Header: "Category", Width: 18},
 				{Header: "Qty", Numeric: true, Width: 8},
 				{Header: "Unit", Width: 8},
 				{Header: "Rate", Money: true, Width: 11},
@@ -124,7 +126,7 @@ func ExportWastage(queries repository.InventoryRepository) gin.HandlerFunc {
 				{Header: "Date (BS)", Width: 11},
 			},
 			Rows:   rows,
-			Totals: []any{fmt.Sprintf("Total (%d entries)", len(rows)), "", "", "", export.Money(sum), "", "", ""},
+			Totals: []any{fmt.Sprintf("Total (%d entries)", len(rows)), "", "", "", "", export.Money(sum), "", "", ""},
 		}
 
 		if err := export.Write(c, export.Format(params.Format), "wastage", table); err != nil {

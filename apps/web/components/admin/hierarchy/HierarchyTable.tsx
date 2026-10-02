@@ -13,7 +13,7 @@ import {
   accountingTableWrapClass,
   accountingTdClass,
   accountingThClass,
-} from "./accounting-styles";
+} from "@/modules/admin/accounting/shared/accounting-styles";
 import type { TreeItem, TreeRow } from "./tree";
 
 export type HierarchyColumn<T> = {
@@ -27,6 +27,8 @@ type HierarchyTableProps<T extends TreeItem> = {
   /** While searching every row is expanded, so the chevrons are inert. */
   searching: boolean;
   onToggle: (id: string) => void;
+  /** Hide for hierarchies without codes (e.g. product categories). */
+  showCode?: boolean;
   /** Extra columns rendered between Code and Description. */
   columns?: HierarchyColumn<T>[];
   canManage: boolean;
@@ -46,6 +48,7 @@ export function HierarchyTable<T extends TreeItem>({
   collapsed,
   searching,
   onToggle,
+  showCode = true,
   columns = [],
   canManage,
   childNoun,
@@ -60,7 +63,7 @@ export function HierarchyTable<T extends TreeItem>({
           <thead>
             <tr>
               <th className={accountingThClass}>Name</th>
-              <th className={accountingThClass}>Code</th>
+              {showCode ? <th className={accountingThClass}>Code</th> : null}
               {columns.map((col) => (
                 <th key={col.header} className={accountingThClass}>
                   {col.header}
@@ -113,11 +116,13 @@ export function HierarchyTable<T extends TreeItem>({
                       </span>
                     </div>
                   </td>
-                  <td
-                    className={`${accountingTdClass} text-[rgba(47,78,64,0.7)]`}
-                  >
-                    {item.code ?? emptyCell}
-                  </td>
+                  {showCode ? (
+                    <td
+                      className={`${accountingTdClass} text-[rgba(47,78,64,0.7)]`}
+                    >
+                      {item.code ?? emptyCell}
+                    </td>
+                  ) : null}
                   {columns.map((col) => (
                     <td key={col.header} className={accountingTdClass}>
                       {col.render(item)}

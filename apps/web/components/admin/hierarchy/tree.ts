@@ -6,7 +6,8 @@ export type TreeItem = {
   id: string;
   parentId: string | null;
   name: string;
-  code: string | null;
+  /** Not every hierarchy has codes (e.g. product categories). */
+  code?: string | null;
   description: string | null;
 };
 

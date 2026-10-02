@@ -91,6 +91,7 @@ func ExportInventorySummary(queries repository.InventoryRepository) gin.HandlerF
 
 			rows = append(rows, []any{
 				s.ProductName,
+				s.CategoryPath.String,
 				s.ProductUnit,
 				export.Number(values[0]), export.Money(inAmt),
 				export.Number(values[2]), export.Money(outAmt),
@@ -108,6 +109,7 @@ func ExportInventorySummary(queries repository.InventoryRepository) gin.HandlerF
 			Meta:  export.Filters(export.BSDateRange(params.From, params.To)),
 			Columns: []export.Column{
 				{Header: "Product", Width: 22},
+				{Header: "Category", Width: 18},
 				{Header: "Unit", Width: 8},
 				{Header: "Purchase Qty", Numeric: true, Width: 11},
 				{Header: "Purchase Amt", Money: true, Width: 13},
@@ -120,7 +122,7 @@ func ExportInventorySummary(queries repository.InventoryRepository) gin.HandlerF
 			},
 			Rows: rows,
 			Totals: []any{
-				fmt.Sprintf("Total (%d products)", len(rows)), "",
+				fmt.Sprintf("Total (%d products)", len(rows)), "", "",
 				"", export.Money(inSum),
 				"", export.Money(outSum),
 				"", export.Money(wasteSum),

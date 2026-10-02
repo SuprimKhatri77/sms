@@ -9,7 +9,8 @@ import {
   GetProductResponse,
 } from "@repo/types/inventory";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import type { ProductCategory } from "@repo/types";
 import { AdminDrawer } from "@/components/admin/admin-drawer";
 import {
   adminPrimaryButtonClass,
@@ -21,6 +22,14 @@ import {
   InventoryFormField,
   inventoryFieldInputClass,
 } from "../shared/InventoryFormField";
+import { SearchableSelect } from "../shared/SearchableSelect";
+import {
+  buildTreeOptions,
+  getPathLabel,
+  ROOT_OPTION_VALUE,
+} from "@/components/admin/hierarchy/tree";
+
+const NO_CATEGORY_LABEL = "No category";
 
 type Product = Extract<GetProductResponse, { success: true }>["data"][number];
 type BackendError = Extract<CreateProductResponse, { success: false }>;
@@ -30,6 +39,7 @@ type ProductDialogProps = {
   onClose: () => void;
   onSubmit: (values: CreateProductInput) => Promise<void>;
   editingProduct?: Product | null;
+  categories: ProductCategory[];
 };
 type ProductFields = keyof CreateProductInput;
 
@@ -38,6 +48,7 @@ export function ProductDialog({
   onClose,
   onSubmit,
   editingProduct,
+  categories,
 }: ProductDialogProps) {
   const [backendErrors, setBackendErrors] = useState<
     Partial<Record<ProductFields, string>>
@@ -47,6 +58,7 @@ export function ProductDialog({
     defaultValues: {
       name: editingProduct?.name ?? "",
       unit: editingProduct?.unit ?? "pieces",
+      categoryId: editingProduct?.categoryId ?? "",
     },
     validators: {
       onSubmit: createProductSchema,
@@ -72,6 +84,16 @@ export function ProductDialog({
       }
     },
   });
+
+  const categoriesById = useMemo(
+    () => new Map(categories.map((c) => [c.id, c])),
+    [categories],
+  );
+  const searchCategories = useCallback(
+    async (query: string) =>
+      buildTreeOptions(categories, query, { rootLabel: NO_CATEGORY_LABEL }),
+    [categories],
+  );
 
   const handleClose = () => {
     form.reset();
@@ -167,6 +189,37 @@ export function ProductDialog({
                     setBackendErrors((prev) => ({ ...prev, unit: undefined }));
                   }}
                   onBlur={field.handleBlur}
+                />
+              </InventoryFormField>
+            );
+          }}
+        </form.Field>
+
+        <form.Field name="categoryId">
+          {(field) => {
+            const mergedError =
+              field.state.meta.errors[0]?.message ?? backendErrors.categoryId;
+            return (
+              <InventoryFormField label="Category" optional error={mergedError}>
+                <SearchableSelect
+                  value={field.state.value || ROOT_OPTION_VALUE}
+                  onChange={(value) => {
+                    field.handleChange(
+                      value === ROOT_OPTION_VALUE ? "" : value,
+                    );
+                    setBackendErrors((prev) => ({
+                      ...prev,
+                      categoryId: undefined,
+                    }));
+                  }}
+                  onSearch={searchCategories}
+                  selectedLabel={
+                    field.state.value
+                      ? getPathLabel(categoriesById, field.state.value)
+                      : NO_CATEGORY_LABEL
+                  }
+                  placeholder="Search categories…"
+                  debounceMs={0}
                 />
               </InventoryFormField>
             );

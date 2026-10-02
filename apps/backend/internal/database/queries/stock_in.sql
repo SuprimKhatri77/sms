@@ -19,10 +19,12 @@ SELECT
     si.*,
     p.name AS product_name,
     p.unit AS product_unit,
+    cp.path AS category_path,
     s.company_name AS supplier_name
 FROM stock_in si
 JOIN products p ON p.id = si.product_id
 JOIN suppliers s ON s.id = si.supplier_id
+LEFT JOIN product_category_paths cp ON cp.category_id = p.category_id
 WHERE
     (sqlc.narg('search')::TEXT IS NULL OR (
         p.name ILIKE '%' || sqlc.narg('search')::TEXT || '%'

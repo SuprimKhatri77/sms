@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	db "github.com/suprimkhatri77/sms/backend/internal/database/generated"
@@ -13,8 +14,8 @@ type InventoryRepository interface {
 	// for admin/inventory/products
 	CreateProduct(ctx context.Context, params db.CreateProductParams) (db.Product, error)
 	UpdateProduct(ctx context.Context, params db.UpdateProductParams) (db.Product, error)
-	DeleteProduct(ctx context.Context, id pgtype.UUID) error
-	ListProducts(ctx context.Context, params db.ListProductsParams) ([]db.Product, error)
+	DeleteProduct(ctx context.Context, id pgtype.UUID) (pgconn.CommandTag, error)
+	ListProducts(ctx context.Context, params db.ListProductsParams) ([]db.ListProductsRow, error)
 	GetProductCount(ctx context.Context, params db.GetProductCountParams) (int64, error)
 
 	// for admin/inventory/purchase

@@ -12,6 +12,9 @@ export const queryKeys = {
     details: (id: string) => ["admin-bank-accounts", "detail", id] as const,
     dropdown: ["admin-bank-accounts", "dropdown"] as const,
   },
+  productCategories: {
+    all: ["admin-inventory-categories"] as const,
+  },
   primaryHeads: {
     all: ["admin-primary-heads"] as const,
   },

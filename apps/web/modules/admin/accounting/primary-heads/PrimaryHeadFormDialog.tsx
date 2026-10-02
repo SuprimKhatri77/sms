@@ -28,7 +28,7 @@ import {
   getPathLabel,
   getSubtreeIds,
   ROOT_OPTION_VALUE,
-} from "../shared/tree";
+} from "@/components/admin/hierarchy/tree";
 
 const ROOT_LABEL = "None (top-level head)";
 
