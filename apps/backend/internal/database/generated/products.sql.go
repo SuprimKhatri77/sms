@@ -120,7 +120,12 @@ func (q *Queries) GetProductCount(ctx context.Context, arg GetProductCountParams
 const listProducts = `-- name: ListProducts :many
 SELECT
     products.id, products.name, products.unit, products.created_at, products.category_id,
-    cp.path AS category_path
+    cp.path AS category_path,
+    (
+        COALESCE((SELECT SUM(si.qty) FROM stock_in si WHERE si.product_id = products.id), 0)
+        - COALESCE((SELECT SUM(so.qty) FROM stock_out so WHERE so.product_id = products.id), 0)
+        - COALESCE((SELECT SUM(w.qty) FROM wastage w WHERE w.product_id = products.id), 0)
+    )::FLOAT8 AS in_stock
 FROM products
 LEFT JOIN product_category_paths cp ON cp.category_id = products.category_id
 WHERE
@@ -146,6 +151,7 @@ type ListProductsRow struct {
 	CreatedAt    pgtype.Timestamptz `json:"createdAt"`
 	CategoryID   pgtype.UUID        `json:"categoryId"`
 	CategoryPath pgtype.Text        `json:"categoryPath"`
+	InStock      float64            `json:"inStock"`
 }
 
 func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]ListProductsRow, error) {
@@ -170,6 +176,7 @@ func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]L
 			&i.CreatedAt,
 			&i.CategoryID,
 			&i.CategoryPath,
+			&i.InStock,
 		); err != nil {
 			return nil, err
 		}

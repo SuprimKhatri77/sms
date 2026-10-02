@@ -31,6 +31,15 @@ export function formatAmount(cents: number): string {
 }
 
 /**
+ * qty × rate for one inventory line, in paisa, rounded half-up the same way
+ * the backend's utils.LineAmount does (qty is exact to 3 decimals).
+ */
+export function lineAmount(qty: number, ratePaisa: number): number {
+  const qtyThousandths = Math.round(qty * 1000);
+  return Math.floor((qtyThousandths * ratePaisa + 500) / 1000);
+}
+
+/**
  * Converts rupees (user input) to cents for backend storage.
  * e.g. 500 → 50000
  */

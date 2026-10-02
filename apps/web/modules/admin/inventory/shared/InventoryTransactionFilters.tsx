@@ -23,6 +23,8 @@ type InventoryTransactionFiltersProps = {
   onSearchChange: (value: string) => void;
   searchPlaceholder: string;
   searchLabel?: string;
+  /** What the price sort orders by; wastage has no rate, so it sorts by cost. */
+  priceSortLabel?: string;
   priceSort: "asc" | "desc" | "";
   onPriceSortChange: (value: "asc" | "desc" | "") => void;
   pendingFrom: string;
@@ -40,6 +42,7 @@ export function InventoryTransactionFilters({
   onSearchChange,
   searchPlaceholder,
   searchLabel = "Search",
+  priceSortLabel = "Sort by rate",
   priceSort,
   onPriceSortChange,
   pendingFrom,
@@ -74,7 +77,7 @@ export function InventoryTransactionFilters({
         </div>
 
         <div className="flex min-w-0 flex-col gap-1.5 md:col-span-2">
-          <span className={inventoryLabelClass}>Sort by rate</span>
+          <span className={inventoryLabelClass}>{priceSortLabel}</span>
           <Select
             value={priceSort}
             onValueChange={(v) => onPriceSortChange(v as "asc" | "desc" | "")}

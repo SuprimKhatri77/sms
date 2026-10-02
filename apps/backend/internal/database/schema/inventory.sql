@@ -48,7 +48,6 @@ CREATE TABLE wastage (
     product_id UUID NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
     date TEXT NOT NULL,              -- BS date string
     qty NUMERIC(12,3) NOT NULL CHECK (qty > 0),
-    rate INTEGER NOT NULL CHECK (rate > 0),
     reason TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

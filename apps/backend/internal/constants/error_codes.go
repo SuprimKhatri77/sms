@@ -66,9 +66,15 @@ const (
 	ProductCategoryHasChildren   = "PRODUCT_CATEGORY_HAS_SUB_CATEGORIES"
 	ProductCategoryHasProducts   = "PRODUCT_CATEGORY_HAS_PRODUCTS"
 
+	// a sale / wastage would use more stock than its product has on that date
+	InsufficientStock = "INSUFFICIENT_STOCK"
+	// another stock write moved the same row at the same time; retry
+	StockChangedConcurrently = "STOCK_CHANGED_CONCURRENTLY"
+
 	MissingStockID = "MISSING_STOCK_ID"
 
 	MissingWastageID = "MISSING_WASTAGE_ID"
+	WastageNotFound  = "WASTAGE_NOT_FOUND"
 
 	// student discounts
 	MissingStudentDiscountID = "MISSING_STUDENT_DISCOUNT_ID"

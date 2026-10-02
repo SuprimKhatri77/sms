@@ -90,7 +90,7 @@ func ExportStockOut(queries repository.InventoryRepository) gin.HandlerFunc {
 		}
 
 		rows := make([][]any, 0, len(stockOutList))
-		var sum int64
+		var sum, costSum int64
 		for _, s := range stockOutList {
 			amount := utils.LineAmount(s.Qty, s.Rate)
 			rows = append(rows, []any{
@@ -101,11 +101,14 @@ func ExportStockOut(queries repository.InventoryRepository) gin.HandlerFunc {
 				s.ProductUnit,
 				export.Money(s.Rate),
 				export.Money(amount),
+				export.Money(s.Cost),
+				export.Money(amount - s.Cost),
 				strings.TrimSpace(s.Note.String),
 				export.DateFromBS(s.Date),
 				s.Date,
 			})
 			sum += amount
+			costSum += s.Cost
 		}
 
 		table := export.Table{
@@ -123,12 +126,14 @@ func ExportStockOut(queries repository.InventoryRepository) gin.HandlerFunc {
 				{Header: "Unit", Width: 8},
 				{Header: "Rate", Money: true, Width: 11},
 				{Header: "Amount", Money: true, Width: 13},
+				{Header: "Cost", Money: true, Width: 13},
+				{Header: "Profit", Money: true, Width: 13},
 				{Header: "Note", Width: 24},
 				{Header: "Date (AD)", Width: 11},
 				{Header: "Date (BS)", Width: 11},
 			},
 			Rows:   rows,
-			Totals: []any{fmt.Sprintf("Total (%d sales)", len(rows)), "", "", "", "", "", export.Money(sum), "", "", ""},
+			Totals: []any{fmt.Sprintf("Total (%d sales)", len(rows)), "", "", "", "", "", export.Money(sum), export.Money(costSum), export.Money(sum - costSum), "", "", ""},
 		}
 
 		if err := export.Write(c, export.Format(params.Format), "sales", table); err != nil {

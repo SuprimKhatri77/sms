@@ -33,6 +33,7 @@ import {
 import { useAdminQueryRefresh } from "@/hooks/useAdminQueryRefresh";
 import { adminPrimaryButtonClass } from "@/components/admin/admin-styles";
 import { InventoryTransactionFilters } from "../shared/InventoryTransactionFilters";
+import { invalidateInventoryStockViews } from "@/lib/inventory-cache";
 
 type Purchase = Extract<
   ListStockInResponse,
@@ -104,9 +105,7 @@ export function PurchaseClient() {
     },
     onSuccess: (result) => {
       toast.success(result.message);
-      queryClient.invalidateQueries({
-        queryKey: ["admin-inventory-purchase", currentPage],
-      });
+      invalidateInventoryStockViews(queryClient);
     },
   });
   const updatePurchase = useMutation({
@@ -128,24 +127,27 @@ export function PurchaseClient() {
     },
     onSuccess: (result) => {
       toast.success(result.message);
-      queryClient.invalidateQueries({
-        queryKey: ["admin-inventory-purchase", currentPage],
-      });
+      invalidateInventoryStockViews(queryClient);
     },
   });
   const deletePurchase = useMutation({
     mutationFn: async (id: string) => {
-      const res = await api.delete<DeleteStockInResponse>(
-        `/admin/inventory/purchase/${id}`,
-      );
-      if (!res.data.success) throw res.data;
-      return res.data;
+      // surface the server's reason (e.g. stock already sold from this batch)
+      // rather than axios' "Request failed with status code 409"
+      try {
+        const res = await api.delete<DeleteStockInResponse>(
+          `/admin/inventory/purchase/${id}`,
+        );
+        if (!res.data.success) throw res.data;
+        return res.data;
+      } catch (err) {
+        if (axios.isAxiosError(err)) throw err.response?.data ?? err;
+        throw err;
+      }
     },
     onSuccess: (result) => {
       toast.success(result.message);
-      queryClient.invalidateQueries({
-        queryKey: ["admin-inventory-purchase", currentPage],
-      });
+      invalidateInventoryStockViews(queryClient);
     },
     onError: (error) => {
       toast.error(error.message);

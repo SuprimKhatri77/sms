@@ -11,6 +11,15 @@ const INVENTORY_LIST_KEYS = [
   ["admin-inventory-summary"],
 ] as const;
 
+// A purchase, sale or wastage reflows the FIFO batch links of its product, so
+// costs on other sales/wastage, purchase "remaining", product "in stock" and
+// the summary can all change with it.
+export function invalidateInventoryStockViews(queryClient: QueryClient) {
+  for (const queryKey of INVENTORY_LIST_KEYS) {
+    queryClient.invalidateQueries({ queryKey });
+  }
+}
+
 export function invalidateInventoryCategoryViews(queryClient: QueryClient) {
   queryClient.invalidateQueries({ queryKey: queryKeys.productCategories.all });
   for (const queryKey of INVENTORY_LIST_KEYS) {

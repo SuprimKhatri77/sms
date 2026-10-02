@@ -33,11 +33,32 @@ export type LineItemErrors = Record<
   { productID?: string; quantity?: string; rate?: string }
 >;
 
+// The API flags a line as "items.<index>.<field>" (e.g. a sale that needs
+// more stock than there is); map those onto the rows by position.
+export function mapServerLineErrors(
+  errors: { field?: string; message: string }[] | undefined,
+  items: LineItemRow[],
+): LineItemErrors {
+  const out: LineItemErrors = {};
+  for (const err of errors ?? []) {
+    const match = /^items\.(\d+)\.(productID|quantity|rate)$/.exec(
+      err.field ?? "",
+    );
+    const key = match ? items[Number(match[1])]?.key : undefined;
+    if (!match || !key) continue;
+    const field = match[2] as "productID" | "quantity" | "rate";
+    out[key] = { ...out[key], [field]: err.message };
+  }
+  return out;
+}
+
 type Props = {
   items: LineItemRow[];
   onChange: (items: LineItemRow[]) => void;
   onSearchProducts: (query: string) => Promise<SearchableSelectOption[]>;
   errors?: LineItemErrors;
+  /** Wastage has no rate (it's valued at batch cost), so it hides the column. */
+  showRate?: boolean;
 };
 
 const cellClass = "px-2 py-2 align-top";
@@ -50,6 +71,7 @@ export function LineItemsEditor({
   onChange,
   onSearchProducts,
   errors,
+  showRate = true,
 }: Props) {
   const updateItem = (key: string, patch: Partial<LineItemRow>) => {
     onChange(
@@ -83,7 +105,9 @@ export function LineItemsEditor({
             <tr>
               <th className={inventoryThClass}>Product</th>
               <th className={inventoryThClass}>Qty</th>
-              <th className={inventoryThClass}>Rate (Rs.)</th>
+              {showRate ? (
+                <th className={inventoryThClass}>Rate (Rs.)</th>
+              ) : null}
               <th className={inventoryThClass} />
             </tr>
           </thead>
@@ -93,9 +117,20 @@ export function LineItemsEditor({
               return (
                 <tr
                   key={item.key}
-                  className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] border-b border-[rgba(47,78,64,0.08)] last:border-b-0 sm:table-row"
+                  className={cn(
+                    "grid border-b border-[rgba(47,78,64,0.08)] last:border-b-0 sm:table-row",
+                    showRate
+                      ? "grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]"
+                      : "grid-cols-[minmax(0,1fr)_auto]",
+                  )}
                 >
-                  <td className={cn(cellClass, "col-span-3 sm:table-cell")}>
+                  <td
+                    className={cn(
+                      cellClass,
+                      showRate ? "col-span-3" : "col-span-2",
+                      "sm:table-cell",
+                    )}
+                  >
                     <SearchableSelect
                       value={item.productID}
                       onChange={(value, label) =>
@@ -133,25 +168,27 @@ export function LineItemsEditor({
                       </span>
                     ) : null}
                   </td>
-                  <td className={cellClass}>
-                    <span className={mobileLabelClass}>Rate (Rs.)</span>
-                    <input
-                      type="number"
-                      aria-label="Rate (Rs.)"
-                      min={0.01}
-                      step={0.01}
-                      value={item.rate}
-                      onChange={(e) =>
-                        updateItem(item.key, { rate: e.target.value })
-                      }
-                      className={cn(inventoryFieldInputClass, "w-full sm:w-28")}
-                    />
-                    {itemErrors?.rate ? (
-                      <span className="mt-1 block text-xs font-normal normal-case tracking-normal text-[#9a3412]">
-                        {itemErrors.rate}
-                      </span>
-                    ) : null}
-                  </td>
+                  {showRate ? (
+                    <td className={cellClass}>
+                      <span className={mobileLabelClass}>Rate (Rs.)</span>
+                      <input
+                        type="number"
+                        aria-label="Rate (Rs.)"
+                        min={0.01}
+                        step={0.01}
+                        value={item.rate}
+                        onChange={(e) =>
+                          updateItem(item.key, { rate: e.target.value })
+                        }
+                        className={cn(inventoryFieldInputClass, "w-full sm:w-28")}
+                      />
+                      {itemErrors?.rate ? (
+                        <span className="mt-1 block text-xs font-normal normal-case tracking-normal text-[#9a3412]">
+                          {itemErrors.rate}
+                        </span>
+                      ) : null}
+                    </td>
+                  ) : null}
                   <td className={cn(cellClass, "text-right")}>
                     {/* phones: a blank label + py-3 (38px input - 14px icon) / 2
                         keeps the button level with the inputs, even when
@@ -188,9 +225,11 @@ export function LineItemsEditor({
           <Plus className="h-3.5 w-3.5" strokeWidth={1.75} />
           Add item
         </button>
-        <span className="font-(family-name:--font-dm-sans) text-xs font-semibold uppercase tracking-[0.08em] text-[rgba(47,78,64,0.55)]">
-          Total: Rs. {total.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-        </span>
+        {showRate ? (
+          <span className="font-(family-name:--font-dm-sans) text-xs font-semibold uppercase tracking-[0.08em] text-[rgba(47,78,64,0.55)]">
+            Total: Rs. {total.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </span>
+        ) : null}
       </div>
     </div>
   );

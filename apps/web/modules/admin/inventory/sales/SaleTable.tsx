@@ -17,8 +17,21 @@ import {
   inventoryThClass,
 } from "../shared/inventory-styles";
 import { CategoryCell } from "../shared/CategoryCell";
+import { lineAmount } from "../lib/utils";
 
 type Sale = Extract<ListStockOutResponse, { success: true }>["data"][number];
+
+// cost = what the purchase batches the sale used were bought at (FIFO)
+function ProfitCell({ sale }: { sale: Sale }) {
+  const profit = lineAmount(sale.qty, sale.rate) - sale.cost;
+  return (
+    <td
+      className={`${inventoryTdClass} ${profit < 0 ? "[&_span]:text-[#9a3412]" : ""}`}
+    >
+      <AmountCell cents={profit} />
+    </td>
+  );
+}
 
 type Props = {
   data: Sale[];
@@ -39,6 +52,8 @@ const headers = [
   "Qty",
   "Rate",
   "Amount",
+  "Cost",
+  "Profit",
   "Note",
   "Actions",
 ];
@@ -103,8 +118,12 @@ export function SaleTable({
                   <AmountCell cents={row.rate} />
                 </td>
                 <td className={inventoryTdClass}>
-                  <AmountCell cents={row.qty * row.rate} />
+                  <AmountCell cents={lineAmount(row.qty, row.rate)} />
                 </td>
+                <td className={inventoryTdClass}>
+                  <AmountCell cents={row.cost} />
+                </td>
+                <ProfitCell sale={row} />
                 <td className={`${inventoryTdClass} max-w-[140px] truncate text-[rgba(47,78,64,0.55)]`}>
                   {row.note ?? "—"}
                 </td>

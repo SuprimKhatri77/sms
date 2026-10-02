@@ -39,6 +39,7 @@ const headers = [
   "Date (BS)",
   "Invoice No",
   "Qty",
+  "Remaining",
   "Rate",
   "Amount",
   "Note",
@@ -101,6 +102,12 @@ export function PurchaseTable({
                     <span className="text-xs text-[rgba(47,78,64,0.45)]">
                       {row.productUnit}
                     </span>
+                  </td>
+                  {/* left of this batch after the sales/wastage that used it */}
+                  <td
+                    className={`${inventoryTdClass} tabular-nums ${row.remainingQty === 0 ? "text-[rgba(47,78,64,0.4)]" : ""}`}
+                  >
+                    {row.remainingQty}
                   </td>
                   <td className={inventoryTdClass}>
                     <AmountCell cents={row.rate} />

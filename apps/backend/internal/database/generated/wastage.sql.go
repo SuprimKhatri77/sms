@@ -12,25 +12,26 @@ import (
 )
 
 const createWastage = `-- name: CreateWastage :one
-INSERT INTO wastage (product_id, date, qty, rate, reason)
-VALUES ($1, $2, $3, $4, $5)
-RETURNING id, product_id, date, qty, rate, reason, created_at
+INSERT INTO wastage (product_id, date, qty, reason, created_at)
+VALUES ($1, $2, $3, $4, clock_timestamp())
+RETURNING id, product_id, date, qty, reason, created_at
 `
 
 type CreateWastageParams struct {
 	ProductID pgtype.UUID `json:"productId"`
 	Date      string      `json:"date"`
 	Qty       float64     `json:"qty"`
-	Rate      int32       `json:"rate"`
 	Reason    pgtype.Text `json:"reason"`
 }
 
+// clock_timestamp (not the column default NOW(), which is the same for every
+// row of a transaction) keeps the lines of one batch in order, so FIFO takes
+// them first to last.
 func (q *Queries) CreateWastage(ctx context.Context, arg CreateWastageParams) (Wastage, error) {
 	row := q.db.QueryRow(ctx, createWastage,
 		arg.ProductID,
 		arg.Date,
 		arg.Qty,
-		arg.Rate,
 		arg.Reason,
 	)
 	var i Wastage
@@ -39,7 +40,6 @@ func (q *Queries) CreateWastage(ctx context.Context, arg CreateWastageParams) (W
 		&i.ProductID,
 		&i.Date,
 		&i.Qty,
-		&i.Rate,
 		&i.Reason,
 		&i.CreatedAt,
 	)
@@ -58,7 +58,7 @@ func (q *Queries) DeleteWastage(ctx context.Context, id pgtype.UUID) error {
 
 const getWastageByID = `-- name: GetWastageByID :one
 SELECT
-    w.id, w.product_id, w.date, w.qty, w.rate, w.reason, w.created_at,
+    w.id, w.product_id, w.date, w.qty, w.reason, w.created_at,
     p.name AS product_name,
     p.unit AS product_unit
 FROM wastage w
@@ -71,7 +71,6 @@ type GetWastageByIDRow struct {
 	ProductID   pgtype.UUID        `json:"productId"`
 	Date        string             `json:"date"`
 	Qty         float64            `json:"qty"`
-	Rate        int32              `json:"rate"`
 	Reason      pgtype.Text        `json:"reason"`
 	CreatedAt   pgtype.Timestamptz `json:"createdAt"`
 	ProductName string             `json:"productName"`
@@ -86,7 +85,6 @@ func (q *Queries) GetWastageByID(ctx context.Context, id pgtype.UUID) (GetWastag
 		&i.ProductID,
 		&i.Date,
 		&i.Qty,
-		&i.Rate,
 		&i.Reason,
 		&i.CreatedAt,
 		&i.ProductName,
@@ -118,22 +116,43 @@ func (q *Queries) GetWastageCount(ctx context.Context, arg GetWastageCountParams
 	return count, err
 }
 
+const getWastageProductID = `-- name: GetWastageProductID :one
+SELECT product_id FROM wastage
+WHERE id = $1
+`
+
+// Read without a row lock: stock writes lock the product first (see
+// stockfifo.LockRow); locking this row first would invert that order.
+func (q *Queries) GetWastageProductID(ctx context.Context, id pgtype.UUID) (pgtype.UUID, error) {
+	row := q.db.QueryRow(ctx, getWastageProductID, id)
+	var product_id pgtype.UUID
+	err := row.Scan(&product_id)
+	return product_id, err
+}
+
 const listWastage = `-- name: ListWastage :many
 SELECT
-    w.id, w.product_id, w.date, w.qty, w.rate, w.reason, w.created_at,
+    w.id, w.product_id, w.date, w.qty, w.reason, w.created_at,
     p.name AS product_name,
     p.unit AS product_unit,
-    cp.path AS category_path
+    cp.path AS category_path,
+    COALESCE(wc.cost, 0)::BIGINT AS cost
 FROM wastage w
 JOIN products p ON p.id = w.product_id
 LEFT JOIN product_category_paths cp ON cp.category_id = p.category_id
+LEFT JOIN LATERAL (
+    SELECT SUM(ROUND((a.lot_offset + a.qty) * si.rate) - ROUND(a.lot_offset * si.rate)) AS cost
+    FROM stock_allocations a
+    JOIN stock_in si ON si.id = a.stock_in_id
+    WHERE a.wastage_id = w.id
+) wc ON TRUE
 WHERE
     ($1::TEXT IS NULL OR p.name ILIKE '%' || $1::TEXT || '%')
     AND ($2::TEXT IS NULL OR w.date >= $2::TEXT)
     AND ($3::TEXT IS NULL OR w.date <= $3::TEXT)
 ORDER BY
-    CASE WHEN $4::TEXT = 'asc' THEN w.rate END ASC,
-    CASE WHEN $4::TEXT = 'desc' THEN w.rate END DESC,
+    CASE WHEN $4::TEXT = 'asc' THEN wc.cost END ASC,
+    CASE WHEN $4::TEXT = 'desc' THEN wc.cost END DESC,
     w.created_at DESC
 LIMIT $6::INT OFFSET $5::INT
 `
@@ -152,14 +171,16 @@ type ListWastageRow struct {
 	ProductID    pgtype.UUID        `json:"productId"`
 	Date         string             `json:"date"`
 	Qty          float64            `json:"qty"`
-	Rate         int32              `json:"rate"`
 	Reason       pgtype.Text        `json:"reason"`
 	CreatedAt    pgtype.Timestamptz `json:"createdAt"`
 	ProductName  string             `json:"productName"`
 	ProductUnit  string             `json:"productUnit"`
 	CategoryPath pgtype.Text        `json:"categoryPath"`
+	Cost         int64              `json:"cost"`
 }
 
+// cost in paisa of the purchase batches this wastage used
+// wastage has no rate of its own; the price sort orders by cost
 func (q *Queries) ListWastage(ctx context.Context, arg ListWastageParams) ([]ListWastageRow, error) {
 	rows, err := q.db.Query(ctx, listWastage,
 		arg.ProductName,
@@ -181,12 +202,12 @@ func (q *Queries) ListWastage(ctx context.Context, arg ListWastageParams) ([]Lis
 			&i.ProductID,
 			&i.Date,
 			&i.Qty,
-			&i.Rate,
 			&i.Reason,
 			&i.CreatedAt,
 			&i.ProductName,
 			&i.ProductUnit,
 			&i.CategoryPath,
+			&i.Cost,
 		); err != nil {
 			return nil, err
 		}
@@ -200,7 +221,7 @@ func (q *Queries) ListWastage(ctx context.Context, arg ListWastageParams) ([]Lis
 
 const listWastageByDateRange = `-- name: ListWastageByDateRange :many
 SELECT
-    w.id, w.product_id, w.date, w.qty, w.rate, w.reason, w.created_at,
+    w.id, w.product_id, w.date, w.qty, w.reason, w.created_at,
     p.name AS product_name,
     p.unit AS product_unit
 FROM wastage w
@@ -219,7 +240,6 @@ type ListWastageByDateRangeRow struct {
 	ProductID   pgtype.UUID        `json:"productId"`
 	Date        string             `json:"date"`
 	Qty         float64            `json:"qty"`
-	Rate        int32              `json:"rate"`
 	Reason      pgtype.Text        `json:"reason"`
 	CreatedAt   pgtype.Timestamptz `json:"createdAt"`
 	ProductName string             `json:"productName"`
@@ -240,7 +260,6 @@ func (q *Queries) ListWastageByDateRange(ctx context.Context, arg ListWastageByD
 			&i.ProductID,
 			&i.Date,
 			&i.Qty,
-			&i.Rate,
 			&i.Reason,
 			&i.CreatedAt,
 			&i.ProductName,
@@ -258,7 +277,7 @@ func (q *Queries) ListWastageByDateRange(ctx context.Context, arg ListWastageByD
 
 const listWastageByProduct = `-- name: ListWastageByProduct :many
 SELECT
-    w.id, w.product_id, w.date, w.qty, w.rate, w.reason, w.created_at,
+    w.id, w.product_id, w.date, w.qty, w.reason, w.created_at,
     p.name AS product_name,
     p.unit AS product_unit
 FROM wastage w
@@ -272,7 +291,6 @@ type ListWastageByProductRow struct {
 	ProductID   pgtype.UUID        `json:"productId"`
 	Date        string             `json:"date"`
 	Qty         float64            `json:"qty"`
-	Rate        int32              `json:"rate"`
 	Reason      pgtype.Text        `json:"reason"`
 	CreatedAt   pgtype.Timestamptz `json:"createdAt"`
 	ProductName string             `json:"productName"`
@@ -293,7 +311,6 @@ func (q *Queries) ListWastageByProduct(ctx context.Context, productID pgtype.UUI
 			&i.ProductID,
 			&i.Date,
 			&i.Qty,
-			&i.Rate,
 			&i.Reason,
 			&i.CreatedAt,
 			&i.ProductName,
@@ -311,9 +328,9 @@ func (q *Queries) ListWastageByProduct(ctx context.Context, productID pgtype.UUI
 
 const updateWastage = `-- name: UpdateWastage :one
 UPDATE wastage
-SET product_id = $2, date = $3, qty = $4, rate = $5, reason = $6
+SET product_id = $2, date = $3, qty = $4, reason = $5
 WHERE id = $1
-RETURNING id, product_id, date, qty, rate, reason, created_at
+RETURNING id, product_id, date, qty, reason, created_at
 `
 
 type UpdateWastageParams struct {
@@ -321,7 +338,6 @@ type UpdateWastageParams struct {
 	ProductID pgtype.UUID `json:"productId"`
 	Date      string      `json:"date"`
 	Qty       float64     `json:"qty"`
-	Rate      int32       `json:"rate"`
 	Reason    pgtype.Text `json:"reason"`
 }
 
@@ -331,7 +347,6 @@ func (q *Queries) UpdateWastage(ctx context.Context, arg UpdateWastageParams) (W
 		arg.ProductID,
 		arg.Date,
 		arg.Qty,
-		arg.Rate,
 		arg.Reason,
 	)
 	var i Wastage
@@ -340,7 +355,6 @@ func (q *Queries) UpdateWastage(ctx context.Context, arg UpdateWastageParams) (W
 		&i.ProductID,
 		&i.Date,
 		&i.Qty,
-		&i.Rate,
 		&i.Reason,
 		&i.CreatedAt,
 	)

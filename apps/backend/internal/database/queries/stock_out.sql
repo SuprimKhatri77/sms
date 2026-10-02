@@ -1,6 +1,9 @@
 -- name: CreateStockOut :one
-INSERT INTO stock_out (product_id, date, bill_no, qty, rate, note)
-VALUES ($1, $2, $3, $4, $5, $6)
+-- clock_timestamp (not the column default NOW(), which is the same for every
+-- row of a transaction) keeps the lines of one batch in order, so FIFO takes
+-- them first to last.
+INSERT INTO stock_out (product_id, date, bill_no, qty, rate, note, created_at)
+VALUES ($1, $2, $3, $4, $5, $6, clock_timestamp())
 RETURNING *;
 
 -- name: GetStockOutByID :one
@@ -17,10 +20,18 @@ SELECT
     so.*,
     p.name AS product_name,
     p.unit AS product_unit,
-    cp.path AS category_path
+    cp.path AS category_path,
+    COALESCE(sc.cost, 0)::BIGINT AS cost
 FROM stock_out so
 JOIN products p ON p.id = so.product_id
 LEFT JOIN product_category_paths cp ON cp.category_id = p.category_id
+-- cost in paisa of the purchase batches this sale used
+LEFT JOIN LATERAL (
+    SELECT SUM(ROUND((a.lot_offset + a.qty) * si.rate) - ROUND(a.lot_offset * si.rate)) AS cost
+    FROM stock_allocations a
+    JOIN stock_in si ON si.id = a.stock_in_id
+    WHERE a.stock_out_id = so.id
+) sc ON TRUE
 WHERE
     (sqlc.narg('search')::TEXT IS NULL OR (
     p.name ILIKE '%' || sqlc.narg('search')::TEXT || '%'
@@ -63,6 +74,12 @@ FROM stock_out so
 JOIN products p ON p.id = so.product_id
 WHERE so.date >= $1 AND so.date <= $2
 ORDER BY so.date ASC;
+
+-- name: GetStockOutProductID :one
+-- Read without a row lock: stock writes lock the product first (see
+-- stockfifo.LockRow); locking this row first would invert that order.
+SELECT product_id FROM stock_out
+WHERE id = $1;
 
 -- name: UpdateStockOut :one
 UPDATE stock_out

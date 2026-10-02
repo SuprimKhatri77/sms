@@ -60,13 +60,14 @@ func ExportInventorySummary(queries repository.InventoryRepository) gin.HandlerF
 		}
 
 		rows := make([][]any, 0, len(summary))
-		var inSum, outSum, wasteSum, closingSum int64
+		var openingSum, inSum, outSum, outCostSum, wasteCostSum, closingSum int64
 		for _, s := range summary {
-			var values [8]float64
+			var values [11]float64
 			for i, n := range []pgtype.Numeric{
+				s.OpeningQty, s.OpeningAmount,
 				s.StockInQty, s.StockInAmount,
-				s.StockOutQty, s.StockOutAmount,
-				s.WastageQty, s.WastageAmount,
+				s.StockOutQty, s.StockOutAmount, s.StockOutCost,
+				s.WastageQty, s.WastageCost,
 				s.ClosingQty, s.ClosingAmount,
 			} {
 				values[i], err = utils.NumericToFloat64(n)
@@ -84,26 +85,33 @@ func ExportInventorySummary(queries repository.InventoryRepository) gin.HandlerF
 
 			// amounts are sums of whole-paisa line amounts, so rounding
 			// only strips float noise
-			inAmt := int64(math.Round(values[1]))
-			outAmt := int64(math.Round(values[3]))
-			wasteAmt := int64(math.Round(values[5]))
-			closingAmt := int64(math.Round(values[7]))
+			openingAmt := int64(math.Round(values[1]))
+			inAmt := int64(math.Round(values[3]))
+			outAmt := int64(math.Round(values[5]))
+			outCost := int64(math.Round(values[6]))
+			wasteCost := int64(math.Round(values[8]))
+			closingAmt := int64(math.Round(values[10]))
 
 			rows = append(rows, []any{
 				s.ProductName,
 				s.CategoryPath.String,
 				s.ProductUnit,
-				export.Number(values[0]), export.Money(inAmt),
-				export.Number(values[2]), export.Money(outAmt),
-				export.Number(values[4]), export.Money(wasteAmt),
-				export.Number(values[6]), export.Money(closingAmt),
+				export.Number(values[0]), export.Money(openingAmt),
+				export.Number(values[2]), export.Money(inAmt),
+				export.Number(values[4]), export.Money(outAmt), export.Money(outCost),
+				export.Number(values[7]), export.Money(wasteCost),
+				export.Number(values[9]), export.Money(closingAmt),
 			})
+			openingSum += openingAmt
 			inSum += inAmt
 			outSum += outAmt
-			wasteSum += wasteAmt
+			outCostSum += outCost
+			wasteCostSum += wasteCost
 			closingSum += closingAmt
 		}
 
+		// opening and closing are valued at purchase cost (FIFO batches);
+		// sales amount is the selling total, sales cost what those units cost
 		table := export.Table{
 			Title: "Inventory Summary",
 			Meta:  export.Filters(export.BSDateRange(params.From, params.To)),
@@ -111,21 +119,25 @@ func ExportInventorySummary(queries repository.InventoryRepository) gin.HandlerF
 				{Header: "Product", Width: 22},
 				{Header: "Category", Width: 18},
 				{Header: "Unit", Width: 8},
+				{Header: "Opening Qty", Numeric: true, Width: 11},
+				{Header: "Opening Value", Money: true, Width: 13},
 				{Header: "Purchase Qty", Numeric: true, Width: 11},
 				{Header: "Purchase Amt", Money: true, Width: 13},
 				{Header: "Sales Qty", Numeric: true, Width: 10},
 				{Header: "Sales Amt", Money: true, Width: 13},
+				{Header: "Sales Cost", Money: true, Width: 13},
 				{Header: "Wastage Qty", Numeric: true, Width: 11},
-				{Header: "Wastage Amt", Money: true, Width: 13},
+				{Header: "Wastage Cost", Money: true, Width: 13},
 				{Header: "Closing Qty", Numeric: true, Width: 11},
-				{Header: "Closing Amt", Money: true, Width: 13},
+				{Header: "Closing Value", Money: true, Width: 13},
 			},
 			Rows: rows,
 			Totals: []any{
 				fmt.Sprintf("Total (%d products)", len(rows)), "", "",
+				"", export.Money(openingSum),
 				"", export.Money(inSum),
-				"", export.Money(outSum),
-				"", export.Money(wasteSum),
+				"", export.Money(outSum), export.Money(outCostSum),
+				"", export.Money(wasteCostSum),
 				"", export.Money(closingSum),
 			},
 		}

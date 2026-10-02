@@ -19,10 +19,11 @@ import { SearchableSelect } from "../shared/SearchableSelect";
 import {
   LineItemsEditor,
   emptyLineItem,
+  mapServerLineErrors,
   type LineItemRow,
   type LineItemErrors,
 } from "../shared/LineItemsEditor";
-import { useProductSearch } from "../shared/useProductSupplierSearch";
+import { useStockedProductSearch } from "../shared/useProductSupplierSearch";
 import {
   CreateWastageBatchInput,
   CreateWastageBatchResponse,
@@ -47,7 +48,6 @@ type EditFormData = {
   reason: string;
   productID: string;
   quantity: string;
-  rate: string;
   date: string;
 };
 
@@ -70,7 +70,6 @@ const emptyEditForm: EditFormData = {
   reason: "",
   productID: "",
   quantity: "1",
-  rate: "",
   date: "",
 };
 
@@ -97,7 +96,7 @@ export function WastageDialog({
   const [items, setItems] = useState<LineItemRow[]>([emptyLineItem()]);
   const [itemErrors, setItemErrors] = useState<LineItemErrors>();
 
-  const searchProducts = useProductSearch();
+  const searchProducts = useStockedProductSearch();
 
   useEffect(() => {
     if (!open) return;
@@ -107,7 +106,6 @@ export function WastageDialog({
           reason: initialData.reason ?? "",
           productID: initialData.productId ?? "",
           quantity: initialData.qty.toString(),
-          rate: (initialData.rate / 100).toString(),
           date: initialData.date ?? "",
         });
         setSelectedProductName(initialData.productName ?? "");
@@ -142,7 +140,6 @@ export function WastageDialog({
     const validateFields = editWastageSchema.safeParse({
       productID: editForm.productID,
       quantity: Number(editForm.quantity),
-      rate: Number(editForm.rate),
       reason: editForm.reason || undefined,
       date: editForm.date,
     });
@@ -153,7 +150,6 @@ export function WastageDialog({
         reason: fieldErrors.reason?.[0],
         quantity: fieldErrors.quantity?.[0],
         productID: fieldErrors.productID?.[0],
-        rate: fieldErrors.rate?.[0],
         date: fieldErrors.date?.[0],
       });
       return;
@@ -183,7 +179,6 @@ export function WastageDialog({
       items: items.map((item) => ({
         productID: item.productID,
         quantity: Number(item.quantity),
-        rate: Number(item.rate),
       })),
     };
 
@@ -200,11 +195,7 @@ export function WastageDialog({
       for (const issue of validateFields.error.issues) {
         if (issue.path[0] === "items" && typeof issue.path[1] === "number") {
           const key = items[issue.path[1]]?.key;
-          const field = issue.path[2] as
-            | "productID"
-            | "quantity"
-            | "rate"
-            | undefined;
+          const field = issue.path[2] as "productID" | "quantity" | undefined;
           if (key && field) {
             nextItemErrors[key] = {
               ...nextItemErrors[key],
@@ -227,6 +218,8 @@ export function WastageDialog({
     } catch (err) {
       const error = err as BatchBackendError;
       toast.error(error?.message ?? "Something went wrong");
+      // e.g. a line needs more stock than there is on that date
+      setItemErrors(mapServerLineErrors(error?.errors, items));
     } finally {
       setIsSubmitting(false);
     }
@@ -309,7 +302,7 @@ export function WastageDialog({
             </InventoryFormField>
           </InventoryFormSection>
 
-          <InventoryFormSection title="Quantity & pricing">
+          <InventoryFormSection title="Quantity">
             <div className="grid grid-cols-2 gap-4">
               <InventoryFormField
                 label="Qty"
@@ -330,23 +323,10 @@ export function WastageDialog({
                   className={fieldInputClass}
                 />
               </InventoryFormField>
-              <InventoryFormField
-                label="Rate (Rs.)"
-                required
-                error={editErrors?.rate}
-              >
-                <input
-                  type="number"
-                  min={0.01}
-                  step={0.01}
-                  value={editForm.rate}
-                  onChange={(e) =>
-                    setEditForm((prev) => ({ ...prev, rate: e.target.value }))
-                  }
-                  className={fieldInputClass}
-                />
-              </InventoryFormField>
             </div>
+            <p className="text-xs text-[rgba(47,78,64,0.55)]">
+              Valued at what the oldest purchase batches in stock cost.
+            </p>
           </InventoryFormSection>
 
           <InventoryFormSection title="Additional">
@@ -410,7 +390,11 @@ export function WastageDialog({
               onChange={setItems}
               onSearchProducts={searchProducts}
               errors={itemErrors}
+              showRate={false}
             />
+            <p className="text-xs text-[rgba(47,78,64,0.55)]">
+              Valued at what the oldest purchase batches in stock cost.
+            </p>
           </InventoryFormSection>
         </form>
       )}

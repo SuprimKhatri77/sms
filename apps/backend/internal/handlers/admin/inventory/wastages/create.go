@@ -1,16 +1,19 @@
 package wastage
 
 import (
+	"errors"
+	"fmt"
 	"log/slog"
-	"math"
 	"net/http"
 
 	"github.com/suprimkhatri77/sms/backend/internal/pkg/applog"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/suprimkhatri77/sms/backend/internal/constants"
 	db "github.com/suprimkhatri77/sms/backend/internal/database/generated"
+	"github.com/suprimkhatri77/sms/backend/internal/pkg/stockfifo"
 	"github.com/suprimkhatri77/sms/backend/internal/repository"
 	"github.com/suprimkhatri77/sms/backend/internal/types"
 	"github.com/suprimkhatri77/sms/backend/internal/utils"
@@ -52,8 +55,8 @@ func CreateWastage(queries repository.InventoryTxRepository, pool *pgxpool.Pool)
 		defer tx.Rollback(ctx)
 		qtx := queries.WithTx(tx)
 
-		wastages := make([]db.Wastage, 0, len(req.Items))
-		for _, item := range req.Items {
+		productIDs := make([]pgtype.UUID, len(req.Items))
+		for i, item := range req.Items {
 			productID, err := utils.ConvertToUUID(item.ProductID)
 			if err != nil {
 				applog.Warn(c, handlerCreateWastage, "invalid request",
@@ -66,10 +69,37 @@ func CreateWastage(queries repository.InventoryTxRepository, pool *pgxpool.Pool)
 				return
 			}
 
+			productIDs[i] = productID
+		}
+
+		// one stock change per product at a time, until commit
+		products, err := stockfifo.Lock(ctx, qtx, productIDs...)
+		if err != nil {
+			if errors.Is(err, stockfifo.ErrProductNotFound) {
+				applog.Warn(c, handlerCreateWastage, "resource not found")
+				c.JSON(http.StatusNotFound, types.APIResponse{
+					Success: false,
+					Message: "Product not found",
+					Code:    constants.ProductNotFound,
+				})
+				return
+			}
+			applog.Error(c, handlerCreateWastage, "failed to process request",
+				slog.Any(applog.AttrError, err))
+			c.JSON(http.StatusInternalServerError, types.APIResponse{
+				Success: false,
+				Message: "Failed to process request",
+				Code:    constants.InternalServerError,
+			})
+			return
+		}
+
+		wastages := make([]db.Wastage, 0, len(req.Items))
+		lineOf := make(map[[16]byte]int, len(req.Items))
+		for i, item := range req.Items {
 			wastage, err := qtx.CreateWastage(ctx, db.CreateWastageParams{
-				ProductID: productID,
+				ProductID: productIDs[i],
 				Date:      req.Date,
-				Rate:      int32(math.Round(item.Rate * 100)),
 				Reason:    utils.ToNullableText(req.Reason),
 				Qty:       utils.RoundQty(item.Quantity),
 			})
@@ -85,6 +115,40 @@ func CreateWastage(queries repository.InventoryTxRepository, pool *pgxpool.Pool)
 			}
 
 			wastages = append(wastages, wastage)
+			lineOf[wastage.ID.Bytes] = i
+		}
+
+		// take the wastage out of the purchase batches, oldest first
+		if err := stockfifo.Rebuild(ctx, qtx, products); err != nil {
+			var short *stockfifo.ShortfallError
+			if errors.As(err, &short) {
+				applog.Warn(c, handlerCreateWastage, "insufficient stock",
+					slog.Any(applog.AttrError, err))
+				resp := types.APIResponse{
+					Success: false,
+					Message: short.Error(),
+					Code:    constants.InsufficientStock,
+				}
+				// point at the line when it's one of these new entries (it can
+				// also be an existing later one this is dated before)
+				if i, ok := lineOf[short.Shortfall.Consumer.ID.Bytes]; ok {
+					resp.Errors = []types.AppError{{
+						Code:    constants.InsufficientStock,
+						Field:   fmt.Sprintf("items.%d.quantity", i),
+						Message: short.LineMessage(),
+					}}
+				}
+				c.JSON(http.StatusConflict, resp)
+				return
+			}
+			applog.Error(c, handlerCreateWastage, "failed to process request",
+				slog.Any(applog.AttrError, err))
+			c.JSON(http.StatusInternalServerError, types.APIResponse{
+				Success: false,
+				Message: "Failed to process request",
+				Code:    constants.InternalServerError,
+			})
+			return
 		}
 
 		if err := tx.Commit(ctx); err != nil {

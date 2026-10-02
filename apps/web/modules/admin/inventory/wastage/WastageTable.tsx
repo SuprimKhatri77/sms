@@ -36,8 +36,7 @@ const headers = [
   "Category",
   "Date (BS)",
   "Qty",
-  "Rate",
-  "Amount",
+  "Cost",
   "Reason",
   "Actions",
 ];
@@ -95,11 +94,9 @@ export function WastageTable({
                     {row.productUnit}
                   </span>
                 </td>
+                {/* what the purchase batches it used were bought at (FIFO) */}
                 <td className={inventoryTdClass}>
-                  <AmountCell cents={row.rate} />
-                </td>
-                <td className={inventoryTdClass}>
-                  <AmountCell cents={row.qty * row.rate} />
+                  <AmountCell cents={row.cost} />
                 </td>
                 <td className={`${inventoryTdClass} max-w-[140px] truncate text-[rgba(47,78,64,0.55)]`}>
                   {row.reason ?? "—"}

@@ -12,8 +12,8 @@ import (
 )
 
 const createStockOut = `-- name: CreateStockOut :one
-INSERT INTO stock_out (product_id, date, bill_no, qty, rate, note)
-VALUES ($1, $2, $3, $4, $5, $6)
+INSERT INTO stock_out (product_id, date, bill_no, qty, rate, note, created_at)
+VALUES ($1, $2, $3, $4, $5, $6, clock_timestamp())
 RETURNING id, product_id, date, bill_no, qty, rate, note, created_at
 `
 
@@ -26,6 +26,9 @@ type CreateStockOutParams struct {
 	Note      pgtype.Text `json:"note"`
 }
 
+// clock_timestamp (not the column default NOW(), which is the same for every
+// row of a transaction) keeps the lines of one batch in order, so FIFO takes
+// them first to last.
 func (q *Queries) CreateStockOut(ctx context.Context, arg CreateStockOutParams) (StockOut, error) {
 	row := q.db.QueryRow(ctx, createStockOut,
 		arg.ProductID,
@@ -125,15 +128,36 @@ func (q *Queries) GetStockOutCount(ctx context.Context, arg GetStockOutCountPara
 	return count, err
 }
 
+const getStockOutProductID = `-- name: GetStockOutProductID :one
+SELECT product_id FROM stock_out
+WHERE id = $1
+`
+
+// Read without a row lock: stock writes lock the product first (see
+// stockfifo.LockRow); locking this row first would invert that order.
+func (q *Queries) GetStockOutProductID(ctx context.Context, id pgtype.UUID) (pgtype.UUID, error) {
+	row := q.db.QueryRow(ctx, getStockOutProductID, id)
+	var product_id pgtype.UUID
+	err := row.Scan(&product_id)
+	return product_id, err
+}
+
 const listStockOut = `-- name: ListStockOut :many
 SELECT
     so.id, so.product_id, so.date, so.bill_no, so.qty, so.rate, so.note, so.created_at,
     p.name AS product_name,
     p.unit AS product_unit,
-    cp.path AS category_path
+    cp.path AS category_path,
+    COALESCE(sc.cost, 0)::BIGINT AS cost
 FROM stock_out so
 JOIN products p ON p.id = so.product_id
 LEFT JOIN product_category_paths cp ON cp.category_id = p.category_id
+LEFT JOIN LATERAL (
+    SELECT SUM(ROUND((a.lot_offset + a.qty) * si.rate) - ROUND(a.lot_offset * si.rate)) AS cost
+    FROM stock_allocations a
+    JOIN stock_in si ON si.id = a.stock_in_id
+    WHERE a.stock_out_id = so.id
+) sc ON TRUE
 WHERE
     ($1::TEXT IS NULL OR (
     p.name ILIKE '%' || $1::TEXT || '%'
@@ -168,8 +192,10 @@ type ListStockOutRow struct {
 	ProductName  string             `json:"productName"`
 	ProductUnit  string             `json:"productUnit"`
 	CategoryPath pgtype.Text        `json:"categoryPath"`
+	Cost         int64              `json:"cost"`
 }
 
+// cost in paisa of the purchase batches this sale used
 func (q *Queries) ListStockOut(ctx context.Context, arg ListStockOutParams) ([]ListStockOutRow, error) {
 	rows, err := q.db.Query(ctx, listStockOut,
 		arg.Search,
@@ -198,6 +224,7 @@ func (q *Queries) ListStockOut(ctx context.Context, arg ListStockOutParams) ([]L
 			&i.ProductName,
 			&i.ProductUnit,
 			&i.CategoryPath,
+			&i.Cost,
 		); err != nil {
 			return nil, err
 		}

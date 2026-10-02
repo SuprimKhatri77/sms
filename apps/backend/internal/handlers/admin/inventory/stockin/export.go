@@ -99,6 +99,7 @@ func ExportStockIn(queries repository.InventoryRepository) gin.HandlerFunc {
 				s.SupplierName,
 				s.InvoiceNo.String,
 				export.Number(s.Qty),
+				export.Number(s.RemainingQty),
 				s.ProductUnit,
 				export.Money(s.Rate),
 				export.Money(amount),
@@ -122,6 +123,7 @@ func ExportStockIn(queries repository.InventoryRepository) gin.HandlerFunc {
 				{Header: "Supplier", Width: 20},
 				{Header: "Invoice No", Width: 12},
 				{Header: "Qty", Numeric: true, Width: 8},
+				{Header: "Remaining", Numeric: true, Width: 10},
 				{Header: "Unit", Width: 8},
 				{Header: "Rate", Money: true, Width: 11},
 				{Header: "Amount", Money: true, Width: 13},
@@ -130,7 +132,7 @@ func ExportStockIn(queries repository.InventoryRepository) gin.HandlerFunc {
 				{Header: "Date (BS)", Width: 11},
 			},
 			Rows:   rows,
-			Totals: []any{fmt.Sprintf("Total (%d purchases)", len(rows)), "", "", "", "", "", "", export.Money(sum), "", "", ""},
+			Totals: []any{fmt.Sprintf("Total (%d purchases)", len(rows)), "", "", "", "", "", "", "", export.Money(sum), "", "", ""},
 		}
 
 		if err := export.Write(c, export.Format(params.Format), "purchases", table); err != nil {
