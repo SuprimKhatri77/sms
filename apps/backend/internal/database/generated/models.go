@@ -145,6 +145,15 @@ type Setting struct {
 	Value string `json:"value"`
 }
 
+type StockAllocation struct {
+	ID         pgtype.UUID `json:"id"`
+	StockInID  pgtype.UUID `json:"stockInId"`
+	StockOutID pgtype.UUID `json:"stockOutId"`
+	WastageID  pgtype.UUID `json:"wastageId"`
+	Qty        float64     `json:"qty"`
+	LotOffset  float64     `json:"lotOffset"`
+}
+
 type StockIn struct {
 	ID         pgtype.UUID        `json:"id"`
 	ProductID  pgtype.UUID        `json:"productId"`
@@ -259,7 +268,6 @@ type Wastage struct {
 	ProductID pgtype.UUID        `json:"productId"`
 	Date      string             `json:"date"`
 	Qty       float64            `json:"qty"`
-	Rate      int32              `json:"rate"`
 	Reason    pgtype.Text        `json:"reason"`
 	CreatedAt pgtype.Timestamptz `json:"createdAt"`
 }

@@ -33,6 +33,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import WastageLoading from "./WastageLoading";
 import WastageError from "./WastageError";
 import axios from "axios";
+import { invalidateInventoryStockViews } from "@/lib/inventory-cache";
 
 type Wastage = Extract<ListWastageResponse, { success: true }>["data"][number];
 
@@ -161,9 +162,7 @@ export function WastageClient() {
     },
     onSuccess: (result) => {
       toast.success(result.message);
-      queryClient.invalidateQueries({
-        queryKey: ["admin-inventory-wastage", currentPage],
-      });
+      invalidateInventoryStockViews(queryClient);
     },
   });
   const updateWastage = useMutation({
@@ -182,24 +181,27 @@ export function WastageClient() {
     },
     onSuccess: (result) => {
       toast.success(result.message);
-      queryClient.invalidateQueries({
-        queryKey: ["admin-inventory-wastage", currentPage],
-      });
+      invalidateInventoryStockViews(queryClient);
     },
   });
   const deleteWastage = useMutation({
     mutationFn: async (id: string) => {
-      const res = await api.delete<DeleteWastageResponse>(
-        `/admin/inventory/wastages/${id}`,
-      );
-      if (!res.data.success) throw res.data;
-      return res.data;
+      // surface the server's reason (e.g. stock already sold from this batch)
+      // rather than axios' "Request failed with status code 409"
+      try {
+        const res = await api.delete<DeleteWastageResponse>(
+          `/admin/inventory/wastages/${id}`,
+        );
+        if (!res.data.success) throw res.data;
+        return res.data;
+      } catch (err) {
+        if (axios.isAxiosError(err)) throw err.response?.data ?? err;
+        throw err;
+      }
     },
     onSuccess: (result) => {
       toast.success(result.message);
-      queryClient.invalidateQueries({
-        queryKey: ["admin-inventory-wastage", currentPage],
-      });
+      invalidateInventoryStockViews(queryClient);
     },
     onError: (error) => {
       toast.error(error.message);
@@ -277,6 +279,7 @@ export function WastageClient() {
         search={searchInput}
         onSearchChange={handleSearchInputChange}
         searchPlaceholder="Product name…"
+        priceSortLabel="Sort by cost"
         priceSort={priceSort}
         onPriceSortChange={handlePriceSort}
         pendingFrom={pendingFrom}

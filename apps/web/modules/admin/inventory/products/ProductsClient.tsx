@@ -153,6 +153,7 @@ export function ProductsClient() {
         createdAt: new Date(),
         categoryId: data.categoryId || null,
         categoryPath: categoryPathFor(data.categoryId),
+        inStock: 0,
       };
 
       queryClient.setQueryData<GetProductResponse>(
@@ -181,6 +182,7 @@ export function ProductsClient() {
                 ? {
                     ...result.data,
                     categoryPath: context.optimisticProduct.categoryPath,
+                    inStock: context.optimisticProduct.inStock,
                   }
                 : p,
             ),
@@ -238,6 +240,7 @@ export function ProductsClient() {
         createdAt: editingProduct?.createdAt ?? new Date(),
         categoryId: data.categoryId || null,
         categoryPath: categoryPathFor(data.categoryId),
+        inStock: editingProduct?.inStock ?? 0,
       };
 
       queryClient.setQueryData<GetProductResponse>(

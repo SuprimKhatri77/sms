@@ -12,8 +12,8 @@ import (
 )
 
 const createStockIn = `-- name: CreateStockIn :one
-INSERT INTO stock_in (product_id, supplier_id, date, invoice_no, qty, rate, note)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
+INSERT INTO stock_in (product_id, supplier_id, date, invoice_no, qty, rate, note, created_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, clock_timestamp())
 RETURNING id, product_id, date, invoice_no, qty, rate, note, supplier_id, created_at
 `
 
@@ -27,6 +27,9 @@ type CreateStockInParams struct {
 	Note       pgtype.Text `json:"note"`
 }
 
+// clock_timestamp (not the column default NOW(), which is the same for every
+// row of a transaction) keeps the lines of one batch in order, so FIFO takes
+// them first to last.
 func (q *Queries) CreateStockIn(ctx context.Context, arg CreateStockInParams) (StockIn, error) {
 	row := q.db.QueryRow(ctx, createStockIn,
 		arg.ProductID,
@@ -137,13 +140,31 @@ func (q *Queries) GetStockInCount(ctx context.Context, arg GetStockInCountParams
 	return count, err
 }
 
+const getStockInProductID = `-- name: GetStockInProductID :one
+SELECT product_id FROM stock_in
+WHERE id = $1
+`
+
+// Read without a row lock: stock writes lock the product first (see
+// stockfifo.LockRow); locking this row first would invert that order.
+func (q *Queries) GetStockInProductID(ctx context.Context, id pgtype.UUID) (pgtype.UUID, error) {
+	row := q.db.QueryRow(ctx, getStockInProductID, id)
+	var product_id pgtype.UUID
+	err := row.Scan(&product_id)
+	return product_id, err
+}
+
 const listStockIn = `-- name: ListStockIn :many
 SELECT
     si.id, si.product_id, si.date, si.invoice_no, si.qty, si.rate, si.note, si.supplier_id, si.created_at,
     p.name AS product_name,
     p.unit AS product_unit,
     cp.path AS category_path,
-    s.company_name AS supplier_name
+    s.company_name AS supplier_name,
+    -- what's left of this batch after the sales and wastage that used it
+    (si.qty - COALESCE((
+        SELECT SUM(a.qty) FROM stock_allocations a WHERE a.stock_in_id = si.id
+    ), 0))::FLOAT8 AS remaining_qty
 FROM stock_in si
 JOIN products p ON p.id = si.product_id
 JOIN suppliers s ON s.id = si.supplier_id
@@ -186,6 +207,7 @@ type ListStockInRow struct {
 	ProductUnit  string             `json:"productUnit"`
 	CategoryPath pgtype.Text        `json:"categoryPath"`
 	SupplierName string             `json:"supplierName"`
+	RemainingQty float64            `json:"remainingQty"`
 }
 
 func (q *Queries) ListStockIn(ctx context.Context, arg ListStockInParams) ([]ListStockInRow, error) {
@@ -218,6 +240,7 @@ func (q *Queries) ListStockIn(ctx context.Context, arg ListStockInParams) ([]Lis
 			&i.ProductUnit,
 			&i.CategoryPath,
 			&i.SupplierName,
+			&i.RemainingQty,
 		); err != nil {
 			return nil, err
 		}

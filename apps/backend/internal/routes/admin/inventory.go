@@ -35,14 +35,14 @@ func setupAdminInventoryRoutes(admin *gin.RouterGroup, cfg config.Config) {
 	inv.GET("/sales", adminInventoryStockOut.ListStockOut(cfg.Queries))
 	inv.GET("/sales/export", adminInventoryStockOut.ExportStockOut(cfg.Queries))
 	inv.POST("/sales", adminInventoryStockOut.CreateStockOut(repository.NewInventoryTxRepository(cfg.Queries, cfg.PgxPool), cfg.PgxPool))
-	inv.PUT("/sales/:stockOutID", adminInventoryStockOut.UpdateStockOut(cfg.Queries))
-	inv.DELETE("/sales/:stockOutID", adminInventoryStockOut.DeleteStockOut(cfg.Queries))
+	inv.PUT("/sales/:stockOutID", adminInventoryStockOut.UpdateStockOut(repository.NewInventoryTxRepository(cfg.Queries, cfg.PgxPool), cfg.PgxPool))
+	inv.DELETE("/sales/:stockOutID", adminInventoryStockOut.DeleteStockOut(repository.NewInventoryTxRepository(cfg.Queries, cfg.PgxPool), cfg.PgxPool))
 
 	inv.GET("/wastages", adminInventoryWastages.ListWastageStock(cfg.Queries))
 	inv.GET("/wastages/export", adminInventoryWastages.ExportWastage(cfg.Queries))
 	inv.POST("/wastages", adminInventoryWastages.CreateWastage(repository.NewInventoryTxRepository(cfg.Queries, cfg.PgxPool), cfg.PgxPool))
-	inv.PUT("/wastages/:wastageID", adminInventoryWastages.UpdateWastage(cfg.Queries))
-	inv.DELETE("/wastages/:wastageID", adminInventoryWastages.DeleteWastage(cfg.Queries))
+	inv.PUT("/wastages/:wastageID", adminInventoryWastages.UpdateWastage(repository.NewInventoryTxRepository(cfg.Queries, cfg.PgxPool), cfg.PgxPool))
+	inv.DELETE("/wastages/:wastageID", adminInventoryWastages.DeleteWastage(repository.NewInventoryTxRepository(cfg.Queries, cfg.PgxPool), cfg.PgxPool))
 
 	inv.GET("/summary", adminInventorySummary.GetInventorySummary(cfg.Queries))
 	inv.GET("/summary/export", adminInventorySummary.ExportInventorySummary(cfg.Queries))

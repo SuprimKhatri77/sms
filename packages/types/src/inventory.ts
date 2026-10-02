@@ -15,7 +15,13 @@ const categoryPathSchema = z.string().nullable();
 export const getProductsResponseSchema = z.discriminatedUnion("success", [
   z.object({
     success: z.literal(true),
-    data: z.array(productSchema.extend({ categoryPath: categoryPathSchema })),
+    data: z.array(
+      productSchema.extend({
+        categoryPath: categoryPathSchema,
+        // purchased - sold - wasted, as of now
+        inStock: z.number(),
+      }),
+    ),
     meta: z.object({
       total: z.number(),
       totalPages: z.number(),
@@ -214,6 +220,8 @@ export const listStockInResponse = z.discriminatedUnion("success", [
         categoryPath: categoryPathSchema,
         supplierId: z.uuid(),
         supplierName: z.string(),
+        // what's left of this batch after the sales/wastage that used it
+        remainingQty: z.number(),
       }),
     ),
     meta: z.object({
@@ -265,6 +273,8 @@ export const listStockOutResponse = z.discriminatedUnion("success", [
         productUnit: z.string(),
         productName: z.string(),
         categoryPath: categoryPathSchema,
+        // paisa: what the purchase batches this sale used cost (FIFO)
+        cost: z.number(),
       }),
     ),
     meta: z.object({
@@ -367,7 +377,8 @@ const wastageRecordSchema = z.object({
   categoryPath: categoryPathSchema,
   qty: z.number().gt(0),
   date: z.string(),
-  rate: z.number().gt(0),
+  // paisa: what the purchase batches this wastage used cost (FIFO)
+  cost: z.number(),
   reason: z.string().optional(),
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -393,10 +404,10 @@ export const listWastageResponse = z.discriminatedUnion("success", [
 
 export type ListWastageResponse = z.infer<typeof listWastageResponse>;
 
+// no rate: wastage is valued at the cost of the batches it uses up
 export const wastageLineItemSchema = z.object({
   productID: z.uuid(),
   quantity: quantitySchema,
-  rate: rateSchema,
 });
 export type WastageLineItemInput = z.infer<typeof wastageLineItemSchema>;
 
@@ -471,13 +482,18 @@ export const inventorySummarySchema = z.object({
   productName: z.string(),
   productUnit: z.string(),
   categoryPath: categoryPathSchema,
+  openingQty: z.number(),
   stockInQty: z.number(),
   stockOutQty: z.number(),
   wastageQty: z.number(),
   closingQty: z.number(),
+  // paisa. Opening/closing are valued at purchase cost (FIFO batches);
+  // stockOutAmount is the selling total, stockOutCost what those units cost.
+  openingAmount: z.number(),
   stockInAmount: z.number(),
   stockOutAmount: z.number(),
-  wastageAmount: z.number(),
+  stockOutCost: z.number(),
+  wastageCost: z.number(),
   closingAmount: z.number(),
 });
 

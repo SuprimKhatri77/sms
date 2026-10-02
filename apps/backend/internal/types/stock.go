@@ -32,10 +32,11 @@ type UpdateStockOutRequest struct {
 	Note      string  `json:"note" binding:"omitempty"`
 }
 
+// wastage has no rate of its own: it's valued at the cost of the purchase
+// batches it uses up
 type WastageLineItem struct {
 	ProductID string  `json:"productID" binding:"required,uuid"`
 	Quantity  float64 `json:"quantity" binding:"required,min=0.001,max=10000000"`
-	Rate      float64 `json:"rate" binding:"required,min=0.01,max=999999.99"`
 }
 
 type CreateWastageBatchRequest struct {
@@ -47,6 +48,5 @@ type UpdateWastageRequest struct {
 	ProductID string  `json:"productID" binding:"required,uuid"`
 	Quantity  float64 `json:"quantity" binding:"required,min=0.001,max=10000000"`
 	Date      string  `json:"date" binding:"required,bs_date"`
-	Rate      float64 `json:"rate" binding:"required,min=0.01,max=999999.99"`
 	Reason    string  `json:"reason" binding:"omitempty"`
 }

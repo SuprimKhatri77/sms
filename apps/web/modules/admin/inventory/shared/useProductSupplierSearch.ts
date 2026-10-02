@@ -25,6 +25,29 @@ export function useProductSearch() {
   );
 }
 
+// For sales and wastage: shows what's in stock right now next to each name,
+// e.g. "Pant · 25 pieces in stock". The server still checks stock on the
+// entry's date when it's saved.
+export function useStockedProductSearch() {
+  return useCallback(
+    async (q: string): Promise<SearchableSelectOption[]> => {
+      const params = new URLSearchParams();
+      params.set("page", "1");
+      params.set("limit", "10");
+      if (q) params.set("name", q);
+      const res = await api.get<GetProductResponse>(
+        `/admin/inventory/products?${params.toString()}`,
+      );
+      if (!res.data.success) return [];
+      return res.data.data.map((p) => ({
+        value: p.id,
+        label: `${p.name} · ${p.inStock} ${p.unit} in stock`,
+      }));
+    },
+    [],
+  );
+}
+
 export function useSupplierSearch() {
   return useCallback(
     async (q: string): Promise<SearchableSelectOption[]> => {

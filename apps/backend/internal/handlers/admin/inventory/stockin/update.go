@@ -15,6 +15,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/suprimkhatri77/sms/backend/internal/constants"
 	db "github.com/suprimkhatri77/sms/backend/internal/database/generated"
+	"github.com/suprimkhatri77/sms/backend/internal/pkg/stockfifo"
 	"github.com/suprimkhatri77/sms/backend/internal/repository"
 	"github.com/suprimkhatri77/sms/backend/internal/types"
 	"github.com/suprimkhatri77/sms/backend/internal/utils"
@@ -130,6 +131,46 @@ func UpdateStockIn(queries repository.InventoryTxRepository, pool *pgxpool.Pool)
 		defer tx.Rollback(ctx)
 		qtx := queries.WithTx(tx)
 
+		// the purchase may move to another product; both need their stock redone
+		products, err := stockfifo.LockRow(ctx, qtx, qtx.GetStockInProductID, stockID, productID)
+		if err != nil {
+			switch {
+			case errors.Is(err, pgx.ErrNoRows):
+				applog.Warn(c, handlerUpdateStockIn, "resource not found")
+				c.JSON(http.StatusNotFound, types.APIResponse{
+					Success: false,
+					Message: "Stock not found",
+					Code:    constants.StockNotFound,
+				})
+				return
+			case errors.Is(err, stockfifo.ErrProductNotFound):
+				applog.Warn(c, handlerUpdateStockIn, "resource not found")
+				c.JSON(http.StatusNotFound, types.APIResponse{
+					Success: false,
+					Message: "Product not found",
+					Code:    constants.ProductNotFound,
+				})
+				return
+			case errors.Is(err, stockfifo.ErrConcurrentChange):
+				applog.Warn(c, handlerUpdateStockIn, "concurrent change",
+					slog.Any(applog.AttrError, err))
+				c.JSON(http.StatusConflict, types.APIResponse{
+					Success: false,
+					Message: "This entry was changed at the same time by someone else, please try again",
+					Code:    constants.StockChangedConcurrently,
+				})
+				return
+			}
+			applog.Error(c, handlerUpdateStockIn, "failed to process request",
+				slog.Any(applog.AttrError, err))
+			c.JSON(http.StatusInternalServerError, types.APIResponse{
+				Success: false,
+				Message: "Failed to process request",
+				Code:    constants.InternalServerError,
+			})
+			return
+		}
+
 		stockIn, err := qtx.UpdateStockIn(ctx, db.UpdateStockInParams{
 			ID:         stockID,
 			ProductID:  productID,
@@ -205,6 +246,30 @@ func UpdateStockIn(queries repository.InventoryTxRepository, pool *pgxpool.Pool)
 			// purchases recorded before the supplier ledger was wired up have
 			// no credit; editing one deliberately doesn't backfill it
 			applog.Info(c, handlerUpdateStockIn, "no supplier ledger credit for purchase, ledger left unchanged")
+		}
+
+		// a smaller, later-dated or moved batch can leave sales that used it
+		// short; that's refused rather than letting stock go negative
+		if err := stockfifo.Rebuild(ctx, qtx, products); err != nil {
+			var short *stockfifo.ShortfallError
+			if errors.As(err, &short) {
+				applog.Warn(c, handlerUpdateStockIn, "insufficient stock",
+					slog.Any(applog.AttrError, err))
+				c.JSON(http.StatusConflict, types.APIResponse{
+					Success: false,
+					Message: short.Error(),
+					Code:    constants.InsufficientStock,
+				})
+				return
+			}
+			applog.Error(c, handlerUpdateStockIn, "failed to process request",
+				slog.Any(applog.AttrError, err))
+			c.JSON(http.StatusInternalServerError, types.APIResponse{
+				Success: false,
+				Message: "Failed to process request",
+				Code:    constants.InternalServerError,
+			})
+			return
 		}
 
 		if err := tx.Commit(ctx); err != nil {

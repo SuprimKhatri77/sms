@@ -37,6 +37,7 @@ export function ProductsTable({
             <tr>
               <th className={inventoryThClass}>Name</th>
               <th className={inventoryThClass}>Category</th>
+              <th className={inventoryThClass}>In stock</th>
               <th className={inventoryThClass}>Unit</th>
               <th className={inventoryThClass}>Created</th>
               <th className={`${inventoryThClass} text-right`}>Actions</th>
@@ -52,6 +53,9 @@ export function ProductsTable({
                   {product.name}
                 </td>
                 <CategoryCell path={product.categoryPath} />
+                <td className={`${inventoryTdClass} tabular-nums`}>
+                  {product.inStock}
+                </td>
                 <td className={`${inventoryTdClass} text-[rgba(47,78,64,0.6)]`}>
                   {product.unit}
                 </td>

@@ -30,7 +30,12 @@ LIMIT 1;
 -- name: ListProducts :many
 SELECT
     products.*,
-    cp.path AS category_path
+    cp.path AS category_path,
+    (
+        COALESCE((SELECT SUM(si.qty) FROM stock_in si WHERE si.product_id = products.id), 0)
+        - COALESCE((SELECT SUM(so.qty) FROM stock_out so WHERE so.product_id = products.id), 0)
+        - COALESCE((SELECT SUM(w.qty) FROM wastage w WHERE w.product_id = products.id), 0)
+    )::FLOAT8 AS in_stock
 FROM products
 LEFT JOIN product_category_paths cp ON cp.category_id = products.category_id
 WHERE

@@ -1,6 +1,9 @@
 -- name: CreateStockIn :one
-INSERT INTO stock_in (product_id, supplier_id, date, invoice_no, qty, rate, note)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
+-- clock_timestamp (not the column default NOW(), which is the same for every
+-- row of a transaction) keeps the lines of one batch in order, so FIFO takes
+-- them first to last.
+INSERT INTO stock_in (product_id, supplier_id, date, invoice_no, qty, rate, note, created_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, clock_timestamp())
 RETURNING *;
 
 -- name: GetStockInByID :one
@@ -20,7 +23,11 @@ SELECT
     p.name AS product_name,
     p.unit AS product_unit,
     cp.path AS category_path,
-    s.company_name AS supplier_name
+    s.company_name AS supplier_name,
+    -- what's left of this batch after the sales and wastage that used it
+    (si.qty - COALESCE((
+        SELECT SUM(a.qty) FROM stock_allocations a WHERE a.stock_in_id = si.id
+    ), 0))::FLOAT8 AS remaining_qty
 FROM stock_in si
 JOIN products p ON p.id = si.product_id
 JOIN suppliers s ON s.id = si.supplier_id
@@ -74,6 +81,12 @@ JOIN products p ON p.id = si.product_id
 JOIN suppliers s ON s.id = si.supplier_id
 WHERE si.date >= $1 AND si.date <= $2
 ORDER BY si.date ASC;
+
+-- name: GetStockInProductID :one
+-- Read without a row lock: stock writes lock the product first (see
+-- stockfifo.LockRow); locking this row first would invert that order.
+SELECT product_id FROM stock_in
+WHERE id = $1;
 
 -- name: UpdateStockIn :one
 UPDATE stock_in

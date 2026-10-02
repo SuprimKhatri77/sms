@@ -16,6 +16,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/suprimkhatri77/sms/backend/internal/constants"
 	db "github.com/suprimkhatri77/sms/backend/internal/database/generated"
+	"github.com/suprimkhatri77/sms/backend/internal/pkg/stockfifo"
 	"github.com/suprimkhatri77/sms/backend/internal/repository"
 	"github.com/suprimkhatri77/sms/backend/internal/types"
 	"github.com/suprimkhatri77/sms/backend/internal/utils"
@@ -132,8 +133,8 @@ func CreateStockIn(queries repository.InventoryTxRepository, pool *pgxpool.Pool)
 
 		desc := ledgerDescription(req.InvoiceNo)
 
-		stockIns := make([]db.StockIn, 0, len(req.Items))
-		for _, item := range req.Items {
+		productIDs := make([]pgtype.UUID, len(req.Items))
+		for i, item := range req.Items {
 			productID, err := utils.ConvertToUUID(item.ProductID)
 			if err != nil {
 				applog.Warn(c, handlerCreateStockIn, "invalid request",
@@ -146,8 +147,36 @@ func CreateStockIn(queries repository.InventoryTxRepository, pool *pgxpool.Pool)
 				return
 			}
 
+			productIDs[i] = productID
+		}
+
+		// lock before inserting: the insert's FK check takes a share lock on
+		// the product, and two of those upgrading to FOR UPDATE would deadlock
+		products, err := stockfifo.Lock(ctx, qtx, productIDs...)
+		if err != nil {
+			if errors.Is(err, stockfifo.ErrProductNotFound) {
+				applog.Warn(c, handlerCreateStockIn, "resource not found")
+				c.JSON(http.StatusNotFound, types.APIResponse{
+					Success: false,
+					Message: "Product not found",
+					Code:    constants.ProductNotFound,
+				})
+				return
+			}
+			applog.Error(c, handlerCreateStockIn, "failed to process request",
+				slog.Any(applog.AttrError, err))
+			c.JSON(http.StatusInternalServerError, types.APIResponse{
+				Success: false,
+				Message: "Failed to process request",
+				Code:    constants.InternalServerError,
+			})
+			return
+		}
+
+		stockIns := make([]db.StockIn, 0, len(req.Items))
+		for i, item := range req.Items {
 			stockIn, err := qtx.CreateStockIn(ctx, db.CreateStockInParams{
-				ProductID:  productID,
+				ProductID:  productIDs[i],
 				Note:       utils.ToNullableText(req.Note),
 				InvoiceNo:  utils.ToNullableText(req.InvoiceNo),
 				Rate:       int32(math.Round(item.Rate * 100)),
@@ -210,6 +239,30 @@ func CreateStockIn(queries repository.InventoryTxRepository, pool *pgxpool.Pool)
 			}
 
 			stockIns = append(stockIns, stockIn)
+		}
+
+		// a new batch can be dated before existing sales, which then use it
+		// first; redo the product's links so FIFO holds
+		if err := stockfifo.Rebuild(ctx, qtx, products); err != nil {
+			var short *stockfifo.ShortfallError
+			if errors.As(err, &short) {
+				applog.Warn(c, handlerCreateStockIn, "insufficient stock",
+					slog.Any(applog.AttrError, err))
+				c.JSON(http.StatusConflict, types.APIResponse{
+					Success: false,
+					Message: short.Error(),
+					Code:    constants.InsufficientStock,
+				})
+				return
+			}
+			applog.Error(c, handlerCreateStockIn, "failed to process request",
+				slog.Any(applog.AttrError, err))
+			c.JSON(http.StatusInternalServerError, types.APIResponse{
+				Success: false,
+				Message: "Failed to process request",
+				Code:    constants.InternalServerError,
+			})
+			return
 		}
 
 		if err := tx.Commit(ctx); err != nil {

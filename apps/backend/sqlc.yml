@@ -19,3 +19,7 @@ sql:
             go_type: "float64"
           - column: "wastage.qty"
             go_type: "float64"
+          - column: "stock_allocations.qty"
+            go_type: "float64"
+          - column: "stock_allocations.lot_offset"
+            go_type: "float64"

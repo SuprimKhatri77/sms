@@ -19,10 +19,11 @@ import { SearchableSelect } from "../shared/SearchableSelect";
 import {
   LineItemsEditor,
   emptyLineItem,
+  mapServerLineErrors,
   type LineItemRow,
   type LineItemErrors,
 } from "../shared/LineItemsEditor";
-import { useProductSearch } from "../shared/useProductSupplierSearch";
+import { useStockedProductSearch } from "../shared/useProductSupplierSearch";
 import {
   CreateStockOutBatchInput,
   CreateStockOutBatchResponse,
@@ -100,7 +101,7 @@ export function SaleDialog({
   const [items, setItems] = useState<LineItemRow[]>([emptyLineItem()]);
   const [itemErrors, setItemErrors] = useState<LineItemErrors>();
 
-  const searchProducts = useProductSearch();
+  const searchProducts = useStockedProductSearch();
 
   useEffect(() => {
     if (!open) return;
@@ -235,6 +236,8 @@ export function SaleDialog({
     } catch (err) {
       const error = err as BatchBackendError;
       toast.error(error?.message ?? "Something went wrong");
+      // e.g. a line needs more stock than there is on that date
+      setItemErrors(mapServerLineErrors(error?.errors, items));
     } finally {
       setIsSubmitting(false);
     }

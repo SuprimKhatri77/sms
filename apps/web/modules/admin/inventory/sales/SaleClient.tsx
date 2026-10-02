@@ -33,6 +33,7 @@ import SaleLoading from "./SaleLoading";
 import SaleError from "./SaleError";
 import axios from "axios";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { invalidateInventoryStockViews } from "@/lib/inventory-cache";
 
 type Sale = Extract<ListStockOutResponse, { success: true }>["data"][number];
 
@@ -151,9 +152,7 @@ export function SaleClient() {
     },
     onSuccess: (result) => {
       toast.success(result.message);
-      queryClient.invalidateQueries({
-        queryKey: ["admin-inventory-sale", currentPage],
-      });
+      invalidateInventoryStockViews(queryClient);
     },
   });
 
@@ -176,25 +175,28 @@ export function SaleClient() {
     },
     onSuccess: (result) => {
       toast.success(result.message);
-      queryClient.invalidateQueries({
-        queryKey: ["admin-inventory-sale", currentPage],
-      });
+      invalidateInventoryStockViews(queryClient);
     },
   });
 
   const deleteSale = useMutation({
     mutationFn: async (id: string) => {
-      const res = await api.delete<DeleteStockOutResponse>(
-        `/admin/inventory/sales/${id}`,
-      );
-      if (!res.data.success) throw res.data;
-      return res.data;
+      // surface the server's reason (e.g. stock already sold from this batch)
+      // rather than axios' "Request failed with status code 409"
+      try {
+        const res = await api.delete<DeleteStockOutResponse>(
+          `/admin/inventory/sales/${id}`,
+        );
+        if (!res.data.success) throw res.data;
+        return res.data;
+      } catch (err) {
+        if (axios.isAxiosError(err)) throw err.response?.data ?? err;
+        throw err;
+      }
     },
     onSuccess: (result) => {
       toast.success(result.message);
-      queryClient.invalidateQueries({
-        queryKey: ["admin-inventory-sale", currentPage],
-      });
+      invalidateInventoryStockViews(queryClient);
     },
     onError: (error) => {
       toast.error(error.message);

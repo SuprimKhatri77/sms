@@ -92,19 +92,17 @@ func ExportWastage(queries repository.InventoryRepository) gin.HandlerFunc {
 		rows := make([][]any, 0, len(wastageList))
 		var sum int64
 		for _, w := range wastageList {
-			amount := utils.LineAmount(w.Qty, w.Rate)
 			rows = append(rows, []any{
 				w.ProductName,
 				w.CategoryPath.String,
 				export.Number(w.Qty),
 				w.ProductUnit,
-				export.Money(w.Rate),
-				export.Money(amount),
+				export.Money(w.Cost),
 				strings.TrimSpace(w.Reason.String),
 				export.DateFromBS(w.Date),
 				w.Date,
 			})
-			sum += amount
+			sum += w.Cost
 		}
 
 		table := export.Table{
@@ -112,21 +110,20 @@ func ExportWastage(queries repository.InventoryRepository) gin.HandlerFunc {
 			Meta: export.Filters(
 				export.BSDateRange(params.From, params.To),
 				export.Labelled("Product", params.ProductName),
-				export.Labelled("Rate sort", params.SortByRate),
+				export.Labelled("Cost sort", params.SortByRate),
 			),
 			Columns: []export.Column{
 				{Header: "Product", Width: 24},
 				{Header: "Category", Width: 18},
 				{Header: "Qty", Numeric: true, Width: 8},
 				{Header: "Unit", Width: 8},
-				{Header: "Rate", Money: true, Width: 11},
-				{Header: "Amount", Money: true, Width: 13},
+				{Header: "Cost", Money: true, Width: 13},
 				{Header: "Reason", Width: 28},
 				{Header: "Date (AD)", Width: 11},
 				{Header: "Date (BS)", Width: 11},
 			},
 			Rows:   rows,
-			Totals: []any{fmt.Sprintf("Total (%d entries)", len(rows)), "", "", "", "", export.Money(sum), "", "", ""},
+			Totals: []any{fmt.Sprintf("Total (%d entries)", len(rows)), "", "", "", export.Money(sum), "", "", ""},
 		}
 
 		if err := export.Write(c, export.Format(params.Format), "wastage", table); err != nil {

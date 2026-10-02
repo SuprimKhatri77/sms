@@ -51,8 +51,22 @@ type InventoryTxRepository interface {
 	CreateSupplierLedgerEntry(ctx context.Context, params db.CreateSupplierLedgerEntryParams) (db.SupplierLedger, error)
 	UpdateStockInLedgerCredit(ctx context.Context, params db.UpdateStockInLedgerCreditParams) (int64, error)
 	DeleteStockInLedgerCredit(ctx context.Context, stockInID pgtype.UUID) error
+	GetStockInProductID(ctx context.Context, id pgtype.UUID) (pgtype.UUID, error)
 	CreateStockOut(ctx context.Context, params db.CreateStockOutParams) (db.StockOut, error)
+	UpdateStockOut(ctx context.Context, params db.UpdateStockOutParams) (db.StockOut, error)
+	DeleteStockOut(ctx context.Context, id pgtype.UUID) error
+	GetStockOutProductID(ctx context.Context, id pgtype.UUID) (pgtype.UUID, error)
 	CreateWastage(ctx context.Context, params db.CreateWastageParams) (db.Wastage, error)
+	UpdateWastage(ctx context.Context, params db.UpdateWastageParams) (db.Wastage, error)
+	DeleteWastage(ctx context.Context, id pgtype.UUID) error
+	GetWastageProductID(ctx context.Context, id pgtype.UUID) (pgtype.UUID, error)
+
+	// FIFO batch links (see pkg/stockfifo)
+	LockProductsForStock(ctx context.Context, ids []pgtype.UUID) ([]db.LockProductsForStockRow, error)
+	ListStockLotsForProduct(ctx context.Context, productID pgtype.UUID) ([]db.ListStockLotsForProductRow, error)
+	ListStockConsumersForProduct(ctx context.Context, productID pgtype.UUID) ([]db.ListStockConsumersForProductRow, error)
+	DeleteStockAllocationsForProduct(ctx context.Context, productID pgtype.UUID) error
+	InsertStockAllocations(ctx context.Context, params []db.InsertStockAllocationsParams) (int64, error)
 }
 
 type inventoryTxRepository struct {
@@ -91,4 +105,40 @@ func (r *inventoryTxRepository) CreateStockOut(ctx context.Context, params db.Cr
 }
 func (r *inventoryTxRepository) CreateWastage(ctx context.Context, params db.CreateWastageParams) (db.Wastage, error) {
 	return r.queries.CreateWastage(ctx, params)
+}
+func (r *inventoryTxRepository) GetStockInProductID(ctx context.Context, id pgtype.UUID) (pgtype.UUID, error) {
+	return r.queries.GetStockInProductID(ctx, id)
+}
+func (r *inventoryTxRepository) UpdateStockOut(ctx context.Context, params db.UpdateStockOutParams) (db.StockOut, error) {
+	return r.queries.UpdateStockOut(ctx, params)
+}
+func (r *inventoryTxRepository) DeleteStockOut(ctx context.Context, id pgtype.UUID) error {
+	return r.queries.DeleteStockOut(ctx, id)
+}
+func (r *inventoryTxRepository) GetStockOutProductID(ctx context.Context, id pgtype.UUID) (pgtype.UUID, error) {
+	return r.queries.GetStockOutProductID(ctx, id)
+}
+func (r *inventoryTxRepository) UpdateWastage(ctx context.Context, params db.UpdateWastageParams) (db.Wastage, error) {
+	return r.queries.UpdateWastage(ctx, params)
+}
+func (r *inventoryTxRepository) DeleteWastage(ctx context.Context, id pgtype.UUID) error {
+	return r.queries.DeleteWastage(ctx, id)
+}
+func (r *inventoryTxRepository) GetWastageProductID(ctx context.Context, id pgtype.UUID) (pgtype.UUID, error) {
+	return r.queries.GetWastageProductID(ctx, id)
+}
+func (r *inventoryTxRepository) LockProductsForStock(ctx context.Context, ids []pgtype.UUID) ([]db.LockProductsForStockRow, error) {
+	return r.queries.LockProductsForStock(ctx, ids)
+}
+func (r *inventoryTxRepository) ListStockLotsForProduct(ctx context.Context, productID pgtype.UUID) ([]db.ListStockLotsForProductRow, error) {
+	return r.queries.ListStockLotsForProduct(ctx, productID)
+}
+func (r *inventoryTxRepository) ListStockConsumersForProduct(ctx context.Context, productID pgtype.UUID) ([]db.ListStockConsumersForProductRow, error) {
+	return r.queries.ListStockConsumersForProduct(ctx, productID)
+}
+func (r *inventoryTxRepository) DeleteStockAllocationsForProduct(ctx context.Context, productID pgtype.UUID) error {
+	return r.queries.DeleteStockAllocationsForProduct(ctx, productID)
+}
+func (r *inventoryTxRepository) InsertStockAllocations(ctx context.Context, params []db.InsertStockAllocationsParams) (int64, error) {
+	return r.queries.InsertStockAllocations(ctx, params)
 }
