@@ -31,7 +31,7 @@ import { formatNpr } from "../shared/student-utils";
 import { inputCls } from "./shared/utils";
 import { SearchableSelect } from "../../inventory/shared/SearchableSelect";
 import { useBankAccountSearch } from "../../inventory/shared/useProductSupplierSearch";
-import { useBankAccountsDropdown } from "@/hooks/queries/admin/banks/bank_ledger/useBankAccountsDropdown";
+import { useBankAccountsDropdown } from "@/hooks/queries/admin/banks/bank_accounts/useBankAccountsDropdown";
 
 const CASH_AND_BANK = "cash_and_bank";
 

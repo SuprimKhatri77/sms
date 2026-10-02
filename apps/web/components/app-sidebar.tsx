@@ -128,7 +128,7 @@ const navSections = [
         title: "Banks",
         url: "/banks",
         icon: <Building2 />,
-        excludeUrls: ["/banks/ledger", "/banks/accounts"],
+        excludeUrls: ["/banks/accounts"],
       },
       {
         title: "Bank Accounts",
@@ -139,15 +139,8 @@ const navSections = [
         title: "Suppliers",
         url: "/suppliers",
         icon: <BookOpenCheck />,
-        excludeUrls: ["/suppliers/ledger"],
       },
-      { title: "Bank Ledger", url: "/banks/ledger", icon: <Wallet /> },
-      { title: "Cash Ledger", url: "/cash-ledger", icon: <Wallet /> },
-      {
-        title: "Supplier Ledger",
-        url: "/suppliers/ledger",
-        icon: <Wallet />,
-      },
+      { title: "Ledgers", url: "/ledgers", icon: <Wallet /> },
     ],
   },
 ];

@@ -10,10 +10,10 @@ import (
 )
 
 type Config struct {
-	Config             *config.Config
-	Queries            *db.Queries
-	CldClient          *cloudinary.Client
-	StudentRepo        repository.StudentRepository
-	SupplierLedgerRepo accountingRepository.SupplierLedgerTxRepository
-	PgxPool            *pgxpool.Pool
+	Config      *config.Config
+	Queries     *db.Queries
+	CldClient   *cloudinary.Client
+	StudentRepo repository.StudentRepository
+	LedgerRepo  accountingRepository.LedgerTxRepository
+	PgxPool     *pgxpool.Pool
 }

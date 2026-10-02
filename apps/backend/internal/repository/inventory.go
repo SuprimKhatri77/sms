@@ -48,9 +48,9 @@ type InventoryTxRepository interface {
 	CreateStockIn(ctx context.Context, params db.CreateStockInParams) (db.StockIn, error)
 	UpdateStockIn(ctx context.Context, params db.UpdateStockInParams) (db.StockIn, error)
 	DeleteStockIn(ctx context.Context, id pgtype.UUID) error
-	CreateSupplierLedgerEntry(ctx context.Context, params db.CreateSupplierLedgerEntryParams) (db.SupplierLedger, error)
-	UpdateStockInLedgerCredit(ctx context.Context, params db.UpdateStockInLedgerCreditParams) (int64, error)
-	DeleteStockInLedgerCredit(ctx context.Context, stockInID pgtype.UUID) error
+	CreateLedgerEntry(ctx context.Context, params db.CreateLedgerEntryParams) (db.LedgerEntry, error)
+	UpdatePurchaseLedgerCredit(ctx context.Context, params db.UpdatePurchaseLedgerCreditParams) (int64, error)
+	DeletePurchaseLedgerCredit(ctx context.Context, stockInID pgtype.UUID) error
 	GetStockInProductID(ctx context.Context, id pgtype.UUID) (pgtype.UUID, error)
 	CreateStockOut(ctx context.Context, params db.CreateStockOutParams) (db.StockOut, error)
 	UpdateStockOut(ctx context.Context, params db.UpdateStockOutParams) (db.StockOut, error)
@@ -91,14 +91,14 @@ func (r *inventoryTxRepository) UpdateStockIn(ctx context.Context, params db.Upd
 func (r *inventoryTxRepository) DeleteStockIn(ctx context.Context, id pgtype.UUID) error {
 	return r.queries.DeleteStockIn(ctx, id)
 }
-func (r *inventoryTxRepository) CreateSupplierLedgerEntry(ctx context.Context, params db.CreateSupplierLedgerEntryParams) (db.SupplierLedger, error) {
-	return r.queries.CreateSupplierLedgerEntry(ctx, params)
+func (r *inventoryTxRepository) CreateLedgerEntry(ctx context.Context, params db.CreateLedgerEntryParams) (db.LedgerEntry, error) {
+	return r.queries.CreateLedgerEntry(ctx, params)
 }
-func (r *inventoryTxRepository) UpdateStockInLedgerCredit(ctx context.Context, params db.UpdateStockInLedgerCreditParams) (int64, error) {
-	return r.queries.UpdateStockInLedgerCredit(ctx, params)
+func (r *inventoryTxRepository) UpdatePurchaseLedgerCredit(ctx context.Context, params db.UpdatePurchaseLedgerCreditParams) (int64, error) {
+	return r.queries.UpdatePurchaseLedgerCredit(ctx, params)
 }
-func (r *inventoryTxRepository) DeleteStockInLedgerCredit(ctx context.Context, stockInID pgtype.UUID) error {
-	return r.queries.DeleteStockInLedgerCredit(ctx, stockInID)
+func (r *inventoryTxRepository) DeletePurchaseLedgerCredit(ctx context.Context, stockInID pgtype.UUID) error {
+	return r.queries.DeletePurchaseLedgerCredit(ctx, stockInID)
 }
 func (r *inventoryTxRepository) CreateStockOut(ctx context.Context, params db.CreateStockOutParams) (db.StockOut, error) {
 	return r.queries.CreateStockOut(ctx, params)

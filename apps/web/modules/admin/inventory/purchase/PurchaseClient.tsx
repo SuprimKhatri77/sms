@@ -33,7 +33,7 @@ import {
 import { useAdminQueryRefresh } from "@/hooks/useAdminQueryRefresh";
 import { adminPrimaryButtonClass } from "@/components/admin/admin-styles";
 import { InventoryTransactionFilters } from "../shared/InventoryTransactionFilters";
-import { invalidateInventoryStockViews } from "@/lib/inventory-cache";
+import { invalidatePurchaseViews } from "@/lib/inventory-cache";
 
 type Purchase = Extract<
   ListStockInResponse,
@@ -105,7 +105,7 @@ export function PurchaseClient() {
     },
     onSuccess: (result) => {
       toast.success(result.message);
-      invalidateInventoryStockViews(queryClient);
+      invalidatePurchaseViews(queryClient);
     },
   });
   const updatePurchase = useMutation({
@@ -127,7 +127,7 @@ export function PurchaseClient() {
     },
     onSuccess: (result) => {
       toast.success(result.message);
-      invalidateInventoryStockViews(queryClient);
+      invalidatePurchaseViews(queryClient);
     },
   });
   const deletePurchase = useMutation({
@@ -147,7 +147,7 @@ export function PurchaseClient() {
     },
     onSuccess: (result) => {
       toast.success(result.message);
-      invalidateInventoryStockViews(queryClient);
+      invalidatePurchaseViews(queryClient);
     },
     onError: (error) => {
       toast.error(error.message);

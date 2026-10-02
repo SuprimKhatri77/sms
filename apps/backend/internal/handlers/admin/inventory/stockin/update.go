@@ -224,7 +224,7 @@ func UpdateStockIn(queries repository.InventoryTxRepository, pool *pgxpool.Pool)
 		}
 
 		// keep the purchase's auto-recorded supplier ledger credit in sync
-		updatedCredits, err := qtx.UpdateStockInLedgerCredit(ctx, db.UpdateStockInLedgerCreditParams{
+		updatedCredits, err := qtx.UpdatePurchaseLedgerCredit(ctx, db.UpdatePurchaseLedgerCreditParams{
 			StockInID:   stockIn.ID,
 			SupplierID:  supplierID,
 			Date:        pgtype.Timestamptz{Time: adDate, Valid: true},

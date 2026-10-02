@@ -1,9 +1,11 @@
 import {
+  BankAccountForDropdown,
   BankAccountsData,
   CreateBankAccountInput,
   CreateBankAccountResponse,
   DeleteBankAccountResponse,
   GetBankAccountResponse,
+  GetBankAccountsForDropdownResponse,
   SetDefaultBankAccountResponse,
   UpdateBankAccountInput,
   UpdateBankAccountResponse,
@@ -77,4 +79,33 @@ export const setDefaultBankAccount = async ({
     `/admin/accounting/banks/accounts/${accountID}/set-default`,
   );
   return res.data;
+};
+
+export const getBankAccountsForDropdown = async (): Promise<
+  BankAccountForDropdown[]
+> => {
+  const res = await api.get<GetBankAccountsForDropdownResponse>(
+    "/admin/accounting/banks/accounts/dropdown",
+  );
+  return res.data.data;
+};
+
+type SearchBankAccountsForDropdownParams = {
+  name?: string;
+  bankID?: string;
+  limit: number;
+};
+export const searchBankAccountsForDropdown = async ({
+  name,
+  bankID,
+  limit,
+}: SearchBankAccountsForDropdownParams): Promise<BankAccountForDropdown[]> => {
+  const params = new URLSearchParams();
+  params.append("limit", String(limit));
+  if (name) params.append("name", name);
+  if (bankID && bankID !== "all") params.append("bank_id", bankID);
+  const res = await api.get<GetBankAccountsForDropdownResponse>(
+    `/admin/accounting/banks/accounts/dropdown?${params.toString()}`,
+  );
+  return res.data.data;
 };

@@ -77,12 +77,12 @@ func main() {
 	r.Use(middleware.CORS(cfg))
 
 	routes.Setup(r, routeconfig.Config{
-		Config:             cfg,
-		Queries:            queries,
-		CldClient:          cldClient,
-		StudentRepo:        repository.NewAdmissionRepository(queries),
-		SupplierLedgerRepo: accountingRepository.NewSupplierLedgerTxRepository(queries, db.Pool),
-		PgxPool:            db.Pool,
+		Config:      cfg,
+		Queries:     queries,
+		CldClient:   cldClient,
+		StudentRepo: repository.NewAdmissionRepository(queries),
+		LedgerRepo:  accountingRepository.NewLedgerTxRepository(queries, db.Pool),
+		PgxPool:     db.Pool,
 	})
 
 	srv := &http.Server{

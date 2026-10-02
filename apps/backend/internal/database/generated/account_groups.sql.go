@@ -55,6 +55,25 @@ func (q *Queries) DeleteAccountGroup(ctx context.Context, id pgtype.UUID) (pgcon
 	return q.db.Exec(ctx, deleteAccountGroup, id)
 }
 
+const getAccountGroupByID = `-- name: GetAccountGroupByID :one
+SELECT id, parent_id, primary_head_id, name, code, description, created_at FROM account_groups WHERE id = $1
+`
+
+func (q *Queries) GetAccountGroupByID(ctx context.Context, id pgtype.UUID) (AccountGroup, error) {
+	row := q.db.QueryRow(ctx, getAccountGroupByID, id)
+	var i AccountGroup
+	err := row.Scan(
+		&i.ID,
+		&i.ParentID,
+		&i.PrimaryHeadID,
+		&i.Name,
+		&i.Code,
+		&i.Description,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const isAccountGroupInSubtree = `-- name: IsAccountGroupInSubtree :one
 WITH RECURSIVE ancestors AS (
     SELECT ag.id, ag.parent_id FROM account_groups ag WHERE ag.id = $2::UUID

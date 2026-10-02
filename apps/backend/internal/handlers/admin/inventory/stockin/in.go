@@ -16,6 +16,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/suprimkhatri77/sms/backend/internal/constants"
 	db "github.com/suprimkhatri77/sms/backend/internal/database/generated"
+	"github.com/suprimkhatri77/sms/backend/internal/pkg/ledger"
 	"github.com/suprimkhatri77/sms/backend/internal/pkg/stockfifo"
 	"github.com/suprimkhatri77/sms/backend/internal/repository"
 	"github.com/suprimkhatri77/sms/backend/internal/types"
@@ -218,7 +219,9 @@ func CreateStockIn(queries repository.InventoryTxRepository, pool *pgxpool.Pool)
 				return
 			}
 
-			_, err = qtx.CreateSupplierLedgerEntry(ctx, db.CreateSupplierLedgerEntryParams{
+			_, err = qtx.CreateLedgerEntry(ctx, db.CreateLedgerEntryParams{
+				LedgerType:  ledger.TypeSupplier,
+				Source:      ledger.SourcePurchase,
 				SupplierID:  supplierID,
 				Date:        pgtype.Timestamptz{Time: adDate, Valid: true},
 				BsDate:      req.BsDate,

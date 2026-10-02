@@ -1,4 +1,4 @@
-import { GetBankLedgerSummaryParams } from "./api/bank_ledger";
+import type { LedgerFilterParams } from "./api/ledgers";
 
 export const queryKeys = {
   analytics: {
@@ -25,75 +25,16 @@ export const queryKeys = {
     all: ["admin-banks"] as const,
     detail: (id: string) => ["admin-banks", id] as const,
   },
-  bankLedger: {
-    all: ["admin-bank-ledger"] as const,
-    list: (
-      bankId?: string,
-      accountId?: string,
-      fromDate?: string | null,
-      toDate?: string | null,
-    ) =>
-      ["admin-bank-ledger", "list", bankId, accountId, fromDate, toDate] as const,
-    summary: ({
-      accountID,
-      bankID,
-      fromDate,
-      toDate,
-    }: GetBankLedgerSummaryParams) =>
-      [
-        "admin-bank-ledger",
-        "summary",
-        accountID,
-        bankID,
-        fromDate,
-        toDate,
-      ] as const,
-  },
-  cashLedger: {
-    all: ["admin-cash-ledger"] as const,
-    list: (fromAD?: string | null, toAD?: string | null) =>
-      ["admin-cash-ledger", "list", fromAD, toAD] as const,
-    summary: (fromAD?: string | null, toAD?: string | null) =>
-      ["admin-cash-ledger", "summary", fromAD, toAD] as const,
+  ledgers: {
+    all: ["admin-ledgers"] as const,
+    list: (filters: LedgerFilterParams) =>
+      ["admin-ledgers", "list", filters] as const,
+    summary: (filters: LedgerFilterParams) =>
+      ["admin-ledgers", "summary", filters] as const,
   },
   suppliers: {
     all: ["admin-suppliers"] as const,
     list: (page: number) => ["admin-suppliers", "list", page] as const,
-    ledger: {
-      summary: ({
-        supplierID,
-        fromDate,
-        toDate,
-      }: {
-        supplierID: string | null;
-        fromDate: string | null;
-        toDate: string | null;
-      }) =>
-        [
-          "admin-suppliers",
-          "ledger",
-          "summary",
-          supplierID,
-          fromDate,
-          toDate,
-        ] as const,
-      list: (
-        supplierID: string,
-        page: number,
-        fromDate: string | null,
-        toDate: string | null,
-      ) =>
-        [
-          "admin-suppliers",
-          "ledger",
-          "list",
-          supplierID,
-          page,
-          fromDate,
-          toDate,
-        ] as const,
-      all: ["admin-suppliers", "ledger"] as const,
-    },
   },
   batches: {
     all: ["admin-students", "batches"] as const,

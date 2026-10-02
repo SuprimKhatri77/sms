@@ -4,11 +4,9 @@ import (
 	"github.com/gin-gonic/gin"
 	accountgroups "github.com/suprimkhatri77/sms/backend/internal/handlers/admin/accounting/account_groups"
 	bankaccounts "github.com/suprimkhatri77/sms/backend/internal/handlers/admin/accounting/bank_accounts"
-	bankledger "github.com/suprimkhatri77/sms/backend/internal/handlers/admin/accounting/bank_ledger"
 	"github.com/suprimkhatri77/sms/backend/internal/handlers/admin/accounting/banks"
-	cashledger "github.com/suprimkhatri77/sms/backend/internal/handlers/admin/accounting/cash_ledger"
+	"github.com/suprimkhatri77/sms/backend/internal/handlers/admin/accounting/ledger"
 	primaryheads "github.com/suprimkhatri77/sms/backend/internal/handlers/admin/accounting/primary_heads"
-	supplierledger "github.com/suprimkhatri77/sms/backend/internal/handlers/admin/accounting/supplier_ledger"
 	"github.com/suprimkhatri77/sms/backend/internal/handlers/admin/accounting/suppliers"
 	"github.com/suprimkhatri77/sms/backend/internal/middleware"
 	accountingRepository "github.com/suprimkhatri77/sms/backend/internal/repository/accounting"
@@ -26,12 +24,6 @@ func setupAdminAccountingRoutes(admin *gin.RouterGroup, cfg config.Config) {
 	b.DELETE("/:bankID", banks.DeleteBank(cfg.Queries))
 	b.PUT("/:bankID/set-default", banks.SetDefaultBank(accountingRepository.NewBankTxRepository(cfg.Queries), cfg.PgxPool))
 
-	// bank ledger
-	b.GET("/ledger", bankledger.ListBankLedger(cfg.Queries))
-	b.GET("/ledger/export", bankledger.ExportBankLedger(cfg.Queries))
-	b.GET("/ledger/summary", bankledger.GetBankLedgerSummary(cfg.Queries))
-	b.POST("/ledger/:accountID", bankledger.CreateBankLedgerEntry(cfg.Queries))
-
 	// bank accounts
 	b.GET("/accounts", bankaccounts.ListBankAccounts(cfg.Queries))
 	b.GET("/accounts/dropdown", bankaccounts.ListBankAccountsForDropdown(cfg.Queries))
@@ -40,12 +32,16 @@ func setupAdminAccountingRoutes(admin *gin.RouterGroup, cfg config.Config) {
 	b.DELETE("/accounts/:accountID", bankaccounts.DeleteBankAccount(cfg.Queries))
 	b.PUT("/accounts/:accountID/set-default", bankaccounts.SetDefaultBankAccount(accountingRepository.NewBankAccountTxRepository(cfg.Queries), cfg.PgxPool))
 
-	// cash ledger
-	cash := accounting.Group("/cash-ledger")
-	cash.GET("", cashledger.ListCashLedger(cfg.Queries))
-	cash.GET("/export", cashledger.ExportCashLedger(cfg.Queries))
-	cash.GET("/summary", cashledger.GetCashLedgerSummary(cfg.Queries))
-	cash.POST("", cashledger.CreateCashLedgerEntry(cfg.Queries))
+	// ledgers (cash, bank, supplier, ...) — any admin can view and add
+	// entries, only superadmin can edit or delete them
+	l := accounting.Group("/ledgers")
+	l.GET("", ledger.ListLedgerEntries(cfg.Queries))
+	l.GET("/export", ledger.ExportLedgerEntries(cfg.Queries))
+	l.GET("/summary", ledger.GetLedgerSummary(cfg.Queries))
+	l.POST("", ledger.CreateLedgerEntry(cfg.LedgerRepo, cfg.PgxPool))
+	lWrite := l.Group("", middleware.RequireRole("superadmin"))
+	lWrite.PUT("/:entryID", ledger.UpdateLedgerEntry(cfg.LedgerRepo, cfg.PgxPool))
+	lWrite.DELETE("/:entryID", ledger.DeleteLedgerEntry(cfg.LedgerRepo, cfg.PgxPool))
 
 	// suppliers
 	sup := accounting.Group("/suppliers")
@@ -53,12 +49,6 @@ func setupAdminAccountingRoutes(admin *gin.RouterGroup, cfg config.Config) {
 	sup.POST("", suppliers.CreateSupplier(cfg.Queries))
 	sup.PUT("/:supplierID", suppliers.UpdateSupplier(cfg.Queries))
 	sup.DELETE("/:supplierID", suppliers.DeleteSupplier(cfg.Queries))
-
-	// supplier ledger
-	sup.GET("/ledger", supplierledger.ListSupplierLedger(cfg.Queries))
-	sup.GET("/ledger/export", supplierledger.ExportSupplierLedger(cfg.Queries))
-	sup.GET("/ledger/summary", supplierledger.GetSupplierLedgerSummary(cfg.Queries))
-	sup.POST("/:supplierID/ledger", supplierledger.CreateSupplierLedgerEntry(cfg.SupplierLedgerRepo, cfg.PgxPool))
 
 	// primary heads — any admin can view, only superadmin can change
 	ph := accounting.Group("/primary-heads")

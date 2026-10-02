@@ -129,6 +129,14 @@ const (
 	AccountGroupCircularParent    = "ACCOUNT_GROUP_CIRCULAR_PARENT"
 	AccountGroupHasSubGroups      = "ACCOUNT_GROUP_HAS_SUB_GROUPS"
 	SubGroupCannotHavePrimaryHead = "SUB_GROUP_CANNOT_HAVE_PRIMARY_HEAD"
+	AccountGroupInUse             = "ACCOUNT_GROUP_IN_USE"
+
+	// ledgers
+	LedgerEntryNotFound    = "LEDGER_ENTRY_NOT_FOUND"
+	LedgerEntryLocked      = "LEDGER_ENTRY_LOCKED"
+	LedgerEntryUnpaired    = "LEDGER_ENTRY_UNPAIRED"
+	LedgerTypeChange       = "LEDGER_TYPE_CHANGE"
+	InvalidLedgerFields    = "INVALID_LEDGER_FIELDS"
 
 	// certificates
 	CertificateAlreadyExists = "CERTIFICATE_ALREADY_EXISTS"

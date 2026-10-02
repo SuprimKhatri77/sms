@@ -17,12 +17,24 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
+          # Stops at the first failure. The new binary is built first, then the
+          # service is stopped so nothing writes while migrations run. Each
+          # migration file runs in one transaction, so a failing one changes
+          # nothing; the old binary comes back up (on the schema as of the last
+          # migration that succeeded) and the deploy fails.
           script: |
+            set -eu
             cd ~/bakeandbrew
             git pull origin main
             cd apps/backend
             export PATH=$PATH:$HOME/go/bin
-            make migrate-up
-            go build -o server ./cmd/server
+            go build -o server.new ./cmd/server
+            sudo systemctl stop bakeandbrew
+            if ! make migrate-up; then
+              sudo systemctl start bakeandbrew
+              echo "MIGRATION FAILED - old version restarted; check schema_migrations for a dirty flag"
+              exit 1
+            fi
+            mv server.new server
             chmod +x server
-            sudo systemctl restart bakeandbrew
+            sudo systemctl start bakeandbrew
