@@ -76,8 +76,7 @@ type AdminPaymentTxRepository interface {
 	GetStudentFeeSummary(ctx context.Context, id pgtype.UUID) (db.GetStudentFeeSummaryRow, error)
 	AddPayment(ctx context.Context, params db.AddPaymentParams) (db.Payment, error)
 	GetStudentByID(ctx context.Context, id pgtype.UUID) (db.GetStudentByIDRow, error)
-	CreateBankLedgerEntry(ctx context.Context, params db.CreateBankLedgerEntryParams) (db.BankLedger, error)
-	CreateCashLedgerEntry(ctx context.Context, params db.CreateCashLedgerEntryParams) (db.CashLedger, error)
+	CreateLedgerEntry(ctx context.Context, params db.CreateLedgerEntryParams) (db.LedgerEntry, error)
 	GetDefaultBankAccountID(ctx context.Context) (pgtype.UUID, error)
 }
 
@@ -106,12 +105,8 @@ func (r *adminPaymentTxRepository) GetStudentByID(ctx context.Context, id pgtype
 	return r.queries.GetStudentByID(ctx, id)
 }
 
-func (r *adminPaymentTxRepository) CreateBankLedgerEntry(ctx context.Context, params db.CreateBankLedgerEntryParams) (db.BankLedger, error) {
-	return r.queries.CreateBankLedgerEntry(ctx, params)
-}
-
-func (r *adminPaymentTxRepository) CreateCashLedgerEntry(ctx context.Context, params db.CreateCashLedgerEntryParams) (db.CashLedger, error) {
-	return r.queries.CreateCashLedgerEntry(ctx, params)
+func (r *adminPaymentTxRepository) CreateLedgerEntry(ctx context.Context, params db.CreateLedgerEntryParams) (db.LedgerEntry, error) {
+	return r.queries.CreateLedgerEntry(ctx, params)
 }
 
 func (r *adminPaymentTxRepository) GetDefaultBankAccountID(ctx context.Context) (pgtype.UUID, error) {

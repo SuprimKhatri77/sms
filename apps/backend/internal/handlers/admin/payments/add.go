@@ -14,6 +14,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/suprimkhatri77/sms/backend/internal/constants"
 	db "github.com/suprimkhatri77/sms/backend/internal/database/generated"
+	"github.com/suprimkhatri77/sms/backend/internal/pkg/ledger"
 	"github.com/suprimkhatri77/sms/backend/internal/repository"
 	"github.com/suprimkhatri77/sms/backend/internal/types"
 	"github.com/suprimkhatri77/sms/backend/internal/utils"
@@ -314,7 +315,9 @@ func AddPayment(queries repository.AdminPaymentTxRepository, pool *pgxpool.Pool)
 		// bank ledger; on failure they write the error response and return
 		// false, and the deferred rollback undoes the payment too.
 		recordCash := func(amt int64) bool {
-			_, err := qtx.CreateCashLedgerEntry(ctx, db.CreateCashLedgerEntryParams{
+			_, err := qtx.CreateLedgerEntry(ctx, db.CreateLedgerEntryParams{
+				LedgerType:  ledger.TypeCash,
+				Source:      ledger.SourceStudentPayment,
 				Amount:      amt,
 				EntryType:   "cr",
 				Description: pgtype.Text{String: "Student payment - auto recorded", Valid: true},
@@ -380,7 +383,9 @@ func AddPayment(queries repository.AdminPaymentTxRepository, pool *pgxpool.Pool)
 					return false
 				}
 			}
-			_, err = qtx.CreateBankLedgerEntry(ctx, db.CreateBankLedgerEntryParams{
+			_, err = qtx.CreateLedgerEntry(ctx, db.CreateLedgerEntryParams{
+				LedgerType:    ledger.TypeBank,
+				Source:        ledger.SourceStudentPayment,
 				Amount:        amt,
 				EntryType:     "cr",
 				Description:   pgtype.Text{String: "Student payment - auto recorded", Valid: true},
@@ -397,14 +402,14 @@ func AddPayment(queries repository.AdminPaymentTxRepository, pool *pgxpool.Pool)
 						slog.String("constraint", pgErr.ConstraintName),
 					)
 					switch pgErr.ConstraintName {
-					case "bank_ledger_bank_account_id_fkey":
+					case "ledger_entries_bank_account_id_fkey":
 						c.JSON(http.StatusNotFound, types.APIResponse{
 							Success: false,
 							Message: "Bank account not found",
 							Code:    constants.BankAccountNotFound,
 						})
 						return false
-					case "bank_ledger_payment_id_fkey":
+					case "ledger_entries_payment_id_fkey":
 						c.JSON(http.StatusNotFound, types.APIResponse{
 							Success: false,
 							Message: "Payment not found",

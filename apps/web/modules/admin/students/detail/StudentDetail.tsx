@@ -14,7 +14,8 @@ import {
   UpdateStudentStatusResponse,
 } from "@repo/types";
 import { AddPaymentModal } from "./AddPaymentModal";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
 import api from "@/lib/axios";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -102,6 +103,7 @@ export default function StudentDetailPage({
   const courseCertRef = useRef<HTMLDivElement>(null);
   const [currentStatus, setCurrentStatus] = useState<Status>(student.status);
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   useAdminRefreshShortcut(useAdminRouterRefresh());
   useAdminBackShortcut(useCallback(() => router.push("/admin/students"), [router]));
@@ -207,6 +209,8 @@ export default function StudentDetailPage({
     },
     onSuccess: (result) => {
       toast.success(result.message);
+      // the payment is also booked into the cash/bank ledger
+      queryClient.invalidateQueries({ queryKey: queryKeys.ledgers.all });
       router.refresh();
     },
   });

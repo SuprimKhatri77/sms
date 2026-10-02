@@ -227,8 +227,8 @@ SELECT
     p.payment_mode,
     a.name AS added_by_name,
     -- where the money was booked; shows the split of a cash_and_bank payment
-    COALESCE((SELECT SUM(c.amount) FROM cash_ledger c WHERE c.payment_id = p.id), 0)::BIGINT AS cash_amount,
-    COALESCE((SELECT SUM(b.amount) FROM bank_ledger b WHERE b.payment_id = p.id), 0)::BIGINT AS bank_amount
+    COALESCE((SELECT SUM(c.amount) FROM ledger_entries c WHERE c.payment_id = p.id AND c.ledger_type = 'cash'), 0)::BIGINT AS cash_amount,
+    COALESCE((SELECT SUM(b.amount) FROM ledger_entries b WHERE b.payment_id = p.id AND b.ledger_type = 'bank'), 0)::BIGINT AS bank_amount
 FROM payments p
 JOIN users a ON a.id = p.added_by
 WHERE p.student_id = $1

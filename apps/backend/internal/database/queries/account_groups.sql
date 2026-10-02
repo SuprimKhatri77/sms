@@ -57,3 +57,6 @@ WITH RECURSIVE ancestors AS (
     JOIN ancestors a ON g.id = a.parent_id
 )
 SELECT EXISTS (SELECT 1 FROM ancestors WHERE ancestors.id = sqlc.arg(group_id)::UUID);
+
+-- name: GetAccountGroupByID :one
+SELECT * FROM account_groups WHERE id = $1;

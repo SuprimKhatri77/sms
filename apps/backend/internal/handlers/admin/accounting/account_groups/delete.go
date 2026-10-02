@@ -47,6 +47,16 @@ func DeleteAccountGroup(queries accountingRepository.AccountGroupsRepository) gi
 				})
 				return
 			}
+			if errors.As(err, &pgErr) && pgErr.Code == "23503" && pgErr.ConstraintName == "ledger_entries_account_group_id_fkey" {
+				applog.Warn(c, handlerDeleteAccountGroup, "conflict",
+					slog.Any(applog.AttrError, err))
+				c.JSON(http.StatusConflict, types.APIResponse{
+					Success: false,
+					Message: "Cannot delete a group that ledger entries are tagged with. Re-tag those entries first.",
+					Code:    constants.AccountGroupInUse,
+				})
+				return
+			}
 			applog.Error(c, handlerDeleteAccountGroup, "failed to process request",
 				slog.Any(applog.AttrError, err))
 			c.JSON(http.StatusInternalServerError, types.APIResponse{

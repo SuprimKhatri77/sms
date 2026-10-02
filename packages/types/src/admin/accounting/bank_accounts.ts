@@ -86,3 +86,22 @@ export const setDefaultBankAccountResponseSchema = z.object({
 export type SetDefaultBankAccountResponse = z.infer<
   typeof setDefaultBankAccountResponseSchema
 >;
+
+const bankAccountForDropdown = z.object({
+  id: z.uuid(),
+  bankName: z.string(),
+  accountName: z.string(),
+  bankId: z.string(),
+  isDefault: z.boolean(),
+});
+
+export type BankAccountForDropdown = z.infer<typeof bankAccountForDropdown>;
+
+export const getBankAccountsForDropdownResponseSchema = z.object({
+  success: z.literal(true),
+  data: z.array(bankAccountForDropdown),
+});
+
+export type GetBankAccountsForDropdownResponse = z.infer<
+  typeof getBankAccountsForDropdownResponseSchema
+>;

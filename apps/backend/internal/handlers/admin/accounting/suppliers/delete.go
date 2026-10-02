@@ -39,7 +39,7 @@ func DeleteSupplier(queries accountingRepository.SuppliersRepository) gin.Handle
 			var pgErr *pgconn.PgError
 			if errors.As(err, &pgErr) && pgErr.Code == "23503" {
 				switch pgErr.ConstraintName {
-				case "supplier_ledger_supplier_id_fkey":
+				case "ledger_entries_supplier_id_fkey":
 					applog.Warn(c, handlerDeleteSupplier, "conflict",
 						slog.Any(applog.AttrError, err))
 					c.JSON(http.StatusConflict, types.APIResponse{

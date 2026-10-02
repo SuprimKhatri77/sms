@@ -20,6 +20,13 @@ export function invalidateInventoryStockViews(queryClient: QueryClient) {
   }
 }
 
+// A purchase also records (or updates, or removes) its supplier's ledger
+// credit.
+export function invalidatePurchaseViews(queryClient: QueryClient) {
+  invalidateInventoryStockViews(queryClient);
+  queryClient.invalidateQueries({ queryKey: queryKeys.ledgers.all });
+}
+
 export function invalidateInventoryCategoryViews(queryClient: QueryClient) {
   queryClient.invalidateQueries({ queryKey: queryKeys.productCategories.all });
   for (const queryKey of INVENTORY_LIST_KEYS) {

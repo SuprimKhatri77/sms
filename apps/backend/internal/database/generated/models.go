@@ -34,29 +34,6 @@ type BankAccount struct {
 	CreatedAt     pgtype.Timestamptz `json:"createdAt"`
 }
 
-type BankLedger struct {
-	ID            pgtype.UUID        `json:"id"`
-	BankAccountID pgtype.UUID        `json:"bankAccountId"`
-	Date          pgtype.Timestamptz `json:"date"`
-	BsDate        string             `json:"bsDate"`
-	EntryType     string             `json:"entryType"`
-	Amount        int64              `json:"amount"`
-	Description   pgtype.Text        `json:"description"`
-	PaymentID     pgtype.UUID        `json:"paymentId"`
-	CreatedAt     pgtype.Timestamptz `json:"createdAt"`
-}
-
-type CashLedger struct {
-	ID          pgtype.UUID        `json:"id"`
-	Date        pgtype.Timestamptz `json:"date"`
-	BsDate      string             `json:"bsDate"`
-	EntryType   string             `json:"entryType"`
-	Amount      int64              `json:"amount"`
-	Description pgtype.Text        `json:"description"`
-	PaymentID   pgtype.UUID        `json:"paymentId"`
-	CreatedAt   pgtype.Timestamptz `json:"createdAt"`
-}
-
 type Certificate struct {
 	ID         string             `json:"id"`
 	StudentID  pgtype.UUID        `json:"studentId"`
@@ -86,6 +63,25 @@ type Inquiry struct {
 	Source    string             `json:"source"`
 	IsRead    bool               `json:"isRead"`
 	CreatedAt pgtype.Timestamptz `json:"createdAt"`
+}
+
+type LedgerEntry struct {
+	ID             pgtype.UUID        `json:"id"`
+	LedgerType     string             `json:"ledgerType"`
+	Source         string             `json:"source"`
+	BankAccountID  pgtype.UUID        `json:"bankAccountId"`
+	SupplierID     pgtype.UUID        `json:"supplierId"`
+	AccountGroupID pgtype.UUID        `json:"accountGroupId"`
+	PaymentID      pgtype.UUID        `json:"paymentId"`
+	StockInID      pgtype.UUID        `json:"stockInId"`
+	PairedEntryID  pgtype.UUID        `json:"pairedEntryId"`
+	Date           pgtype.Timestamptz `json:"date"`
+	BsDate         string             `json:"bsDate"`
+	EntryType      string             `json:"entryType"`
+	Amount         int64              `json:"amount"`
+	Description    pgtype.Text        `json:"description"`
+	PaymentType    pgtype.Text        `json:"paymentType"`
+	CreatedAt      pgtype.Timestamptz `json:"createdAt"`
 }
 
 type Payment struct {
@@ -237,19 +233,6 @@ type Supplier struct {
 	CompanyName string             `json:"companyName"`
 	VatNo       pgtype.Text        `json:"vatNo"`
 	Phone       pgtype.Text        `json:"phone"`
-	CreatedAt   pgtype.Timestamptz `json:"createdAt"`
-}
-
-type SupplierLedger struct {
-	ID          pgtype.UUID        `json:"id"`
-	SupplierID  pgtype.UUID        `json:"supplierId"`
-	Date        pgtype.Timestamptz `json:"date"`
-	BsDate      string             `json:"bsDate"`
-	EntryType   string             `json:"entryType"`
-	Amount      int64              `json:"amount"`
-	Description pgtype.Text        `json:"description"`
-	StockInID   pgtype.UUID        `json:"stockInId"`
-	PaymentType string             `json:"paymentType"`
 	CreatedAt   pgtype.Timestamptz `json:"createdAt"`
 }
 

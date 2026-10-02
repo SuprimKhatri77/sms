@@ -114,7 +114,7 @@ func DeleteStockIn(queries repository.InventoryTxRepository, pool *pgxpool.Pool)
 
 		// remove the purchase's auto-recorded supplier ledger credit with it;
 		// manual entries linked to the purchase stay (stock_in_id -> NULL)
-		if err := qtx.DeleteStockInLedgerCredit(ctx, stockID); err != nil {
+		if err := qtx.DeletePurchaseLedgerCredit(ctx, stockID); err != nil {
 			applog.Error(c, handlerDeleteStockIn, "failed to process request",
 				slog.Any(applog.AttrError, err))
 			c.JSON(http.StatusInternalServerError, types.APIResponse{
