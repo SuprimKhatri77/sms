@@ -56,6 +56,8 @@ const URL_PARAMS = {
   ledgerType: "type",
   supplierID: "supplier_id",
   supplierName: "supplier_name",
+  employeeID: "employee_id",
+  employeeName: "employee_name",
   bankID: "bank_id",
   bankName: "bank_name",
   accountID: "account_id",
@@ -93,6 +95,7 @@ function toQueryFilters(f: LedgerFilterState): LedgerFilterParams {
   return {
     ledgerType: f.ledgerType,
     supplierID: f.supplierID,
+    employeeID: f.employeeID,
     bankID: f.bankID,
     accountID: f.accountID,
     accountGroupID: f.accountGroupID,
@@ -102,10 +105,10 @@ function toQueryFilters(f: LedgerFilterState): LedgerFilterParams {
 }
 
 function deleteLabel(entry: LedgerEntry): string {
-  const what =
-    entry.ledgerType === "supplier" && entry.counterEntryId
-      ? "this supplier payment and its cash/bank entry"
-      : `this ${LEDGER_TYPES[entry.ledgerType].label.toLowerCase()} entry`;
+  const label = LEDGER_TYPES[entry.ledgerType].label.toLowerCase();
+  const what = entry.counterEntryId
+    ? `this ${label} payment and its cash/bank entry`
+    : `this ${label} entry`;
   return `${what} (${formatRs(entry.amount)} on ${entry.bsDate})`;
 }
 
@@ -224,7 +227,7 @@ function LedgersInner() {
   return (
     <AdminPageLayout
       title="Ledgers"
-      description="Cash, bank and supplier entries in one place"
+      description="Cash, bank, supplier and salary entries in one place"
       maxWidth="wide"
       action={
         <div className="flex flex-wrap items-center gap-2">

@@ -33,12 +33,14 @@ import {
 } from "../../inventory/shared/StaticSelect";
 import {
   useBankSearch,
+  useEmployeeSearch,
   useSupplierSearch,
 } from "../../inventory/shared/useProductSupplierSearch";
 
 /** The filters plus what the pickers show for the picked ids. */
 export type LedgerFilterState = LedgerFilterParams & {
   supplierName: string;
+  employeeName: string;
   bankName: string;
   accountName: string;
   fromBsDate: string;
@@ -49,6 +51,8 @@ export const EMPTY_LEDGER_FILTERS: LedgerFilterState = {
   ledgerType: "",
   supplierID: "",
   supplierName: "",
+  employeeID: "",
+  employeeName: "",
   bankID: "",
   bankName: "",
   accountID: "",
@@ -91,6 +95,12 @@ export function LedgersFilters({
   const searchSuppliers = useMemo(
     () => withAllOption(supplierSearch, "All suppliers"),
     [supplierSearch],
+  );
+  // everyone, inactive too: a former employee's history can still be looked up
+  const employeeSearch = useEmployeeSearch();
+  const searchEmployees = useMemo(
+    () => withAllOption(employeeSearch, "All employees"),
+    [employeeSearch],
   );
   const bankSearch = useBankSearch();
   const searchBanks = useMemo(
@@ -186,7 +196,8 @@ export function LedgersFilters({
   const partyFieldCount =
     spec?.party === "bankAccount"
       ? 2
-      : (spec?.party === "supplier" ? 1 : 0) + (spec?.accountGroup ? 1 : 0);
+      : (spec?.party === "supplier" || spec?.party === "employee" ? 1 : 0) +
+        (spec?.accountGroup ? 1 : 0);
   const fieldCount = 1 + partyFieldCount + 2;
 
   const hasActiveFilters = Object.entries(filters).some(([, v]) => !!v);
@@ -232,6 +243,25 @@ export function LedgersFilters({
               onSearch={searchSuppliers}
               placeholder="Search supplier…"
               selectedLabel={filters.supplierName || "All suppliers"}
+            />
+          </div>
+        )}
+
+        {spec?.party === "employee" && (
+          <div className="flex min-w-0 flex-col gap-2">
+            <span className={accountingLabelClass}>Employee</span>
+            <SearchableSelect
+              value={filters.employeeID || ALL}
+              onChange={(value, label) =>
+                onChange({
+                  ...filters,
+                  employeeID: value === ALL ? "" : value,
+                  employeeName: value === ALL ? "" : label,
+                })
+              }
+              onSearch={searchEmployees}
+              placeholder="Search name or code…"
+              selectedLabel={filters.employeeName || "All employees"}
             />
           </div>
         )}

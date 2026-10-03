@@ -25,6 +25,7 @@ const SOURCE_LABELS: Partial<Record<LedgerSource, string>> = {
   purchase: "Auto · purchase",
   student_payment: "Auto · student payment",
   supplier_payment: "Auto · supplier payment",
+  salary_payment: "Auto · salary payment",
 };
 
 // why an automatic entry has no Edit/Delete, and where to change it (the
@@ -37,9 +38,11 @@ const LOCKED_MESSAGES: Record<LedgerSource, string> = {
     "Recorded by a student payment, so it can't be changed here.",
   supplier_payment:
     "The cash/bank side of a supplier payment. Edit or delete the supplier entry and this follows.",
+  salary_payment:
+    "The cash/bank side of a salary payment. Edit or delete the salary entry and this follows.",
 };
 
-// how a supplier payment was made
+// how a supplier or salary payment was made
 const PAYMENT_TYPE_LABELS: Record<string, string> = {
   cash: "Cash",
   bank: "Bank",
@@ -127,6 +130,11 @@ export function LedgersTable({
               const isDebit = entry.entryType === "dr";
               const sourceLabel = SOURCE_LABELS[entry.source];
               const party = partyLabel(entry);
+              // under the party: an employee's code (it tells apart people
+              // with the same name) and the account group
+              const partyDetail = [entry.employeeCode, entry.accountGroupName]
+                .filter(Boolean)
+                .join(" · ");
               return (
                 <tr
                   key={entry.id}
@@ -153,12 +161,12 @@ export function LedgersTable({
                     <div className="truncate" title={party}>
                       {party || <span className={muted}>—</span>}
                     </div>
-                    {entry.accountGroupName && (
+                    {partyDetail && (
                       <div
                         className="mt-0.5 truncate text-xs text-[rgba(47,78,64,0.5)]"
-                        title={entry.accountGroupName}
+                        title={partyDetail}
                       >
-                        {entry.accountGroupName}
+                        {partyDetail}
                       </div>
                     )}
                   </td>

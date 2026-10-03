@@ -16,12 +16,14 @@ type LedgerRepository interface {
 	GetBankByID(ctx context.Context, id pgtype.UUID) (db.Bank, error)
 	GetBankAccountByID(ctx context.Context, id pgtype.UUID) (db.GetBankAccountByIDRow, error)
 	GetSupplierByID(ctx context.Context, id pgtype.UUID) (db.Supplier, error)
+	GetEmployeeByID(ctx context.Context, id pgtype.UUID) (db.Employee, error)
 	GetAccountGroupByID(ctx context.Context, id pgtype.UUID) (db.AccountGroup, error)
 }
 
 type LedgerTxRepository interface {
 	WithTx(tx pgx.Tx) LedgerTxRepository
 	GetSupplierByID(ctx context.Context, id pgtype.UUID) (db.Supplier, error)
+	GetEmployeeByID(ctx context.Context, id pgtype.UUID) (db.Employee, error)
 	CreateLedgerEntry(ctx context.Context, params db.CreateLedgerEntryParams) (db.LedgerEntry, error)
 	GetLedgerEntryByID(ctx context.Context, id pgtype.UUID) (db.GetLedgerEntryByIDRow, error)
 	GetLedgerEntryForUpdate(ctx context.Context, id pgtype.UUID) (db.LedgerEntry, error)
@@ -46,6 +48,10 @@ func (r *ledgerTxRepository) WithTx(tx pgx.Tx) LedgerTxRepository {
 
 func (r *ledgerTxRepository) GetSupplierByID(ctx context.Context, id pgtype.UUID) (db.Supplier, error) {
 	return r.queries.GetSupplierByID(ctx, id)
+}
+
+func (r *ledgerTxRepository) GetEmployeeByID(ctx context.Context, id pgtype.UUID) (db.Employee, error) {
+	return r.queries.GetEmployeeByID(ctx, id)
 }
 
 func (r *ledgerTxRepository) CreateLedgerEntry(ctx context.Context, params db.CreateLedgerEntryParams) (db.LedgerEntry, error) {

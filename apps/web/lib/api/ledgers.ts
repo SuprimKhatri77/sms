@@ -14,6 +14,7 @@ import api from "../axios";
 export type LedgerFilterParams = {
   ledgerType: LedgerType | "";
   supplierID: string;
+  employeeID: string;
   bankID: string;
   accountID: string;
   accountGroupID: string;
@@ -25,6 +26,7 @@ export type LedgerFilterParams = {
 export const ledgerFilterQuery = (f: LedgerFilterParams) => ({
   type: f.ledgerType,
   supplier_id: f.supplierID,
+  employee_id: f.employeeID,
   bank_id: f.bankID,
   account_id: f.accountID,
   account_group_id: f.accountGroupID,

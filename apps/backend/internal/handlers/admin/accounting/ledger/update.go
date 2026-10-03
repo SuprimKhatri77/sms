@@ -25,10 +25,14 @@ const unpairedPaymentMessage = "This payment was recorded before cash/bank entri
 // are changed through that purchase or payment instead, and an entry keeps
 // its ledger type.
 //
-// A supplier payment's cash/bank side is rebuilt from the edited entry, so a
-// change of amount, date, payment type or account carries over. Older payments
-// that never got linked to their cash/bank side can't have their money fields
-// changed: rebuilding would add a second cash/bank debit next to the old one.
+// A supplier or salary payment's cash/bank side is rebuilt from the edited
+// entry, so a change of amount, date, payment type or account carries over.
+// Older supplier payments that never got linked to their cash/bank side can't
+// have their money fields changed: rebuilding would add a second cash/bank
+// debit next to the old one.
+//
+// An entry of an employee who is now inactive can still be corrected, but an
+// entry can't be moved to an inactive employee.
 func UpdateLedgerEntry(queries accountingRepository.LedgerTxRepository, pool *pgxpool.Pool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
@@ -85,11 +89,17 @@ func UpdateLedgerEntry(queries accountingRepository.LedgerTxRepository, pool *pg
 			return
 		}
 
-		// Only supplier entries have a cash/bank side. A supplier entry with a
-		// payment type but no linked side predates the link (see the 000054
-		// migration).
+		if in.EmployeeID.Valid && in.EmployeeID != existing.EmployeeID &&
+			rejectUnavailableEmployee(c, handlerUpdateLedgerEntry, qtx, in.EmployeeID) {
+			return
+		}
+
+		// Only supplier and salary entries have a cash/bank side. One with a
+		// payment type but no linked side is a supplier payment from before
+		// the link (see the 000054 migration).
+		recordsPayments := ledgertypes.Types[existing.LedgerType].PaymentType
 		var hasPair, unpairedPayment bool
-		if existing.LedgerType == ledgertypes.TypeSupplier {
+		if recordsPayments {
 			if _, err := qtx.GetPairedLedgerEntry(ctx, existing.ID); err == nil {
 				hasPair = true
 			} else if !errors.Is(err, pgx.ErrNoRows) {
@@ -123,6 +133,7 @@ func UpdateLedgerEntry(queries accountingRepository.LedgerTxRepository, pool *pg
 			ID:             entryID,
 			BankAccountID:  entryBankAccount(in),
 			SupplierID:     in.SupplierID,
+			EmployeeID:     in.EmployeeID,
 			AccountGroupID: in.AccountGroupID,
 			StockInID:      in.StockInID,
 			Date:           in.Date,
@@ -137,7 +148,7 @@ func UpdateLedgerEntry(queries accountingRepository.LedgerTxRepository, pool *pg
 			return
 		}
 
-		if existing.LedgerType == ledgertypes.TypeSupplier && !unpairedPayment {
+		if recordsPayments && !unpairedPayment {
 			if hasPair {
 				if err := qtx.DeletePairedLedgerEntry(ctx, entry.ID); err != nil {
 					respondLedgerWriteError(c, handlerUpdateLedgerEntry, err)
@@ -145,7 +156,7 @@ func UpdateLedgerEntry(queries accountingRepository.LedgerTxRepository, pool *pg
 				}
 			}
 			if ledgertypes.RecordsPayment(in.LedgerType, in.EntryType, in.PaymentType) {
-				if err := recordSupplierPayment(ctx, qtx, entry, in); err != nil {
+				if err := recordPayment(ctx, qtx, entry, in); err != nil {
 					respondLedgerWriteError(c, handlerUpdateLedgerEntry, err)
 					return
 				}

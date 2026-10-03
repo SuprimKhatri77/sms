@@ -4,7 +4,7 @@ import {
   Wallet,
   type LucideIcon,
 } from "lucide-react";
-import { LEDGER_TYPES, type LedgerSummary } from "@repo/types";
+import { LEDGER_TYPES, type LedgerSummary, type LedgerType } from "@repo/types";
 import { formatRs } from "./format";
 
 type Card = {
@@ -20,17 +20,40 @@ const GREEN = "text-[#16a34a]";
 const RED = "text-[#9a3412]";
 const BROWN = "text-(--brand-brown)";
 
-// A supplier's balance is what's still owed to them (negative = overpaid);
-// cash and bank show money in minus money out.
+// what the credits and debits of a party's ledger are, and how its balance
+// (credits minus debits) reads when it's owed and when it's paid ahead
+const WORDING: Partial<
+  Record<
+    LedgerType,
+    { cr: string; dr: string; owed: string; ahead: string }
+  >
+> = {
+  supplier: {
+    cr: "Total purchased (Cr)",
+    dr: "Total paid (Dr)",
+    owed: "payable",
+    ahead: "overpaid",
+  },
+  salary: {
+    cr: "Total due (Cr)",
+    dr: "Total paid (Dr)",
+    owed: "owed",
+    ahead: "paid in advance",
+  },
+};
+
+// A supplier's or employee's balance is what's still owed to them (negative
+// = paid ahead); cash and bank show money in minus money out.
 function balanceCard(row: LedgerSummary, label: string): Card {
-  if (row.ledgerType === "supplier") {
-    const overpaid = row.balance < 0;
+  const wording = WORDING[row.ledgerType];
+  if (wording) {
+    const ahead = row.balance < 0;
     return {
       key: `${row.ledgerType}-balance`,
-      label: overpaid ? `${label} overpaid` : `${label} payable`,
+      label: `${label} ${ahead ? wording.ahead : wording.owed}`,
       value: formatRs(Math.abs(row.balance)),
       icon: Wallet,
-      tone: overpaid ? RED : BROWN,
+      tone: ahead ? RED : BROWN,
     };
   }
   return {
@@ -46,23 +69,23 @@ function cardsFor(summary: LedgerSummary[]): Card[] {
   // one ledger in view: its credits, debits and balance
   if (summary.length === 1) {
     const row = summary[0]!;
-    const isSupplier = row.ledgerType === "supplier";
+    const wording = WORDING[row.ledgerType];
     return [
       {
         key: "cr",
-        label: isSupplier ? "Total purchased (Cr)" : "Total credits",
+        label: wording?.cr ?? "Total credits",
         value: formatRs(row.totalCr),
         icon: TrendingUp,
         tone: GREEN,
       },
       {
         key: "dr",
-        label: isSupplier ? "Total paid (Dr)" : "Total debits",
+        label: wording?.dr ?? "Total debits",
         value: formatRs(row.totalDr),
         icon: TrendingDown,
         tone: RED,
       },
-      { ...balanceCard(row, isSupplier ? "Balance" : "Net"), key: "balance" },
+      { ...balanceCard(row, wording ? "Balance" : "Net"), key: "balance" },
     ];
   }
   // every ledger: one balance card each
@@ -95,9 +118,17 @@ export function LedgerSummaryCards({
     );
   }
 
+  const cards = cardsFor(summary);
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-      {cardsFor(summary).map((card) => {
+    <div
+      className={
+        // every ledger: a card each, in two rows of two or one row of four
+        cards.length === 4
+          ? "grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
+          : "grid grid-cols-1 gap-4 sm:grid-cols-3"
+      }
+    >
+      {cards.map((card) => {
         const Icon = card.icon;
         return (
           <div
