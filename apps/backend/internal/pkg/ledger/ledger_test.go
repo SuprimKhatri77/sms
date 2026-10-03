@@ -30,6 +30,13 @@ func TestValidate(t *testing.T) {
 			Fields{Supplier: true, AccountGroup: true, PaymentType: true, StockIn: true}, nil},
 		// a supplier paid by bank names the account the money left from
 		{"supplier payment from a bank account", TypeSupplier, Fields{Supplier: true, PaymentType: true, BankAccount: true}, nil},
+		{"supplier with an employee", TypeSupplier, Fields{Supplier: true, Employee: true}, []string{"employeeID"}},
+		{"salary entry needs an employee", TypeSalary, Fields{}, []string{"employeeID"}},
+		{"salary with an account group, paid from a bank account", TypeSalary,
+			Fields{Employee: true, AccountGroup: true, PaymentType: true, BankAccount: true}, nil},
+		{"salary with a supplier or a purchase", TypeSalary, Fields{Employee: true, Supplier: true, StockIn: true},
+			[]string{"supplierID", "stockInID"}},
+		{"cash with an employee", TypeCash, Fields{Employee: true}, []string{"employeeID"}},
 	}
 
 	for _, tt := range tests {
@@ -66,8 +73,14 @@ func TestRecordsPayment(t *testing.T) {
 	if RecordsPayment(TypeSupplier, "dr", "") {
 		t.Error("a supplier debit without a payment type moves no money")
 	}
+	if !RecordsPayment(TypeSalary, "dr", "bank") {
+		t.Error("a salary debit with a payment type is a payment")
+	}
+	if RecordsPayment(TypeSalary, "cr", "bank") {
+		t.Error("a salary credit is salary due, never a payment")
+	}
 	if RecordsPayment(TypeCash, "dr", "cash") {
-		t.Error("only supplier entries record a cash/bank side")
+		t.Error("only supplier and salary entries record a cash/bank side")
 	}
 }
 
@@ -75,9 +88,22 @@ func TestLockedMessage(t *testing.T) {
 	if LockedMessage(SourceManual) != "" {
 		t.Error("manual entries are editable")
 	}
-	for _, src := range []string{SourcePurchase, SourceStudentPayment, SourceSupplierPayment} {
+	for _, src := range []string{SourcePurchase, SourceStudentPayment, SourceSupplierPayment, SourceSalaryPayment} {
 		if LockedMessage(src) == "" {
 			t.Errorf("%s entries must not be editable here", src)
+		}
+	}
+}
+
+// Every type that records payments must say what source its cash/bank side
+// gets, or the side would be written with an empty source.
+func TestPaymentSources(t *testing.T) {
+	for name, spec := range Types {
+		if spec.PaymentType && spec.PaymentSource == "" {
+			t.Errorf("%s records payments but has no PaymentSource", name)
+		}
+		if !spec.PaymentType && spec.PaymentSource != "" {
+			t.Errorf("%s has a PaymentSource but records no payments", name)
 		}
 	}
 }

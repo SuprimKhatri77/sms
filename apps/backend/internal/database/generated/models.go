@@ -54,6 +54,23 @@ type Course struct {
 	CreatedAt pgtype.Timestamptz `json:"createdAt"`
 }
 
+type Employee struct {
+	ID            pgtype.UUID        `json:"id"`
+	EmployeeNo    int32              `json:"employeeNo"`
+	Code          string             `json:"code"`
+	FullName      string             `json:"fullName"`
+	Phone         pgtype.Text        `json:"phone"`
+	Designation   pgtype.Text        `json:"designation"`
+	Address       pgtype.Text        `json:"address"`
+	PanNo         pgtype.Text        `json:"panNo"`
+	Notes         pgtype.Text        `json:"notes"`
+	MonthlySalary pgtype.Int8        `json:"monthlySalary"`
+	JoinDate      pgtype.Date        `json:"joinDate"`
+	JoinDateBs    pgtype.Text        `json:"joinDateBs"`
+	Status        string             `json:"status"`
+	CreatedAt     pgtype.Timestamptz `json:"createdAt"`
+}
+
 type Inquiry struct {
 	ID        pgtype.UUID        `json:"id"`
 	FullName  string             `json:"fullName"`
@@ -82,6 +99,7 @@ type LedgerEntry struct {
 	Description    pgtype.Text        `json:"description"`
 	PaymentType    pgtype.Text        `json:"paymentType"`
 	CreatedAt      pgtype.Timestamptz `json:"createdAt"`
+	EmployeeID     pgtype.UUID        `json:"employeeId"`
 }
 
 type Payment struct {

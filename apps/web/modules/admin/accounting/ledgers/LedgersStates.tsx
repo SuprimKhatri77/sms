@@ -98,7 +98,7 @@ export function LedgersEmpty({
         <p className="mt-1 font-(family-name:--font-dm-sans) text-sm text-[rgba(47,78,64,0.45)]">
           {filtered
             ? "Try a different ledger, party or date range."
-            : "Record a cash, bank or supplier entry to get started."}
+            : "Record a cash, bank, supplier or salary entry to get started."}
         </p>
       </div>
       <button

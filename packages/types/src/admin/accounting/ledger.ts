@@ -1,7 +1,7 @@
 import z from "zod";
 import { paginationMetaSchema } from "../../base";
 
-export const ledgerTypeValues = ["cash", "bank", "supplier"] as const;
+export const ledgerTypeValues = ["cash", "bank", "supplier", "salary"] as const;
 export type LedgerType = (typeof ledgerTypeValues)[number];
 
 /**
@@ -12,10 +12,10 @@ export const LEDGER_TYPES: Record<
   LedgerType,
   {
     label: string;
-    party: "none" | "bankAccount" | "supplier";
+    party: "none" | "bankAccount" | "supplier" | "employee";
     /** can be tagged with an account group */
     accountGroup: boolean;
-    /** a debit records how it was paid, and the matching cash/bank debit */
+    /** a debit is a payment: it records how it was paid, and the matching cash/bank debit */
     paymentType: boolean;
   }
 > = {
@@ -37,9 +37,15 @@ export const LEDGER_TYPES: Record<
     accountGroup: true,
     paymentType: true,
   },
+  salary: {
+    label: "Salary",
+    party: "employee",
+    accountGroup: true,
+    paymentType: true,
+  },
 };
 
-/** how a supplier payment was made; it's booked in that ledger too */
+/** how a supplier or salary payment was made; it's booked in that ledger too */
 export const ledgerPaymentTypeValues = ["cash", "bank"] as const;
 export type LedgerPaymentType = (typeof ledgerPaymentTypeValues)[number];
 
@@ -48,6 +54,7 @@ export const ledgerSourceValues = [
   "purchase",
   "student_payment",
   "supplier_payment",
+  "salary_payment",
 ] as const;
 export type LedgerSource = (typeof ledgerSourceValues)[number];
 
@@ -57,10 +64,11 @@ const ledgerEntrySchema = z.object({
   source: z.enum(ledgerSourceValues),
   bankAccountId: z.uuid().nullable(),
   supplierId: z.uuid().nullable(),
+  employeeId: z.uuid().nullable(),
   accountGroupId: z.uuid().nullable(),
   paymentId: z.uuid().nullable(),
   stockInId: z.uuid().nullable(),
-  /** on the cash/bank side of a supplier payment: the supplier entry */
+  /** on the cash/bank side of a supplier or salary payment: the payment */
   pairedEntryId: z.uuid().nullable(),
   date: z.string(),
   bsDate: z.string(),
@@ -71,13 +79,16 @@ const ledgerEntrySchema = z.object({
   paymentType: z.string().nullable(),
   createdAt: z.string(),
   supplierName: z.string().nullable(),
+  employeeName: z.string().nullable(),
+  /** e.g. EMP-001 */
+  employeeCode: z.string().nullable(),
   bankName: z.string().nullable(),
   accountName: z.string().nullable(),
   accountNumber: z.string().nullable(),
   accountGroupName: z.string().nullable(),
-  /** on a supplier payment: its cash/bank side, if it's linked to one */
+  /** on a supplier or salary payment: its cash/bank side, if it's linked to one */
   counterEntryId: z.uuid().nullable(),
-  /** on a supplier payment by bank: the account the money left from */
+  /** on a payment by bank: the account the money left from */
   paidFromAccountId: z.uuid().nullable(),
   paidFromAccountName: z.string().nullable(),
   paidFromBankName: z.string().nullable(),
@@ -139,6 +150,7 @@ export const ledgerEntryInputSchema = z
       .optional(),
     bankAccountID: z.uuid().optional(),
     supplierID: z.uuid().optional(),
+    employeeID: z.uuid().optional(),
     accountGroupID: z.uuid().optional(),
     paymentType: z
       .enum(ledgerPaymentTypeValues, { error: "Choose cash or bank" })
@@ -162,7 +174,14 @@ export const ledgerEntryInputSchema = z
         path: ["supplierID"],
       });
     }
-    // only a supplier payment (a debit) moves money, so only it needs a payment type
+    if (spec.party === "employee" && !data.employeeID) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Choose an employee",
+        path: ["employeeID"],
+      });
+    }
+    // only a supplier or salary payment (a debit) moves money, so only it needs a payment type
     if (spec.paymentType && data.entryType === "dr" && !data.paymentType) {
       ctx.addIssue({
         code: "custom",

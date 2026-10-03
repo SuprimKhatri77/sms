@@ -10,8 +10,9 @@ import (
 // The IDs are checked as UUIDs because utils.ToNullableUUID turns a malformed
 // one into "no filter", which would silently show everything.
 type LedgerFilterParams struct {
-	LedgerType     string `form:"type" binding:"omitempty,oneof=cash bank supplier"`
+	LedgerType     string `form:"type" binding:"omitempty,oneof=cash bank supplier salary"`
 	SupplierID     string `form:"supplier_id" binding:"omitempty,uuid"`
+	EmployeeID     string `form:"employee_id" binding:"omitempty,uuid"`
 	BankID         string `form:"bank_id" binding:"omitempty,uuid"`
 	BankAccountID  string `form:"account_id" binding:"omitempty,uuid"`
 	AccountGroupID string `form:"account_group_id" binding:"omitempty,uuid"`
@@ -23,6 +24,7 @@ func (f LedgerFilterParams) countParams() db.GetLedgerEntryCountParams {
 	return db.GetLedgerEntryCountParams{
 		LedgerType:     utils.ToNullableText(f.LedgerType),
 		SupplierID:     utils.ToNullableUUID(f.SupplierID),
+		EmployeeID:     utils.ToNullableUUID(f.EmployeeID),
 		BankID:         utils.ToNullableUUID(f.BankID),
 		BankAccountID:  utils.ToNullableUUID(f.BankAccountID),
 		AccountGroupID: utils.ToNullableUUID(f.AccountGroupID),
@@ -37,6 +39,7 @@ func (f LedgerFilterParams) listParams(limit pgtype.Int4, offset int32) db.ListL
 	return db.ListLedgerEntriesParams{
 		LedgerType:     p.LedgerType,
 		SupplierID:     p.SupplierID,
+		EmployeeID:     p.EmployeeID,
 		BankID:         p.BankID,
 		BankAccountID:  p.BankAccountID,
 		AccountGroupID: p.AccountGroupID,

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -28,7 +29,7 @@ import (
 // The IDs are checked as UUIDs here because utils.ToNullableUUID turns a
 // malformed one into NULL, which would silently drop the link.
 type LedgerEntryRequest struct {
-	LedgerType     string  `json:"ledgerType" binding:"required,oneof=cash bank supplier"`
+	LedgerType     string  `json:"ledgerType" binding:"required,oneof=cash bank supplier salary"`
 	Date           string  `json:"date" binding:"required,date_format"`
 	BsDate         string  `json:"bsDate" binding:"required,bs_date"`
 	EntryType      string  `json:"entryType" binding:"required,oneof=cr dr"`
@@ -36,6 +37,7 @@ type LedgerEntryRequest struct {
 	Description    string  `json:"description" binding:"omitempty,notblank,min=5,max=200"`
 	BankAccountID  string  `json:"bankAccountID" binding:"omitempty,uuid"`
 	SupplierID     string  `json:"supplierID" binding:"omitempty,uuid"`
+	EmployeeID     string  `json:"employeeID" binding:"omitempty,uuid"`
 	AccountGroupID string  `json:"accountGroupID" binding:"omitempty,uuid"`
 	PaymentType    string  `json:"paymentType" binding:"omitempty,oneof=cash bank"`
 	StockInID      string  `json:"stockInID" binding:"omitempty,uuid"`
@@ -50,10 +52,12 @@ type ledgerEntryInput struct {
 	EntryType   string
 	Amount      int64
 	Description pgtype.Text
-	// a bank entry's account; on a supplier payment by bank, the account the
-	// money left from (stored on the paired bank entry, not the supplier one)
+	// a bank entry's account; on a supplier or salary payment by bank, the
+	// account the money left from (stored on the paired bank entry, not on
+	// the payment itself)
 	BankAccountID  pgtype.UUID
 	SupplierID     pgtype.UUID
+	EmployeeID     pgtype.UUID
 	AccountGroupID pgtype.UUID
 	PaymentType    string
 	StockInID      pgtype.UUID
@@ -123,14 +127,16 @@ func bindLedgerEntryRequest(c *gin.Context, handlerName string) (ledgerEntryInpu
 	for _, fe := range ledgertypes.Validate(req.LedgerType, ledgertypes.Fields{
 		BankAccount:  req.BankAccountID != "",
 		Supplier:     req.SupplierID != "",
+		Employee:     req.EmployeeID != "",
 		AccountGroup: req.AccountGroupID != "",
 		PaymentType:  req.PaymentType != "",
 		StockIn:      req.StockInID != "",
 	}) {
 		fieldErrs = append(fieldErrs, types.AppError{Code: constants.InvalidLedgerFields, Field: fe.Field, Message: fe.Message})
 	}
-	if req.LedgerType == ledgertypes.TypeSupplier && req.EntryType == "dr" && req.PaymentType == "" {
-		fieldErrs = append(fieldErrs, types.AppError{Code: constants.InvalidLedgerFields, Field: "paymentType", Message: "Choose how the supplier was paid"})
+	// a supplier or salary debit is a payment, so it says how it was paid
+	if spec := ledgertypes.Types[req.LedgerType]; spec.PaymentType && req.EntryType == "dr" && req.PaymentType == "" {
+		fieldErrs = append(fieldErrs, types.AppError{Code: constants.InvalidLedgerFields, Field: "paymentType", Message: "Choose how the " + strings.ToLower(spec.Label) + " was paid"})
 	}
 	if len(fieldErrs) > 0 {
 		rejectFields(c, handlerName, fieldErrs)
@@ -145,6 +151,7 @@ func bindLedgerEntryRequest(c *gin.Context, handlerName string) (ledgerEntryInpu
 		Amount:         utils.RupeesToPaisa(req.Amount),
 		Description:    utils.ToNullableText(req.Description),
 		SupplierID:     utils.ToNullableUUID(req.SupplierID),
+		EmployeeID:     utils.ToNullableUUID(req.EmployeeID),
 		AccountGroupID: utils.ToNullableUUID(req.AccountGroupID),
 		BankAccountID:  utils.ToNullableUUID(req.BankAccountID),
 		PaymentType:    req.PaymentType,
@@ -153,7 +160,7 @@ func bindLedgerEntryRequest(c *gin.Context, handlerName string) (ledgerEntryInpu
 	return in, true
 }
 
-// rejectMissingPaidFromAccount refuses a supplier payment by bank that
+// rejectMissingPaidFromAccount refuses a supplier or salary payment by bank that
 // doesn't say which account the money left from. It reports whether it
 // refused.
 func rejectMissingPaidFromAccount(c *gin.Context, handlerName string, in ledgerEntryInput) bool {
@@ -169,18 +176,67 @@ func rejectMissingPaidFromAccount(c *gin.Context, handlerName string, in ledgerE
 	return true
 }
 
-// paymentDescription is the description on the cash/bank debit recorded when
-// a supplier is paid.
-func paymentDescription(companyName string) string {
-	return fmt.Sprintf("Supplier payment - %s", companyName)
+// rejectUnavailableEmployee refuses a salary entry for an employee who
+// doesn't exist or has been marked inactive (they've left; their history
+// stays, but nothing new is booked to them). It reports whether it refused.
+func rejectUnavailableEmployee(c *gin.Context, handlerName string, qtx accountingRepository.LedgerTxRepository, id pgtype.UUID) bool {
+	employee, err := qtx.GetEmployeeByID(c.Request.Context(), id)
+	if errors.Is(err, pgx.ErrNoRows) {
+		applog.Warn(c, handlerName, "resource not found", slog.Any(applog.AttrError, err))
+		c.JSON(http.StatusNotFound, types.APIResponse{
+			Success: false,
+			Message: "Employee not found",
+			Code:    constants.EmployeeNotFound,
+			Errors:  []types.AppError{{Code: constants.EmployeeNotFound, Field: "employeeID", Message: "Employee not found"}},
+		})
+		return true
+	}
+	if err != nil {
+		respondLedgerWriteError(c, handlerName, err)
+		return true
+	}
+	// the statuses are employees_status_check's: active or inactive
+	if employee.Status != "active" {
+		const message = "This employee is marked inactive. Mark them active again to add salary entries for them."
+		applog.Warn(c, handlerName, "employee inactive")
+		c.JSON(http.StatusConflict, types.APIResponse{
+			Success: false,
+			Message: message,
+			Code:    constants.EmployeeInactive,
+			Errors:  []types.AppError{{Code: constants.EmployeeInactive, Field: "employeeID", Message: message}},
+		})
+		return true
+	}
+	return false
 }
 
-// recordSupplierPayment writes the cash or bank side of a supplier payment
-// and links it to the supplier entry. Cash and bank ledgers read like a
-// statement (cr = money in, dr = money out), so paying a supplier is a dr
-// there too.
-func recordSupplierPayment(ctx context.Context, qtx accountingRepository.LedgerTxRepository, entry db.LedgerEntry, in ledgerEntryInput) error {
-	supplier, err := qtx.GetSupplierByID(ctx, entry.SupplierID)
+// paymentDescription is the description on the cash/bank debit recorded when
+// a supplier or employee is paid, e.g. "Supplier payment - ABC Traders" or
+// "Salary payment - EMP-001 Ram Shrestha". The supplier wording is what the
+// 000054 migration matched older payments by, so it stays as it is.
+func paymentDescription(ctx context.Context, qtx accountingRepository.LedgerTxRepository, entry db.LedgerEntry) (string, error) {
+	switch entry.LedgerType {
+	case ledgertypes.TypeSupplier:
+		supplier, err := qtx.GetSupplierByID(ctx, entry.SupplierID)
+		if err != nil {
+			return "", err
+		}
+		return fmt.Sprintf("Supplier payment - %s", supplier.CompanyName), nil
+	case ledgertypes.TypeSalary:
+		employee, err := qtx.GetEmployeeByID(ctx, entry.EmployeeID)
+		if err != nil {
+			return "", err
+		}
+		return fmt.Sprintf("Salary payment - %s %s", employee.Code, employee.FullName), nil
+	}
+	return "", fmt.Errorf("ledger type %q records no payments", entry.LedgerType)
+}
+
+// recordPayment writes the cash or bank side of a supplier or salary payment
+// and links it to the payment entry. Cash and bank ledgers read like a
+// statement (cr = money in, dr = money out), so paying out is a dr there too.
+func recordPayment(ctx context.Context, qtx accountingRepository.LedgerTxRepository, entry db.LedgerEntry, in ledgerEntryInput) error {
+	description, err := paymentDescription(ctx, qtx, entry)
 	if err != nil {
 		return err
 	}
@@ -193,14 +249,14 @@ func recordSupplierPayment(ctx context.Context, qtx accountingRepository.LedgerT
 
 	_, err = qtx.CreateLedgerEntry(ctx, db.CreateLedgerEntryParams{
 		LedgerType:    counterType,
-		Source:        ledgertypes.SourceSupplierPayment,
+		Source:        ledgertypes.Types[entry.LedgerType].PaymentSource,
 		BankAccountID: bankAccountID,
 		PairedEntryID: entry.ID,
 		Date:          entry.Date,
 		BsDate:        entry.BsDate,
 		EntryType:     "dr",
 		Amount:        entry.Amount,
-		Description:   pgtype.Text{String: paymentDescription(supplier.CompanyName), Valid: true},
+		Description:   pgtype.Text{String: description, Valid: true},
 	})
 	return err
 }
@@ -215,6 +271,8 @@ func respondLedgerWriteError(c *gin.Context, handlerName string, err error) {
 		switch pgErr.ConstraintName {
 		case "ledger_entries_supplier_id_fkey":
 			field, code, message = "supplierID", constants.SupplierNotFound, "Supplier not found"
+		case "ledger_entries_employee_id_fkey":
+			field, code, message = "employeeID", constants.EmployeeNotFound, "Employee not found"
 		case "ledger_entries_bank_account_id_fkey":
 			field, code, message = "bankAccountID", constants.BankAccountNotFound, "Bank account not found"
 		case "ledger_entries_account_group_id_fkey":

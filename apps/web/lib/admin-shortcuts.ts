@@ -238,13 +238,19 @@ export const ADMIN_SHORTCUT_GROUPS: AdminShortcutGroup[] = [
       {
         keys: ["G", "L"],
         label: "Ledgers",
-        description: "Open the cash, bank and supplier ledgers.",
+        description: "Open the cash, bank, supplier and salary ledgers.",
         scope: "Admin panel",
       },
       {
         keys: ["G", "E"],
         label: "Suppliers",
         description: "Open suppliers.",
+        scope: "Admin panel",
+      },
+      {
+        keys: ["G", "H"],
+        label: "Employees",
+        description: "Open employees.",
         scope: "Admin panel",
       },
     ],
@@ -278,6 +284,7 @@ export const ADMIN_GO_NAV_ROUTES: AdminGoNavRoute[] = [
   { key: "k", label: "Banks", href: "/admin/banks" },
   { key: "l", label: "Ledgers", href: "/admin/ledgers" },
   { key: "e", label: "Suppliers", href: "/admin/suppliers" },
+  { key: "h", label: "Employees", href: "/admin/employees" },
 ];
 
 export type AdminPageShortcut = {
@@ -486,6 +493,19 @@ export const ADMIN_PAGE_SHORTCUTS: AdminPageShortcut[] = [
     focusSearch: false,
     clearFilters: false,
     back: true,
+    payment: false,
+    scholarship: false,
+    discount: false,
+  },
+  {
+    path: "/admin/employees",
+    category: "Accounting",
+    page: "Employees",
+    action: "Add employee",
+    newEntry: true,
+    focusSearch: true,
+    clearFilters: true,
+    back: false,
     payment: false,
     scholarship: false,
     discount: false,

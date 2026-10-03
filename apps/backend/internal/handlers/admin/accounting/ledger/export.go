@@ -35,11 +35,20 @@ func accountText(name string, number pgtype.Text) string {
 	return name
 }
 
-// partyText is who an entry is with: the supplier, or the bank and account.
+// employeeText is an employee by code and name, e.g. "EMP-001 Ram Shrestha";
+// the code tells apart people with the same name.
+func employeeText(code, name string) string {
+	return code + " " + name
+}
+
+// partyText is who an entry is with: the supplier, the employee, or the bank
+// and account.
 func partyText(e db.ListLedgerEntriesRow) string {
 	switch {
 	case e.SupplierName.Valid:
 		return e.SupplierName.String
+	case e.EmployeeName.Valid:
+		return employeeText(e.EmployeeCode.String, e.EmployeeName.String)
 	case e.BankName.Valid:
 		return e.BankName.String + " · " + accountText(e.AccountName.String, e.AccountNumber)
 	}
@@ -47,14 +56,21 @@ func partyText(e db.ListLedgerEntriesRow) string {
 }
 
 // balanceLine words a ledger's Cr − Dr the way its summary card does: what's
-// still owed for suppliers (negative = overpaid), the net balance otherwise.
+// still owed to suppliers (negative = overpaid) or employees (negative = paid
+// in advance), the net balance otherwise.
 func balanceLine(row db.GetLedgerSummaryRow) string {
 	label := ledgertypes.Types[row.LedgerType].Label
-	if row.LedgerType == ledgertypes.TypeSupplier {
+	switch row.LedgerType {
+	case ledgertypes.TypeSupplier:
 		if row.Balance < 0 {
 			return label + " overpaid: " + export.Rupees(-row.Balance)
 		}
 		return label + " payable balance: " + export.Rupees(row.Balance)
+	case ledgertypes.TypeSalary:
+		if row.Balance < 0 {
+			return label + " paid in advance: " + export.Rupees(-row.Balance)
+		}
+		return label + " owed: " + export.Rupees(row.Balance)
 	}
 	return label + " net balance (Cr - Dr): " + export.Rupees(row.Balance)
 }
@@ -102,7 +118,7 @@ func ExportLedgerEntries(queries accountingRepository.LedgerRepository) gin.Hand
 		}
 
 		// the picked filters, by name, for the file's filter line
-		var supplierLabel, bankLabel, accountLabel, groupLabel string
+		var supplierLabel, employeeLabel, bankLabel, accountLabel, groupLabel string
 		if id := utils.ToNullableUUID(filter.SupplierID); id.Valid {
 			supplier, err := queries.GetSupplierByID(ctx, id)
 			if err != nil {
@@ -110,6 +126,14 @@ func ExportLedgerEntries(queries accountingRepository.LedgerRepository) gin.Hand
 				return
 			}
 			supplierLabel = supplier.CompanyName
+		}
+		if id := utils.ToNullableUUID(filter.EmployeeID); id.Valid {
+			employee, err := queries.GetEmployeeByID(ctx, id)
+			if err != nil {
+				respondErr(err)
+				return
+			}
+			employeeLabel = employeeText(employee.Code, employee.FullName)
 		}
 		if id := utils.ToNullableUUID(filter.BankID); id.Valid {
 			bank, err := queries.GetBankByID(ctx, id)
@@ -191,6 +215,7 @@ func ExportLedgerEntries(queries accountingRepository.LedgerRepository) gin.Hand
 		meta := export.Filters(
 			export.DateRange(filter.FromDate, filter.ToDate),
 			export.Labelled("Supplier", supplierLabel),
+			export.Labelled("Employee", employeeLabel),
 			export.Labelled("Bank", bankLabel),
 			export.Labelled("Account", accountLabel),
 			export.Labelled("Account group", groupLabel),

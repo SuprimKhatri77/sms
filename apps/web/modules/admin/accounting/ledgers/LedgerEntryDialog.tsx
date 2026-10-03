@@ -1,7 +1,14 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
-import { Banknote, CalendarDays, Landmark, Truck, Wallet } from "lucide-react";
+import { useCallback, useMemo, useRef, useState } from "react";
+import {
+  Banknote,
+  CalendarDays,
+  Landmark,
+  Truck,
+  Users,
+  Wallet,
+} from "lucide-react";
 import { toast } from "sonner";
 import { NepaliDatePicker } from "nepali-datepicker-reactjs";
 import { BSToAD } from "bikram-sambat-js";
@@ -13,6 +20,7 @@ import {
   ledgerTypeValues,
   type APIError,
   type AccountGroup,
+  type Employee,
   type LedgerEntry,
   type LedgerEntryInput,
   type LedgerPaymentType,
@@ -39,7 +47,9 @@ import {
 import { ChoiceCards, type ChoiceCardOption } from "../shared/ChoiceCards";
 import { SearchableSelect } from "../../inventory/shared/SearchableSelect";
 import {
+  employeeOptionLabel,
   useBankAccountSearch,
+  useEmployeeSearch,
   useSupplierSearch,
 } from "../../inventory/shared/useProductSupplierSearch";
 
@@ -50,6 +60,7 @@ const LEDGER_CARD_DETAILS: Record<
   cash: { hint: "Cash in hand, in or out", icon: Wallet },
   bank: { hint: "Money in or out of a bank account", icon: Landmark },
   supplier: { hint: "Purchases owed and payments made", icon: Truck },
+  salary: { hint: "Salary due to staff and paid out", icon: Users },
 };
 
 const LEDGER_OPTIONS: ChoiceCardOption<LedgerType>[] = ledgerTypeValues.map(
@@ -60,7 +71,7 @@ const LEDGER_OPTIONS: ChoiceCardOption<LedgerType>[] = ledgerTypeValues.map(
   }),
 );
 
-// a supplier payment is booked in the cash ledger or against a bank account
+// a supplier or salary payment is booked in the cash ledger or against a bank account
 const PAYMENT_OPTIONS: ChoiceCardOption<LedgerPaymentType>[] = [
   {
     value: "cash",
@@ -91,6 +102,10 @@ const ENTRY_TYPE_OPTIONS: Record<LedgerType, ChoiceCardOption<"cr" | "dr">[]> =
       { value: "cr", label: "Credit", hint: "Purchase / amount owed" },
       { value: "dr", label: "Debit", hint: "Payment to the supplier" },
     ],
+    salary: [
+      { value: "cr", label: "Credit", hint: "Salary due to the employee" },
+      { value: "dr", label: "Debit", hint: "Payment to the employee" },
+    ],
   };
 
 const NO_GROUP_LABEL = "No account group";
@@ -111,8 +126,9 @@ interface LedgerEntryDialogProps {
 
 /**
  * Add or edit an entry in any ledger. The fields follow the ledger type:
- * a bank entry needs its account, a supplier entry its supplier, and a
- * supplier payment how it was paid (which also books the cash/bank side).
+ * a bank entry needs its account, a supplier entry its supplier, a salary
+ * entry its employee, and a supplier or salary payment how it was paid
+ * (which also books the cash/bank side).
  * Mount it with a fresh `key` per entry so the fields start from it.
  */
 export function LedgerEntryDialog({
@@ -130,7 +146,13 @@ export function LedgerEntryDialog({
   );
   const [supplierId, setSupplierId] = useState(entry?.supplierId ?? "");
   const [supplierLabel, setSupplierLabel] = useState(entry?.supplierName ?? "");
-  // a bank entry's account, or the account a supplier was paid from
+  const [employeeId, setEmployeeId] = useState(entry?.employeeId ?? "");
+  const [employeeLabel, setEmployeeLabel] = useState(
+    entry?.employeeName && entry.employeeCode
+      ? employeeOptionLabel(entry.employeeName, entry.employeeCode)
+      : "",
+  );
+  // a bank entry's account, or the account a payment left from
   const [bankAccountId, setBankAccountId] = useState(
     entry?.bankAccountId ?? entry?.paidFromAccountId ?? "",
   );
@@ -155,6 +177,10 @@ export function LedgerEntryDialog({
   const [amountRs, setAmountRs] = useState(
     entry ? String(entry.amount / 100) : "",
   );
+  // the amount as last filled in from the picked employee's monthly salary;
+  // while the amount still equals it (nobody typed over it), picking another
+  // employee fills in theirs instead
+  const [filledAmount, setFilledAmount] = useState<string | null>(null);
   const [paymentType, setPaymentType] = useState<LedgerPaymentType | "">(
     entry?.paymentType === "cash" || entry?.paymentType === "bank"
       ? entry.paymentType
@@ -168,13 +194,25 @@ export function LedgerEntryDialog({
 
   const spec = ledgerType ? LEDGER_TYPES[ledgerType] : null;
   const searchSuppliers = useSupplierSearch();
+  // monthly salaries of the employees the picker has shown, so picking one
+  // can fill in the amount
+  const salaryByEmployee = useRef(new Map<string, number | null>());
+  const rememberSalaries = useCallback((employees: Employee[]) => {
+    for (const e of employees)
+      salaryByEmployee.current.set(e.id, e.monthlySalary);
+  }, []);
+  // only active employees: nothing new is booked to someone who has left
+  const searchEmployees = useEmployeeSearch({
+    activeOnly: true,
+    onLoaded: rememberSalaries,
+  });
   const searchBankAccounts = useBankAccountSearch();
   const { data: bankAccounts } = useBankAccountsDropdown();
 
-  // Only a supplier payment (a debit) moves money, so only it is paid by
-  // cash or bank; a bank payment also says which account it left from.
-  const isSupplierPayment = !!spec?.paymentType && entryType === "dr";
-  const isBankPayment = isSupplierPayment && paymentType === "bank";
+  // Only a supplier or salary payment (a debit) moves money, so only it is
+  // paid by cash or bank; a bank payment also says which account it left from.
+  const isPayment = !!spec?.paymentType && entryType === "dr";
+  const isBankPayment = isPayment && paymentType === "bank";
   const needsBankAccount = spec?.party === "bankAccount" || isBankPayment;
   const defaultBankAccount = bankAccounts?.find((a) => a.isDefault);
   const effectiveBankAccountId =
@@ -190,7 +228,7 @@ export function LedgerEntryDialog({
   // cash/bank entry would stay and the payment would be counted twice.
   const isUnlinkedPayment =
     isEdit &&
-    entry.ledgerType === "supplier" &&
+    LEDGER_TYPES[entry.ledgerType].paymentType &&
     !!entry.paymentType &&
     !entry.counterEntryId;
 
@@ -209,9 +247,11 @@ export function LedgerEntryDialog({
 
   function handleLedgerTypeChange(value: LedgerType) {
     setLedgerType(value);
-    // the other ledger's party and supplier-only fields don't carry over
+    // the other ledger's party and payment fields don't carry over
     setSupplierId("");
     setSupplierLabel("");
+    setEmployeeId("");
+    setEmployeeLabel("");
     setBankAccountId("");
     setBankAccountLabel("");
     setPaymentType("");
@@ -241,6 +281,8 @@ export function LedgerEntryDialog({
       description: description.trim() || undefined,
       supplierID:
         spec?.party === "supplier" ? supplierId || undefined : undefined,
+      employeeID:
+        spec?.party === "employee" ? employeeId || undefined : undefined,
       bankAccountID:
         needsBankAccount && !isUnlinkedPayment
           ? effectiveBankAccountId || undefined
@@ -248,7 +290,7 @@ export function LedgerEntryDialog({
       accountGroupID: spec?.accountGroup
         ? accountGroupId || undefined
         : undefined,
-      paymentType: isSupplierPayment ? paymentType || undefined : undefined,
+      paymentType: isPayment ? paymentType || undefined : undefined,
       // a link to a purchase isn't edited here; keep it
       stockInID: entry?.stockInId ?? undefined,
     });
@@ -261,6 +303,7 @@ export function LedgerEntryDialog({
         amount: tree?.amount?.errors[0],
         description: tree?.description?.errors[0],
         supplierID: tree?.supplierID?.errors[0],
+        employeeID: tree?.employeeID?.errors[0],
         bankAccountID: tree?.bankAccountID?.errors[0],
         accountGroupID: tree?.accountGroupID?.errors[0],
         paymentType: tree?.paymentType?.errors[0],
@@ -286,8 +329,8 @@ export function LedgerEntryDialog({
       title={isEdit ? "Edit Ledger Entry" : "New Ledger Entry"}
       description={
         isEdit
-          ? "Change this entry. A supplier payment's cash/bank side follows it."
-          : "Record an entry in the cash, bank or supplier ledger."
+          ? "Change this entry. A payment's cash/bank side follows it."
+          : "Record an entry in the cash, bank, supplier or salary ledger."
       }
       footer={
         <div className="flex justify-end gap-2">
@@ -352,6 +395,37 @@ export function LedgerEntryDialog({
                 onSearch={searchSuppliers}
                 selectedLabel={supplierLabel}
                 placeholder="Search supplier…"
+              />
+            </AccountingFormField>
+          )}
+
+          {spec?.party === "employee" && (
+            <AccountingFormField
+              label="Employee"
+              required
+              error={errors.employeeID}
+            >
+              <SearchableSelect
+                value={employeeId}
+                onChange={(v, label) => {
+                  setEmployeeId(v);
+                  setEmployeeLabel(label);
+                  clearError("employeeID");
+                  // a new entry starts from their monthly salary; a typed
+                  // amount (or an edited entry's) is never replaced
+                  const untouched =
+                    amountRs === "" || amountRs === filledAmount;
+                  if (!isEdit && untouched) {
+                    const salary = salaryByEmployee.current.get(v);
+                    const next = salary ? String(salary / 100) : "";
+                    setAmountRs(next);
+                    setFilledAmount(next || null);
+                    clearError("amount");
+                  }
+                }}
+                onSearch={searchEmployees}
+                selectedLabel={employeeLabel}
+                placeholder="Search name or code…"
               />
             </AccountingFormField>
           )}
@@ -477,7 +551,7 @@ export function LedgerEntryDialog({
           </AccountingFormSection>
         )}
 
-        {isSupplierPayment && (
+        {isPayment && (
           <AccountingFormSection title="Payment">
             <AccountingFormField
               label="Paid by"

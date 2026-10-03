@@ -13,16 +13,16 @@ import (
 
 const createLedgerEntry = `-- name: CreateLedgerEntry :one
 INSERT INTO ledger_entries (
-    ledger_type, source, bank_account_id, supplier_id, account_group_id,
-    payment_id, stock_in_id, paired_entry_id, date, bs_date, entry_type,
-    amount, description, payment_type
+    ledger_type, source, bank_account_id, supplier_id, employee_id,
+    account_group_id, payment_id, stock_in_id, paired_entry_id, date, bs_date,
+    entry_type, amount, description, payment_type
 )
 VALUES (
     $1, $2, $3, $4, $5,
     $6, $7, $8, $9, $10, $11,
-    $12, $13, $14
+    $12, $13, $14, $15
 )
-RETURNING id, ledger_type, source, bank_account_id, supplier_id, account_group_id, payment_id, stock_in_id, paired_entry_id, date, bs_date, entry_type, amount, description, payment_type, created_at
+RETURNING id, ledger_type, source, bank_account_id, supplier_id, account_group_id, payment_id, stock_in_id, paired_entry_id, date, bs_date, entry_type, amount, description, payment_type, created_at, employee_id
 `
 
 type CreateLedgerEntryParams struct {
@@ -30,6 +30,7 @@ type CreateLedgerEntryParams struct {
 	Source         string             `json:"source"`
 	BankAccountID  pgtype.UUID        `json:"bankAccountId"`
 	SupplierID     pgtype.UUID        `json:"supplierId"`
+	EmployeeID     pgtype.UUID        `json:"employeeId"`
 	AccountGroupID pgtype.UUID        `json:"accountGroupId"`
 	PaymentID      pgtype.UUID        `json:"paymentId"`
 	StockInID      pgtype.UUID        `json:"stockInId"`
@@ -48,6 +49,7 @@ func (q *Queries) CreateLedgerEntry(ctx context.Context, arg CreateLedgerEntryPa
 		arg.Source,
 		arg.BankAccountID,
 		arg.SupplierID,
+		arg.EmployeeID,
 		arg.AccountGroupID,
 		arg.PaymentID,
 		arg.StockInID,
@@ -77,6 +79,7 @@ func (q *Queries) CreateLedgerEntry(ctx context.Context, arg CreateLedgerEntryPa
 		&i.Description,
 		&i.PaymentType,
 		&i.CreatedAt,
+		&i.EmployeeID,
 	)
 	return i, err
 }
@@ -110,13 +113,15 @@ func (q *Queries) DeletePurchaseLedgerCredit(ctx context.Context, stockInID pgty
 
 const getLedgerEntryByID = `-- name: GetLedgerEntryByID :one
 SELECT
-    le.id, le.ledger_type, le.source, le.bank_account_id, le.supplier_id, le.account_group_id, le.payment_id, le.stock_in_id, le.paired_entry_id, le.date, le.bs_date, le.entry_type, le.amount, le.description, le.payment_type, le.created_at,
+    le.id, le.ledger_type, le.source, le.bank_account_id, le.supplier_id, le.account_group_id, le.payment_id, le.stock_in_id, le.paired_entry_id, le.date, le.bs_date, le.entry_type, le.amount, le.description, le.payment_type, le.created_at, le.employee_id,
     s.company_name AS supplier_name,
+    e.full_name AS employee_name,
+    e.code AS employee_code,
     b.name AS bank_name,
     ba.account_name,
     ba.account_number,
     ag.name AS account_group_name,
-    -- a supplier payment's cash/bank side, and the account the money left
+    -- a supplier or salary payment's cash/bank side, and the account the money left
     -- from (none for cash), so the entry can be shown and edited with it
     pe.id AS counter_entry_id,
     pe.bank_account_id AS paid_from_account_id,
@@ -124,6 +129,7 @@ SELECT
     pb.name AS paid_from_bank_name
 FROM ledger_entries le
 LEFT JOIN suppliers s ON s.id = le.supplier_id
+LEFT JOIN employees e ON e.id = le.employee_id
 LEFT JOIN bank_accounts ba ON ba.id = le.bank_account_id
 LEFT JOIN banks b ON b.id = ba.bank_id
 LEFT JOIN account_groups ag ON ag.id = le.account_group_id
@@ -150,7 +156,10 @@ type GetLedgerEntryByIDRow struct {
 	Description         pgtype.Text        `json:"description"`
 	PaymentType         pgtype.Text        `json:"paymentType"`
 	CreatedAt           pgtype.Timestamptz `json:"createdAt"`
+	EmployeeID          pgtype.UUID        `json:"employeeId"`
 	SupplierName        pgtype.Text        `json:"supplierName"`
+	EmployeeName        pgtype.Text        `json:"employeeName"`
+	EmployeeCode        pgtype.Text        `json:"employeeCode"`
 	BankName            pgtype.Text        `json:"bankName"`
 	AccountName         pgtype.Text        `json:"accountName"`
 	AccountNumber       pgtype.Text        `json:"accountNumber"`
@@ -182,7 +191,10 @@ func (q *Queries) GetLedgerEntryByID(ctx context.Context, id pgtype.UUID) (GetLe
 		&i.Description,
 		&i.PaymentType,
 		&i.CreatedAt,
+		&i.EmployeeID,
 		&i.SupplierName,
+		&i.EmployeeName,
+		&i.EmployeeCode,
 		&i.BankName,
 		&i.AccountName,
 		&i.AccountNumber,
@@ -202,16 +214,18 @@ LEFT JOIN bank_accounts ba ON ba.id = le.bank_account_id
 WHERE
     ($1::TEXT IS NULL OR le.ledger_type = $1::TEXT)
     AND ($2::UUID IS NULL OR le.supplier_id = $2::UUID)
-    AND ($3::UUID IS NULL OR ba.bank_id = $3::UUID)
-    AND ($4::UUID IS NULL OR le.bank_account_id = $4::UUID)
-    AND ($5::UUID IS NULL OR le.account_group_id = $5::UUID)
-    AND ($6::DATE IS NULL OR le.date >= $6::TIMESTAMPTZ)
-    AND ($7::DATE IS NULL OR le.date <= $7::TIMESTAMPTZ)
+    AND ($3::UUID IS NULL OR le.employee_id = $3::UUID)
+    AND ($4::UUID IS NULL OR ba.bank_id = $4::UUID)
+    AND ($5::UUID IS NULL OR le.bank_account_id = $5::UUID)
+    AND ($6::UUID IS NULL OR le.account_group_id = $6::UUID)
+    AND ($7::DATE IS NULL OR le.date >= $7::TIMESTAMPTZ)
+    AND ($8::DATE IS NULL OR le.date <= $8::TIMESTAMPTZ)
 `
 
 type GetLedgerEntryCountParams struct {
 	LedgerType     pgtype.Text `json:"ledgerType"`
 	SupplierID     pgtype.UUID `json:"supplierId"`
+	EmployeeID     pgtype.UUID `json:"employeeId"`
 	BankID         pgtype.UUID `json:"bankId"`
 	BankAccountID  pgtype.UUID `json:"bankAccountId"`
 	AccountGroupID pgtype.UUID `json:"accountGroupId"`
@@ -223,6 +237,7 @@ func (q *Queries) GetLedgerEntryCount(ctx context.Context, arg GetLedgerEntryCou
 	row := q.db.QueryRow(ctx, getLedgerEntryCount,
 		arg.LedgerType,
 		arg.SupplierID,
+		arg.EmployeeID,
 		arg.BankID,
 		arg.BankAccountID,
 		arg.AccountGroupID,
@@ -235,7 +250,7 @@ func (q *Queries) GetLedgerEntryCount(ctx context.Context, arg GetLedgerEntryCou
 }
 
 const getLedgerEntryForUpdate = `-- name: GetLedgerEntryForUpdate :one
-SELECT id, ledger_type, source, bank_account_id, supplier_id, account_group_id, payment_id, stock_in_id, paired_entry_id, date, bs_date, entry_type, amount, description, payment_type, created_at FROM ledger_entries WHERE id = $1 FOR UPDATE
+SELECT id, ledger_type, source, bank_account_id, supplier_id, account_group_id, payment_id, stock_in_id, paired_entry_id, date, bs_date, entry_type, amount, description, payment_type, created_at, employee_id FROM ledger_entries WHERE id = $1 FOR UPDATE
 `
 
 func (q *Queries) GetLedgerEntryForUpdate(ctx context.Context, id pgtype.UUID) (LedgerEntry, error) {
@@ -258,6 +273,7 @@ func (q *Queries) GetLedgerEntryForUpdate(ctx context.Context, id pgtype.UUID) (
 		&i.Description,
 		&i.PaymentType,
 		&i.CreatedAt,
+		&i.EmployeeID,
 	)
 	return i, err
 }
@@ -274,11 +290,12 @@ LEFT JOIN bank_accounts ba ON ba.id = le.bank_account_id
 WHERE
     ($1::TEXT IS NULL OR le.ledger_type = $1::TEXT)
     AND ($2::UUID IS NULL OR le.supplier_id = $2::UUID)
-    AND ($3::UUID IS NULL OR ba.bank_id = $3::UUID)
-    AND ($4::UUID IS NULL OR le.bank_account_id = $4::UUID)
-    AND ($5::UUID IS NULL OR le.account_group_id = $5::UUID)
-    AND ($6::DATE IS NULL OR le.date >= $6::TIMESTAMPTZ)
-    AND ($7::DATE IS NULL OR le.date <= $7::TIMESTAMPTZ)
+    AND ($3::UUID IS NULL OR le.employee_id = $3::UUID)
+    AND ($4::UUID IS NULL OR ba.bank_id = $4::UUID)
+    AND ($5::UUID IS NULL OR le.bank_account_id = $5::UUID)
+    AND ($6::UUID IS NULL OR le.account_group_id = $6::UUID)
+    AND ($7::DATE IS NULL OR le.date >= $7::TIMESTAMPTZ)
+    AND ($8::DATE IS NULL OR le.date <= $8::TIMESTAMPTZ)
 GROUP BY le.ledger_type
 ORDER BY le.ledger_type
 `
@@ -286,6 +303,7 @@ ORDER BY le.ledger_type
 type GetLedgerSummaryParams struct {
 	LedgerType     pgtype.Text `json:"ledgerType"`
 	SupplierID     pgtype.UUID `json:"supplierId"`
+	EmployeeID     pgtype.UUID `json:"employeeId"`
 	BankID         pgtype.UUID `json:"bankId"`
 	BankAccountID  pgtype.UUID `json:"bankAccountId"`
 	AccountGroupID pgtype.UUID `json:"accountGroupId"`
@@ -306,6 +324,7 @@ func (q *Queries) GetLedgerSummary(ctx context.Context, arg GetLedgerSummaryPara
 	rows, err := q.db.Query(ctx, getLedgerSummary,
 		arg.LedgerType,
 		arg.SupplierID,
+		arg.EmployeeID,
 		arg.BankID,
 		arg.BankAccountID,
 		arg.AccountGroupID,
@@ -336,10 +355,10 @@ func (q *Queries) GetLedgerSummary(ctx context.Context, arg GetLedgerSummaryPara
 }
 
 const getPairedLedgerEntry = `-- name: GetPairedLedgerEntry :one
-SELECT id, ledger_type, source, bank_account_id, supplier_id, account_group_id, payment_id, stock_in_id, paired_entry_id, date, bs_date, entry_type, amount, description, payment_type, created_at FROM ledger_entries WHERE paired_entry_id = $1 FOR UPDATE
+SELECT id, ledger_type, source, bank_account_id, supplier_id, account_group_id, payment_id, stock_in_id, paired_entry_id, date, bs_date, entry_type, amount, description, payment_type, created_at, employee_id FROM ledger_entries WHERE paired_entry_id = $1 FOR UPDATE
 `
 
-// the cash/bank side of a supplier payment, if it has one
+// the cash/bank side of a supplier or salary payment, if it has one
 func (q *Queries) GetPairedLedgerEntry(ctx context.Context, pairedEntryID pgtype.UUID) (LedgerEntry, error) {
 	row := q.db.QueryRow(ctx, getPairedLedgerEntry, pairedEntryID)
 	var i LedgerEntry
@@ -360,19 +379,22 @@ func (q *Queries) GetPairedLedgerEntry(ctx context.Context, pairedEntryID pgtype
 		&i.Description,
 		&i.PaymentType,
 		&i.CreatedAt,
+		&i.EmployeeID,
 	)
 	return i, err
 }
 
 const listLedgerEntries = `-- name: ListLedgerEntries :many
 SELECT
-    le.id, le.ledger_type, le.source, le.bank_account_id, le.supplier_id, le.account_group_id, le.payment_id, le.stock_in_id, le.paired_entry_id, le.date, le.bs_date, le.entry_type, le.amount, le.description, le.payment_type, le.created_at,
+    le.id, le.ledger_type, le.source, le.bank_account_id, le.supplier_id, le.account_group_id, le.payment_id, le.stock_in_id, le.paired_entry_id, le.date, le.bs_date, le.entry_type, le.amount, le.description, le.payment_type, le.created_at, le.employee_id,
     s.company_name AS supplier_name,
+    e.full_name AS employee_name,
+    e.code AS employee_code,
     b.name AS bank_name,
     ba.account_name,
     ba.account_number,
     ag.name AS account_group_name,
-    -- a supplier payment's cash/bank side, and the account the money left
+    -- a supplier or salary payment's cash/bank side, and the account the money left
     -- from (none for cash), so the entry can be shown and edited with it
     pe.id AS counter_entry_id,
     pe.bank_account_id AS paid_from_account_id,
@@ -380,6 +402,7 @@ SELECT
     pb.name AS paid_from_bank_name
 FROM ledger_entries le
 LEFT JOIN suppliers s ON s.id = le.supplier_id
+LEFT JOIN employees e ON e.id = le.employee_id
 LEFT JOIN bank_accounts ba ON ba.id = le.bank_account_id
 LEFT JOIN banks b ON b.id = ba.bank_id
 LEFT JOIN account_groups ag ON ag.id = le.account_group_id
@@ -389,18 +412,20 @@ LEFT JOIN banks pb ON pb.id = pba.bank_id
 WHERE
     ($1::TEXT IS NULL OR le.ledger_type = $1::TEXT)
     AND ($2::UUID IS NULL OR le.supplier_id = $2::UUID)
-    AND ($3::UUID IS NULL OR ba.bank_id = $3::UUID)
-    AND ($4::UUID IS NULL OR le.bank_account_id = $4::UUID)
-    AND ($5::UUID IS NULL OR le.account_group_id = $5::UUID)
-    AND ($6::DATE IS NULL OR le.date >= $6::TIMESTAMPTZ)
-    AND ($7::DATE IS NULL OR le.date <= $7::TIMESTAMPTZ)
+    AND ($3::UUID IS NULL OR le.employee_id = $3::UUID)
+    AND ($4::UUID IS NULL OR ba.bank_id = $4::UUID)
+    AND ($5::UUID IS NULL OR le.bank_account_id = $5::UUID)
+    AND ($6::UUID IS NULL OR le.account_group_id = $6::UUID)
+    AND ($7::DATE IS NULL OR le.date >= $7::TIMESTAMPTZ)
+    AND ($8::DATE IS NULL OR le.date <= $8::TIMESTAMPTZ)
 ORDER BY le.date DESC, le.created_at DESC, le.id DESC
-LIMIT $9::INT OFFSET $8::INT
+LIMIT $10::INT OFFSET $9::INT
 `
 
 type ListLedgerEntriesParams struct {
 	LedgerType     pgtype.Text `json:"ledgerType"`
 	SupplierID     pgtype.UUID `json:"supplierId"`
+	EmployeeID     pgtype.UUID `json:"employeeId"`
 	BankID         pgtype.UUID `json:"bankId"`
 	BankAccountID  pgtype.UUID `json:"bankAccountId"`
 	AccountGroupID pgtype.UUID `json:"accountGroupId"`
@@ -427,7 +452,10 @@ type ListLedgerEntriesRow struct {
 	Description         pgtype.Text        `json:"description"`
 	PaymentType         pgtype.Text        `json:"paymentType"`
 	CreatedAt           pgtype.Timestamptz `json:"createdAt"`
+	EmployeeID          pgtype.UUID        `json:"employeeId"`
 	SupplierName        pgtype.Text        `json:"supplierName"`
+	EmployeeName        pgtype.Text        `json:"employeeName"`
+	EmployeeCode        pgtype.Text        `json:"employeeCode"`
 	BankName            pgtype.Text        `json:"bankName"`
 	AccountName         pgtype.Text        `json:"accountName"`
 	AccountNumber       pgtype.Text        `json:"accountNumber"`
@@ -445,6 +473,7 @@ func (q *Queries) ListLedgerEntries(ctx context.Context, arg ListLedgerEntriesPa
 	rows, err := q.db.Query(ctx, listLedgerEntries,
 		arg.LedgerType,
 		arg.SupplierID,
+		arg.EmployeeID,
 		arg.BankID,
 		arg.BankAccountID,
 		arg.AccountGroupID,
@@ -477,7 +506,10 @@ func (q *Queries) ListLedgerEntries(ctx context.Context, arg ListLedgerEntriesPa
 			&i.Description,
 			&i.PaymentType,
 			&i.CreatedAt,
+			&i.EmployeeID,
 			&i.SupplierName,
+			&i.EmployeeName,
+			&i.EmployeeCode,
 			&i.BankName,
 			&i.AccountName,
 			&i.AccountNumber,
@@ -501,21 +533,23 @@ const updateLedgerEntry = `-- name: UpdateLedgerEntry :one
 UPDATE ledger_entries
 SET bank_account_id = $1,
     supplier_id = $2,
-    account_group_id = $3,
-    stock_in_id = $4,
-    date = $5,
-    bs_date = $6,
-    entry_type = $7,
-    amount = $8,
-    description = $9,
-    payment_type = $10
-WHERE id = $11
-RETURNING id, ledger_type, source, bank_account_id, supplier_id, account_group_id, payment_id, stock_in_id, paired_entry_id, date, bs_date, entry_type, amount, description, payment_type, created_at
+    employee_id = $3,
+    account_group_id = $4,
+    stock_in_id = $5,
+    date = $6,
+    bs_date = $7,
+    entry_type = $8,
+    amount = $9,
+    description = $10,
+    payment_type = $11
+WHERE id = $12
+RETURNING id, ledger_type, source, bank_account_id, supplier_id, account_group_id, payment_id, stock_in_id, paired_entry_id, date, bs_date, entry_type, amount, description, payment_type, created_at, employee_id
 `
 
 type UpdateLedgerEntryParams struct {
 	BankAccountID  pgtype.UUID        `json:"bankAccountId"`
 	SupplierID     pgtype.UUID        `json:"supplierId"`
+	EmployeeID     pgtype.UUID        `json:"employeeId"`
 	AccountGroupID pgtype.UUID        `json:"accountGroupId"`
 	StockInID      pgtype.UUID        `json:"stockInId"`
 	Date           pgtype.Timestamptz `json:"date"`
@@ -531,6 +565,7 @@ func (q *Queries) UpdateLedgerEntry(ctx context.Context, arg UpdateLedgerEntryPa
 	row := q.db.QueryRow(ctx, updateLedgerEntry,
 		arg.BankAccountID,
 		arg.SupplierID,
+		arg.EmployeeID,
 		arg.AccountGroupID,
 		arg.StockInID,
 		arg.Date,
@@ -559,6 +594,7 @@ func (q *Queries) UpdateLedgerEntry(ctx context.Context, arg UpdateLedgerEntryPa
 		&i.Description,
 		&i.PaymentType,
 		&i.CreatedAt,
+		&i.EmployeeID,
 	)
 	return i, err
 }

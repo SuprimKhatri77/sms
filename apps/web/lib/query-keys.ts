@@ -1,3 +1,4 @@
+import type { EmployeeListParams } from "./api/employees";
 import type { LedgerFilterParams } from "./api/ledgers";
 
 export const queryKeys = {
@@ -35,6 +36,11 @@ export const queryKeys = {
   suppliers: {
     all: ["admin-suppliers"] as const,
     list: (page: number) => ["admin-suppliers", "list", page] as const,
+  },
+  employees: {
+    all: ["admin-employees"] as const,
+    list: (params: EmployeeListParams) =>
+      ["admin-employees", "list", params] as const,
   },
   batches: {
     all: ["admin-students", "batches"] as const,

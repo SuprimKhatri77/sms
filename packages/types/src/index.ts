@@ -214,6 +214,18 @@ export {
 } from "./admin/accounting/suppliers";
 
 export {
+  employeeStatusValues,
+  employeeInputSchema,
+  type EmployeeStatus,
+  type Employee,
+  type EmployeesData,
+  type EmployeeInput,
+  type GetEmployeesResponse,
+  type EmployeeMutationResponse,
+  type DeleteEmployeeResponse,
+} from "./admin/accounting/employees";
+
+export {
   LEDGER_TYPES,
   ledgerTypeValues,
   ledgerSourceValues,

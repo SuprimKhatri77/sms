@@ -16,7 +16,7 @@ import (
 const handlerGetLedgerSummary = "GetLedgerSummary"
 
 // summaryTypeOrder is the order the per-ledger totals come back in.
-var summaryTypeOrder = []string{ledgertypes.TypeCash, ledgertypes.TypeBank, ledgertypes.TypeSupplier}
+var summaryTypeOrder = []string{ledgertypes.TypeCash, ledgertypes.TypeBank, ledgertypes.TypeSupplier, ledgertypes.TypeSalary}
 
 // fillLedgerSummary returns one row per ledger in view: the filtered type, or
 // every type when none is picked. Types without entries get zero totals, so

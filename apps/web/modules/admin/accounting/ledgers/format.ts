@@ -13,9 +13,10 @@ export function formatAmount(paisa: number): string {
   });
 }
 
-/** Who an entry is with: the supplier, or the bank and account. */
+/** Who an entry is with: the supplier, the employee, or the bank and account. */
 export function partyLabel(entry: LedgerEntry): string {
   if (entry.supplierName) return entry.supplierName;
+  if (entry.employeeName) return entry.employeeName;
   if (entry.bankName) {
     const account = entry.accountNumber
       ? `${entry.accountName} · ${entry.accountNumber}`

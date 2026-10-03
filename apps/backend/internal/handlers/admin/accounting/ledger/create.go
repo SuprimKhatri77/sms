@@ -18,7 +18,8 @@ import (
 const handlerCreateLedgerEntry = "CreateLedgerEntry"
 
 // entryBankAccount is the bank account stored on the entry itself: only bank
-// entries have one. A supplier paid by bank keeps it on the paired bank entry.
+// entries have one. A supplier or employee paid by bank keeps it on the
+// paired bank entry.
 func entryBankAccount(in ledgerEntryInput) pgtype.UUID {
 	if in.LedgerType == ledgertypes.TypeBank {
 		return in.BankAccountID
@@ -26,9 +27,10 @@ func entryBankAccount(in ledgerEntryInput) pgtype.UUID {
 	return pgtype.UUID{}
 }
 
-// CreateLedgerEntry records a manual entry in any ledger. A supplier payment
-// (a supplier debit paid by cash or bank) also records the matching cash or
-// bank debit in the same transaction, linked to it.
+// CreateLedgerEntry records a manual entry in any ledger. A supplier or
+// salary payment (a debit paid by cash or bank) also records the matching
+// cash or bank debit in the same transaction, linked to it. Salary can't be
+// booked to an employee who is marked inactive.
 func CreateLedgerEntry(queries accountingRepository.LedgerTxRepository, pool *pgxpool.Pool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
@@ -47,11 +49,16 @@ func CreateLedgerEntry(queries accountingRepository.LedgerTxRepository, pool *pg
 
 		qtx := queries.WithTx(tx)
 
+		if in.EmployeeID.Valid && rejectUnavailableEmployee(c, handlerCreateLedgerEntry, qtx, in.EmployeeID) {
+			return
+		}
+
 		entry, err := qtx.CreateLedgerEntry(ctx, db.CreateLedgerEntryParams{
 			LedgerType:     in.LedgerType,
 			Source:         ledgertypes.SourceManual,
 			BankAccountID:  entryBankAccount(in),
 			SupplierID:     in.SupplierID,
+			EmployeeID:     in.EmployeeID,
 			AccountGroupID: in.AccountGroupID,
 			StockInID:      in.StockInID,
 			Date:           in.Date,
@@ -67,7 +74,7 @@ func CreateLedgerEntry(queries accountingRepository.LedgerTxRepository, pool *pg
 		}
 
 		if ledgertypes.RecordsPayment(in.LedgerType, in.EntryType, in.PaymentType) {
-			if err := recordSupplierPayment(ctx, qtx, entry, in); err != nil {
+			if err := recordPayment(ctx, qtx, entry, in); err != nil {
 				respondLedgerWriteError(c, handlerCreateLedgerEntry, err)
 				return
 			}

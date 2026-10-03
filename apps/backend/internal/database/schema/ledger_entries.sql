@@ -1,4 +1,4 @@
--- every ledger (cash, bank, supplier, ...) in one table, told apart by ledger_type
+-- every ledger (cash, bank, supplier, salary, ...) in one table, told apart by ledger_type
 CREATE TABLE ledger_entries (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     ledger_type TEXT NOT NULL,
@@ -9,7 +9,7 @@ CREATE TABLE ledger_entries (
     account_group_id UUID CONSTRAINT ledger_entries_account_group_id_fkey REFERENCES account_groups(id) ON DELETE RESTRICT,
     payment_id UUID CONSTRAINT ledger_entries_payment_id_fkey REFERENCES payments(id) ON DELETE RESTRICT,
     stock_in_id UUID CONSTRAINT ledger_entries_stock_in_id_fkey REFERENCES stock_in(id) ON DELETE SET NULL,
-    -- on the cash/bank side of a supplier payment: the supplier entry it pays
+    -- on the cash/bank side of a supplier or salary payment: the entry it pays
     paired_entry_id UUID CONSTRAINT ledger_entries_paired_entry_id_fkey REFERENCES ledger_entries(id) ON DELETE CASCADE,
     date TIMESTAMPTZ NOT NULL,
     bs_date TEXT NOT NULL,
@@ -18,25 +18,29 @@ CREATE TABLE ledger_entries (
     description TEXT,
     payment_type TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    -- a salary entry's employee (000056 added it, so it comes last)
+    employee_id UUID CONSTRAINT ledger_entries_employee_id_fkey REFERENCES employees(id) ON DELETE RESTRICT,
 
-    CONSTRAINT ledger_entries_type_check CHECK (ledger_type IN ('cash', 'bank', 'supplier')),
-    CONSTRAINT ledger_entries_source_check CHECK (source IN ('manual', 'purchase', 'student_payment', 'supplier_payment')),
+    CONSTRAINT ledger_entries_type_check CHECK (ledger_type IN ('cash', 'bank', 'supplier', 'salary')),
+    CONSTRAINT ledger_entries_source_check CHECK (source IN ('manual', 'purchase', 'student_payment', 'supplier_payment', 'salary_payment')),
     CONSTRAINT ledger_entries_entry_type_check CHECK (entry_type IN ('dr', 'cr')),
     CONSTRAINT ledger_entries_amount_check CHECK (amount > 0),
-    -- how a supplier payment was made (000055 limited it to cash or bank)
+    -- how a supplier or salary payment was made (000055 limited it to cash or bank)
     CONSTRAINT ledger_entries_payment_type_check CHECK (payment_type IS NULL OR payment_type IN ('cash', 'bank')),
 
     -- each ledger type's shape
-    CONSTRAINT ledger_entries_cash_shape CHECK (ledger_type <> 'cash' OR (bank_account_id IS NULL AND supplier_id IS NULL)),
-    CONSTRAINT ledger_entries_bank_shape CHECK (ledger_type <> 'bank' OR (bank_account_id IS NOT NULL AND supplier_id IS NULL)),
-    CONSTRAINT ledger_entries_supplier_shape CHECK (ledger_type <> 'supplier' OR (supplier_id IS NOT NULL AND bank_account_id IS NULL AND payment_id IS NULL)),
-    CONSTRAINT ledger_entries_supplier_fields CHECK (ledger_type = 'supplier' OR (stock_in_id IS NULL AND payment_type IS NULL)),
+    CONSTRAINT ledger_entries_cash_shape CHECK (ledger_type <> 'cash' OR (bank_account_id IS NULL AND supplier_id IS NULL AND employee_id IS NULL)),
+    CONSTRAINT ledger_entries_bank_shape CHECK (ledger_type <> 'bank' OR (bank_account_id IS NOT NULL AND supplier_id IS NULL AND employee_id IS NULL)),
+    CONSTRAINT ledger_entries_supplier_shape CHECK (ledger_type <> 'supplier' OR (supplier_id IS NOT NULL AND bank_account_id IS NULL AND payment_id IS NULL AND employee_id IS NULL)),
+    CONSTRAINT ledger_entries_salary_shape CHECK (ledger_type <> 'salary' OR (employee_id IS NOT NULL AND bank_account_id IS NULL AND supplier_id IS NULL AND payment_id IS NULL)),
+    CONSTRAINT ledger_entries_stock_link_check CHECK (ledger_type = 'supplier' OR stock_in_id IS NULL),
+    CONSTRAINT ledger_entries_payment_type_owner_check CHECK (ledger_type IN ('supplier', 'salary') OR payment_type IS NULL),
 
     -- each source's shape
     CONSTRAINT ledger_entries_student_payment_shape CHECK ((source = 'student_payment') = (payment_id IS NOT NULL)),
     CONSTRAINT ledger_entries_purchase_shape CHECK (source <> 'purchase' OR (ledger_type = 'supplier' AND entry_type = 'cr' AND stock_in_id IS NOT NULL)),
-    CONSTRAINT ledger_entries_supplier_payment_shape CHECK (source <> 'supplier_payment' OR (ledger_type IN ('cash', 'bank') AND entry_type = 'dr')),
-    CONSTRAINT ledger_entries_paired_shape CHECK ((source = 'supplier_payment') = (paired_entry_id IS NOT NULL)),
+    CONSTRAINT ledger_entries_supplier_payment_shape CHECK (source NOT IN ('supplier_payment', 'salary_payment') OR (ledger_type IN ('cash', 'bank') AND entry_type = 'dr')),
+    CONSTRAINT ledger_entries_paired_shape CHECK ((source IN ('supplier_payment', 'salary_payment')) = (paired_entry_id IS NOT NULL)),
     CONSTRAINT ledger_entries_not_own_pair CHECK (paired_entry_id IS NULL OR paired_entry_id <> id)
 );
 
@@ -52,3 +56,4 @@ CREATE INDEX idx_ledger_entries_supplier_id ON ledger_entries(supplier_id);
 CREATE INDEX idx_ledger_entries_account_group_id ON ledger_entries(account_group_id);
 CREATE INDEX idx_ledger_entries_payment_id ON ledger_entries(payment_id);
 CREATE INDEX idx_ledger_entries_stock_in_id ON ledger_entries(stock_in_id);
+CREATE INDEX idx_ledger_entries_employee_id ON ledger_entries(employee_id);

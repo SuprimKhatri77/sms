@@ -138,6 +138,12 @@ const (
 	LedgerTypeChange       = "LEDGER_TYPE_CHANGE"
 	InvalidLedgerFields    = "INVALID_LEDGER_FIELDS"
 
+	// employees
+	EmployeeNotFound   = "EMPLOYEE_NOT_FOUND"
+	EmployeeInUse      = "EMPLOYEE_IN_USE"
+	EmployeeInactive   = "EMPLOYEE_INACTIVE"
+	PanNoAlreadyExists = "PAN_NO_ALREADY_EXISTS"
+
 	// certificates
 	CertificateAlreadyExists = "CERTIFICATE_ALREADY_EXISTS"
 	CertificateNotFound      = "CERTIFICATE_NOT_FOUND"

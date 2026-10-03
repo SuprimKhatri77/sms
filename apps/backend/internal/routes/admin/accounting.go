@@ -5,6 +5,7 @@ import (
 	accountgroups "github.com/suprimkhatri77/sms/backend/internal/handlers/admin/accounting/account_groups"
 	bankaccounts "github.com/suprimkhatri77/sms/backend/internal/handlers/admin/accounting/bank_accounts"
 	"github.com/suprimkhatri77/sms/backend/internal/handlers/admin/accounting/banks"
+	"github.com/suprimkhatri77/sms/backend/internal/handlers/admin/accounting/employees"
 	"github.com/suprimkhatri77/sms/backend/internal/handlers/admin/accounting/ledger"
 	primaryheads "github.com/suprimkhatri77/sms/backend/internal/handlers/admin/accounting/primary_heads"
 	"github.com/suprimkhatri77/sms/backend/internal/handlers/admin/accounting/suppliers"
@@ -32,7 +33,7 @@ func setupAdminAccountingRoutes(admin *gin.RouterGroup, cfg config.Config) {
 	b.DELETE("/accounts/:accountID", bankaccounts.DeleteBankAccount(cfg.Queries))
 	b.PUT("/accounts/:accountID/set-default", bankaccounts.SetDefaultBankAccount(accountingRepository.NewBankAccountTxRepository(cfg.Queries), cfg.PgxPool))
 
-	// ledgers (cash, bank, supplier, ...) — any admin can view and add
+	// ledgers (cash, bank, supplier, salary) — any admin can view and add
 	// entries, only superadmin can edit or delete them
 	l := accounting.Group("/ledgers")
 	l.GET("", ledger.ListLedgerEntries(cfg.Queries))
@@ -49,6 +50,13 @@ func setupAdminAccountingRoutes(admin *gin.RouterGroup, cfg config.Config) {
 	sup.POST("", suppliers.CreateSupplier(cfg.Queries))
 	sup.PUT("/:supplierID", suppliers.UpdateSupplier(cfg.Queries))
 	sup.DELETE("/:supplierID", suppliers.DeleteSupplier(cfg.Queries))
+
+	// employees, who are paid through the salary ledger
+	emp := accounting.Group("/employees")
+	emp.GET("", employees.ListEmployees(cfg.Queries))
+	emp.POST("", employees.CreateEmployee(cfg.Queries))
+	emp.PUT("/:employeeID", employees.UpdateEmployee(cfg.Queries))
+	emp.DELETE("/:employeeID", employees.DeleteEmployee(cfg.Queries))
 
 	// primary heads — any admin can view, only superadmin can change
 	ph := accounting.Group("/primary-heads")
