@@ -19,7 +19,7 @@ export function CertificateNotFound() {
             <ButtonArrow />
           </Link>
           <Link
-            href="/#programs"
+            href="/courses"
             className={siteButton({ variant: "outline", size: "lg" })}
           >
             View courses

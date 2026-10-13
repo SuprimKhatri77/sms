@@ -52,9 +52,24 @@ export interface Instructor {
   profile?: InstructorProfile;
 }
 
+/** Filter groups on the /courses page (?type=). */
+export const courseCategories = {
+  coffee: "Coffee",
+  bakery: "Bakery",
+  bar: "Bar",
+  kitchen: "Kitchen",
+} as const;
+
+export type CourseCategory = keyof typeof courseCategories;
+
 export interface CourseDetail {
   slug: string;
+  /** Short name; also the backend course name (lowercased) fees match on. */
+  name: string;
   course: string;
+  category: CourseCategory;
+  /** Shown on the landing page and /courses. Unlisted courses keep their page. */
+  listed: boolean;
   tagline: string;
   shortDescription: string;
   longDescription: string;
@@ -252,7 +267,10 @@ export const mentors: Instructor[] = [
 export const courses: CourseDetail[] = [
   {
     slug: "barista",
+    name: "Barista",
     course: "Professional Barista Program",
+    category: "coffee",
+    listed: true,
     tagline: "The Art of Coffee",
     shortDescription:
       "A journey from bean to cup, mastering espresso extraction, milk texturing, and café business management.",
@@ -356,7 +374,10 @@ export const courses: CourseDetail[] = [
   },
   {
     slug: "bakery",
+    name: "Bakery",
     course: "Bakery",
+    category: "bakery",
+    listed: true,
     tagline: "From Flour to Showpiece",
     shortDescription:
       "Classical and contemporary baking — breads, pastries, cakes — in a fully equipped bakery lab.",
@@ -466,7 +487,10 @@ export const courses: CourseDetail[] = [
   },
   {
     slug: "bartending",
+    name: "Bartending",
     course: "Bartending",
+    category: "bar",
+    listed: true,
     tagline: "Craft Behind the Bar",
     shortDescription:
       "Classic cocktails to modern mixology — flair, bar management, and the science of flavour pairing.",
@@ -586,7 +610,10 @@ export const courses: CourseDetail[] = [
   },
   {
     slug: "sushi",
+    name: "Sushi",
     course: "Sushi",
+    category: "kitchen",
+    listed: false,
     tagline: "Japanese Culinary Tradition",
     shortDescription:
       "Precision and philosophy behind Japanese cuisine — from rice prep to omakase plating.",
@@ -693,6 +720,9 @@ export const courses: CourseDetail[] = [
     ],
   },
 ];
+
+/** Courses shown on the landing page and /courses, in display order. */
+export const listedCourses = courses.filter((course) => course.listed);
 
 export function getCourseBySlug(slug: string): CourseDetail | undefined {
   return courses.find((c) => c.slug === slug);

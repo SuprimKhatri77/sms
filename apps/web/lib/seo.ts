@@ -185,6 +185,34 @@ export const homeMetadata: Metadata = {
   },
 };
 
+const COURSES_TITLE = `Barista, Bakery & Bartending Courses in ${LOCATION.city} | ${siteInfo.company.shortName}`;
+const COURSES_DESCRIPTION = `Hands-on barista, bakery and bartending courses at ${siteInfo.company.shortName} in ${LOCATION.label}. Four-week programs taught by working professionals, with fees and course details.`;
+
+export const coursesMetadata: Metadata = {
+  title: COURSES_TITLE,
+  description: COURSES_DESCRIPTION,
+  keywords: [...SEO_KEYWORDS],
+  alternates: {
+    canonical: "/courses",
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "/courses",
+    siteName: siteInfo.company.shortName,
+    title: COURSES_TITLE,
+    description: COURSES_DESCRIPTION,
+    images: [defaultOgImage],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: COURSES_TITLE,
+    description: COURSES_DESCRIPTION,
+    images: [defaultOgImage.url],
+  },
+  robots: homeMetadata.robots,
+};
+
 export function createCourseMetadata(course: CourseDetail): Metadata {
   const seo = COURSE_SEO[course.slug];
   const title = seo?.title ?? course.course;
