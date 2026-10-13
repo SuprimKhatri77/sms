@@ -1,7 +1,7 @@
-"use client";
-
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { ButtonArrow, siteButton } from "@/components/site/button";
+import { cn } from "@/lib/utils";
+import { siteInfo } from "@/utils/site-info";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -15,12 +15,9 @@ interface AlreadySubmittedProps {
 
 interface StatusConfig {
   eyebrow: string;
-  eyebrowColor: string;
   dotColor: string;
   headline: (firstName: string) => React.ReactNode;
   subCopy: string;
-  accentColor: string;
-  dividerColor: string;
 }
 
 interface StepItem {
@@ -36,68 +33,59 @@ function formatDate(iso: string): string {
     month: "long",
     day: "numeric",
     year: "numeric",
+    // Pinned so the server and every visitor see the academy's date.
+    timeZone: "Asia/Kathmandu",
   });
 }
+
+const rise = (i: number) => ({ "--i": i }) as React.CSSProperties;
 
 // ─── Status config map ────────────────────────────────────────────────────────
 
 const STATUS_CONFIG: Record<StudentStatus, StatusConfig> = {
   pending: {
     eyebrow: "Application Pending",
-    eyebrowColor: "text-[#c28a4f]",
-    dotColor: "bg-[#c28a4f]",
+    dotColor: "bg-clay",
     headline: (firstName) => (
       <>
-        Hang tight, <span className="text-[#c28a4f]">{firstName}.</span>
+        Hang tight, <em>{firstName}.</em>
       </>
     ),
     subCopy:
       "Your application is in our hands and under careful review. We appreciate your patience — good things take a little time.",
-    accentColor: "#c28a4f",
-    dividerColor: "bg-[#c28a4f]/20",
   },
   active: {
     eyebrow: "Application Received",
-    eyebrowColor: "text-[#2f4e40]",
-    dotColor: "bg-[#2f4e40]",
+    dotColor: "bg-pine",
     headline: (firstName) => (
       <>
-        You&apos;re all set,{" "}
-        <span className="text-[#2f4e40]">{firstName}.</span>
+        You&apos;re all set, <em>{firstName}.</em>
       </>
     ),
     subCopy:
       "Your admission form has already been submitted. There's nothing more you need to do right now — sit tight!",
-    accentColor: "#2f4e40",
-    dividerColor: "bg-[#2f4e40]/20",
   },
   completed: {
     eyebrow: "Program Completed",
-    eyebrowColor: "text-[#2f4e40]",
-    dotColor: "bg-[#2f4e40]",
+    dotColor: "bg-pine",
     headline: (firstName) => (
       <>
-        Congratulations, <span className="text-[#2f4e40]">{firstName}.</span>
+        Congratulations, <em>{firstName}.</em>
       </>
     ),
     subCopy:
       "You've successfully completed your program with Brew & Bake Academy. It's been a pleasure having you with us.",
-    accentColor: "#2f4e40",
-    dividerColor: "bg-[#2f4e40]/20",
   },
   rejected: {
     eyebrow: "Application Unsuccessful",
-    eyebrowColor: "text-[#1a1a1a]/45",
-    dotColor: "bg-[#1a1a1a]/30",
+    dotColor: "bg-ink-muted",
     headline: (firstName) => (
       <>
-        We&apos;re sorry, <span className="text-[#2f4e40]">{firstName}.</span>
+        We&apos;re sorry, <em>{firstName}.</em>
       </>
     ),
     subCopy:
       "After careful consideration, we were unable to offer you a place this cycle. This is never an easy decision, and we genuinely appreciate your interest.",
-    accentColor: "#2f4e40",
-    dividerColor: "bg-[#1a1a1a]/12",
   },
 };
 
@@ -174,120 +162,6 @@ const STATUS_STEPS: Record<StudentStatus, StepItem[]> = {
   ],
 };
 
-// ─── Icons ────────────────────────────────────────────────────────────────────
-
-function LayoutDashboardIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.75}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="h-4 w-4"
-      aria-hidden="true"
-    >
-      <rect x="3" y="3" width="7" height="9" rx="1" />
-      <rect x="14" y="3" width="7" height="5" rx="1" />
-      <rect x="14" y="12" width="7" height="9" rx="1" />
-      <rect x="3" y="16" width="7" height="5" rx="1" />
-    </svg>
-  );
-}
-
-function HomeIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.75}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="h-4 w-4"
-      aria-hidden="true"
-    >
-      <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-      <polyline points="9 22 9 12 15 12 15 22" />
-    </svg>
-  );
-}
-
-function ArrowRightIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5"
-      aria-hidden="true"
-    >
-      <path d="M5 12h14M12 5l7 7-7 7" />
-    </svg>
-  );
-}
-
-// ─── Step Row ─────────────────────────────────────────────────────────────────
-
-interface StepRowProps {
-  index: number;
-  label: string;
-  description: string;
-  accentColor: string;
-  delay: number;
-  visible: boolean;
-}
-
-function StepRow({
-  index,
-  label,
-  description,
-  accentColor,
-  delay,
-  visible,
-}: StepRowProps) {
-  return (
-    <div
-      className={`grid grid-cols-[2rem_1fr] gap-x-5 gap-y-1 transition-all duration-500 sm:grid-cols-[2.5rem_1fr] ${
-        visible ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0"
-      }`}
-      style={{ transitionDelay: `${delay}ms` }}
-    >
-      {/* Index number */}
-      <span
-        className="font-playfair text-2xl font-black leading-none sm:text-3xl"
-        style={{ color: accentColor, opacity: 0.25 }}
-        aria-hidden="true"
-      >
-        {String(index).padStart(2, "0")}
-      </span>
-      {/* Content */}
-      <div className="pb-7 pt-0.5">
-        <p className="font-dm-sans text-[13px] font-bold uppercase tracking-widest text-[#1a1a1a]">
-          {label}
-        </p>
-        <p className="mt-1.5 font-dm-sans text-sm leading-relaxed text-[#1a1a1a]/50">
-          {description}
-        </p>
-      </div>
-      {/* Connector — spans only the number column as a left gutter line */}
-      <div
-        className="mx-auto w-px flex-shrink-0"
-        style={{ background: `${accentColor}18`, minHeight: "1rem" }}
-        aria-hidden="true"
-      />
-      <div /> {/* empty right cell to keep grid aligned */}
-    </div>
-  );
-}
-
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function AlreadySubmitted({
@@ -295,205 +169,137 @@ export default function AlreadySubmitted({
   submittedAt,
   status,
 }: AlreadySubmittedProps) {
-  const [mounted, setMounted] = useState<boolean>(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setMounted(true), 80);
-    return () => clearTimeout(timer);
-  }, []);
-
   const firstName = studentName.split(" ")[0] ?? "Student";
   const formattedDate = formatDate(submittedAt);
   const config = STATUS_CONFIG[status];
   const steps = STATUS_STEPS[status];
 
   const showDashboardCTA = status === "active" || status === "completed";
-  //   const showReapplyCTA = status === "rejected";
+  const tel = siteInfo.contact.phone.replace(/\s/g, "");
 
   return (
-    <div className="flex min-h-screen w-full items-start justify-center bg-[#fbfaf7] px-6 py-20 sm:px-10 lg:px-16">
-      {/* Grain */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none fixed inset-0 z-0 opacity-[0.028]"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
-        }}
-      />
-
-      {/* Left accent rule — full height */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none fixed bottom-0 left-6 top-0 z-0 w-px sm:left-10 lg:left-16"
-        style={{
-          background: `linear-gradient(to bottom, transparent, ${config.accentColor}22 20%, ${config.accentColor}22 80%, transparent)`,
-        }}
-      />
-
-      <div className="relative z-10 w-full max-w-xl">
-        {/* ── Eyebrow ── */}
-        <div
-          className={`mb-10 flex items-center gap-3 transition-all duration-500 ${
-            mounted ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0"
-          }`}
-          style={{ transitionDelay: "0ms" }}
-        >
-          {/* Animated status dot */}
-          <span className="relative flex h-2 w-2 flex-shrink-0">
-            {status === "pending" && (
+    <main className="bg-paper pt-12 pb-20 font-site sm:pt-16 sm:pb-28">
+      <div className="container-page grid grid-cols-1 gap-14 lg:grid-cols-12 lg:gap-16">
+        <div className="lg:col-span-6">
+          <p className="eyebrow animate-rise flex items-center gap-3">
+            <span className="relative flex size-2 shrink-0" aria-hidden>
+              {status === "pending" ? (
+                <span
+                  className={cn(
+                    "absolute inline-flex size-full animate-ping rounded-full opacity-60 motion-reduce:animate-none",
+                    config.dotColor,
+                  )}
+                />
+              ) : null}
               <span
-                className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-60 ${config.dotColor}`}
+                className={cn(
+                  "relative inline-flex size-2 rounded-full",
+                  config.dotColor,
+                )}
               />
-            )}
-            <span
-              className={`relative inline-flex h-2 w-2 rounded-full ${config.dotColor}`}
-            />
-          </span>
-
-          <span
-            className={`font-dm-sans text-[11px] font-bold uppercase tracking-[0.16em] ${config.eyebrowColor}`}
-          >
+            </span>
             {config.eyebrow}
-          </span>
+          </p>
 
-          {/* Short rule */}
-          <div className={`h-px w-8 flex-shrink-0 ${config.dividerColor}`} />
-        </div>
-
-        {/* ── Headline ── */}
-        <h1
-          className={`font-playfair text-4xl font-bold leading-[1.1] text-[#1a1a1a] transition-all duration-600 sm:text-5xl lg:text-[3.25rem] ${
-            mounted ? "translate-y-0 opacity-100" : "translate-y-5 opacity-0"
-          }`}
-          style={{ transitionDelay: "80ms" }}
-        >
-          {config.headline(firstName)}
-        </h1>
-
-        {/* ── Sub copy ── */}
-        <p
-          className={`mt-5 max-w-md font-lora text-base leading-[1.8] text-[#1a1a1a]/55 italic transition-all duration-500 sm:text-[17px] ${
-            mounted ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
-          }`}
-          style={{ transitionDelay: "160ms" }}
-        >
-          {config.subCopy}
-        </p>
-
-        {/* ── Submitted on meta ── */}
-        <div
-          className={`mt-7 flex items-baseline gap-3 transition-all duration-500 ${
-            mounted ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
-          }`}
-          style={{ transitionDelay: "240ms" }}
-        >
-          <span className="font-dm-sans text-[11px] font-semibold uppercase tracking-[0.13em] text-[#1a1a1a]/30">
-            Submitted
-          </span>
-          <span className="h-px w-4 flex-shrink-0 bg-[#1a1a1a]/15" />
-          <span className="font-dm-sans text-sm font-medium text-[#1a1a1a]/60">
-            {formattedDate}
-          </span>
-        </div>
-
-        {/* ── Horizontal rule ── */}
-        <div
-          className={`mb-10 mt-10 h-px transition-all duration-700 ${config.dividerColor} ${
-            mounted ? "scale-x-100 opacity-100" : "scale-x-0 opacity-0"
-          } origin-left`}
-          style={{ transitionDelay: "320ms" }}
-        />
-
-        {/* ── Section label ── */}
-        <p
-          className={`mb-8 font-dm-sans text-[10px] font-bold uppercase tracking-[0.18em] text-[#1a1a1a]/28 transition-all duration-500 ${
-            mounted ? "opacity-100" : "opacity-0"
-          }`}
-          style={{ transitionDelay: "380ms" }}
-        >
-          {status === "rejected" ? "Your options" : "What happens next"}
-        </p>
-
-        {/* ── Steps ── */}
-        <div>
-          {steps.map((step, i) => (
-            <StepRow
-              key={step.label}
-              index={i + 1}
-              label={step.label}
-              description={step.description}
-              accentColor={config.accentColor}
-              delay={440 + i * 80}
-              visible={mounted}
-            />
-          ))}
-        </div>
-
-        {/* ── CTAs ── */}
-        <div
-          className={`mt-4 flex flex-col gap-3 sm:flex-row sm:items-center transition-all duration-500 ${
-            mounted ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
-          }`}
-          style={{ transitionDelay: `${440 + steps.length * 80 + 80}ms` }}
-        >
-          {showDashboardCTA && (
-            <Link
-              href="/dashboard"
-              className="group inline-flex items-center gap-2.5 rounded-xl bg-[#2f4e40] px-6 py-3.5 font-dm-sans text-sm font-semibold text-[#fbfaf7] shadow-[0_2px_12px_-2px_rgba(47,78,64,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#3a5a49] hover:shadow-[0_6px_20px_-4px_rgba(47,78,64,0.45)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2f4e40] focus-visible:ring-offset-2"
-            >
-              <LayoutDashboardIcon />
-              Go to Dashboard
-              <ArrowRightIcon />
-            </Link>
-          )}
-
-          {/* {showReapplyCTA && (
-            <Link
-              href="/admission"
-              className="group inline-flex items-center gap-2.5 rounded-xl bg-[#2f4e40] px-6 py-3.5 font-dm-sans text-sm font-semibold text-[#fbfaf7] shadow-[0_2px_12px_-2px_rgba(47,78,64,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#3a5a49] hover:shadow-[0_6px_20px_-4px_rgba(47,78,64,0.45)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2f4e40] focus-visible:ring-offset-2"
-            >
-              Reapply
-              <ArrowRightIcon />
-            </Link>
-          )} */}
-
-          <Link
-            href="/"
-            className="group inline-flex items-center gap-2 font-dm-sans text-sm font-semibold text-[#1a1a1a]/45 transition-all duration-200 hover:text-[#1a1a1a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2f4e40] focus-visible:ring-offset-2"
+          <h1
+            className="display animate-rise mt-6 text-[clamp(3rem,7vw,5.5rem)] text-ink"
+            style={rise(1)}
           >
-            <HomeIcon />
-            Back to Home
-          </Link>
-        </div>
+            {config.headline(firstName)}
+          </h1>
 
-        {/* ── Footer ── */}
-        <p
-          className={`mt-14 font-dm-sans text-xs text-[#1a1a1a]/30 transition-all duration-500 ${
-            mounted ? "opacity-100" : "opacity-0"
-          }`}
-          style={{ transitionDelay: `${560 + steps.length * 80}ms` }}
-        >
-          Questions?{" "}
-          <a
-            href="mailto:brewandbakeacademy@gmail.com"
-            className="underline underline-offset-2 transition-colors duration-150 hover:text-[#2f4e40]"
+          <p
+            className="animate-rise mt-6 max-w-md text-[1rem] leading-relaxed text-ink-muted"
+            style={rise(2)}
           >
-            brewandbakeacademy@gmail.com
-          </a>
-          {status === "rejected" && (
-            <>
-              {" "}
-              ·{" "}
-              <a
-                href="tel:+9779851433332"
-                className="underline underline-offset-2 transition-colors duration-150 hover:text-[#2f4e40]"
+            {config.subCopy}
+          </p>
+
+          <dl
+            className="animate-rise mt-10 grid max-w-md grid-cols-[7rem_1fr] items-baseline gap-4 border-y border-hairline py-4"
+            style={rise(3)}
+          >
+            <dt className="eyebrow">Submitted</dt>
+            <dd className="text-[0.9375rem] text-ink">{formattedDate}</dd>
+          </dl>
+
+          <div
+            className="animate-rise mt-10 flex flex-wrap items-center gap-x-8 gap-y-5"
+            style={rise(4)}
+          >
+            {showDashboardCTA && (
+              <Link
+                href="/dashboard"
+                className={siteButton({ variant: "pine", size: "lg" })}
               >
-                +977 9851433332
-              </a>
-            </>
-          )}
-        </p>
+                Go to dashboard
+                <ButtonArrow />
+              </Link>
+            )}
+            <Link
+              href="/"
+              className="link-underline text-[0.875rem] text-ink outline-none"
+            >
+              Back to home
+            </Link>
+          </div>
+        </div>
+
+        <div className="lg:col-span-5 lg:col-start-8">
+          <p className="eyebrow animate-rise" style={rise(2)}>
+            {status === "rejected" ? "Your options" : "What happens next"}
+          </p>
+          <ol className="mt-6 border-t border-hairline">
+            {steps.map((step, i) => (
+              <li
+                key={step.label}
+                className="animate-rise grid grid-cols-[3rem_1fr] gap-x-4 border-b border-hairline py-6"
+                style={rise(3 + i)}
+              >
+                <span
+                  aria-hidden
+                  className="font-label text-[0.75rem] tracking-[0.08em] text-clay-deep tabular-nums"
+                >
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <div>
+                  <p className="font-display text-2xl leading-tight text-ink">
+                    {step.label}
+                  </p>
+                  <p className="mt-2 text-[0.875rem] leading-relaxed text-ink-muted">
+                    {step.description}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ol>
+
+          <p
+            className="animate-rise mt-8 text-[0.8125rem] text-ink-muted"
+            style={rise(3 + steps.length)}
+          >
+            Questions?{" "}
+            <a
+              href={`mailto:${siteInfo.contact.email}`}
+              className="link-underline break-all text-ink outline-none"
+            >
+              {siteInfo.contact.email}
+            </a>
+            {status === "rejected" && (
+              <>
+                {" "}
+                ·{" "}
+                <a
+                  href={`tel:${tel}`}
+                  className="link-underline text-ink outline-none"
+                >
+                  {siteInfo.contact.phone}
+                </a>
+              </>
+            )}
+          </p>
+        </div>
       </div>
-    </div>
+    </main>
   );
 }

@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 
+/** The step heading inside the form, shown below lg where the side panel collapses. */
 export function StepTitle({
   icon: Icon,
   title,
@@ -12,17 +13,19 @@ export function StepTitle({
   className?: string;
 }) {
   return (
-    <div className={cn("mb-6 lg:hidden", className)}>
+    <div className={cn("mb-2 lg:hidden", className)}>
       <div className="flex items-start gap-3">
-        <div className="grid h-9 w-9 shrink-0 place-items-center bg-[rgba(47,78,64,0.06)] text-(--brand-brown)">
-          <Icon className="h-4 w-4" strokeWidth={1.75} />
-        </div>
+        <Icon
+          aria-hidden
+          className="mt-1.5 h-5 w-5 shrink-0 text-clay-deep"
+          strokeWidth={1.5}
+        />
         <div>
-          <h2 className="font-[family-name:var(--font-playfair)] text-[1.15rem] font-semibold text-(--brand-green)">
+          <h2 className="font-display text-[1.75rem] leading-tight text-ink">
             {title}
           </h2>
           {description ? (
-            <p className="mt-1 font-(family-name:--font-dm-sans) text-[0.84rem] leading-relaxed text-[rgba(47,78,64,0.52)]">
+            <p className="mt-1 font-site text-[0.875rem] leading-relaxed text-ink-muted">
               {description}
             </p>
           ) : null}

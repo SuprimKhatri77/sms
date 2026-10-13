@@ -45,7 +45,6 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
-  --max-width-landing: 96rem;
 
   /* Public site (editorial, cartspace-style). Namespaced so the shadcn
      tokens that admin uses stay untouched. */
@@ -153,10 +152,6 @@
   --brand-brown: #c28a4f;
   --brand-cream: #fbfaf7;
   --brand-ink: #1a1a1a;
-  /* Backward-compatible aliases used in older components */
-  --brand-orange: var(--brand-brown);
-  --brand-sage: var(--brand-green-2);
-  --brand-mauve: #7a6a57;
 
   --font-playfair: var(--font-playfair);
   --font-dm-sans: var(--font-dm-sans);
@@ -235,7 +230,7 @@
 
 /* Selection */
 ::selection {
-  background: var(--brand-orange);
+  background: var(--brand-brown);
   color: #fff;
 }
 

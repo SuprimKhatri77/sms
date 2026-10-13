@@ -1,13 +1,8 @@
+"use client";
+
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import {
-  Field,
-  FieldDescription,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
+import { siteButton } from "@/components/site/button";
+import { AuthField } from "@/components/auth/auth-field";
 import Link from "next/link";
 import { useForm } from "@tanstack/react-form-nextjs";
 import { SignupInput, signupInputSchema, SignupResponse } from "@repo/types";
@@ -88,34 +83,42 @@ export function SignupForm({
         e.preventDefault();
         handleSubmit();
       }}
-      className={cn("flex flex-col gap-6", className)}
+      className={cn("w-full max-w-sm", className)}
       {...props}
     >
-      <FieldGroup>
-        <div className="flex flex-col items-center gap-1 text-center">
-          <h1 className="text-2xl font-bold">Create your account</h1>
-          <p className="text-sm text-balance text-muted-foreground">
-            Fill in the form below to create your account
-          </p>
-        </div>
+      <div className="mb-10 space-y-3">
+        <p className="eyebrow animate-rise">Join the academy</p>
+        <h1
+          className="display animate-rise text-5xl text-ink sm:text-6xl"
+          style={{ "--i": 1 } as React.CSSProperties}
+        >
+          Create your <em>account.</em>
+        </h1>
+        <p
+          className="animate-rise text-[0.9375rem] text-ink-muted"
+          style={{ "--i": 2 } as React.CSSProperties}
+        >
+          You&apos;ll use it to apply for a course and follow your admission.
+        </p>
+      </div>
+
+      <div className="space-y-7">
         <FormField name="name">
           {(field) => {
             const fieldError = field.state.meta.errors[0]?.message;
             const mergedError = fieldError ?? errors?.name;
             return (
-              <Field>
-                <FieldLabel htmlFor="name">Full Name</FieldLabel>
-                <Input
-                  id="name"
-                  type="text"
-                  placeholder="John Doe"
-                  value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  required
-                  className="bg-background"
-                />
-                {mergedError && <FieldError>{mergedError}</FieldError>}
-              </Field>
+              <AuthField
+                id="name"
+                label="Full name"
+                type="text"
+                autoComplete="name"
+                placeholder="John Doe"
+                value={field.state.value}
+                onChange={(e) => field.handleChange(e.target.value)}
+                required
+                error={mergedError}
+              />
             );
           }}
         </FormField>
@@ -124,23 +127,18 @@ export function SignupForm({
             const fieldError = field.state.meta.errors[0]?.message;
             const mergedError = fieldError ?? errors?.email;
             return (
-              <Field>
-                <FieldLabel htmlFor="email">Email</FieldLabel>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="m@example.com"
-                  value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  required
-                  className="bg-background"
-                />
-                {mergedError && <FieldError>{mergedError}</FieldError>}
-                <FieldDescription>
-                  We&apos;ll use this to contact you. We will not share your
-                  email with anyone else.
-                </FieldDescription>
-              </Field>
+              <AuthField
+                id="email"
+                label="Email"
+                type="email"
+                autoComplete="email"
+                placeholder="m@example.com"
+                value={field.state.value}
+                onChange={(e) => field.handleChange(e.target.value)}
+                required
+                error={mergedError}
+                hint="We'll use this to contact you and won't share it."
+              />
             );
           }}
         </FormField>
@@ -150,21 +148,17 @@ export function SignupForm({
             const fieldError = field.state.meta.errors[0]?.message;
             const mergedError = fieldError ?? errors?.password;
             return (
-              <Field>
-                <FieldLabel htmlFor="password">Password</FieldLabel>
-                <Input
-                  id="password"
-                  value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  type="password"
-                  required
-                  className="bg-background"
-                />
-                {mergedError && <FieldError>{mergedError}</FieldError>}
-                <FieldDescription>
-                  Must be at least 8 characters long.
-                </FieldDescription>
-              </Field>
+              <AuthField
+                id="password"
+                label="Password"
+                type="password"
+                autoComplete="new-password"
+                value={field.state.value}
+                onChange={(e) => field.handleChange(e.target.value)}
+                required
+                error={mergedError}
+                hint="At least 8 characters."
+              />
             );
           }}
         </FormField>
@@ -172,41 +166,38 @@ export function SignupForm({
           {(field) => {
             const fieldError = field.state.meta.errors[0]?.message;
             return (
-              <Field>
-                <FieldLabel htmlFor="confirm-password">
-                  Confirm Password
-                </FieldLabel>
-                <Input
-                  id="confirm-password"
-                  type="password"
-                  value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  required
-                  className="bg-background"
-                />
-                <FieldDescription>
-                  Please confirm your password.
-                </FieldDescription>
-                {fieldError && <FieldError>{fieldError}</FieldError>}
-              </Field>
+              <AuthField
+                id="confirm-password"
+                label="Confirm password"
+                type="password"
+                autoComplete="new-password"
+                value={field.state.value}
+                onChange={(e) => field.handleChange(e.target.value)}
+                required
+                error={fieldError}
+              />
             );
           }}
         </FormField>
-        <Field>
-          <Button
-            type="submit"
-            disabled={isPending}
-            className="rounded-none bg-[#c28a4f]"
-          >
-            {isPending ? <Spinner /> : "Create Account"}
-          </Button>
-        </Field>
-        <Field>
-          <FieldDescription className="px-6 text-center">
-            Already have an account? <Link href="/auth/login">Sign in</Link>
-          </FieldDescription>
-        </Field>
-      </FieldGroup>
+      </div>
+
+      <button
+        type="submit"
+        disabled={isPending}
+        className={cn(
+          siteButton({ variant: "pine", size: "lg" }),
+          "mt-10 w-full",
+        )}
+      >
+        {isPending ? <Spinner /> : "Create account"}
+      </button>
+
+      <p className="mt-8 text-center text-[0.875rem] text-ink-muted">
+        Already have an account?{" "}
+        <Link href="/auth/login" className="link-underline text-ink">
+          Log in
+        </Link>
+      </p>
     </form>
   );
 }

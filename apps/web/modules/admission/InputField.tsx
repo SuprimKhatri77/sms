@@ -1,6 +1,8 @@
+import { useId } from "react";
 import { cn } from "@/lib/utils";
 import {
   admissionErrorClass,
+  admissionIconClass,
   admissionInputClass,
   admissionInputErrorBorder,
   admissionInputNormalBorder,
@@ -13,6 +15,7 @@ export function InputField({
   error,
   required,
   className,
+  id,
   ...props
 }: {
   label: string;
@@ -20,20 +23,23 @@ export function InputField({
   error?: string;
   required?: boolean;
 } & React.InputHTMLAttributes<HTMLInputElement>) {
+  const generatedId = useId();
+  const inputId = id ?? generatedId;
+
   return (
-    <div className="flex flex-col gap-1.5">
-      <label className={admissionLabelClass}>
+    <div className="flex flex-col gap-2">
+      <label htmlFor={inputId} className={admissionLabelClass}>
         {label}
-        {required ? (
-          <span className="ml-1 text-(--brand-brown)">*</span>
-        ) : null}
+        {required ? <span className="ml-1 text-clay-deep">*</span> : null}
       </label>
       <div className="relative">
-        <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[rgba(47,78,64,0.38)]">
-          <Icon className="h-4 w-4" strokeWidth={1.75} />
+        <span className={cn(admissionIconClass, "top-1/2 -translate-y-1/2")}>
+          <Icon className="h-4 w-4" strokeWidth={1.5} />
         </span>
         <input
           {...props}
+          id={inputId}
+          aria-invalid={error ? true : undefined}
           className={cn(
             admissionInputClass,
             error ? admissionInputErrorBorder : admissionInputNormalBorder,
@@ -41,7 +47,11 @@ export function InputField({
           )}
         />
       </div>
-      {error ? <p className={admissionErrorClass}>{error}</p> : null}
+      {error ? (
+        <p role="alert" className={admissionErrorClass}>
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }

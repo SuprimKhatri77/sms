@@ -47,23 +47,34 @@ export default function CourseClientShells({
   }, []);
 
   useEffect(() => {
-    const sections = NAV_ITEMS.map(({ id }) =>
-      document.getElementById(id),
-    ).filter(Boolean) as HTMLElement[];
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            setActiveId(entry.target.id as NavId);
-          }
+    // The active tab is the last section whose top has crossed a line 22%
+    // down the viewport. Above the first section that is still the first
+    // tab, so scrolling back up resets the highlight.
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const line = window.innerHeight * 0.22;
+      let current: NavId = NAV_ITEMS[0].id;
+      for (const { id } of NAV_ITEMS) {
+        const section = document.getElementById(id);
+        if (section && section.getBoundingClientRect().top <= line) {
+          current = id;
         }
-      },
-      { rootMargin: "-22% 0px -65% 0px" },
-    );
+      }
+      setActiveId(current);
+    };
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
 
-    sections.forEach((s) => observer.observe(s));
-    return () => observer.disconnect();
+    update();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    return () => {
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+      cancelAnimationFrame(frame);
+    };
   }, []);
 
   const scrollTo = (id: NavId) => {
