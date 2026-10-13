@@ -11,22 +11,10 @@ import { CoursesList } from "@repo/types";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios";
 import { cn } from "@/lib/utils";
-import { getCourseBySlug } from "@/utils/mock";
+import { listedCourses, type CourseDetail } from "@/utils/mock";
 import { Stagger, StaggerItem, Reveal } from "@/components/motion/reveal";
 import { SectionHeading } from "@/components/site/section-heading";
 import { COURSE_PRICE_VAT_NOTE } from "@/components/courses/course-styles";
-
-/**
- * Courses on the landing page, in display order. `name` is how the backend
- * names the course (fees are matched on it); the rest comes from the course
- * detail data.
- */
-const programs = [
-  { name: "Barista", slug: "barista" },
-  { name: "Bakery", slug: "bakery" },
-  { name: "Bartending", slug: "bartending" },
-  // Sushi is hidden on the landing page for now.
-] as const;
 
 async function fetchCourses() {
   const res = await api.get<CoursesList>("/courses");
@@ -83,13 +71,15 @@ export default function Programs() {
             </>
           }
           description="Practical, hands-on training taught by working professionals, in small cohorts on commercial equipment."
+          href="/courses"
+          linkLabel="View all courses"
         />
       </Reveal>
 
-      <Stagger className="grid gap-3 sm:grid-cols-2 sm:gap-5 lg:grid-cols-12 lg:grid-rows-[repeat(2,minmax(19rem,1fr))]">
-        {programs.map((program, i) => (
+      <Stagger className="grid gap-3 sm:grid-cols-2 sm:gap-5 lg:auto-rows-[24rem] lg:grid-cols-12 lg:grid-rows-[repeat(2,minmax(19rem,1fr))]">
+        {listedCourses.map((course, i) => (
           <StaggerItem
-            key={program.slug}
+            key={course.slug}
             className={cn(
               i === 0
                 ? "sm:col-span-2 lg:col-span-7 lg:row-span-2"
@@ -97,11 +87,10 @@ export default function Programs() {
             )}
           >
             <ProgramTile
-              name={program.name}
-              slug={program.slug}
+              course={course}
               index={i}
               feature={i === 0}
-              fee={feeFor(program.name)}
+              fee={feeFor(course.name)}
             />
           </StaggerItem>
         ))}
@@ -132,20 +121,16 @@ export default function Programs() {
 }
 
 function ProgramTile({
-  name,
-  slug,
+  course,
   index,
   feature,
   fee,
 }: {
-  name: string;
-  slug: string;
+  course: CourseDetail;
   index: number;
   feature: boolean;
   fee: FeeState;
 }) {
-  const course = getCourseBySlug(slug);
-
   return (
     <div className="group relative h-full overflow-hidden bg-surface text-paper">
       <div
@@ -156,19 +141,17 @@ function ProgramTile({
             : "aspect-[4/5] lg:aspect-auto",
         )}
       >
-        {course ? (
-          <Image
-            src={course.videoPlaceholder}
-            alt=""
-            fill
-            sizes={
-              feature
-                ? "(min-width: 1024px) 58vw, 100vw"
-                : "(min-width: 1024px) 42vw, (min-width: 640px) 50vw, 100vw"
-            }
-            className="object-cover transition-transform duration-[1600ms] ease-out-expo group-hover:scale-[1.06] motion-reduce:transition-none"
-          />
-        ) : null}
+        <Image
+          src={course.videoPlaceholder}
+          alt=""
+          fill
+          sizes={
+            feature
+              ? "(min-width: 1024px) 58vw, 100vw"
+              : "(min-width: 1024px) 42vw, (min-width: 640px) 50vw, 100vw"
+          }
+          className="object-cover transition-transform duration-[1600ms] ease-out-expo group-hover:scale-[1.06] motion-reduce:transition-none"
+        />
         <div
           aria-hidden
           className="absolute inset-0 bg-gradient-to-t from-ink/80 via-ink/20 to-ink/5"
@@ -178,10 +161,10 @@ function ProgramTile({
       {/* The whole tile is the link. The caption sits above it but lets
           clicks through, so only the fee retry button catches its own. */}
       <Link
-        href={`/courses/${slug}`}
+        href={`/courses/${course.slug}`}
         className="absolute inset-0 z-[1] outline-none focus-visible:ring-2 focus-visible:ring-clay focus-visible:ring-inset"
       >
-        <span className="sr-only">View the {name} course</span>
+        <span className="sr-only">View the {course.name} course</span>
       </Link>
 
       <p
@@ -193,29 +176,27 @@ function ProgramTile({
 
       <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] flex items-end justify-between gap-4 p-5 sm:p-6 lg:p-8">
         <div className="min-w-0 space-y-3">
-          {course ? (
-            <p className="font-label text-[0.6875rem] tracking-[0.16em] text-paper/80 uppercase">
-              {course.duration} · {course.difficulty}
-            </p>
-          ) : null}
+          <p className="font-label text-[0.6875rem] tracking-[0.16em] text-paper/80 uppercase">
+            {course.duration} · {course.difficulty}
+          </p>
           <h3
             className={cn(
               "font-display leading-[0.95] tracking-[-0.02em]",
-              feature ? "text-5xl sm:text-6xl lg:text-7xl" : "text-4xl sm:text-5xl",
+              feature
+                ? "text-5xl sm:text-6xl lg:text-7xl"
+                : "text-4xl sm:text-5xl",
             )}
           >
-            {name}
+            {course.name}
           </h3>
-          {course ? (
-            <p
-              className={cn(
-                "text-[0.875rem] leading-relaxed text-paper/75",
-                feature ? "max-w-md" : "max-w-xs",
-              )}
-            >
-              {feature ? course.shortDescription : course.tagline}
-            </p>
-          ) : null}
+          <p
+            className={cn(
+              "text-[0.875rem] leading-relaxed text-paper/75",
+              feature ? "max-w-md" : "max-w-xs",
+            )}
+          >
+            {feature ? course.shortDescription : course.tagline}
+          </p>
           <ProgramFee fee={fee} />
         </div>
         <span

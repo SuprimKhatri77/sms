@@ -3,7 +3,12 @@ import { Reveal } from "@/components/motion/reveal";
 import { ButtonArrow, siteButton } from "@/components/site/button";
 import { ApplyButton } from "./ApplyButton";
 
-export default function ClosingCta() {
+export default function ClosingCta({
+  secondary = { href: "#programs", label: "Explore courses" },
+}: {
+  /** The quiet link beside the Apply button. */
+  secondary?: { href: string; label: string };
+}) {
   return (
     <section
       aria-labelledby="closing-cta-heading"
@@ -26,10 +31,10 @@ export default function ClosingCta() {
             <ButtonArrow />
           </ApplyButton>
           <Link
-            href="#programs"
+            href={secondary.href}
             className="link-underline text-[0.8125rem] text-paper outline-none"
           >
-            Explore courses
+            {secondary.label}
           </Link>
         </div>
 

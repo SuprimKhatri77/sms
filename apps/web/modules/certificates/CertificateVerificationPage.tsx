@@ -142,7 +142,7 @@ export function CertificateVerificationPage({ certificate }: Props) {
             records.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-start gap-3">
-            <Link href="/#programs" className={landingPrimaryButtonClass}>
+            <Link href="/courses" className={landingPrimaryButtonClass}>
               Explore Programs
             </Link>
             <Link

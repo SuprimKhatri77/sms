@@ -125,7 +125,7 @@ export default async function CoursePage({
 
         <div className={cn(courseContainerClass, "relative")}>
           <Link
-            href="/#programs"
+            href="/courses"
             aria-label="Back to all training programs"
             className="mb-8 inline-flex items-center gap-2 font-(family-name:--font-dm-sans) text-[0.82rem] font-medium text-white/55 transition-colors hover:text-white"
           >

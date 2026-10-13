@@ -18,7 +18,7 @@ import { primaryNav } from "./nav-links";
 import { UserMenu } from "./user-menu";
 
 const navLink =
-  "relative flex h-16 items-center px-3 text-[0.8125rem] text-ink-muted outline-none transition-colors duration-300 hover:text-ink focus-visible:text-ink after:absolute after:inset-x-3 after:bottom-[18px] after:h-px after:origin-left after:scale-x-0 after:bg-current after:transition-transform after:duration-500 after:ease-out-expo hover:after:scale-x-100 focus-visible:after:scale-x-100";
+  "relative flex h-16 items-center px-3 text-[0.8125rem] text-ink-muted outline-none transition-colors duration-300 hover:text-ink focus-visible:text-ink after:absolute after:inset-x-3 after:bottom-[18px] after:h-px after:origin-left after:scale-x-0 after:bg-current after:transition-transform after:duration-500 after:ease-out-expo hover:after:scale-x-100 focus-visible:after:scale-x-100 aria-[current=page]:text-ink aria-[current=page]:after:scale-x-100";
 
 /**
  * The public site chrome: announcement ticker, then a sticky header that sits
@@ -103,7 +103,11 @@ export function SiteHeader() {
             <ul className="flex items-center">
               {primaryNav.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href} className={navLink}>
+                  <Link
+                    href={link.href}
+                    aria-current={pathname === link.href ? "page" : undefined}
+                    className={navLink}
+                  >
                     {link.label}
                   </Link>
                 </li>
