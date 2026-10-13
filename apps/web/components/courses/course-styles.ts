@@ -11,7 +11,9 @@ export const courseTitleClass =
 export const courseBodyClass =
   "font-(family-name:--font-dm-sans) text-[0.95rem] leading-[1.75] text-[rgba(47,78,64,0.62)]";
 
-export const courseSectionClass = "scroll-mt-[4.5rem] px-6 py-20";
+/* scroll-mt clears the sticky section nav; html scroll-padding clears the
+   site header above it. */
+export const courseSectionClass = "scroll-mt-14 px-6 py-20";
 
 export const courseCardClass =
   "border border-[rgba(47,78,64,0.1)] bg-white";

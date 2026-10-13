@@ -35,9 +35,11 @@ export default function CourseClientShells({
     const sentinel = sentinelRef.current;
     if (!sentinel) return;
 
+    // The nav sticks below the site header, so "stuck" starts once the
+    // sentinel passes under the header (64px = --header-h).
     const observer = new IntersectionObserver(
       ([entry]) => setStuck(!entry.isIntersecting),
-      { threshold: 0 },
+      { threshold: 0, rootMargin: "-64px 0px 0px 0px" },
     );
     observer.observe(sentinel);
     return () => observer.disconnect();
@@ -66,9 +68,10 @@ export default function CourseClientShells({
   const scrollTo = (id: NavId) => {
     const el = document.getElementById(id);
     if (!el) return;
-    const offset = 56;
-    const top = el.getBoundingClientRect().top + window.scrollY - offset;
-    window.scrollTo({ top, behavior: "smooth" });
+    // Lands below the header (html scroll-padding) and this nav (section
+    // scroll-margin).
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    el.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
   };
 
   return (
@@ -77,7 +80,7 @@ export default function CourseClientShells({
 
       <nav
         aria-label="Course sections"
-        className="sticky top-0 z-30 border-b border-[rgba(47,78,64,0.1)] bg-(--brand-cream)/95 backdrop-blur-md transition-shadow duration-200"
+        className="sticky top-(--header-h) z-30 border-b border-[rgba(47,78,64,0.1)] bg-(--brand-cream)/95 backdrop-blur-md transition-shadow duration-200"
         style={{
           boxShadow: stuck ? "0 4px 20px rgba(47,78,64,0.06)" : "none",
         }}

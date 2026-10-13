@@ -18,7 +18,7 @@ export default function Hero() {
     <section
       id="home"
       aria-labelledby="home-heading"
-      className="relative w-full overflow-hidden pb-8 pt-[100px]"
+      className="relative w-full overflow-hidden pb-8 pt-10"
       style={{ background: "var(--brand-cream)" }}
     >
       <div className={cn(landingContainerClass, "px-4 sm:px-6")}>

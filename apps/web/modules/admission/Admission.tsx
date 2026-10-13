@@ -382,7 +382,7 @@ export default function AdmissionPage({ courses }: Props) {
 
   // ── Form ──
   return (
-    <main className="min-h-screen bg-(--brand-cream) pb-16 pt-24">
+    <main className="min-h-screen bg-(--brand-cream) pb-16 pt-10">
       <div className={cn(landingContainerClass, "px-4 sm:px-6")}>
         <div className="mx-auto w-full max-w-6xl">
           <AdmissionHero />

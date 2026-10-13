@@ -35,7 +35,7 @@ export function CertificateVerificationPage({ certificate }: Props) {
 
   return (
     <main className="min-h-screen bg-(--brand-cream)">
-      <section className={cn(landingCreamSectionClass, "pb-12 pt-28 sm:pt-32")}>
+      <section className={cn(landingCreamSectionClass, "pb-12 pt-14 sm:pt-16")}>
         <div className={landingContainerClass}>
           <div className="max-w-3xl text-left">
             <span

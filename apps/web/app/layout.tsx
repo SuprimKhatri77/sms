@@ -4,7 +4,14 @@ import { cn } from "@/lib/utils";
 import { ReactQueryProvider } from "@/components/providers/react-query-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
-import { dmSans, lora, playfair } from "@/utils/font";
+import {
+  dmSans,
+  geist,
+  geistMono,
+  instrumentSerif,
+  lora,
+  playfair,
+} from "@/utils/font";
 import NavFooterWrapper from "@/components/wrapper/nav-footer-wrapper";
 import { getSiteUrl } from "@/lib/seo";
 import { getCurrentUser } from "@/lib/queries/auth/get-current-user";
@@ -36,6 +43,9 @@ export default async function RootLayout({
         playfair.variable,
         dmSans.variable,
         lora.variable,
+        instrumentSerif.variable,
+        geist.variable,
+        geistMono.variable,
       )}
       data-scroll-behavior="smooth"
     >

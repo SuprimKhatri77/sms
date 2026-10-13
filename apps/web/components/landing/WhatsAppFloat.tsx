@@ -129,17 +129,17 @@ export default function WhatsAppFloat() {
               duration: reduceMotion ? 0.12 : 0.22,
               ease: [0.22, 1, 0.36, 1],
             }}
-            className="pointer-events-auto w-[min(100vw-2rem,20.5rem)] origin-bottom-right overflow-hidden border border-[rgba(47,78,64,0.12)] bg-(--brand-cream) shadow-[0_18px_50px_rgba(26,26,26,0.16)]"
+            className="pointer-events-auto w-[min(100vw-2rem,20.5rem)] origin-bottom-right overflow-hidden border border-hairline bg-paper font-site shadow-[0_30px_60px_-30px_rgb(26_26_26/0.4)]"
           >
-            <div className="flex items-start justify-between gap-3 bg-(--brand-green) px-4 py-3.5 text-white">
+            <div className="flex items-start justify-between gap-3 bg-pine px-4 py-4 text-paper">
               <div className="min-w-0">
                 <p
                   id={`${panelId}-title`}
-                  className="font-(family-name:--font-playfair) text-[1.05rem] font-semibold leading-tight"
+                  className="display text-2xl"
                 >
                   Chat with us
                 </p>
-                <p className="mt-0.5 font-(family-name:--font-dm-sans) text-[0.78rem] text-white/75">
+                <p className="mt-1.5 text-[0.78rem] text-paper/70">
                   We typically reply within office hours
                 </p>
               </div>
@@ -147,7 +147,7 @@ export default function WhatsAppFloat() {
                 ref={closeButtonRef}
                 type="button"
                 onClick={closePanel}
-                className="shrink-0 rounded-sm p-1 text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+                className="shrink-0 p-1 text-paper/80 transition-colors hover:bg-white/10 hover:text-paper"
                 aria-label="Close WhatsApp chat"
               >
                 <X className="size-4" strokeWidth={2} />
@@ -155,16 +155,14 @@ export default function WhatsAppFloat() {
             </div>
 
             <div className="space-y-4 px-4 py-4">
-              <p className="font-(family-name:--font-dm-sans) text-[0.9rem] leading-relaxed text-[rgba(47,78,64,0.72)]">
+              <p className="text-[0.8125rem] leading-relaxed text-ink-muted">
                 Have a question about admissions or courses? Message{" "}
                 {siteInfo.company.shortName} on WhatsApp.
               </p>
 
-              <div className="border border-[rgba(47,78,64,0.1)] bg-white px-3.5 py-3">
-                <p className="font-(family-name:--font-dm-sans) text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-[rgba(47,78,64,0.45)]">
-                  WhatsApp
-                </p>
-                <p className="mt-1 font-(family-name:--font-dm-sans) text-sm font-semibold text-(--brand-green)">
+              <div className="border-y border-hairline py-3">
+                <p className="eyebrow">WhatsApp</p>
+                <p className="mt-1 font-label text-sm tracking-[0.04em] text-ink tabular-nums">
                   {phone}
                 </p>
               </div>
@@ -175,10 +173,10 @@ export default function WhatsAppFloat() {
                 rel="noopener noreferrer"
                 onClick={closePanel}
                 className={cn(
-                  "inline-flex w-full items-center justify-center gap-2",
-                  "bg-[#25D366] px-4 py-3",
-                  "font-(family-name:--font-dm-sans) text-sm font-semibold text-white",
-                  "transition-all duration-200 hover:brightness-105",
+                  "inline-flex h-12 w-full items-center justify-center gap-2",
+                  "bg-[#25D366] px-4",
+                  "text-xs font-medium tracking-[0.14em] text-white uppercase",
+                  "transition-[filter,transform] duration-200 hover:brightness-105",
                   !reduceMotion && "hover:-translate-y-0.5",
                 )}
               >
@@ -212,7 +210,7 @@ export default function WhatsAppFloat() {
           "bg-[#25D366] text-white",
           "shadow-[0_10px_28px_rgba(37,211,102,0.35)]",
           "transition-shadow duration-200 hover:shadow-[0_14px_34px_rgba(37,211,102,0.45)]",
-          "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--brand-green)",
+          "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pine",
         )}
       >
         {!reduceMotion && (

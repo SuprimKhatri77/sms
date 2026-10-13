@@ -9,7 +9,7 @@ export function AdmissionSkeleton() {
     "relative overflow-hidden before:absolute before:inset-0 before:-translate-x-full before:animate-[shimmer_2s_infinite] before:bg-gradient-to-r before:from-transparent before:via-white/60 before:to-transparent";
 
   return (
-    <main className="min-h-screen bg-(--brand-cream) pb-16 pt-24">
+    <main className="min-h-screen bg-(--brand-cream) pb-16 pt-10">
       <div className={cn(landingContainerClass, "px-4 sm:px-6")}>
         <div className="mx-auto w-full max-w-6xl">
           <header className="mb-10 lg:mb-14">
