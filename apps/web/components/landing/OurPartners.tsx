@@ -1,15 +1,7 @@
-"use client";
-
 import Link from "next/link";
-import {
-  landingContainerClass,
-  landingEyebrowClass,
-  landingNavLinkClass,
-  landingSectionBodyClass,
-  landingSectionTitleClass,
-} from "./landing-styles";
-import { cn } from "@/lib/utils";
-import { LandingSectionPattern } from "./LandingSectionPattern";
+import { ArrowRightIcon } from "@phosphor-icons/react/ssr";
+import { Reveal, Stagger, StaggerItem } from "@/components/motion/reveal";
+import { SectionHeading } from "@/components/site/section-heading";
 
 const partners = [
   {
@@ -73,160 +65,71 @@ export default function OurPartners() {
     <section
       id="partners"
       aria-labelledby="partners-heading"
-      className="relative w-full overflow-hidden px-6 py-24"
-      style={{ backgroundColor: "var(--brand-cream, #fbfaf7)" }}
+      className="container-page py-20 font-site sm:py-28"
     >
-      <LandingSectionPattern variant="partners" opacityClassName="opacity-[0.92]" />
+      <Reveal>
+        <SectionHeading
+          id="partners-heading"
+          eyebrow="Industry network"
+          title={
+            <>
+              Trusted by the <em>industry&apos;s best.</em>
+            </>
+          }
+          description="Our graduates are sought after by leading hotels, restaurants, and culinary institutions across Nepal and beyond."
+        />
+      </Reveal>
 
-      <div className={landingContainerClass}>
-        {/* ── Header ── */}
-        <div className="mb-14 max-w-2xl">
-          <span className={cn(landingEyebrowClass, "mb-4 inline-block")}>
-            Industry Network
-          </span>
-          <h2 id="partners-heading" className={cn(landingSectionTitleClass, "mb-4")}>
-            Trusted by the{" "}
-            <em
-              className="font-medium text-(--brand-brown)"
-              style={{ fontStyle: "italic" }}
+      <Reveal>
+        <dl className="mb-14 grid grid-cols-3 border-y border-hairline">
+          {stats.map((stat) => (
+            <div
+              key={stat.label}
+              className="flex flex-col-reverse gap-2 border-hairline py-6 not-first:border-l not-first:pl-4 sm:not-first:pl-8"
             >
-              Industry&apos;s Best
-            </em>
-          </h2>
-          <p className={cn(landingSectionBodyClass, "max-w-xl")}>
-            Our graduates are sought after by leading hotels, restaurants, and
-            culinary institutions across Nepal and beyond.
-          </p>
-        </div>
-
-        {/* ── Stats row ── */}
-        <div className="mb-14 flex flex-wrap items-start gap-x-10 gap-y-8 sm:gap-x-14">
-          {stats.map((stat, i) => (
-            <div key={stat.label} className="flex items-center gap-10 sm:gap-14">
-              <div>
-                <p className="font-(family-name:--font-lora) text-[2.2rem] font-bold leading-none tracking-tight text-(--brand-green)">
-                  {stat.value}
-                </p>
-                <p className="mt-1 font-(family-name:--font-dm-sans) text-[0.75rem] uppercase tracking-widest text-[rgba(26,26,26,0.4)]">
-                  {stat.label}
-                </p>
-              </div>
-              {i < stats.length - 1 ? (
-                <div
-                  className="hidden h-10 w-px sm:block"
-                  style={{ backgroundColor: "rgba(47,78,64,0.15)" }}
-                />
-              ) : null}
+              <dt className="eyebrow">{stat.label}</dt>
+              <dd className="font-display text-4xl leading-none text-ink sm:text-5xl">
+                {stat.value}
+              </dd>
             </div>
           ))}
-        </div>
+        </dl>
+      </Reveal>
 
-        {/* ── Full-bleed horizontal rule with label ── */}
-        <div className="relative mb-12 flex items-center gap-4">
-          <div
-            className="h-px flex-1"
-            style={{ backgroundColor: "rgba(47,78,64,0.12)" }}
-          />
-          <span
-            className="shrink-0 text-[0.72rem] uppercase tracking-[0.18em]"
-            style={{
-              color: "rgba(26,26,26,0.35)",
-              fontFamily: "var(--font-dm-sans)",
-            }}
+      <Stagger className="grid grid-cols-2 gap-px border border-hairline bg-hairline sm:grid-cols-4">
+        {partners.map((partner) => (
+          <StaggerItem
+            key={partner.name}
+            className="group flex min-h-40 flex-col justify-between gap-6 bg-paper p-5 transition-colors duration-500 hover:bg-surface sm:p-6"
           >
-            Our Partners
-          </span>
-          <div
-            className="h-px flex-1"
-            style={{ backgroundColor: "rgba(47,78,64,0.12)" }}
-          />
-        </div>
+            <p className="eyebrow">{partner.category}</p>
+            <div>
+              <p className="font-display text-2xl leading-tight text-ink">
+                {partner.name}
+              </p>
+              <p className="mt-1 text-[0.75rem] text-ink-muted">
+                {partner.description}
+              </p>
+            </div>
+          </StaggerItem>
+        ))}
+      </Stagger>
 
-        {/* ── Partner grid ── */}
-        <div
-          className="grid grid-cols-2 overflow-hidden rounded-2xl border sm:grid-cols-4"
-          style={{ borderColor: "rgba(47,78,64,0.14)" }}
+      <Reveal className="mt-12 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-[0.9375rem] text-ink-muted">
+          Are you a hospitality business looking to hire trained graduates?
+        </p>
+        <Link
+          href="#inquiry"
+          className="group inline-flex items-center gap-2 text-[0.8125rem] text-ink outline-none"
         >
-          {partners.map((partner, i) => {
-            const tinted = i === 0 || i === 3 || i === 5 || i === 6;
-
-            const isLastInRow = (i + 1) % 4 === 0;
-            const isLastRow = i >= partners.length - 4;
-
-            return (
-              <div
-                key={partner.name}
-                className="group relative flex flex-col items-center justify-center px-6 py-9 transition-colors duration-200"
-                style={{
-                  backgroundColor: tinted
-                    ? "rgba(47,78,64,0.05)"
-                    : "var(--brand-cream, #fbfaf7)",
-                  borderRight: !isLastInRow
-                    ? "1px solid rgba(47,78,64,0.12)"
-                    : undefined,
-                  borderBottom: !isLastRow
-                    ? "1px solid rgba(47,78,64,0.12)"
-                    : undefined,
-                }}
-              >
-                <div
-                  className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
-                  style={{ backgroundColor: "rgba(47,78,64,0.04)" }}
-                />
-
-                <div className="relative mb-3 flex h-10 items-center justify-center">
-                  <LogoPlaceholder name={partner.name} />
-                </div>
-
-                <span
-                  className="rounded-full px-2.5 py-0.5 text-[0.68rem] font-semibold uppercase tracking-widest"
-                  style={{
-                    backgroundColor: "rgba(194,138,79,0.12)",
-                    color: "var(--brand-brown, #c28a4f)",
-                    fontFamily: "var(--font-dm-sans)",
-                  }}
-                >
-                  {partner.category}
-                </span>
-
-                <p
-                  className="mt-2 max-w-35 text-center text-[0.75rem] leading-normal opacity-0 transition-opacity duration-200 group-hover:opacity-100"
-                  style={{
-                    color: "rgba(26,26,26,0.45)",
-                    fontFamily: "var(--font-dm-sans)",
-                  }}
-                >
-                  {partner.description}
-                </p>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* ── Bottom CTA ── */}
-        <div className="mt-14">
-          <p className={cn(landingSectionBodyClass, "mb-2")}>
-            Are you a hospitality business looking to hire trained graduates?
-          </p>
-          <Link href="#inquiry" className={landingNavLinkClass}>
-            Become a Partner
-          </Link>
-        </div>
-      </div>
+          <span className="link-underline">Become a partner</span>
+          <ArrowRightIcon
+            aria-hidden
+            className="size-3.5 transition-transform duration-300 ease-out-expo group-hover:translate-x-1"
+          />
+        </Link>
+      </Reveal>
     </section>
-  );
-}
-
-function LogoPlaceholder({ name }: { name: string }) {
-  return (
-    <span
-      className="text-[0.85rem] font-semibold tracking-tight"
-      style={{
-        fontFamily: "var(--font-playfair)",
-        color: "var(--brand-ink, #1a1a1a)",
-      }}
-    >
-      {name}
-    </span>
   );
 }

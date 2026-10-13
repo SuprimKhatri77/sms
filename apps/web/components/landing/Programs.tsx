@@ -1,143 +1,32 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import {
-  ArrowRight,
-  Check,
-  Clock,
-  Coffee,
-  CroissantIcon,
-  GlassWater,
-  Users,
-} from "lucide-react";
+  ArrowClockwiseIcon,
+  ArrowRightIcon,
+  ArrowUpRightIcon,
+} from "@phosphor-icons/react/ssr";
 import { CoursesList } from "@repo/types";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useRef, useState, type ReactNode } from "react";
-import ProgramsSkeleton from "./programs/ProgramLoadingSkeleton";
-import ProgramsError from "./programs/ProgramsError";
 import api from "@/lib/axios";
-import {
-  landingContainerClass,
-  landingEyebrowClass,
-  landingPrimaryButtonClass,
-  landingSectionBodyClass,
-  landingSectionTitleClass,
-} from "./landing-styles";
 import { cn } from "@/lib/utils";
-import { CoursePriceVatNote } from "@/components/courses/CoursePriceVatNote";
-import { LandingSectionPattern } from "./LandingSectionPattern";
+import { getCourseBySlug } from "@/utils/mock";
+import { Stagger, StaggerItem, Reveal } from "@/components/motion/reveal";
+import { SectionHeading } from "@/components/site/section-heading";
+import { COURSE_PRICE_VAT_NOTE } from "@/components/courses/course-styles";
 
-type ProgramTone = "brown" | "gold" | "green";
-
-type Program = {
-  course: string;
-  slug: string;
-  tagline: string;
-  description: string;
-  highlights: string[];
-  duration: string;
-  seats: number;
-  icon: typeof Coffee;
-  tone: ProgramTone;
-  number: string;
-  featured?: boolean;
-  /** Set false to hide on landing without removing course data */
-  showOnLanding?: boolean;
-};
-
-const programs: Program[] = [
-  {
-    course: "Barista",
-    slug: "barista",
-    tagline: "The Art of Coffee",
-    description:
-      "Master espresso extraction, milk texturing, latte art, and café workflow — from bean origin to the perfect cup.",
-    highlights: [
-      "Espresso theory & extraction",
-      "Milk steaming & latte art",
-      "Café equipment handling",
-      "Customer service & menu design",
-    ],
-    duration: "4 Weeks",
-    seats: 16,
-    icon: Coffee,
-    tone: "brown",
-    number: "01",
-    featured: true,
-  },
-  {
-    course: "Bakery",
-    slug: "bakery",
-    tagline: "From Flour to Showpiece",
-    description:
-      "Classical and contemporary baking — breads, pastries, and cakes — in a fully equipped bakery lab.",
-    highlights: [
-      "Bread & sourdough making",
-      "Pastry & viennoiserie",
-      "Cake decoration techniques",
-    ],
-    duration: "4 Weeks",
-    seats: 14,
-    icon: CroissantIcon,
-    tone: "gold",
-    number: "02",
-  },
-  {
-    course: "Bartending",
-    slug: "bartending",
-    tagline: "Craft Behind the Bar",
-    description:
-      "Classic cocktails to modern mixology — flair techniques, bar management, and the science of flavour.",
-    highlights: [
-      "Classic & craft cocktails",
-      "Spirits & beverage knowledge",
-      "Responsible alcohol service",
-    ],
-    duration: "4 Weeks",
-    seats: 18,
-    icon: GlassWater,
-    tone: "green",
-    number: "03",
-  },
-  // Hidden on landing for now — flip showOnLanding to true when ready
-  // {
-  //   course: "Sushi",
-  //   slug: "sushi",
-  //   ...
-  // },
-];
-
-const toneStyles = {
-  brown: {
-    bar: "bg-(--brand-brown)",
-    iconWrap:
-      "border-[rgba(194,138,79,0.22)] bg-[rgba(194,138,79,0.08)] text-(--brand-brown)",
-    check: "border-[rgba(194,138,79,0.25)] bg-[rgba(194,138,79,0.06)] text-(--brand-brown)",
-    price: "text-(--brand-brown)",
-    cta: "border-[rgba(194,138,79,0.3)] text-(--brand-brown) hover:bg-[rgba(194,138,79,0.08)]",
-    panel: "bg-[rgba(194,138,79,0.06)] border-[rgba(194,138,79,0.14)]",
-  },
-  gold: {
-    bar: "bg-[#b8956a]",
-    iconWrap:
-      "border-[rgba(184,149,106,0.22)] bg-[rgba(184,149,106,0.08)] text-[#b8956a]",
-    check:
-      "border-[rgba(184,149,106,0.25)] bg-[rgba(184,149,106,0.06)] text-[#b8956a]",
-    price: "text-[#b8956a]",
-    cta: "border-[rgba(184,149,106,0.3)] text-[#b8956a] hover:bg-[rgba(184,149,106,0.08)]",
-    panel: "bg-[rgba(184,149,106,0.06)] border-[rgba(184,149,106,0.14)]",
-  },
-  green: {
-    bar: "bg-(--brand-green)",
-    iconWrap:
-      "border-[rgba(47,78,64,0.15)] bg-[rgba(47,78,64,0.06)] text-(--brand-green)",
-    check:
-      "border-[rgba(47,78,64,0.18)] bg-[rgba(47,78,64,0.05)] text-(--brand-green)",
-    price: "text-(--brand-green)",
-    cta: "border-[rgba(47,78,64,0.2)] text-(--brand-green) hover:bg-[rgba(47,78,64,0.05)]",
-    panel: "bg-[rgba(47,78,64,0.04)] border-[rgba(47,78,64,0.12)]",
-  },
-};
+/**
+ * Courses on the landing page, in display order. `name` is how the backend
+ * names the course (fees are matched on it); the rest comes from the course
+ * detail data.
+ */
+const programs = [
+  { name: "Barista", slug: "barista" },
+  { name: "Bakery", slug: "bakery" },
+  { name: "Bartending", slug: "bartending" },
+  // Sushi is hidden on the landing page for now.
+] as const;
 
 async function fetchCourses() {
   const res = await api.get<CoursesList>("/courses");
@@ -147,458 +36,245 @@ async function fetchCourses() {
   return res.data.data;
 }
 
-function useReveal(threshold = 0.12) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
+type FeeState =
+  | { status: "pending" }
+  | { status: "error"; retry: () => void; retrying: boolean }
+  | { status: "ready"; fee?: number };
 
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
+export default function Programs() {
+  const { data, isError, refetch, isFetching } = useQuery({
+    queryKey: ["landing-programs"],
+    queryFn: fetchCourses,
+    staleTime: 10 * 60 * 1000,
+  });
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry?.isIntersecting) {
-          setVisible(true);
-          observer.disconnect();
-        }
-      },
-      { threshold, rootMargin: "0px 0px -40px 0px" },
-    );
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [threshold]);
-
-  return { ref, visible };
-}
-
-function Reveal({
-  children,
-  delay = 0,
-  className = "",
-}: {
-  children: ReactNode;
-  delay?: number;
-  className?: string;
-}) {
-  const { ref, visible } = useReveal();
+  const feeFor = (name: string): FeeState => {
+    // A failed background refetch keeps the fees already loaded; only a
+    // first load that failed shows the retry.
+    if (data) {
+      return {
+        status: "ready",
+        fee: data.find((c) => c.name === name.toLowerCase())?.fee,
+      };
+    }
+    if (isError) {
+      return {
+        status: "error",
+        retry: () => void refetch(),
+        retrying: isFetching,
+      };
+    }
+    return { status: "pending" };
+  };
 
   return (
-    <div
-      ref={ref}
-      className={cn(
-        "program-reveal",
-        visible && "program-reveal--visible",
-        className,
-      )}
-      style={{ "--reveal-delay": `${delay}ms` } as React.CSSProperties}
+    <section
+      id="programs"
+      aria-labelledby="programs-heading"
+      className="container-page py-20 font-site sm:py-28"
     >
-      {children}
-    </div>
+      <Reveal>
+        <SectionHeading
+          id="programs-heading"
+          eyebrow="Our courses"
+          title={
+            <>
+              Courses that build <em>real careers.</em>
+            </>
+          }
+          description="Practical, hands-on training taught by working professionals, in small cohorts on commercial equipment."
+        />
+      </Reveal>
+
+      <Stagger className="grid gap-3 sm:grid-cols-2 sm:gap-5 lg:grid-cols-12 lg:grid-rows-[repeat(2,minmax(19rem,1fr))]">
+        {programs.map((program, i) => (
+          <StaggerItem
+            key={program.slug}
+            className={cn(
+              i === 0
+                ? "sm:col-span-2 lg:col-span-7 lg:row-span-2"
+                : "lg:col-span-5",
+            )}
+          >
+            <ProgramTile
+              name={program.name}
+              slug={program.slug}
+              index={i}
+              feature={i === 0}
+              fee={feeFor(program.name)}
+            />
+          </StaggerItem>
+        ))}
+      </Stagger>
+
+      <Reveal className="mt-12 flex flex-col gap-4 border-t border-hairline pt-8 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="font-display text-2xl text-ink sm:text-3xl">
+            Not sure which course is <em>right for you?</em>
+          </p>
+          <p className="mt-1 text-[0.8125rem] text-ink-muted">
+            Send us an inquiry and our team will guide you through the options.
+          </p>
+        </div>
+        <Link
+          href="#inquiry"
+          className="group inline-flex shrink-0 items-center gap-2 text-[0.8125rem] text-ink outline-none"
+        >
+          <span className="link-underline">Talk to an advisor</span>
+          <ArrowRightIcon
+            aria-hidden
+            className="size-3.5 transition-transform duration-300 ease-out-expo group-hover:translate-x-1"
+          />
+        </Link>
+      </Reveal>
+    </section>
   );
 }
 
-function ProgramMeta({
-  duration,
-  seats,
-}: {
-  duration: string;
-  seats: number;
-}) {
-  return (
-    <div className="flex flex-wrap items-center gap-3">
-      <span className="inline-flex items-center gap-1.5 font-(family-name:--font-dm-sans) text-[0.75rem] text-[rgba(47,78,64,0.55)]">
-        <Clock size={13} strokeWidth={2} />
-        {duration}
-      </span>
-      <span className="h-3 w-px bg-[rgba(47,78,64,0.12)]" />
-      <span className="inline-flex items-center gap-1.5 font-(family-name:--font-dm-sans) text-[0.75rem] text-[rgba(47,78,64,0.55)]">
-        <Users size={13} strokeWidth={2} />
-        Max {seats} students
-      </span>
-    </div>
-  );
-}
-
-function ProgramPrice({
+function ProgramTile({
+  name,
+  slug,
+  index,
+  feature,
   fee,
-  tone,
-  size = "default",
 }: {
-  fee?: number;
-  tone: (typeof toneStyles)[ProgramTone];
-  size?: "default" | "compact";
+  name: string;
+  slug: string;
+  index: number;
+  feature: boolean;
+  fee: FeeState;
 }) {
-  if (fee == null) {
+  const course = getCourseBySlug(slug);
+
+  return (
+    <div className="group relative h-full overflow-hidden bg-surface text-paper">
+      <div
+        className={cn(
+          "relative h-full w-full",
+          feature
+            ? "aspect-[4/5] sm:aspect-[16/10] lg:aspect-auto"
+            : "aspect-[4/5] lg:aspect-auto",
+        )}
+      >
+        {course ? (
+          <Image
+            src={course.videoPlaceholder}
+            alt=""
+            fill
+            sizes={
+              feature
+                ? "(min-width: 1024px) 58vw, 100vw"
+                : "(min-width: 1024px) 42vw, (min-width: 640px) 50vw, 100vw"
+            }
+            className="object-cover transition-transform duration-[1600ms] ease-out-expo group-hover:scale-[1.06] motion-reduce:transition-none"
+          />
+        ) : null}
+        <div
+          aria-hidden
+          className="absolute inset-0 bg-gradient-to-t from-ink/80 via-ink/20 to-ink/5"
+        />
+      </div>
+
+      {/* The whole tile is the link. The caption sits above it but lets
+          clicks through, so only the fee retry button catches its own. */}
+      <Link
+        href={`/courses/${slug}`}
+        className="absolute inset-0 z-[1] outline-none focus-visible:ring-2 focus-visible:ring-clay focus-visible:ring-inset"
+      >
+        <span className="sr-only">View the {name} course</span>
+      </Link>
+
+      <p
+        aria-hidden
+        className="pointer-events-none absolute top-5 left-5 z-[2] font-label text-[0.6875rem] tracking-[0.16em] text-paper/80 sm:top-6 sm:left-6"
+      >
+        {String(index + 1).padStart(2, "0")}
+      </p>
+
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] flex items-end justify-between gap-4 p-5 sm:p-6 lg:p-8">
+        <div className="min-w-0 space-y-3">
+          {course ? (
+            <p className="font-label text-[0.6875rem] tracking-[0.16em] text-paper/80 uppercase">
+              {course.duration} · {course.difficulty}
+            </p>
+          ) : null}
+          <h3
+            className={cn(
+              "font-display leading-[0.95] tracking-[-0.02em]",
+              feature ? "text-5xl sm:text-6xl lg:text-7xl" : "text-4xl sm:text-5xl",
+            )}
+          >
+            {name}
+          </h3>
+          {course ? (
+            <p
+              className={cn(
+                "text-[0.875rem] leading-relaxed text-paper/75",
+                feature ? "max-w-md" : "max-w-xs",
+              )}
+            >
+              {feature ? course.shortDescription : course.tagline}
+            </p>
+          ) : null}
+          <ProgramFee fee={fee} />
+        </div>
+        <span
+          aria-hidden
+          className="flex size-11 shrink-0 items-center justify-center rounded-full border border-paper/40 transition-[transform,background-color,color] duration-500 ease-out-expo group-hover:rotate-45 group-hover:bg-paper group-hover:text-ink"
+        >
+          <ArrowUpRightIcon weight="light" className="size-4" />
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function ProgramFee({ fee }: { fee: FeeState }) {
+  if (fee.status === "pending") {
     return (
-      <p className="font-(family-name:--font-dm-sans) text-[0.8rem] text-[rgba(47,78,64,0.45)]">
+      <div aria-hidden className="space-y-1.5 pt-1">
+        <div className="skeleton-shimmer h-4 w-32 bg-paper/20" />
+        <div className="skeleton-shimmer h-2.5 w-40 bg-paper/15" />
+      </div>
+    );
+  }
+
+  if (fee.status === "error") {
+    return (
+      <div className="pointer-events-auto flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-[0.8125rem] text-paper/80">
+        <span>Couldn&apos;t load the fee.</span>
+        <button
+          type="button"
+          onClick={fee.retry}
+          disabled={fee.retrying}
+          className="inline-flex items-center gap-1.5 text-paper underline underline-offset-4 outline-none hover:text-white focus-visible:ring-2 focus-visible:ring-clay disabled:opacity-60"
+        >
+          <ArrowClockwiseIcon
+            aria-hidden
+            className={cn("size-3.5", fee.retrying && "animate-spin")}
+          />
+          {fee.retrying ? "Retrying…" : "Try again"}
+        </button>
+      </div>
+    );
+  }
+
+  if (fee.fee == null) {
+    return (
+      <p className="pt-1 text-[0.8125rem] text-paper/80">
         Contact us for pricing
       </p>
     );
   }
 
   return (
-    <div>
-      <p className="mb-1 font-(family-name:--font-dm-sans) text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-[rgba(47,78,64,0.4)]">
-        Course fee
+    <div className="pt-1">
+      <p className="font-label text-sm tracking-[0.06em] text-paper tabular-nums">
+        NPR {(fee.fee / 100).toLocaleString()}
       </p>
-      <div className="flex items-baseline gap-1.5">
-        <span className="font-(family-name:--font-dm-sans) text-[0.78rem] font-medium text-[rgba(47,78,64,0.45)]">
-          NPR
-        </span>
-        <span
-          className={cn(
-            "font-(family-name:--font-lora) font-bold leading-none tracking-tight",
-            size === "compact" ? "text-[1.5rem]" : "text-[2rem]",
-            tone.price,
-          )}
-        >
-          {(fee / 100).toLocaleString()}
-        </span>
-      </div>
-      <CoursePriceVatNote className="mt-1" />
+      <p className="mt-0.5 text-[0.6875rem] text-paper/65">
+        {COURSE_PRICE_VAT_NOTE}
+      </p>
     </div>
-  );
-}
-
-function FeaturedProgramCard({
-  program,
-  fee,
-}: {
-  program: Program;
-  fee?: number;
-}) {
-  const Icon = program.icon;
-  const tone = toneStyles[program.tone];
-
-  return (
-    <article className="program-card group overflow-hidden border border-[rgba(47,78,64,0.1)] bg-white">
-      <div
-        className={cn(
-          "h-1 w-full origin-left scale-x-0 transition-transform duration-500 ease-out group-hover:scale-x-100",
-          tone.bar,
-        )}
-      />
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_minmax(260px,320px)]">
-        <div className="flex flex-col p-6 sm:p-8 lg:p-9">
-          <div className="mb-6 flex items-start justify-between gap-4">
-            <div
-              className={cn(
-                "grid h-14 w-14 shrink-0 place-items-center border transition-transform duration-300 ease-out group-hover:scale-105",
-                tone.iconWrap,
-              )}
-            >
-              <Icon size={24} strokeWidth={1.75} />
-            </div>
-            <span className="font-(family-name:--font-dm-sans) text-[0.65rem] font-semibold tracking-[0.2em] text-[rgba(47,78,64,0.25)]">
-              {program.number}
-            </span>
-          </div>
-
-          <p className="mb-2 font-(family-name:--font-dm-sans) text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-(--brand-brown)">
-            Featured · {program.tagline}
-          </p>
-          <h3 className="mb-3 font-[family-name:var(--font-playfair)] text-[clamp(1.75rem,3vw,2.25rem)] font-bold leading-tight text-(--brand-green)">
-            {program.course}
-          </h3>
-          <p className="mb-6 max-w-2xl font-(family-name:--font-dm-sans) text-[0.92rem] leading-[1.7] text-[rgba(47,78,64,0.58)]">
-            {program.description}
-          </p>
-
-          <ul className="mb-6 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-            {program.highlights.map((item) => (
-              <li key={item} className="flex items-start gap-2.5">
-                <span
-                  className={cn(
-                    "mt-0.5 grid h-5 w-5 shrink-0 place-items-center border",
-                    tone.check,
-                  )}
-                >
-                  <Check size={11} strokeWidth={2.5} />
-                </span>
-                <span className="font-(family-name:--font-dm-sans) text-[0.84rem] leading-snug text-[rgba(47,78,64,0.72)]">
-                  {item}
-                </span>
-              </li>
-            ))}
-          </ul>
-
-          <div className="mt-auto lg:hidden">
-            <ProgramMeta duration={program.duration} seats={program.seats} />
-          </div>
-        </div>
-
-        <div
-          className={cn(
-            "flex flex-col justify-between border-t border-[rgba(47,78,64,0.08)] p-6 sm:p-8 lg:border-t-0 lg:border-l",
-            tone.panel,
-          )}
-        >
-          <div className="hidden lg:block">
-            <ProgramMeta duration={program.duration} seats={program.seats} />
-          </div>
-
-          <div className="mt-6 lg:mt-10">
-            <ProgramPrice fee={fee} tone={tone} />
-          </div>
-
-          <Link
-            href={`/courses/${program.slug}`}
-            className={cn(
-              "group/btn mt-6 inline-flex w-full items-center justify-center gap-2 border px-4 py-3 font-(family-name:--font-dm-sans) text-[0.84rem] font-semibold transition-all duration-200 active:scale-[0.99]",
-              tone.cta,
-            )}
-          >
-            View Program
-            <ArrowRight
-              size={15}
-              strokeWidth={2.5}
-              className="transition-transform duration-200 group-hover/btn:translate-x-0.5"
-            />
-          </Link>
-        </div>
-      </div>
-    </article>
-  );
-}
-
-function CompactProgramCard({
-  program,
-  fee,
-}: {
-  program: Program;
-  fee?: number;
-}) {
-  const Icon = program.icon;
-  const tone = toneStyles[program.tone];
-
-  return (
-    <article className="program-card group flex h-full flex-col border border-[rgba(47,78,64,0.1)] bg-white">
-      <div
-        className={cn(
-          "h-1 w-full origin-left scale-x-0 transition-transform duration-500 ease-out group-hover:scale-x-100",
-          tone.bar,
-        )}
-      />
-
-      <div className="flex flex-1 flex-col p-6">
-        <div className="mb-4 flex items-start justify-between gap-3">
-          <div
-            className={cn(
-              "grid h-11 w-11 shrink-0 place-items-center border transition-transform duration-300 ease-out group-hover:scale-105",
-              tone.iconWrap,
-            )}
-          >
-            <Icon size={18} strokeWidth={1.75} />
-          </div>
-          <span className="font-(family-name:--font-dm-sans) text-[0.65rem] font-semibold tracking-[0.2em] text-[rgba(47,78,64,0.25)]">
-            {program.number}
-          </span>
-        </div>
-
-        <p className="mb-1 font-(family-name:--font-dm-sans) text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-(--brand-brown)">
-          {program.tagline}
-        </p>
-        <h3 className="mb-2 font-[family-name:var(--font-playfair)] text-[1.35rem] font-bold leading-tight text-(--brand-green)">
-          {program.course}
-        </h3>
-        <p className="mb-4 line-clamp-2 font-(family-name:--font-dm-sans) text-[0.85rem] leading-[1.6] text-[rgba(47,78,64,0.55)]">
-          {program.description}
-        </p>
-
-        <ul className="mb-5 flex flex-col gap-2">
-          {program.highlights.map((item) => (
-            <li key={item} className="flex items-start gap-2">
-              <Check
-                size={12}
-                strokeWidth={2.5}
-                className={cn("mt-0.5 shrink-0", tone.price)}
-              />
-              <span className="font-(family-name:--font-dm-sans) text-[0.8rem] leading-snug text-[rgba(47,78,64,0.65)]">
-                {item}
-              </span>
-            </li>
-          ))}
-        </ul>
-
-        <div className="mt-auto border-t border-[rgba(47,78,64,0.08)] pt-4">
-          <div className="mb-4">
-            <ProgramMeta duration={program.duration} seats={program.seats} />
-          </div>
-
-          {fee != null ? (
-            <div className="mb-4">
-              <ProgramPrice fee={fee} tone={tone} size="compact" />
-            </div>
-          ) : null}
-
-          <Link
-            href={`/courses/${program.slug}`}
-            className={cn(
-              "group/btn inline-flex w-full items-center justify-center gap-2 border px-4 py-2.5 font-(family-name:--font-dm-sans) text-[0.82rem] font-semibold transition-all duration-200 active:scale-[0.99]",
-              tone.cta,
-            )}
-          >
-            View Program
-            <ArrowRight
-              size={14}
-              strokeWidth={2.5}
-              className="transition-transform duration-200 group-hover/btn:translate-x-0.5"
-            />
-          </Link>
-        </div>
-      </div>
-    </article>
-  );
-}
-
-export default function Programs() {
-  const { data, isPending, isError, error, refetch, isFetching } = useQuery({
-    queryKey: ["landing-programs"],
-    queryFn: fetchCourses,
-    staleTime: 10 * 60 * 1000,
-  });
-
-  if (isPending) {
-    return <ProgramsSkeleton />;
-  }
-
-  if (isError) {
-    return (
-      <ProgramsError
-        message={
-          error?.message ?? "An unexpected error occurred. Please try again."
-        }
-        onRetry={() => void refetch()}
-        isRetrying={isFetching}
-      />
-    );
-  }
-
-  const courses = data;
-  const visiblePrograms = programs.filter((p) => p.showOnLanding !== false);
-  const featured =
-    visiblePrograms.find((p) => p.featured) ?? visiblePrograms[0];
-  const rest = visiblePrograms.filter((p) => p !== featured);
-
-  const getFee = (courseName: string) =>
-    courses.find((c) => c.name === courseName.toLowerCase())?.fee;
-
-  return (
-    <section
-      id="programs"
-      aria-labelledby="programs-heading"
-      className="relative overflow-hidden bg-(--brand-cream) px-6 py-24"
-    >
-      <LandingSectionPattern variant="programs" />
-      <div className={landingContainerClass}>
-        <Reveal>
-          <div className="mb-14 max-w-2xl">
-            <span className={`${landingEyebrowClass} mb-4 inline-block`}>
-              Our Courses
-            </span>
-            <h2 id="programs-heading" className={landingSectionTitleClass}>
-              Courses That Build
-              <br />
-              <em
-                className="font-medium text-(--brand-brown)"
-                style={{ fontStyle: "italic" }}
-              >
-                Real Careers
-              </em>
-            </h2>
-            <p className={`${landingSectionBodyClass} mt-4 max-w-xl`}>
-              Practical training taught by working professionals — graduate
-              job-ready, not just certified.
-            </p>
-          </div>
-        </Reveal>
-
-        <Reveal delay={60}>
-          <FeaturedProgramCard
-            program={featured}
-            fee={getFee(featured.course)}
-          />
-        </Reveal>
-
-        <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-          {rest.map((program, idx) => (
-            <Reveal key={program.course} delay={120 + idx * 80}>
-              <CompactProgramCard
-                program={program}
-                fee={getFee(program.course)}
-              />
-            </Reveal>
-          ))}
-        </div>
-
-        <Reveal delay={280}>
-          <div className="program-cta mt-14 flex flex-col items-start justify-between gap-5 border border-[rgba(47,78,64,0.1)] bg-[rgba(47,78,64,0.03)] p-6 sm:flex-row sm:items-center sm:p-8">
-            <div>
-              <p className="mb-1 font-[family-name:var(--font-playfair)] text-[1.1rem] font-semibold text-(--brand-green)">
-                Not sure which course is right for you?
-              </p>
-              <p className={landingSectionBodyClass}>
-                Send us an inquiry and our team will guide you through the
-                options.
-              </p>
-            </div>
-            <Link
-              href="#inquiry"
-              className={`${landingPrimaryButtonClass} shrink-0`}
-            >
-              Talk to an Advisor
-              <ArrowRight size={16} strokeWidth={2.5} />
-            </Link>
-          </div>
-        </Reveal>
-      </div>
-
-      <style>{`
-        .program-reveal {
-          opacity: 0;
-          transform: translateY(18px);
-          transition:
-            opacity 0.65s cubic-bezier(0.22, 1, 0.36, 1),
-            transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
-          transition-delay: var(--reveal-delay, 0ms);
-        }
-        .program-reveal--visible {
-          opacity: 1;
-          transform: translateY(0);
-        }
-        .program-card {
-          box-shadow: 0 1px 0 rgba(47, 78, 64, 0.04);
-          transition:
-            transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
-            box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1),
-            border-color 0.35s ease;
-        }
-        .program-card:hover {
-          transform: translateY(-4px);
-          border-color: rgba(47, 78, 64, 0.16);
-          box-shadow: 0 16px 48px rgba(47, 78, 64, 0.09);
-        }
-        .program-cta {
-          transition: box-shadow 0.35s ease, border-color 0.35s ease;
-        }
-        .program-cta:hover {
-          border-color: rgba(47, 78, 64, 0.16);
-          box-shadow: 0 8px 32px rgba(47, 78, 64, 0.06);
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .program-reveal {
-            opacity: 1;
-            transform: none;
-            transition: none;
-          }
-          .program-card,
-          .program-card:hover {
-            transform: none;
-            transition: none;
-          }
-        }
-      `}</style>
-    </section>
   );
 }

@@ -9,15 +9,13 @@ import {
 } from "motion/react";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeftIcon, ArrowRightIcon } from "@phosphor-icons/react/ssr";
 import { cn } from "@/lib/utils";
-import {
-  galleryContainerClass,
-  landingEyebrowClass,
-  landingSectionBodyClass,
-  landingSectionTitleClass,
-} from "@/components/landing/landing-styles";
-import { LandingSectionPattern } from "@/components/landing/LandingSectionPattern";
+import { EASE_OUT } from "@/lib/motion";
+import { Reveal } from "@/components/motion/reveal";
+import { usePrefersReducedMotion } from "@/components/motion/use-prefers-reduced-motion";
+import { siteButton } from "@/components/site/button";
+import { SectionHeading } from "@/components/site/section-heading";
 
 export const items = [
   {
@@ -88,43 +86,25 @@ export const items = [
 
 const SPRING = { stiffness: 320, damping: 32, mass: 0.9 } as const;
 
-const categoryTone: Record<string, string> = {
-  Barista: "text-(--brand-brown) border-[rgba(194,138,79,0.3)] bg-[rgba(194,138,79,0.08)]",
-  Bakery: "text-[#b8956a] border-[rgba(184,149,106,0.3)] bg-[rgba(184,149,106,0.08)]",
-  Bartending: "text-(--brand-green) border-[rgba(47,78,64,0.2)] bg-[rgba(47,78,64,0.06)]",
-  Training: "text-(--brand-green) border-[rgba(47,78,64,0.2)] bg-[rgba(47,78,64,0.06)]",
-};
+const pad = (n: number) => String(n).padStart(2, "0");
 
-function useReveal(threshold = 0.12) {
-  const ref = useRef<HTMLElement>(null);
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry?.isIntersecting) {
-          setVisible(true);
-          observer.disconnect();
-        }
-      },
-      { threshold, rootMargin: "0px 0px -48px 0px" },
-    );
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [threshold]);
-
-  return { ref, visible };
+/** Scrolls a thumbnail to the middle of its own strip, never the page. */
+function centerInStrip(thumb: HTMLElement | null | undefined) {
+  const strip = thumb?.parentElement;
+  if (!thumb || !strip || strip.offsetParent === null) return;
+  strip.scrollTo({
+    left: thumb.offsetLeft - (strip.clientWidth - thumb.clientWidth) / 2,
+    top: thumb.offsetTop - (strip.clientHeight - thumb.clientHeight) / 2,
+    behavior: "smooth",
+  });
 }
 
 export default function ImageGallery() {
   const [index, setIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
-  const thumbRefs = useRef<(HTMLButtonElement | null)[]>([]);
-  const { ref: sectionRef, visible } = useReveal();
+  const stripRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const gridRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const reduceMotion = usePrefersReducedMotion(false);
 
   const indexMV = useMotionValue(0);
   const containerWidth = useMotionValue(1);
@@ -158,21 +138,21 @@ export default function ImageGallery() {
   }, [index, indexMV]);
 
   useEffect(() => {
-    thumbRefs.current[index]?.scrollIntoView({
-      behavior: "smooth",
-      block: "nearest",
-      inline: "center",
-    });
+    centerInStrip(stripRefs.current[index]);
+    centerInStrip(gridRefs.current[index]);
   }, [index]);
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "ArrowLeft") goPrev();
-      if (e.key === "ArrowRight") goNext();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [goPrev, goNext]);
+  // Arrow keys work while focus is inside the gallery, not page-wide.
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      goPrev();
+    }
+    if (e.key === "ArrowRight") {
+      e.preventDefault();
+      goNext();
+    }
+  };
 
   const handleDragEnd = (
     _: never,
@@ -195,137 +175,130 @@ export default function ImageGallery() {
   return (
     <section
       id="gallery"
-      ref={sectionRef}
       aria-labelledby="gallery-heading"
-      className={cn(
-        "gallery-section relative overflow-x-hidden bg-(--brand-cream) py-24",
-        visible && "gallery-section--visible",
-      )}
+      className="overflow-x-hidden border-t border-hairline bg-surface py-20 font-site sm:py-28"
     >
-      <LandingSectionPattern variant="gallery" />
-      <div className={galleryContainerClass}>
-        <div className="gallery-reveal mb-12 max-w-2xl">
-          <span className={`${landingEyebrowClass} mb-4 inline-block`}>
-            Campus & Training
-          </span>
-          <h2 id="gallery-heading" className={landingSectionTitleClass}>
-            Life at
-            <br />
-            <em
-              className="font-medium text-(--brand-brown)"
-              style={{ fontStyle: "italic" }}
-            >
-              Brew & Bake
-            </em>
-          </h2>
-          <p className={`${landingSectionBodyClass} mt-4 max-w-xl`}>
-            A glimpse into our labs, workshops, and the hands-on sessions that
-            shape confident hospitality professionals.
-          </p>
-        </div>
+      <div className="container-page">
+        <Reveal>
+          <SectionHeading
+            id="gallery-heading"
+            eyebrow="Campus & training"
+            title={
+              <>
+                Life at <em>Brew &amp; Bake.</em>
+              </>
+            }
+            description="A glimpse into our labs, workshops, and the hands-on sessions that shape confident hospitality professionals."
+          />
+        </Reveal>
 
-        <div className="gallery-reveal gallery-reveal--delay grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_240px] lg:gap-6 xl:grid-cols-[minmax(0,1fr)_252px]">
-          <div className="flex min-w-0 flex-col gap-4">
+        <Reveal
+          delay={0.1}
+          onKeyDown={handleKeyDown}
+          className="grid min-w-0 grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_17rem] lg:gap-10"
+        >
+          <div className="flex min-w-0 flex-col gap-5">
             <div
               ref={containerRef}
               role="group"
-              aria-label="Training photo gallery"
+              aria-label="Training photo gallery. Use the arrow keys to browse."
               aria-roledescription="carousel"
-              aria-live="polite"
-              className="gallery-stage relative mx-auto aspect-[3/2] w-full max-h-[min(52vw,420px)] overflow-hidden border border-[rgba(47,78,64,0.1)] bg-[rgba(47,78,64,0.04)] sm:max-h-[min(48vw,440px)] lg:mx-0 lg:max-h-[460px] lg:aspect-[16/10]"
+              tabIndex={0}
+              className="relative aspect-[3/2] w-full touch-pan-y overflow-hidden bg-hairline outline-none focus-visible:ring-2 focus-visible:ring-clay focus-visible:ring-offset-4 focus-visible:ring-offset-surface lg:aspect-[16/10]"
             >
               <motion.div
                 className="flex h-full"
                 drag="x"
                 dragElastic={0.12}
                 dragMomentum={false}
-                style={{ x: xSpring }}
+                style={{ x: reduceMotion ? xPx : xSpring }}
                 onDragEnd={handleDragEnd}
               >
-                {items.map((item) => (
+                {items.map((item, i) => (
                   <div
                     key={item.id}
                     className="relative h-full min-w-full shrink-0"
+                    aria-hidden={i !== index}
                   >
                     <Image
                       src={item.url}
                       alt={item.alt}
                       fill
-                      sizes="(max-width: 1024px) 100vw, 900px"
+                      sizes="(min-width: 1024px) 70vw, 100vw"
                       className="object-cover select-none"
                       draggable={false}
-                      priority={item.id <= 2}
-                    />
-                    <div
-                      className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[rgba(26,26,26,0.55)] via-transparent to-transparent opacity-80"
-                      aria-hidden
                     />
                   </div>
                 ))}
               </motion.div>
 
-              <AnimatePresence mode="wait">
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink/60 via-transparent to-transparent"
+              />
+
+              <AnimatePresence mode="wait" initial={false}>
                 <motion.div
                   key={active.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -6 }}
-                  transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-                  className="pointer-events-none absolute bottom-0 left-0 right-0 p-5 sm:p-6"
+                  transition={{ duration: 0.4, ease: EASE_OUT }}
+                  aria-hidden
+                  className="pointer-events-none absolute inset-x-0 bottom-0 p-5 text-paper sm:p-7"
                 >
-                  <span
-                    className={cn(
-                      "mb-2 inline-block border px-2.5 py-0.5 font-(family-name:--font-dm-sans) text-[0.65rem] font-semibold uppercase tracking-[0.14em]",
-                      categoryTone[active.category],
-                    )}
-                  >
+                  <p className="font-label text-[0.6875rem] tracking-[0.16em] text-paper/80 uppercase">
                     {active.category}
-                  </span>
-                  <p className="font-[family-name:var(--font-playfair)] text-[1.25rem] font-semibold text-white sm:text-[1.4rem]">
+                  </p>
+                  <p className="mt-2 font-display text-3xl leading-none sm:text-4xl">
                     {active.title}
                   </p>
                 </motion.div>
               </AnimatePresence>
+            </div>
 
-              <div className="pointer-events-none absolute left-0 right-0 top-0 h-1 bg-[rgba(255,255,255,0.15)]">
+            <div className="flex items-center gap-5">
+              <p className="font-label text-[0.75rem] tracking-[0.08em] text-ink tabular-nums">
+                {pad(index + 1)}
+                <span className="mx-1.5 text-ink-muted">/</span>
+                <span className="text-ink-muted">{pad(items.length)}</span>
+              </p>
+              <div aria-hidden className="relative h-px flex-1 bg-hairline">
                 <motion.div
-                  className="h-full bg-(--brand-brown)"
+                  className="absolute inset-y-0 left-0 bg-ink"
+                  initial={false}
                   animate={{ width: `${progress}%` }}
-                  transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                  transition={{ duration: 0.5, ease: EASE_OUT }}
                 />
               </div>
-
-              <GalleryNavButton
-                direction="prev"
-                disabled={index === 0}
-                onClick={goPrev}
-                className="left-3 sm:left-4"
-              />
-              <GalleryNavButton
-                direction="next"
-                disabled={index === items.length - 1}
-                onClick={goNext}
-                className="right-3 sm:right-4"
-              />
+              <div className="flex gap-1">
+                <button
+                  type="button"
+                  onClick={goPrev}
+                  disabled={index === 0}
+                  aria-label="Previous photo"
+                  className={siteButton({ variant: "outline", size: "icon" })}
+                >
+                  <ArrowLeftIcon weight="light" className="size-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={goNext}
+                  disabled={index === items.length - 1}
+                  aria-label="Next photo"
+                  className={siteButton({ variant: "outline", size: "icon" })}
+                >
+                  <ArrowRightIcon weight="light" className="size-4" />
+                </button>
+              </div>
             </div>
 
-            <div className="flex items-center justify-between gap-4 px-0.5">
-              <p className="sr-only" aria-live="polite">
-                Viewing {active.title}: {active.caption}
-              </p>
-              <p className="font-(family-name:--font-dm-sans) text-[0.8rem] text-[rgba(47,78,64,0.5)]">
-                Swipe or use arrow keys to browse
-              </p>
-              <p className="font-(family-name:--font-dm-sans) text-sm tabular-nums text-(--brand-green)">
-                <span className="font-semibold text-(--brand-brown)">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
-                <span className="mx-1.5 text-[rgba(47,78,64,0.25)]">/</span>
-                {String(items.length).padStart(2, "0")}
-              </p>
-            </div>
+            <p className="sr-only" aria-live="polite">
+              Photo {index + 1} of {items.length}: {active.title}.{" "}
+              {active.caption}
+            </p>
 
-            <div className="gallery-thumbs flex gap-2 overflow-x-auto pb-1 scrollbar-none lg:hidden">
+            <div className="scrollbar-hidden relative flex gap-2 overflow-x-auto lg:hidden">
               {items.map((item, i) => (
                 <ThumbButton
                   key={item.id}
@@ -333,41 +306,37 @@ export default function ImageGallery() {
                   active={i === index}
                   onClick={() => goTo(i)}
                   ref={(el) => {
-                    thumbRefs.current[i] = el;
+                    stripRefs.current[i] = el;
                   }}
                 />
               ))}
             </div>
           </div>
 
-          <aside className="flex flex-col gap-5 lg:pt-1">
-            <div className="border border-[rgba(47,78,64,0.1)] bg-white p-5">
-              <p className="mb-2 font-(family-name:--font-dm-sans) text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-(--brand-brown)">
-                Now viewing
-              </p>
-              <AnimatePresence mode="wait">
+          <aside className="flex flex-col gap-8">
+            <div className="border-t border-ink pt-5">
+              <p className="eyebrow">Now viewing</p>
+              <AnimatePresence mode="wait" initial={false}>
                 <motion.div
                   key={active.id}
                   initial={{ opacity: 0, x: 8 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -8 }}
-                  transition={{ duration: 0.25 }}
+                  transition={{ duration: 0.3, ease: EASE_OUT }}
                 >
-                  <h3 className="mb-2 font-[family-name:var(--font-playfair)] text-[1.35rem] font-semibold leading-tight text-(--brand-green)">
+                  <h3 className="mt-3 font-display text-3xl leading-tight text-ink">
                     {active.title}
                   </h3>
-                  <p className="font-(family-name:--font-dm-sans) text-[0.88rem] leading-[1.65] text-[rgba(47,78,64,0.62)]">
+                  <p className="mt-2 text-[0.875rem] leading-relaxed text-ink-muted">
                     {active.caption}
                   </p>
                 </motion.div>
               </AnimatePresence>
             </div>
 
-            <div className="hidden flex-col gap-2 lg:flex">
-              <p className="font-(family-name:--font-dm-sans) text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[rgba(47,78,64,0.4)]">
-                All moments
-              </p>
-              <div className="gallery-thumbs grid max-h-[360px] grid-cols-2 gap-2 overflow-y-auto pr-1">
+            <div className="hidden flex-col gap-3 lg:flex">
+              <p className="eyebrow">All moments</p>
+              <div className="scrollbar-hidden relative grid max-h-[22rem] grid-cols-2 gap-2 overflow-y-auto">
                 {items.map((item, i) => (
                   <ThumbButton
                     key={item.id}
@@ -376,96 +345,16 @@ export default function ImageGallery() {
                     onClick={() => goTo(i)}
                     variant="grid"
                     ref={(el) => {
-                      thumbRefs.current[i] = el;
+                      gridRefs.current[i] = el;
                     }}
                   />
                 ))}
               </div>
             </div>
           </aside>
-        </div>
+        </Reveal>
       </div>
-
-      <style>{`
-        .gallery-reveal {
-          opacity: 0;
-          transform: translateY(16px);
-          transition:
-            opacity 0.65s cubic-bezier(0.22, 1, 0.36, 1),
-            transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
-        }
-        .gallery-reveal--delay {
-          transition-delay: 90ms;
-        }
-        .gallery-section--visible .gallery-reveal {
-          opacity: 1;
-          transform: translateY(0);
-        }
-        .gallery-stage {
-          touch-action: pan-y;
-        }
-        .gallery-thumbs {
-          scrollbar-width: none;
-        }
-        .gallery-thumbs::-webkit-scrollbar {
-          display: none;
-        }
-        .gallery-thumb {
-          transition:
-            transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
-            border-color 0.25s ease,
-            opacity 0.25s ease;
-        }
-        .gallery-thumb:hover {
-          transform: translateY(-2px);
-        }
-        .gallery-thumb--active {
-          border-color: var(--brand-brown);
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .gallery-reveal {
-            opacity: 1;
-            transform: none;
-            transition: none;
-          }
-          .gallery-thumb:hover {
-            transform: none;
-          }
-        }
-      `}</style>
     </section>
-  );
-}
-
-function GalleryNavButton({
-  direction,
-  disabled,
-  onClick,
-  className,
-}: {
-  direction: "prev" | "next";
-  disabled: boolean;
-  onClick: () => void;
-  className?: string;
-}) {
-  const Icon = direction === "prev" ? ChevronLeft : ChevronRight;
-
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      aria-label={direction === "prev" ? "Previous photo" : "Next photo"}
-      className={cn(
-        "absolute top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center border border-[rgba(255,255,255,0.35)] bg-[rgba(255,255,255,0.92)] text-(--brand-green) backdrop-blur-sm transition-all duration-200",
-        disabled
-          ? "cursor-not-allowed opacity-35"
-          : "hover:border-(--brand-brown) hover:bg-white hover:text-(--brand-brown) active:scale-95",
-        className,
-      )}
-    >
-      <Icon size={18} strokeWidth={2.25} />
-    </button>
   );
 }
 
@@ -486,32 +375,30 @@ const ThumbButton = ({
     type="button"
     ref={ref}
     onClick={onClick}
-    aria-label={`View photo: ${item.alt}`}
+    aria-label={`View photo: ${item.title}`}
     aria-current={active ? "true" : undefined}
     className={cn(
-      "gallery-thumb relative shrink-0 overflow-hidden border-2 border-transparent",
-      active && "gallery-thumb--active",
-      variant === "strip"
-        ? "h-16 w-24 sm:h-[4.5rem] sm:w-28"
-        : "aspect-[4/3] w-full",
+      "group relative shrink-0 overflow-hidden bg-hairline outline-none focus-visible:ring-2 focus-visible:ring-clay focus-visible:ring-inset",
+      variant === "strip" ? "h-16 w-24 sm:h-[4.5rem] sm:w-28" : "aspect-[4/3] w-full",
     )}
   >
     <Image
       src={item.url}
       alt=""
       fill
-      sizes={variant === "strip" ? "112px" : "160px"}
+      sizes={variant === "strip" ? "112px" : "136px"}
       className={cn(
-        "object-cover transition-opacity duration-200",
-        active ? "opacity-100" : "opacity-70",
+        "object-cover transition-[opacity,transform] duration-500 ease-out-expo group-hover:scale-105",
+        active ? "opacity-100" : "opacity-55 group-hover:opacity-90",
       )}
       draggable={false}
     />
-    {active ? (
-      <span
-        className="absolute bottom-0 left-0 h-0.5 w-full bg-(--brand-brown)"
-        aria-hidden
-      />
-    ) : null}
+    <span
+      aria-hidden
+      className={cn(
+        "absolute inset-x-0 bottom-0 h-0.5 origin-left bg-clay transition-transform duration-500 ease-out-expo",
+        active ? "scale-x-100" : "scale-x-0",
+      )}
+    />
   </button>
 );
