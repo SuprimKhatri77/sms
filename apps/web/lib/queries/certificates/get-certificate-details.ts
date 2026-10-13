@@ -13,7 +13,7 @@ export async function getCertificateDetails(
   certificateId: string,
 ): Promise<CertificateDetailsResult> {
   const res = await fetch(
-    `${getApiUrl()}/api/v1/certificates/${certificateId}`,
+    `${getApiUrl()}/api/v1/certificates/${encodeURIComponent(certificateId)}`,
     { cache: "no-store" },
   );
 

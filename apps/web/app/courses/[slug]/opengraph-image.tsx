@@ -1,6 +1,6 @@
-import { getCourseSeo } from "@/lib/seo";
 import { notFound } from "next/navigation";
-import { getCourseBySlug } from "@/utils/mock";
+import { splitTitle } from "@/lib/seo";
+import { courseCategories, getCourseBySlug } from "@/utils/mock";
 import { siteInfo } from "@/utils/site-info";
 import {
   createOgImage,
@@ -23,13 +23,14 @@ export default async function Image({
     notFound();
   }
 
-  const seo = getCourseSeo(slug);
+  const { lead, last } = splitTitle(course.course);
 
   return createOgImage({
-    eyebrow: `${course.duration} · Butwal`,
-    title: seo?.title ?? course.course,
-    description: seo?.description ?? course.shortDescription,
-    footer: `${siteInfo.company.shortName} · ${siteInfo.contact.address}`,
+    eyebrow: `${courseCategories[course.category]} course · Butwal`,
+    title: { lead, em: `${last}.` },
+    description: course.shortDescription,
+    detail: `${course.duration} · ${course.difficulty}`,
+    photo: course.videoPlaceholder,
   });
 }
 

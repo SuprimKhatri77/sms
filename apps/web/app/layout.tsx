@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { ReactQueryProvider } from "@/components/providers/react-query-provider";
@@ -25,6 +25,10 @@ export const metadata: Metadata = {
   verification: {
     google: "Kqup0zVMASUI41BgW0WSjUY37K65Fjp254ODhRkfrjs",
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#fbfaf7",
 };
 
 export default async function RootLayout({

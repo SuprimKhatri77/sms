@@ -22,9 +22,6 @@ export const SEO_KEYWORDS = [
   "bartending course Butwal",
   "bartending school Butwal",
   "mixology training Butwal",
-  "sushi course Butwal",
-  "sushi training Butwal",
-  "Japanese cooking course Butwal",
   "hospitality training Butwal",
   "culinary school Butwal",
   "food and beverage training Rupandehi",
@@ -119,7 +116,25 @@ const HOME_TITLE =
   "Best Barista & Bakery School in Butwal | Brew & Bake Academy";
 
 const HOME_DESCRIPTION =
-  "Brew & Bake Academy is Butwal’s leading training school for barista, bakery, bartending, and sushi programs. Hands-on classes, expert mentors, and placement support in Kalikanagar, Rupandehi, Nepal.";
+  "Brew & Bake Academy is Butwal’s leading training school for barista, bakery, and bartending programs. Hands-on classes, expert mentors, and placement support in Kalikanagar, Rupandehi, Nepal.";
+
+/** Pages that stay out of search results (sign-in, forms, personal records). */
+export const noIndexRobots = { index: false, follow: false } as const;
+
+/** "Log in" → "Log in | Brew & Bake Academy", kept out of search. */
+export function privatePageMetadata(title: string): Metadata {
+  return {
+    title: `${title} | ${siteInfo.company.shortName}`,
+    robots: noIndexRobots,
+  };
+}
+
+/** "Professional Barista Program" → "Professional Barista" + "Program". */
+export function splitTitle(title: string) {
+  const words = title.trim().split(/\s+/);
+  const last = words.pop() ?? title;
+  return { lead: words.join(" "), last };
+}
 
 export function getSiteUrl(): string {
   return (
@@ -135,13 +150,6 @@ export function absoluteUrl(path = "/"): string {
 export function getCourseSeo(slug: string) {
   return COURSE_SEO[slug];
 }
-
-const defaultOgImage = {
-  url: "/opengraph-image",
-  width: 1200,
-  height: 630,
-  alt: `${siteInfo.company.shortName} — Best barista and bakery school in Butwal`,
-} as const;
 
 export const homeMetadata: Metadata = {
   title: {
@@ -164,13 +172,11 @@ export const homeMetadata: Metadata = {
     siteName: siteInfo.company.shortName,
     title: HOME_TITLE,
     description: HOME_DESCRIPTION,
-    images: [defaultOgImage],
   },
   twitter: {
     card: "summary_large_image",
     title: HOME_TITLE,
     description: HOME_DESCRIPTION,
-    images: [defaultOgImage.url],
   },
   robots: {
     index: true,
@@ -202,13 +208,11 @@ export const coursesMetadata: Metadata = {
     siteName: siteInfo.company.shortName,
     title: COURSES_TITLE,
     description: COURSES_DESCRIPTION,
-    images: [defaultOgImage],
   },
   twitter: {
     card: "summary_large_image",
     title: COURSES_TITLE,
     description: COURSES_DESCRIPTION,
-    images: [defaultOgImage.url],
   },
   robots: homeMetadata.robots,
 };
@@ -229,13 +233,6 @@ export function createCourseMetadata(course: CourseDetail): Metadata {
     ...SEO_KEYWORDS,
   ];
 
-  const ogImage = {
-    url: `/courses/${course.slug}/opengraph-image`,
-    width: 1200,
-    height: 630,
-    alt: `${title} at ${siteInfo.company.shortName}, ${LOCATION.label}`,
-  };
-
   return {
     title: pageTitle,
     description,
@@ -250,15 +247,17 @@ export function createCourseMetadata(course: CourseDetail): Metadata {
       siteName: siteInfo.company.shortName,
       title: seo?.ogTitle ?? pageTitle,
       description,
-      images: [ogImage],
     },
     twitter: {
       card: "summary_large_image",
       title: seo?.ogTitle ?? pageTitle,
       description,
-      images: [ogImage.url],
     },
-    robots: homeMetadata.robots,
+    // Unlisted courses keep their page for anyone with the link, but stay
+    // out of search.
+    robots: course.listed
+      ? homeMetadata.robots
+      : { index: false, follow: true },
   };
 }
 
@@ -294,7 +293,6 @@ export function createOrganizationJsonLd() {
       "Barista training",
       "Bakery training",
       "Bartending training",
-      "Sushi training",
       "Hospitality education",
     ],
     sameAs: [
@@ -319,7 +317,11 @@ export function createWebsiteJsonLd() {
   };
 }
 
-export function createCourseJsonLd(course: CourseDetail) {
+/** `feeInPaisa` is the backend fee; without it there is no offer, rather than a wrong price. */
+export function createCourseJsonLd(
+  course: CourseDetail,
+  feeInPaisa: number | null,
+) {
   const seo = COURSE_SEO[course.slug];
 
   return {
@@ -347,13 +349,15 @@ export function createCourseJsonLd(course: CourseDetail) {
         addressCountry: "NP",
       },
     },
-    offers: {
-      "@type": "Offer",
-      price: course.tuitionNPR,
-      priceCurrency: "NPR",
-      availability: "https://schema.org/InStock",
-      url: absoluteUrl("/admission"),
-    },
+    ...(feeInPaisa != null && {
+      offers: {
+        "@type": "Offer",
+        price: feeInPaisa / 100,
+        priceCurrency: "NPR",
+        availability: "https://schema.org/InStock",
+        url: absoluteUrl("/admission"),
+      },
+    }),
     hasCourseInstance: course.startDates.map((startDate) => ({
       "@type": "CourseInstance",
       courseMode: course.format,
