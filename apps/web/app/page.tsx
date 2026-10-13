@@ -3,7 +3,8 @@ import Hero from "@/components/landing/Hero";
 import HowItWorks from "@/components/landing/HowItWorks";
 import InquiryForm from "@/components/landing/InquiryForm";
 import Mentors from "@/components/landing/Mentors";
-import OurPartners from "@/components/landing/OurPartners";
+// Industry Network section hidden for now — restore with the <OurPartners /> line below.
+// import OurPartners from "@/components/landing/OurPartners";
 import Programs from "@/components/landing/Programs";
 import ProgramLoadingSkeleton from "@/components/landing/programs/ProgramLoadingSkeleton";
 import { TestimonialsSection } from "@/components/landing/Testimonials";
@@ -32,7 +33,7 @@ export default function Home() {
       <HowItWorks />
       <ImageGallery />
       <TestimonialsSection />
-      <OurPartners />
+      {/* <OurPartners /> */}
       <InquiryForm />
     </main>
   );
