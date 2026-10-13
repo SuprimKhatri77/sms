@@ -73,12 +73,181 @@ export interface CourseDetail {
   icon: IconKey;
   outcomes: string[];
   curriculum: CurriculumModule[];
-  instructor: Instructor;
+  instructors: Instructor[];
   stats: { label: string; value: string }[];
   videoPlaceholder: string;
   videoSrc?: string;
   faqs: { question: string; answer: string }[];
 }
+
+export const instructors = {
+  ashish: {
+    name: "Mr. Ashish Shrestha",
+    title: "Program Coordinator · Brew and Bake Academy",
+    bio: "Ashish is an experienced coffee professional and hospitality strategist specializing in barista training, café operations, and branding. He has led training for Himalayan Java and founded Coffee Class & Himalayan Roaster in Pokhara.",
+    yearsExp: 11,
+    image: "/assets/instructors/ashish.jpg",
+    imagePlaceholder: "#3a5a49",
+    hasProfileCard: true,
+    profile: {
+      headline: "Program Coordinator",
+      experience: [
+        {
+          role: "Training Director",
+          place: "Himalayan Java Coffee, Pokhara",
+          period: "2015–2023",
+        },
+        {
+          role: "Operational Head",
+          place: "Himalayan Java, Pokhara",
+          period: "2018–2023",
+        },
+        {
+          role: "Operation, Consultant & Branding",
+          place: "Open House Academy of Culinary Arts",
+          period: "",
+        },
+        {
+          role: "Owner",
+          place: "Little Big Cafe, Pokhara",
+          period: "2025–Present",
+        },
+        {
+          role: "Program Coordinator",
+          place: "Brew and Bake Academy, Butwal",
+          period: "",
+        },
+        {
+          role: "Founder & Training Director",
+          place: "Coffee Class & Himalayan Roaster, Pokhara",
+          period: "2023–Present",
+        },
+      ],
+      expertise: [
+        "Barista Training & Coffee Education",
+        "Café Operations & Team Management",
+        "Specialty Coffee & Roasting",
+        "Latte Art & Espresso Training",
+        "Hospitality Branding & Consulting",
+        "Menu Engineering & Customer Experience",
+        "Staff Development & Operational Systems",
+        "Coffee Workshop & Curriculum Design",
+      ],
+    },
+  },
+  kristna: {
+    name: "Miss Kristna Gurung",
+    title: "Senior Barista Trainer · Coffee Specialist",
+    bio: "Kristna is a senior barista trainer and coffee specialist with over 10 years of barista and hospitality experience and more than 5,000 students successfully trained. Kristna brings advanced expertise in espresso, manual brewing, and latte art, along with mixology, beverage development, and F&B supervision, and turns students into 5-star professionals.",
+    yearsExp: 10,
+    image: "/assets/instructors/kristna.jpg",
+    imagePlaceholder: "#2f4e40",
+    hasProfileCard: true,
+    profile: {
+      headline: "Senior Barista Trainer",
+      experience: [
+        {
+          role: "Senior Barista Trainer",
+          place: "Brew and Bake Academy, Butwal",
+          period: "",
+        },
+        {
+          role: "Cabin Crew",
+          place: "Aviation",
+          period: "1 year",
+        },
+      ],
+      expertise: [
+        "Espresso, Manual Brewing & Latte Art",
+        "Mixology & Beverage Development",
+        "F&B Supervision & Café Operations",
+        "Hospitality & Guest Service",
+        "Team Leadership",
+        "Barista Training (5,000+ students)",
+      ],
+    },
+  },
+  sandesh: {
+    name: "Mr. Sandesh Gyawali",
+    title: "Barista Trainer · Certified Barista Specialist",
+    bio: "Sandesh is a certified barista specialist with over 5 years of experience in the specialty coffee industry. Having trained hundreds of aspiring baristas, Sandesh focuses on brewing skills, latte art, and coffee excellence, and turns students into 5-star professionals.",
+    yearsExp: 5,
+    image: "/assets/instructors/sandesh.jpg",
+    imagePlaceholder: "#3a5a49",
+    hasProfileCard: true,
+    profile: {
+      headline: "Barista Trainer",
+      experience: [
+        {
+          role: "Barista Trainer",
+          place: "Brew and Bake Academy, Butwal",
+          period: "",
+        },
+      ],
+      expertise: [
+        "Specialty Coffee",
+        "Brewing Skills",
+        "Latte Art",
+        "Barista Training",
+      ],
+    },
+  },
+  sanjeev: {
+    name: "Mr. Sanjeev Kumar Rana",
+    title: "Bakery Trainer · Head of Bakery, Nirvana Hotel",
+    bio: "Sanjeev is a highly experienced bakery professional and instructor, dedicated to developing skilled and industry-ready bakery professionals through practical training and international standards. With 18 years in the bakery industry, including bakery operations and production in Dubai from 2000 to 2016, Sanjeev now leads the bakery at Nirvana Hotel.",
+    yearsExp: 18,
+    image: "/assets/instructors/sanjeev.jpg",
+    imagePlaceholder: "#c28a4f",
+    hasProfileCard: true,
+    profile: {
+      headline: "Bakery Trainer",
+      experience: [
+        {
+          role: "Head of Bakery",
+          place: "Nirvana Hotel",
+          period: "",
+        },
+        {
+          role: "Bakery Instructor",
+          place: "Butwal Model College",
+          period: "4 yrs · Current",
+        },
+        {
+          role: "Bakery Instructor",
+          place: "Aroma Hospitality College",
+          period: "2 yrs · Current",
+        },
+        {
+          role: "Bakery Operations & Production",
+          place: "Dubai, UAE",
+          period: "2000–2016",
+        },
+        {
+          role: "Bakery Trainer",
+          place: "Brew and Bake Academy, Butwal",
+          period: "",
+        },
+      ],
+      expertise: [
+        "Bakery Production",
+        "Kitchen Operations",
+        "Food Hygiene and Safety",
+        "Quality Control and Assurance",
+        "Culinary Arts",
+        "Bakery Training and Certification",
+      ],
+    },
+  },
+} satisfies Record<string, Instructor>;
+
+/** Ordered list for the landing page "Meet Our Mentors" section. */
+export const mentors: Instructor[] = [
+  instructors.ashish,
+  instructors.kristna,
+  instructors.sandesh,
+  instructors.sanjeev,
+];
 
 export const courses: CourseDetail[] = [
   {
@@ -152,60 +321,11 @@ export const courses: CourseDetail[] = [
         ],
       },
     ],
-    instructor: {
-      name: "Mr. Ashish Shrestha",
-      title: "Program Coordinator · Brew and Bake Academy",
-      bio: "Ashish is an experienced coffee professional and hospitality strategist specializing in barista training, café operations, and branding. He has led training for Himalayan Java and founded Coffee Class & Himalayan Roaster in Pokhara.",
-      yearsExp: 11,
-      image: "/assets/instructors/ashish.png",
-      imagePlaceholder: "#3a5a49",
-      hasProfileCard: true,
-      profile: {
-        headline: "Program Coordinator",
-        experience: [
-          {
-            role: "Training Director",
-            place: "Himalayan Java Coffee, Pokhara",
-            period: "2015–2023",
-          },
-          {
-            role: "Operational Head",
-            place: "Himalayan Java, Pokhara",
-            period: "2018–2023",
-          },
-          {
-            role: "Operation, Consultant & Branding",
-            place: "Open House Academy of Culinary Arts",
-            period: "",
-          },
-          {
-            role: "Owner",
-            place: "Little Big Cafe, Pokhara",
-            period: "2025–Present",
-          },
-          {
-            role: "Program Coordinator",
-            place: "Brew and Bake Academy, Butwal",
-            period: "",
-          },
-          {
-            role: "Founder & Training Director",
-            place: "Coffee Class & Himalayan Roaster, Pokhara",
-            period: "2023–Present",
-          },
-        ],
-        expertise: [
-          "Barista Training & Coffee Education",
-          "Café Operations & Team Management",
-          "Specialty Coffee & Roasting",
-          "Latte Art & Espresso Training",
-          "Hospitality Branding & Consulting",
-          "Menu Engineering & Customer Experience",
-          "Staff Development & Operational Systems",
-          "Coffee Workshop & Curriculum Design",
-        ],
-      },
-    },
+    instructors: [
+      instructors.ashish,
+      instructors.kristna,
+      instructors.sandesh,
+    ],
     stats: [
       { label: "Graduates placed", value: "200+" },
       { label: "Avg. salary uplift", value: "40%" },
@@ -315,13 +435,7 @@ export const courses: CourseDetail[] = [
         ],
       },
     ],
-    instructor: {
-      name: "Priya Tamang",
-      title: "Pastry Chef · Le Cordon Bleu Alumna",
-      bio: "Priya trained at Le Cordon Bleu London before working in patisseries in Paris and Melbourne. She returned to Nepal to champion local grain varieties and now integrates heritage flours into classical European techniques.",
-      yearsExp: 10,
-      imagePlaceholder: "#c28a4f",
-    },
+    instructors: [instructors.sanjeev],
     stats: [
       { label: "Graduates placed", value: "160+" },
       { label: "Own businesses launched", value: "34" },
@@ -441,13 +555,7 @@ export const courses: CourseDetail[] = [
         ],
       },
     ],
-    instructor: {
-      name: "Rohan Karki",
-      title: "Head Bartender · WSET Level 3",
-      bio: "Rohan has tended bar at five-star properties in Dubai and Singapore, competed in the Diageo World Class regional finals, and holds a WSET Level 3 Award in Spirits. He specialises in low-ABV cocktail development and fermentation.",
-      yearsExp: 12,
-      imagePlaceholder: "#9B7FC7",
-    },
+    instructors: [],
     stats: [
       { label: "Graduates placed", value: "280+" },
       { label: "Hotel partners", value: "22" },
@@ -557,13 +665,7 @@ export const courses: CourseDetail[] = [
         ],
       },
     ],
-    instructor: {
-      name: "Kenji Watanabe",
-      title: "Executive Sushi Chef · 15 Yrs Tokyo & International",
-      bio: "Kenji apprenticed under a third-generation Edo-mae sushi master in Tokyo's Ginza district for four years before working in Michelin-starred restaurants across Hong Kong and London. He is one of the few non-Japanese instructors certified by the Japan Sushi Skills Institute.",
-      yearsExp: 15,
-      imagePlaceholder: "#4EA87A",
-    },
+    instructors: [],
     stats: [
       { label: "Graduates placed", value: "90+" },
       { label: "5-star hotel partners", value: "9" },

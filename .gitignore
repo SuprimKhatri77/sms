@@ -48,3 +48,6 @@ yarn-error.log*
 # Claude Code local rules and per-ticket work logs
 CLAUDE.local.md
 /ticket-logs/
+
+# Claude Code local working folder (tickets, notes)
+.claude/
