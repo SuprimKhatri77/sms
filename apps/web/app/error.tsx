@@ -1,12 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, Home, RefreshCw } from "lucide-react";
-import {
-  ErrorPageShell,
-  landingPrimaryButtonClass,
-  landingSecondaryButtonClass,
-} from "@/components/error-page-shell";
+import { ErrorPageShell } from "@/components/error-page-shell";
+import { siteButton } from "@/components/site/button";
 
 export default function GlobalError({
   reset,
@@ -17,22 +13,23 @@ export default function GlobalError({
   return (
     <ErrorPageShell
       eyebrow="Something went wrong"
-      title="Please try again"
+      title={
+        <>
+          Let&apos;s try <em>that again.</em>
+        </>
+      }
       description="We ran into an unexpected issue. You can retry, or return home and continue from there."
-      icon={<RefreshCw size={24} strokeWidth={1.75} />}
       actions={
         <>
           <button
             type="button"
             onClick={reset}
-            className={landingPrimaryButtonClass}
+            className={siteButton({ variant: "pine", size: "lg" })}
           >
-            <RefreshCw size={16} strokeWidth={2.5} />
-            Try Again
+            Try again
           </button>
-          <Link href="/" className={landingSecondaryButtonClass}>
-            <Home size={16} strokeWidth={2.5} />
-            Back to Home
+          <Link href="/" className={siteButton({ variant: "outline", size: "lg" })}>
+            Back to home
           </Link>
         </>
       }

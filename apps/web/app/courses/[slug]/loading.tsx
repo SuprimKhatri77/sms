@@ -10,7 +10,7 @@ export default function Loading() {
   return (
     <main className="min-h-screen bg-(--brand-cream)">
       {/* Hero */}
-      <section className="relative overflow-hidden bg-(--brand-green) px-6 pb-16 pt-28 sm:pb-20 sm:pt-32">
+      <section className="relative overflow-hidden bg-(--brand-green) px-6 pb-16 pt-14 sm:pb-20 sm:pt-16">
         <div className={cn(courseContainerClass, "relative")}>
           <div className="mb-8 h-4 w-28 animate-pulse bg-white/10" />
           <div className="mb-6 flex items-center gap-3">

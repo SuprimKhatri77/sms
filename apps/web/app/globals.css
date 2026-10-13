@@ -46,6 +46,22 @@
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
   --max-width-landing: 96rem;
+
+  /* Public site (editorial, cartspace-style). Namespaced so the shadcn
+     tokens that admin uses stay untouched. */
+  --color-paper: #fbfaf7;
+  --color-ink: #1a1a1a;
+  --color-ink-muted: #5c5b57;
+  --color-pine: #2f4e40;
+  --color-pine-soft: #3a5a49;
+  --color-clay: #c28a4f;
+  --color-clay-deep: #96622f;
+  --color-surface: #f4f1ec;
+  --color-hairline: #e3ded5;
+  --font-display: var(--font-instrument-serif), Georgia, serif;
+  --font-site: var(--font-geist), system-ui, sans-serif;
+  --font-label: var(--font-geist-mono), ui-monospace, monospace;
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 :root {
@@ -147,26 +163,48 @@
   --font-lora: var(--font-lora);
 }
 
-html {
-  scroll-behavior: smooth;
-}
+/* Site-wide element defaults. Kept in @layer base (after the shadcn base
+   above, so they still win over it) instead of unlayered: unlayered rules
+   beat every Tailwind utility, which made font-* and transition utilities on
+   headings, links and buttons silently ineffective. */
+@layer base {
+  :root {
+    /* Height of the sticky public header; sub-navs and anchors offset by it. */
+    --header-h: 4rem;
+  }
 
-body {
-  font-family: var(--font-dm-sans), sans-serif;
-  background-color: #faf9f7;
-  color: #1a1a1a;
-  line-height: 1.6;
-  -webkit-font-smoothing: antialiased;
-}
+  html {
+    scroll-behavior: smooth;
+  }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-family: var(--font-playfair), serif;
-  line-height: 1.2;
+  /* Hash links on public pages land below the sticky header. */
+  html:has([data-site-header]) {
+    scroll-padding-top: var(--header-h);
+  }
+
+  body {
+    font-family: var(--font-dm-sans), sans-serif;
+    background-color: #faf9f7;
+    color: #1a1a1a;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-playfair), serif;
+    line-height: 1.2;
+  }
+
+  /* Smooth transitions globally */
+  a,
+  button {
+    transition: all 0.2s ease;
+  }
 }
 
 .font-heading {
@@ -179,12 +217,6 @@ h6 {
 
 .font-lora {
   font-family: var(--font-lora), serif;
-}
-
-/* Smooth transitions globally */
-a,
-button {
-  transition: all 0.2s ease;
 }
 
 /* Custom scrollbar */
@@ -239,4 +271,119 @@ button {
   font-style: normal;
   font-weight: 600;
   letter-spacing: 0;
+}
+
+/* ── Public site: editorial building blocks (cartspace-style) ───────────── */
+@layer components {
+  /* One page width and gutter for every public section. */
+  .container-page {
+    @apply mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-10;
+  }
+
+  /* Small mono caps for labels, kickers and metadata. */
+  .eyebrow {
+    @apply font-label text-[0.6875rem] font-medium tracking-[0.16em] text-ink-muted uppercase;
+  }
+
+  /* Serif display type; size comes from the text-* utility beside it.
+     One <em> per headline carries the italic accent. */
+  .display {
+    font-family: var(--font-display);
+    font-weight: 400;
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+  .display em {
+    font-style: italic;
+  }
+
+  /* An underline that grows from the left on hover. */
+  .link-underline {
+    background-image: linear-gradient(currentColor, currentColor);
+    background-size: 0% 1px;
+    background-position: 0 100%;
+    background-repeat: no-repeat;
+    transition: background-size 400ms var(--ease-out-expo);
+  }
+  .link-underline:hover,
+  .link-underline:focus-visible,
+  .link-underline[aria-current="page"] {
+    background-size: 100% 1px;
+  }
+
+  /* Loading placeholder sweep, layered on a bg-surface block. */
+  .skeleton-shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+  .skeleton-shimmer::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgb(251 250 247 / 0.6),
+      transparent
+    );
+    animation: skeleton-shimmer 1.6s infinite;
+  }
+}
+
+@keyframes skeleton-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+}
+
+@keyframes hero-settle {
+  from {
+    transform: scale(1.08);
+  }
+}
+
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* Entrance for content that paints before hydration (hero copy, cards).
+   Stagger with style={{ "--i": index }}. */
+@utility animate-rise {
+  animation: rise 0.9s var(--ease-out-expo) both;
+  animation-delay: calc(min(var(--i, 0), 12) * 55ms);
+}
+
+/* Slow settle for large hero images. */
+@utility animate-hero-settle {
+  animation: hero-settle 2.2s var(--ease-out-expo) both;
+}
+
+@utility animate-marquee {
+  animation: marquee 40s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-shimmer::after,
+  .animate-rise,
+  .animate-hero-settle,
+  .animate-marquee {
+    animation: none;
+  }
+  .link-underline {
+    transition: none;
+  }
+  html {
+    scroll-behavior: auto;
+  }
 }

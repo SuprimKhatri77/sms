@@ -1,8 +1,9 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import Navbar from "../landing/Navbar";
-import Footer from "../landing/Footer";
+import { MotionProvider } from "../motion/motion-provider";
+import { SiteHeader } from "../site/site-header";
+import { SiteFooter } from "../site/site-footer";
 import WhatsAppFloat from "../landing/WhatsAppFloat";
 
 const EXCLUDE_NAV_FOOTER_ROUTES = ["/admin", "/auth", "/dashboard"];
@@ -20,11 +21,11 @@ export default function NavFooterWrapper({
   return hideNavFooter ? (
     <>{children}</>
   ) : (
-    <>
-      <Navbar />
+    <MotionProvider>
+      <SiteHeader />
       {children}
-      <Footer />
+      <SiteFooter />
       <WhatsAppFloat />
-    </>
+    </MotionProvider>
   );
 }

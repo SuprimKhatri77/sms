@@ -104,7 +104,7 @@ export default async function CoursePage({
       {/* ── Hero ── */}
       <section
         aria-labelledby="course-hero-heading"
-        className="relative overflow-hidden bg-(--brand-green) px-6 pb-16 pt-28 sm:pb-20 sm:pt-32"
+        className="relative overflow-hidden bg-(--brand-green) px-6 pb-16 pt-14 sm:pb-20 sm:pt-16"
       >
         <div
           className="pointer-events-none absolute inset-0 opacity-50"

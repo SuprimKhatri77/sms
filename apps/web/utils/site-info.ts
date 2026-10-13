@@ -30,6 +30,12 @@ export const siteInfo = {
   admission: {
     cycleLabel: "Admissions Open",
   },
+  /** Ticker notices in the public announcement bar. */
+  announcement: [
+    "Admissions open for the next intake",
+    "Barista · Bakery · Bartending",
+    "Hands-on training in Butwal",
+  ],
   stats: [
     { number: "1,200+", label: "Trainees Enrolled" },
     { number: "96%", label: "Placement Support Rate" },

@@ -1,27 +1,28 @@
 import Link from "next/link";
-import { ArrowLeft, Home, SearchX } from "lucide-react";
-import {
-  ErrorPageShell,
-  landingPrimaryButtonClass,
-  landingSecondaryButtonClass,
-} from "@/components/error-page-shell";
+import { ErrorPageShell } from "@/components/error-page-shell";
+import { ButtonArrow, siteButton } from "@/components/site/button";
 
 export function CertificateNotFound() {
   return (
     <ErrorPageShell
       eyebrow="Verification"
-      title="Certificate not found"
+      title={
+        <>
+          Certificate <em>not found.</em>
+        </>
+      }
       description="We couldn't find a certificate matching this verification link. Please check the URL or QR code and try again, or contact the academy if you believe this is an error."
-      icon={<SearchX size={24} strokeWidth={1.75} />}
       actions={
         <>
-          <Link href="/" className={landingPrimaryButtonClass}>
-            <Home size={16} strokeWidth={2.5} />
-            Back to Home
+          <Link href="/" className={siteButton({ variant: "pine", size: "lg" })}>
+            Back to home
+            <ButtonArrow />
           </Link>
-          <Link href="/#programs" className={landingSecondaryButtonClass}>
-            <ArrowLeft size={16} strokeWidth={2.5} />
-            View Programs
+          <Link
+            href="/#programs"
+            className={siteButton({ variant: "outline", size: "lg" })}
+          >
+            View courses
           </Link>
         </>
       }

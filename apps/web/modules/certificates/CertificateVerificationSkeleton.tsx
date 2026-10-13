@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 export function CertificateVerificationSkeleton() {
   return (
     <main className="min-h-screen bg-(--brand-cream)">
-      <section className={cn(landingCreamSectionClass, "pb-12 pt-28 sm:pt-32")}>
+      <section className={cn(landingCreamSectionClass, "pb-12 pt-14 sm:pt-16")}>
         <div className={landingContainerClass}>
           <div className="max-w-3xl text-left">
             <div className="mb-4 h-3 w-32 animate-pulse bg-[rgba(47,78,64,0.1)]" />
