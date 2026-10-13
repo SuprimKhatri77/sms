@@ -1,14 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import { ArrowLeftIcon, ArrowRightIcon } from "@phosphor-icons/react/ssr";
+import { InstructorCard } from "@/components/courses/InstructorCard";
 import { InstructorProfileDrawer } from "@/components/courses/InstructorProfileDrawer";
 import { Instructor, mentors } from "@/utils/mock";
 import { Reveal } from "@/components/motion/reveal";
 import { siteButton } from "@/components/site/button";
 import { SectionHeading } from "@/components/site/section-heading";
-import { cn } from "@/lib/utils";
 
 export default function Mentors() {
   const [selected, setSelected] = useState<Instructor | null>(null);
@@ -81,8 +80,8 @@ export default function Mentors() {
               key={mentor.name}
               className="w-[78%] shrink-0 snap-start sm:w-[44%] md:w-[31%] lg:w-[calc((100%-3*1.25rem)/4)]"
             >
-              <MentorCard
-                mentor={mentor}
+              <InstructorCard
+                instructor={mentor}
                 onViewProfile={() => setSelected(mentor)}
               />
             </li>
@@ -128,68 +127,5 @@ export default function Mentors() {
         />
       ) : null}
     </section>
-  );
-}
-
-function MentorCard({
-  mentor,
-  onViewProfile,
-}: {
-  mentor: Instructor;
-  onViewProfile: () => void;
-}) {
-  return (
-    <article className="group relative">
-      <div className="relative aspect-[4/5] overflow-hidden bg-surface">
-        {mentor.image ? (
-          <Image
-            src={mentor.image}
-            alt={`Portrait of ${mentor.name}, ${mentor.title}`}
-            fill
-            sizes="(min-width: 1024px) 24vw, (min-width: 768px) 31vw, (min-width: 640px) 44vw, 78vw"
-            className="object-cover object-top transition-transform duration-[1600ms] ease-out-expo group-hover:scale-[1.04] motion-reduce:transition-none"
-          />
-        ) : (
-          <div
-            aria-hidden
-            className="size-full opacity-35"
-            style={{ backgroundColor: mentor.imagePlaceholder }}
-          />
-        )}
-      </div>
-
-      <div className="mt-4 space-y-1">
-        <p className="font-label text-[0.6875rem] tracking-[0.16em] text-ink-muted uppercase">
-          {mentor.yearsExp} yrs experience
-        </p>
-        <h3 className="font-display text-2xl leading-tight text-ink sm:text-[1.75rem]">
-          {mentor.name}
-        </h3>
-        <p className="text-[0.8125rem] leading-snug text-ink-muted">
-          {mentor.title}
-        </p>
-      </div>
-
-      {mentor.hasProfileCard ? (
-        <button
-          type="button"
-          onClick={onViewProfile}
-          aria-label={`View full profile of ${mentor.name}`}
-          className={cn(
-            "group/btn mt-4 inline-flex items-center gap-2 text-[0.8125rem] text-ink outline-none",
-            // Stretch the click target over the whole card.
-            "after:absolute after:inset-0 focus-visible:after:ring-2 focus-visible:after:ring-clay focus-visible:after:ring-inset",
-          )}
-        >
-          <span className="link-underline group-hover:bg-size-[100%_1px] group-focus-visible/btn:bg-size-[100%_1px]">
-            View profile
-          </span>
-          <ArrowRightIcon
-            aria-hidden
-            className="size-3.5 transition-transform duration-300 ease-out-expo group-hover:translate-x-1"
-          />
-        </button>
-      ) : null}
-    </article>
   );
 }

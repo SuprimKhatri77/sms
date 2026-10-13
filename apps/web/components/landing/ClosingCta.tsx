@@ -5,9 +5,15 @@ import { ApplyButton } from "./ApplyButton";
 
 export default function ClosingCta({
   secondary = { href: "#programs", label: "Explore courses" },
+  applyHref,
 }: {
   /** The quiet link beside the Apply button. */
   secondary?: { href: string; label: string };
+  /**
+   * Make Apply a plain link here instead of the landing page's
+   * signed-in-student check (the course pages link straight to it).
+   */
+  applyHref?: string;
 }) {
   return (
     <section
@@ -26,10 +32,22 @@ export default function ClosingCta({
           Small cohorts, working mentors and commercial equipment from day one.
         </p>
         <div className="relative z-10 mt-10 flex flex-wrap items-center justify-center gap-x-7 gap-y-4">
-          <ApplyButton className={siteButton({ variant: "light", size: "lg" })}>
-            Apply for admission
-            <ButtonArrow />
-          </ApplyButton>
+          {applyHref ? (
+            <Link
+              href={applyHref}
+              className={siteButton({ variant: "light", size: "lg" })}
+            >
+              Apply for admission
+              <ButtonArrow />
+            </Link>
+          ) : (
+            <ApplyButton
+              className={siteButton({ variant: "light", size: "lg" })}
+            >
+              Apply for admission
+              <ButtonArrow />
+            </ApplyButton>
+          )}
           <Link
             href={secondary.href}
             className="link-underline text-[0.8125rem] text-paper outline-none"

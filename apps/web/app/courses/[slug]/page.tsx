@@ -1,57 +1,53 @@
 import { notFound } from "next/navigation";
+import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
 import {
-  ArrowLeft,
-  ArrowRight,
-  Award,
-  BarChart2,
-  Calendar,
-  CheckCircle2,
-  Clock,
-  Users,
-} from "lucide-react";
-import { getCourseBySlug, courses } from "@/utils/mock";
+  CertificateIcon,
+  ChatCircleTextIcon,
+  HandshakeIcon,
+  UsersThreeIcon,
+} from "@phosphor-icons/react/ssr";
+import { getCourseBySlug, courses, listedCourses } from "@/utils/mock";
+import { siteInfo } from "@/utils/site-info";
 import CourseClientShells from "@/components/courses/CourseClientShells";
-import { SectionLabel } from "@/components/courses/SectionLabel";
+import { CourseSectionHeading } from "@/components/courses/CourseSectionHeading";
 import { CurriculumAccordion } from "@/components/courses/CurriculumAccordion";
 import { VideoPlayer } from "@/components/courses/VideoPlayer";
 import { FaqList } from "@/components/courses/FAQ";
-import { getApiUrl } from "@/lib/api-url";
-import {
-  Coffee,
-  GlassWater,
-  CroissantIcon,
-  UtensilsCrossed,
-} from "lucide-react";
-import { JsonLd } from "@/components/seo/json-ld";
-import { createCourseJsonLd, createCourseMetadata } from "@/lib/seo";
-import { CourseDetailResponse } from "@repo/types";
 import { InstructorSection } from "@/components/courses/InstructorSection";
 import { ReadMoreText } from "@/components/courses/ReadMoreText";
-import { CoursePriceVatNote } from "@/components/courses/CoursePriceVatNote";
+import { MobileEnrolBar } from "@/components/courses/MobileEnrolBar";
 import {
-  courseBodyClass,
-  courseContainerClass,
-  courseCreamSection,
-  courseMutedSection,
-  coursePrimaryBtnClass,
-  courseSecondaryBtnClass,
-  courseSectionClass,
-  courseTitleClass,
+  COURSE_PRICE_VAT_NOTE,
   courseTones,
-  type CourseToneKey,
 } from "@/components/courses/course-styles";
+import ClosingCta from "@/components/landing/ClosingCta";
+import { JsonLd } from "@/components/seo/json-ld";
+import { Breadcrumbs } from "@/components/site/breadcrumbs";
+import { ButtonArrow, siteButton } from "@/components/site/button";
+import { SectionHeading } from "@/components/site/section-heading";
+import { createCourseJsonLd, createCourseMetadata } from "@/lib/seo";
+import { CourseCard } from "@/modules/courses/CourseCard";
+import {
+  formatFee,
+  getCourseFee,
+  getCourseFees,
+} from "@/modules/courses/course-fees";
 import { cn } from "@/lib/utils";
 
-const iconMap = {
-  coffee: Coffee,
-  bartending: GlassWater,
-  bakery: CroissantIcon,
-  sushi: UtensilsCrossed,
-} as const;
+export type IconKey = "coffee" | "bartending" | "bakery" | "sushi";
 
-export type IconKey = keyof typeof iconMap;
+const HERO_CTA_ID = "course-hero-cta";
+const ENROL_CARD_ID = "course-enrol";
+
+/* Clears the site header and the sticky section nav (h-12) when a section
+   is jumped to. */
+const sectionClass = "scroll-mt-16";
+
+// Only the courses in utils/mock.ts exist; anything else is a real 404
+// (notFound() alone would stream a 200 behind loading.tsx).
+export const dynamicParams = false;
 
 export function generateStaticParams() {
   return courses.map((c) => ({ slug: c.slug }));
@@ -68,391 +64,393 @@ export async function generateMetadata({
   return createCourseMetadata(course);
 }
 
+/** "Professional Barista Program" → "Professional Barista" + "Program." */
+function splitTitle(title: string) {
+  const words = title.trim().split(/\s+/);
+  const last = words.pop() ?? title;
+  return { lead: words.join(" "), last };
+}
+
 export default async function CoursePage({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const res = await fetch(`${getApiUrl()}/api/v1/courses/${slug}`);
-  if (!res.ok) throw new Error("Failed to fetch course data");
-  const data = (await res.json()) as CourseDetailResponse;
-  if (!data.success) throw new Error(data.message);
-
-  const courseFee = data.data.fee / 100;
+  // Unknown slugs 404 before anything is fetched.
   const course = getCourseBySlug(slug);
   if (!course) notFound();
 
-  const { icon } = course;
-  const Icon = iconMap[icon];
-  const tone = courseTones[icon as CourseToneKey];
-  const formatter = new Intl.NumberFormat("en-NP");
+  const [fee, allFees] = await Promise.all([
+    getCourseFee(slug),
+    getCourseFees(),
+  ]);
+  const feeLabel = fee != null ? formatFee(fee) : "Fee on request";
+
+  const tone = courseTones[course.icon];
+  const { lead, last } = splitTitle(course.course);
+  const otherCourses = listedCourses
+    .filter((c) => c.slug !== course.slug)
+    .slice(0, 3);
+  const whatsappHref = `https://wa.me/${siteInfo.contact.phone.replace(/\D/g, "")}?text=${encodeURIComponent(
+    `Hi, I'd like to know more about the ${course.name} course.`,
+  )}`;
 
   const metaItems = [
-    { icon: Clock, label: "Duration", value: course.duration },
-    { icon: BarChart2, label: "Level", value: course.difficulty },
-    { icon: Users, label: "Class size", value: `Max ${course.seats}` },
-    { icon: Calendar, label: "Next intake", value: course.startDates[0] },
-  ] as const;
+    { label: "Duration", value: course.duration },
+    { label: "Level", value: course.difficulty },
+    { label: "Class size", value: `Max ${course.seats}` },
+    { label: "Next intake", value: course.startDates[0] },
+  ];
+
+  const trust = [
+    { icon: CertificateIcon, text: "Certificate on completion" },
+    {
+      icon: UsersThreeIcon,
+      text: `Small cohorts of up to ${course.seats} students`,
+    },
+    { icon: HandshakeIcon, text: "Placement support after graduation" },
+  ];
 
   return (
-    <main
-      id="main-content"
-      className="min-h-screen bg-(--brand-cream) font-(family-name:--font-dm-sans) text-(--brand-ink)"
-    >
+    <main id="main-content" className="font-site text-ink">
       <JsonLd data={createCourseJsonLd(course)} />
+
       {/* ── Hero ── */}
       <section
         aria-labelledby="course-hero-heading"
-        className="relative overflow-hidden bg-(--brand-green) px-6 pb-16 pt-14 sm:pb-20 sm:pt-16"
+        className="container-page grid gap-10 pt-10 pb-14 sm:pt-14 lg:grid-cols-12 lg:items-center lg:gap-12 lg:pb-16"
       >
-        <div
-          className="pointer-events-none absolute inset-0 opacity-50"
-          aria-hidden
-          style={{
-            backgroundImage: `
-              linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)
-            `,
-            backgroundSize: "48px 48px",
-          }}
-        />
-        <div
-          className="pointer-events-none absolute right-0 top-0 h-80 w-80 rounded-full opacity-25 blur-3xl"
-          style={{ background: "rgba(194,138,79,0.2)" }}
-          aria-hidden
-        />
-
-        <div className={cn(courseContainerClass, "relative")}>
-          <Link
-            href="/courses"
-            aria-label="Back to all training programs"
-            className="mb-8 inline-flex items-center gap-2 font-(family-name:--font-dm-sans) text-[0.82rem] font-medium text-white/55 transition-colors hover:text-white"
+        <div className="space-y-7 lg:col-span-6">
+          <Breadcrumbs
+            className="animate-rise"
+            items={[
+              { label: "Home", href: "/" },
+              { label: "Courses", href: "/courses" },
+              { label: course.name },
+            ]}
+          />
+          <p
+            className="eyebrow animate-rise"
+            style={{ "--i": 1 } as React.CSSProperties}
           >
-            <ArrowLeft size={15} strokeWidth={2} />
-            All programs
-          </Link>
-
-          <div className="mb-6 flex flex-wrap items-center gap-3">
-            <div
-              className="grid h-11 w-11 place-items-center border"
-              aria-hidden
-              style={{
-                borderColor: tone.border,
-                backgroundColor: tone.soft,
-                color: tone.accent,
-              }}
-            >
-              <Icon size={20} strokeWidth={1.75} />
-            </div>
             <span
-              className="border px-3 py-1 font-(family-name:--font-dm-sans) text-[0.68rem] font-semibold uppercase tracking-[0.14em]"
-              style={{
-                borderColor: tone.border,
-                backgroundColor: tone.soft,
-                color: tone.accent,
-              }}
-            >
-              {course.tagline}
-            </span>
+              aria-hidden
+              className="mr-2 inline-block size-1.5 translate-y-[-1px] rounded-full"
+              style={{ backgroundColor: tone.accent }}
+            />
+            {course.tagline}
+          </p>
+          <h1
+            id="course-hero-heading"
+            className="display animate-rise text-[clamp(3.25rem,7vw,6.5rem)] text-ink"
+            style={{ "--i": 2 } as React.CSSProperties}
+          >
+            {lead ? `${lead} ` : null}
+            <em>{last}.</em>
+          </h1>
+          <div
+            className="animate-rise"
+            style={{ "--i": 3 } as React.CSSProperties}
+          >
+            <ReadMoreText text={course.longDescription} />
           </div>
-
-          <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1fr_340px] lg:items-end lg:gap-12">
-            <div>
-              <h1
-                id="course-hero-heading"
-                className="mb-4 font-[family-name:var(--font-playfair)] text-[clamp(2.2rem,5vw,3.5rem)] font-bold leading-[1.08] text-white"
+          <div
+            className="animate-rise flex flex-wrap items-center gap-x-7 gap-y-4"
+            style={{ "--i": 4 } as React.CSSProperties}
+          >
+            <Link
+              id={HERO_CTA_ID}
+              href="/admission"
+              className={siteButton({ variant: "pine", size: "lg" })}
+            >
+              Apply now
+              <ButtonArrow />
+            </Link>
+            <Link
+              href="/#inquiry"
+              className="link-underline text-[0.8125rem] text-ink outline-none"
+            >
+              Talk to an advisor
+            </Link>
+          </div>
+          <dl
+            aria-label="Program details"
+            className="animate-rise grid grid-cols-2 border-t border-hairline sm:grid-cols-4"
+            style={{ "--i": 5 } as React.CSSProperties}
+          >
+            {metaItems.map(({ label, value }) => (
+              <div
+                key={label}
+                className="flex flex-col gap-1.5 border-hairline py-4 pr-3 not-first:sm:border-l not-first:sm:pl-4 even:border-l even:pl-4 nth-[n+3]:border-t sm:nth-[n+3]:border-t-0"
               >
-                {course.course}
-              </h1>
-              <ReadMoreText text={course.longDescription} />
-              <div className="flex flex-wrap gap-3">
-                <Link href="/admission" className={coursePrimaryBtnClass}>
-                  Apply Now
-                  <ArrowRight size={16} strokeWidth={2.5} />
-                </Link>
-                <Link href="/#inquiry" className={courseSecondaryBtnClass}>
-                  Talk to an Advisor
-                </Link>
+                <dt className="font-label text-[0.625rem] tracking-[0.14em] text-ink-muted uppercase">
+                  {label}
+                </dt>
+                <dd className="text-[0.875rem] leading-snug text-ink">
+                  {value}
+                </dd>
               </div>
-            </div>
+            ))}
+          </dl>
+        </div>
 
-            <div
-              className="grid grid-cols-2 gap-2.5 sm:gap-3"
-              role="list"
-              aria-label="Program details"
-            >
-              {metaItems.map(({ icon: MetaIcon, label, value }) => (
-                <div
-                  key={label}
-                  role="listitem"
-                  className="border border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.04)] p-4"
-                >
-                  <MetaIcon
-                    className="mb-2 h-4 w-4 text-white/40"
-                    strokeWidth={1.75}
-                    aria-hidden
-                  />
-                  <p className="mb-0.5 font-(family-name:--font-dm-sans) text-[0.68rem] uppercase tracking-widest text-white/40">
-                    {label}
-                  </p>
-                  <p className="font-(family-name:--font-dm-sans) text-[0.88rem] font-semibold text-white">
-                    {value}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
+        <div className="relative aspect-[4/5] overflow-hidden bg-surface sm:aspect-[16/11] lg:col-span-6 lg:aspect-[5/6] lg:max-h-[calc(100svh-var(--header-h)-4rem)] lg:w-full">
+          <Image
+            src={course.videoPlaceholder}
+            alt={`${course.name} training at ${siteInfo.company.shortName}`}
+            fill
+            preload
+            sizes="(min-width: 1024px) 46vw, 100vw"
+            className="animate-hero-settle object-cover"
+          />
         </div>
       </section>
 
       <CourseClientShells
-        toneKey={icon as CourseToneKey}
+        toneKey={course.icon}
         showInstructor={course.instructors.length > 0}
       />
 
-      {/* ── Video (featured) ── */}
-      <section
-        id="video"
-        aria-labelledby="course-video-heading"
-        className={cn(courseSectionClass, courseCreamSection)}
-      >
-        <div className={courseContainerClass}>
-          <div className="mb-10 grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-center lg:gap-12">
-            <div>
-              <SectionLabel>Program Preview</SectionLabel>
-              <h2 id="course-video-heading" className={courseTitleClass}>
-                <em
-                  className="font-medium text-(--brand-brown)"
-                  style={{ fontStyle: "italic" }}
-                >
-                  Training Lab
-                </em>
-              </h2>
-              <p className={cn(courseBodyClass, "mt-4 max-w-lg")}>
-                See how our {course.course.toLowerCase()} sessions run — real
-                equipment, guided practice, and the pace you can expect in
-                class.
-              </p>
-              <ul className="mt-6 flex flex-col gap-3">
-                {[
-                  "Hands-on demonstrations from working professionals",
-                  "Small cohorts with direct instructor feedback",
-                  "Industry-standard tools and workflows",
-                ].map((item) => (
-                  <li
-                    key={item}
-                    className="flex items-start gap-2.5 font-(family-name:--font-dm-sans) text-[0.88rem] text-[rgba(47,78,64,0.65)]"
-                  >
-                    <CheckCircle2
-                      className="mt-0.5 h-4 w-4 shrink-0 text-(--brand-brown)"
-                      strokeWidth={2}
-                      aria-hidden
-                    />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <VideoPlayer course={course} />
-          </div>
-        </div>
-      </section>
-
-      {/* ── Overview ── */}
-      <section
-        id="overview"
-        aria-labelledby="course-overview-heading"
-        className={cn(courseSectionClass, courseMutedSection)}
-      >
-        <div className={courseContainerClass}>
-          <div className="grid grid-cols-1 gap-12 lg:grid-cols-[1fr_380px] lg:gap-16">
-            <div>
-              <SectionLabel>About This Program</SectionLabel>
-              <h2 id="course-overview-heading" className={courseTitleClass}>
-                <em
-                  className="font-medium text-(--brand-brown)"
-                  style={{ fontStyle: "italic" }}
-                >
-                  Learn & Become
-                </em>
-              </h2>
-              <p className={cn(courseBodyClass, "mt-5 max-w-prose")}>
-                {course.longDescription}
-              </p>
-
-              <div className="mt-10">
-                <div
-                  className="inline-flex flex-col gap-1 border px-6 py-4"
-                  style={{
-                    borderColor: tone.border,
-                    backgroundColor: tone.soft,
-                  }}
-                >
-                  <div className="flex items-baseline gap-2">
-                    <span className="font-(family-name:--font-dm-sans) text-sm text-[rgba(47,78,64,0.5)]">
-                      NPR
-                    </span>
-                    <span className="font-(family-name:--font-lora) text-[2rem] font-bold tracking-tight text-(--brand-green)">
-                      {formatter.format(courseFee)}
-                    </span>
-                  </div>
-                  <span className="font-(family-name:--font-dm-sans) text-[0.8rem] text-[rgba(47,78,64,0.5)]">
-                    Full program · materials included
-                  </span>
-                </div>
-                <CoursePriceVatNote className="mt-2" />
-              </div>
-            </div>
-
-            <div className="border border-[rgba(47,78,64,0.1)] bg-white p-6 sm:p-7">
-              <div className="mb-5 flex items-center gap-2.5">
-                <Award
-                  className="h-4 w-4 text-(--brand-green)"
-                  strokeWidth={1.75}
-                  aria-hidden
-                />
-                <h3 className="font-(family-name:--font-dm-sans) text-[0.95rem] font-semibold text-(--brand-green)">
-                  Learning Outcomes
-                </h3>
-              </div>
-              <ul className="flex flex-col gap-3.5">
-                {course.outcomes.map((outcome) => (
-                  <li
-                    key={outcome}
-                    className="flex items-start gap-3 font-(family-name:--font-dm-sans) text-[0.875rem] leading-[1.6] text-[rgba(47,78,64,0.65)]"
-                  >
-                    <CheckCircle2
-                      className="mt-0.5 h-4 w-4 shrink-0"
-                      style={{ color: tone.accent }}
-                      strokeWidth={2}
-                      aria-hidden
-                    />
-                    {outcome}
-                  </li>
-                ))}
-              </ul>
-
-              <div className="mt-7 border-t border-[rgba(47,78,64,0.08)] pt-6">
-                <p className="mb-3 font-(family-name:--font-dm-sans) text-[0.72rem] font-semibold uppercase tracking-widest text-[rgba(47,78,64,0.4)]">
-                  Upcoming start dates
-                </p>
-                <ul className="flex flex-col gap-2">
-                  {course.startDates.map((date, i) => (
-                    <li
-                      key={date}
-                      className="flex items-start justify-between gap-3 font-(family-name:--font-dm-sans) text-[0.875rem]"
-                    >
-                      <span className="min-w-0 flex-1 leading-snug text-[rgba(47,78,64,0.65)]">
-                        {date}
-                      </span>
-                      {i === 0 ? (
-                        <span
-                          className="shrink-0 whitespace-nowrap border px-2.5 py-0.5 text-[0.68rem] font-semibold uppercase tracking-wide"
-                          style={{
-                            borderColor: tone.border,
-                            color: tone.accent,
-                            backgroundColor: tone.soft,
-                          }}
-                        >
-                          Next intake
-                        </span>
-                      ) : null}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Curriculum ── */}
-      <section
-        id="curriculum"
-        aria-labelledby="course-curriculum-heading"
-        className={cn(courseSectionClass, courseCreamSection)}
-      >
-        <div className={courseContainerClass}>
-          <SectionLabel>Week by Week</SectionLabel>
-          <h2
-            id="course-curriculum-heading"
-            className={cn(courseTitleClass, "mb-10")}
+      {/* ── Body ── */}
+      <div className="container-page grid gap-16 py-16 sm:py-20 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:gap-20">
+        <div className="min-w-0 space-y-20 sm:space-y-28">
+          <section
+            id="video"
+            aria-labelledby="course-video-heading"
+            className={sectionClass}
           >
-            Full Curriculum
-          </h2>
-          <CurriculumAccordion course={course} accent={tone.accent} />
-        </div>
-      </section>
+            <CourseSectionHeading
+              id="course-video-heading"
+              eyebrow="Program preview"
+              title={
+                <>
+                  Inside the <em>training lab.</em>
+                </>
+              }
+            />
+            <VideoPlayer course={course} />
+            <p className="mt-6 max-w-prose text-[0.9375rem] leading-relaxed text-ink-muted">
+              See how our {course.name.toLowerCase()} sessions run: real
+              equipment, guided practice, and the pace you can expect in class.
+            </p>
+          </section>
 
-      {/* ── Instructor ── */}
-      {course.instructors.length > 0 ? (
-        <section
-          id="instructor"
-          aria-labelledby="course-instructor-heading"
-          className={cn(courseSectionClass, courseMutedSection)}
+          <section
+            id="overview"
+            aria-labelledby="course-overview-heading"
+            className={sectionClass}
+          >
+            <CourseSectionHeading
+              id="course-overview-heading"
+              eyebrow="About this program"
+              title={
+                <>
+                  Learn and <em>become.</em>
+                </>
+              }
+            />
+            <p className="max-w-prose text-[0.9375rem] leading-relaxed text-ink-muted">
+              {course.longDescription}
+            </p>
+            <h3 className="eyebrow mt-12 mb-2">What you&apos;ll be able to do</h3>
+            <ol className="border-t border-hairline">
+              {course.outcomes.map((outcome, i) => (
+                <li
+                  key={outcome}
+                  className="grid grid-cols-[2.5rem_1fr] items-baseline border-b border-hairline py-4"
+                >
+                  <span className="font-label text-[0.6875rem] tracking-[0.12em] text-ink-muted">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <span className="text-[0.9375rem] leading-relaxed text-ink">
+                    {outcome}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          </section>
+
+          <section
+            id="curriculum"
+            aria-labelledby="course-curriculum-heading"
+            className={sectionClass}
+          >
+            <CourseSectionHeading
+              id="course-curriculum-heading"
+              eyebrow="Week by week"
+              title={
+                <>
+                  The full <em>curriculum.</em>
+                </>
+              }
+            />
+            <CurriculumAccordion course={course} accent={tone.accent} />
+          </section>
+
+          {course.instructors.length > 0 ? (
+            <section
+              id="instructor"
+              aria-labelledby="course-instructor-heading"
+              className={sectionClass}
+            >
+              <InstructorSection
+                instructors={course.instructors}
+                accent={tone.accent}
+              />
+            </section>
+          ) : null}
+
+          <section
+            id="faq"
+            aria-labelledby="course-faq-heading"
+            className={sectionClass}
+          >
+            <CourseSectionHeading
+              id="course-faq-heading"
+              eyebrow="Common questions"
+              title={
+                <>
+                  Good to <em>know.</em>
+                </>
+              }
+            />
+            <FaqList course={course} />
+          </section>
+        </div>
+
+        {/* ── Enrol card ── */}
+        <aside
+          aria-labelledby="course-enrol-heading"
+          className="lg:sticky lg:top-[calc(var(--header-h)+5rem)] lg:self-start"
         >
-          <InstructorSection
-            instructors={course.instructors}
-            accent={tone.accent}
-          />
+          <div
+            id={ENROL_CARD_ID}
+            className="border border-hairline bg-surface p-6 sm:p-8"
+          >
+            <h2 id="course-enrol-heading" className="eyebrow">
+              Course fee
+            </h2>
+            <p className="mt-3 font-display text-5xl leading-none text-ink tabular-nums">
+              {feeLabel}
+            </p>
+            {fee != null ? (
+              <p className="mt-2 text-[0.75rem] text-ink-muted">
+                {COURSE_PRICE_VAT_NOTE} · Full program, materials included
+              </p>
+            ) : (
+              <p className="mt-2 text-[0.75rem] text-ink-muted">
+                Ask us for the current fee and payment options.
+              </p>
+            )}
+
+            <div className="mt-7 border-t border-hairline pt-5">
+              <p className="eyebrow">Start dates</p>
+              <ul className="mt-3 flex flex-wrap gap-2">
+                {course.startDates.map((date, i) => (
+                  <li
+                    key={date}
+                    className={cn(
+                      "rounded-full border px-3 py-1.5 text-[0.75rem]",
+                      i === 0
+                        ? "border-ink bg-ink text-paper"
+                        : "border-hairline text-ink",
+                    )}
+                  >
+                    {date}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="mt-7 grid gap-2">
+              <Link
+                href="/admission"
+                className={cn(
+                  siteButton({ variant: "pine", size: "lg" }),
+                  "w-full",
+                )}
+              >
+                Apply now
+                <ButtonArrow />
+              </Link>
+              <a
+                href={whatsappHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={cn(
+                  siteButton({ variant: "outline", size: "lg" }),
+                  "w-full",
+                )}
+              >
+                <ChatCircleTextIcon weight="light" className="size-4" />
+                Talk to an advisor
+              </a>
+            </div>
+
+            <ul className="mt-7 space-y-3 border-t border-hairline pt-5">
+              {trust.map(({ icon: Icon, text }) => (
+                <li
+                  key={text}
+                  className="flex items-center gap-3 text-[0.8125rem] text-ink"
+                >
+                  <Icon
+                    aria-hidden
+                    weight="light"
+                    className="size-5 shrink-0 text-clay"
+                  />
+                  {text}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </aside>
+      </div>
+
+      {/* ── Other courses ── */}
+      {otherCourses.length > 0 ? (
+        <section
+          aria-labelledby="other-courses-heading"
+          className="border-t border-hairline bg-paper"
+        >
+          <div className="container-page py-20 sm:py-28">
+            <SectionHeading
+              id="other-courses-heading"
+              eyebrow="Keep exploring"
+              title={
+                <>
+                  Other <em>courses.</em>
+                </>
+              }
+              href="/courses"
+              linkLabel="View all courses"
+            />
+            <div className="grid gap-x-5 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
+              {otherCourses.map((other, i) => (
+                <CourseCard
+                  key={other.slug}
+                  course={other}
+                  fee={allFees?.get(other.name.toLowerCase())}
+                  index={i}
+                  headingLevel="h3"
+                />
+              ))}
+            </div>
+          </div>
         </section>
       ) : null}
 
-      {/* ── FAQ ── */}
-      <section
-        id="faq"
-        aria-labelledby="course-faq-heading"
-        className={cn(courseSectionClass, courseCreamSection)}
-      >
-        <div className={courseContainerClass}>
-          <SectionLabel>Common Questions</SectionLabel>
-          <h2 id="course-faq-heading" className={cn(courseTitleClass, "mb-10")}>
-            FAQ
-          </h2>
-          <FaqList course={course} />
-        </div>
-      </section>
+      <ClosingCta
+        applyHref="/admission"
+        secondary={{ href: "/#inquiry", label: "Talk to an advisor" }}
+      />
 
-      {/* ── CTA ── */}
-      <section
-        className={cn(courseSectionClass, "pb-24 pt-4", courseCreamSection)}
-      >
-        <div className={courseContainerClass}>
-          <div className="overflow-hidden border border-[rgba(47,78,64,0.12)] bg-(--brand-green)">
-            <div
-              className="h-1 w-full"
-              style={{ backgroundColor: tone.accent }}
-            />
-            <div className="flex flex-col items-start justify-between gap-8 px-6 py-10 sm:flex-row sm:items-center sm:px-10 sm:py-12">
-              <div>
-                <h2 className="font-[family-name:var(--font-playfair)] text-[clamp(1.5rem,3vw,2rem)] font-bold leading-tight text-white">
-                  Ready to begin your{" "}
-                  <em
-                    className="font-medium text-(--brand-brown)"
-                    style={{ fontStyle: "italic" }}
-                  >
-                    {course.course} journey?
-                  </em>
-                </h2>
-                <p className="mt-2 font-(family-name:--font-dm-sans) text-[0.9rem] text-white/55">
-                  Next cohort starts {course.startDates[0]} · Only{" "}
-                  {course.seats} seats per intake.
-                </p>
-              </div>
-              <div className="flex shrink-0 flex-col gap-3 sm:flex-row">
-                <Link href="/admission" className={coursePrimaryBtnClass}>
-                  Apply Now
-                  <ArrowRight size={16} strokeWidth={2.5} />
-                </Link>
-                <Link href="/#inquiry" className={courseSecondaryBtnClass}>
-                  Ask a Question
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <MobileEnrolBar
+        name={course.name}
+        feeLabel={feeLabel}
+        heroCtaId={HERO_CTA_ID}
+        enrolCardId={ENROL_CARD_ID}
+      />
     </main>
   );
 }

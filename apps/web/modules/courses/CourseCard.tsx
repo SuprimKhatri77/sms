@@ -16,13 +16,17 @@ export function CourseCard({
   course,
   fee,
   index,
+  headingLevel = "h2",
 }: {
   course: CourseDetail;
+  /** h3 when the cards sit under a section heading. */
+  headingLevel?: "h2" | "h3";
   /** In paisa; undefined when the fee couldn't be loaded. */
   fee: number | undefined;
   index: number;
 }) {
   const facts = [course.duration, course.format, course.difficulty];
+  const Heading = headingLevel;
 
   return (
     <article
@@ -55,14 +59,14 @@ export function CourseCard({
         <p className="eyebrow">
           {courseCategories[course.category]} · {course.tagline}
         </p>
-        <h2 className="mt-3 font-display text-4xl leading-none text-ink sm:text-5xl">
+        <Heading className="mt-3 font-display text-4xl leading-none text-ink sm:text-5xl">
           <Link
             href={`/courses/${course.slug}`}
             className="outline-none after:absolute after:inset-0 focus-visible:after:ring-2 focus-visible:after:ring-clay focus-visible:after:ring-offset-4 focus-visible:after:ring-offset-paper"
           >
             {course.name}
           </Link>
-        </h2>
+        </Heading>
         <p className="mt-3 line-clamp-3 max-w-md text-[0.875rem] leading-relaxed text-ink-muted">
           {course.shortDescription}
         </p>

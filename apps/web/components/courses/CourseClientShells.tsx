@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { CourseToneKey } from "./course-styles";
-import { courseContainerClass, courseTones } from "./course-styles";
+import { courseTones } from "./course-styles";
+import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   { id: "video", label: "Watch" },
@@ -80,23 +81,15 @@ export default function CourseClientShells({
 
       <nav
         aria-label="Course sections"
-        className="sticky top-(--header-h) z-30 border-b border-[rgba(47,78,64,0.1)] bg-(--brand-cream)/95 backdrop-blur-md transition-shadow duration-200"
-        style={{
-          boxShadow: stuck ? "0 4px 20px rgba(47,78,64,0.06)" : "none",
-        }}
+        className={cn(
+          "sticky top-(--header-h) z-30 border-y font-site transition-[background-color,border-color] duration-500",
+          stuck
+            ? "border-hairline bg-paper/90 backdrop-blur-xl backdrop-saturate-150"
+            : "border-hairline bg-paper",
+        )}
       >
-        <div className="relative">
-          <div
-            className="pointer-events-none absolute inset-y-0 left-0 z-10 w-6 bg-linear-to-r from-(--brand-cream) to-transparent sm:w-8"
-            aria-hidden
-          />
-          <div
-            className="pointer-events-none absolute inset-y-0 right-0 z-10 w-6 bg-linear-to-l from-(--brand-cream) to-transparent sm:w-8"
-            aria-hidden
-          />
-          <div
-            className={`${courseContainerClass} flex items-center gap-0.5 overflow-x-auto px-4 scrollbar-none snap-x snap-mandatory sm:gap-1 sm:px-6`}
-          >
+        <div className="container-page">
+          <div className="scrollbar-hidden -mx-4 flex h-12 items-stretch overflow-x-auto px-1 sm:px-0">
             {navItems.map(({ id, label }) => {
               const isActive = activeId === id;
               return (
@@ -105,16 +98,15 @@ export default function CourseClientShells({
                   type="button"
                   onClick={() => scrollTo(id)}
                   aria-current={isActive ? "location" : undefined}
-                  className="relative shrink-0 snap-start px-3.5 py-3 font-(family-name:--font-dm-sans) text-[0.82rem] font-medium transition-colors duration-150 sm:px-4 sm:py-3.5 sm:text-[0.85rem]"
-                  style={{
-                    color: isActive
-                      ? "var(--brand-green)"
-                      : "rgba(47,78,64,0.45)",
-                  }}
+                  className={cn(
+                    "relative shrink-0 px-3 text-[0.8125rem] outline-none transition-colors duration-300 hover:text-ink focus-visible:text-ink focus-visible:underline sm:px-4",
+                    isActive ? "text-ink" : "text-ink-muted",
+                  )}
                 >
                   {label}
                   <span
-                    className="absolute bottom-0 left-3.5 right-3.5 h-0.5 origin-left transition-transform duration-300 sm:left-4 sm:right-4"
+                    aria-hidden
+                    className="absolute inset-x-3 bottom-0 h-px origin-left transition-transform duration-500 ease-out-expo sm:inset-x-4"
                     style={{
                       backgroundColor: tone.accent,
                       transform: isActive ? "scaleX(1)" : "scaleX(0)",
