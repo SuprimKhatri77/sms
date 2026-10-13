@@ -6,20 +6,19 @@ import { APIResponse, type InquiryForm, inquiryFormSchema } from "@repo/types";
 import { useForm } from "@tanstack/react-form-nextjs";
 import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
-import { Check, ChevronDown } from "lucide-react";
+import {
+  CaretDownIcon,
+  CheckCircleIcon,
+  CheckIcon,
+  PaperPlaneTiltIcon,
+} from "@phosphor-icons/react/ssr";
 import { useEffect, useRef, useState, type ComponentProps } from "react";
 import { toast } from "sonner";
 import { siteInfo } from "@/utils/site-info";
-import {
-  landingContainerClass,
-  landingEyebrowClass,
-  landingMutedSectionClass,
-  landingPrimaryButtonClass,
-  landingSectionBodyClass,
-  landingSectionTitleClass,
-} from "./landing-styles";
 import { cn } from "@/lib/utils";
-import { LandingSectionPattern } from "./LandingSectionPattern";
+import { Spinner } from "@/components/ui/spinner";
+import { Reveal } from "@/components/motion/reveal";
+import { siteButton } from "@/components/site/button";
 
 const sourceOptions = [
   { value: "", label: "How did you hear about us?" },
@@ -30,109 +29,22 @@ const sourceOptions = [
   { value: "in_person", label: "In Person" },
 ];
 
-const PhoneIcon = () => (
-  <svg
-    width="18"
-    height="18"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    aria-hidden="true"
-  >
-    <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 8.81 19.79 19.79 0 01.18 2.18 2 2 0 012.18 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 7.91a16 16 0 006.18 6.18l1.28-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z" />
-  </svg>
-);
-
-const MailIcon = () => (
-  <svg
-    width="18"
-    height="18"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    aria-hidden="true"
-  >
-    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-    <polyline points="22,6 12,13 2,6" />
-  </svg>
-);
-
-const ClockIcon = () => (
-  <svg
-    width="18"
-    height="18"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    aria-hidden="true"
-  >
-    <circle cx="12" cy="12" r="10" />
-    <polyline points="12 6 12 12 16 14" />
-  </svg>
-);
-
-const CheckCircleIcon = () => (
-  <svg
-    width="48"
-    height="48"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.5"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    aria-hidden="true"
-  >
-    <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
-    <polyline points="22 4 12 14.01 9 11.01" />
-  </svg>
-);
-
-const SendIcon = () => (
-  <svg
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2.5"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    aria-hidden="true"
-  >
-    <line x1="22" y1="2" x2="11" y2="13" />
-    <polygon points="22 2 15 22 11 13 2 9 22 2" />
-  </svg>
-);
-
 const floatingLabelClass =
-  "pointer-events-none absolute left-0 top-5 font-(family-name:--font-dm-sans) text-[0.9rem] text-[rgba(47,78,64,0.5)] transition-all duration-200 peer-focus:top-0 peer-focus:text-[0.72rem] peer-focus:font-medium peer-focus:text-(--brand-brown) peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:text-[0.72rem] peer-[:not(:placeholder-shown)]:font-medium peer-[:not(:placeholder-shown)]:text-(--brand-green)";
+  "pointer-events-none absolute left-0 top-6 font-site text-[0.9375rem] text-ink-muted transition-all duration-300 ease-out-expo peer-focus:top-0 peer-focus:font-label peer-focus:text-[0.625rem] peer-focus:tracking-[0.16em] peer-focus:uppercase peer-focus:text-ink peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:font-label peer-[:not(:placeholder-shown)]:text-[0.625rem] peer-[:not(:placeholder-shown)]:tracking-[0.16em] peer-[:not(:placeholder-shown)]:uppercase";
 
 const underlineFieldClass =
-  "peer w-full border-0 border-b bg-transparent px-0 pt-6 pb-2.5 font-(family-name:--font-dm-sans) text-sm text-(--brand-ink) outline-none transition-[border-color] duration-200";
+  "peer w-full rounded-none border-0 border-b bg-transparent px-0 pt-7 pb-3 font-site text-[0.9375rem] text-ink outline-none transition-[border-color] duration-300";
 
 function fieldBorder(hasError: boolean) {
   return hasError
-    ? "border-red-400 focus:border-red-500"
-    : "border-[rgba(47,78,64,0.22)] focus:border-(--brand-green)";
+    ? "border-red-600 focus:border-red-700"
+    : "border-ink/20 hover:border-ink/40 focus:border-ink";
 }
 
 function FieldError({ message }: { message?: string }) {
   if (!message) return null;
   return (
-    <p
-      className="mt-1.5 font-(family-name:--font-dm-sans) text-[0.76rem] text-red-500"
-      role="alert"
-    >
+    <p className="mt-2 text-[0.75rem] text-red-700" role="alert">
       {message}
     </p>
   );
@@ -163,7 +75,7 @@ function FloatingInput({
         />
         <label htmlFor={id} className={floatingLabelClass}>
           {label}
-          {required ? <span className="text-red-500"> *</span> : null}
+          {required ? <span className="text-clay-deep"> *</span> : null}
         </label>
       </div>
       <FieldError message={error} />
@@ -201,7 +113,7 @@ function FloatingTextarea({
         />
         <label htmlFor={id} className={floatingLabelClass}>
           {label}
-          {required ? <span className="text-red-500"> *</span> : null}
+          {required ? <span className="text-clay-deep"> *</span> : null}
         </label>
       </div>
       <FieldError message={error} />
@@ -260,10 +172,10 @@ function FloatingSelect({
       <div className="relative pt-1">
         <label
           htmlFor={id}
-          className="pointer-events-none absolute left-0 top-0 z-10 font-(family-name:--font-dm-sans) text-[0.72rem] font-medium text-(--brand-brown)"
+          className="pointer-events-none absolute top-0 left-0 z-10 font-label text-[0.625rem] tracking-[0.16em] text-ink uppercase"
         >
           {label}
-          {required ? <span className="text-red-500"> *</span> : null}
+          {required ? <span className="text-clay-deep"> *</span> : null}
         </label>
 
         <button
@@ -276,19 +188,19 @@ function FloatingSelect({
           onClick={() => setOpen((current) => !current)}
           className={cn(
             "flex w-full items-center justify-between gap-3 border-0 border-b bg-transparent pt-6 pb-3 text-left",
-            "font-(family-name:--font-dm-sans) text-sm outline-none transition-[border-color] duration-200",
+            "font-site text-[0.9375rem] outline-none transition-[border-color] duration-300",
             fieldBorder(!!error),
-            open ? "border-(--brand-green)" : "focus-visible:border-(--brand-green)",
-            value ? "text-(--brand-ink)" : "text-[rgba(47,78,64,0.5)]",
+            open ? "border-ink" : "focus-visible:border-ink",
+            value ? "text-ink" : "text-ink-muted",
           )}
         >
           <span className="min-w-0 flex-1 leading-snug">{selectedLabel}</span>
-          <ChevronDown
+          <CaretDownIcon
+            weight="light"
             className={cn(
-              "h-4 w-4 shrink-0 text-(--brand-green) transition-transform duration-200",
+              "size-4 shrink-0 text-ink transition-transform duration-300 ease-out-expo",
               open && "rotate-180",
             )}
-            strokeWidth={2}
             aria-hidden
           />
         </button>
@@ -298,7 +210,7 @@ function FloatingSelect({
             id={listboxId}
             role="listbox"
             aria-label={label}
-            className="absolute left-0 right-0 top-[calc(100%+0.35rem)] z-50 overflow-hidden border border-[rgba(47,78,64,0.12)] bg-white shadow-[0_16px_40px_rgba(47,78,64,0.12)]"
+            className="animate-rise absolute top-[calc(100%+0.35rem)] right-0 left-0 z-50 overflow-hidden border border-hairline bg-paper shadow-[0_24px_48px_-24px_rgb(26_26_26/0.25)] [animation-duration:0.5s]"
           >
             {options.map((opt) => {
               const isSelected = value === opt.value;
@@ -315,17 +227,17 @@ function FloatingSelect({
                     }}
                     className={cn(
                       "flex w-full items-center justify-between gap-3 px-4 py-3 text-left",
-                      "font-(family-name:--font-dm-sans) text-sm transition-colors duration-150",
+                      "font-site text-[0.875rem] outline-none transition-colors duration-150 focus-visible:bg-surface",
                       isSelected
-                        ? "bg-[rgba(47,78,64,0.08)] font-medium text-(--brand-green)"
-                        : "text-[rgba(47,78,64,0.72)] hover:bg-[rgba(47,78,64,0.05)] hover:text-(--brand-green)",
+                        ? "bg-surface text-ink"
+                        : "text-ink-muted hover:bg-surface hover:text-ink",
                     )}
                   >
                     <span>{opt.label}</span>
                     {isSelected ? (
-                      <Check
-                        className="h-4 w-4 shrink-0 text-(--brand-brown)"
-                        strokeWidth={2.25}
+                      <CheckIcon
+                        weight="light"
+                        className="size-4 shrink-0 text-pine"
                         aria-hidden
                       />
                     ) : null}
@@ -343,24 +255,17 @@ function FloatingSelect({
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-interface ContactCardProps {
-  icon: React.ReactNode;
+function ContactRow({
+  label,
+  children,
+}: {
   label: string;
-  value: string;
-}
-
-function ContactCard({ icon, label, value }: ContactCardProps) {
+  children: React.ReactNode;
+}) {
   return (
-    <div className="flex items-start gap-4 border-b border-[rgba(47,78,64,0.1)] pb-5 last:border-b-0 last:pb-0">
-      <span className="mt-0.5 shrink-0 text-(--brand-brown)">{icon}</span>
-      <div>
-        <div className="mb-0.5 font-(family-name:--font-dm-sans) text-[0.72rem] font-semibold uppercase tracking-widest text-(--brand-brown)">
-          {label}
-        </div>
-        <div className="font-(family-name:--font-dm-sans) text-sm font-medium text-(--brand-green)">
-          {value}
-        </div>
-      </div>
+    <div className="grid grid-cols-[7rem_1fr] items-baseline gap-4 border-t border-hairline py-4 last:border-b">
+      <dt className="eyebrow">{label}</dt>
+      <dd className="text-[0.9375rem] text-ink">{children}</dd>
     </div>
   );
 }
@@ -414,107 +319,90 @@ export default function InquiryFormPage() {
     },
   });
 
+  const tel = siteInfo.contact.phone.replace(/\s/g, "");
+
   return (
     <section
       id="inquiry"
       aria-labelledby="inquiry-heading"
-      className={`${landingMutedSectionClass} relative overflow-hidden`}
+      className="border-t border-hairline bg-paper py-20 font-site sm:py-28"
     >
-      <LandingSectionPattern variant="inquiry" />
-      <div
-        className={`${landingContainerClass} grid grid-cols-1 items-start gap-16 lg:grid-cols-[1fr_1.25fr]`}
-      >
+      <div className="container-page grid grid-cols-1 items-start gap-14 lg:grid-cols-12 lg:gap-16">
         {/* ── Left: Info ── */}
-        <div>
-          <span className={`${landingEyebrowClass} mb-3 inline-block`}>
-            Get In Touch
-          </span>
-
-          <h2 id="inquiry-heading" className={`${landingSectionTitleClass} mb-5`}>
-            Have a Question?
-            <br />
-            <em
-              className="font-medium text-(--brand-brown)"
-              style={{ fontStyle: "italic" }}
-            >
-              Let&apos;s Talk.
-            </em>
+        <Reveal className="lg:col-span-5">
+          <p className="eyebrow">Get in touch</p>
+          <h2
+            id="inquiry-heading"
+            className="display mt-4 text-[2.75rem] text-ink sm:text-6xl lg:text-7xl"
+          >
+            Have a question? <em>Let&apos;s talk.</em>
           </h2>
-
-          <p className={`${landingSectionBodyClass} mb-10`}>
+          <p className="mt-5 max-w-md text-[0.9375rem] leading-relaxed text-ink-muted">
             Whether you&apos;re curious about our programs, fees, or how to
             apply — send us a message and our admissions team will respond
             promptly.
           </p>
 
-          <div className="flex flex-col gap-5">
-            <ContactCard
-              icon={<PhoneIcon />}
-              label="Call Us"
-              value={siteInfo.contact.phone}
-            />
-            <ContactCard
-              icon={<MailIcon />}
-              label="Email Us"
-              value={siteInfo.contact.email}
-            />
-            <ContactCard
-              icon={<ClockIcon />}
-              label="Office Hours"
-              value={siteInfo.contact.officeHours}
-            />
-          </div>
-        </div>
+          <dl className="mt-10">
+            <ContactRow label="Call us">
+              <a href={`tel:${tel}`} className="link-underline outline-none">
+                {siteInfo.contact.phone}
+              </a>
+            </ContactRow>
+            <ContactRow label="Email us">
+              <a
+                href={`mailto:${siteInfo.contact.email}`}
+                className="link-underline break-all outline-none"
+              >
+                {siteInfo.contact.email}
+              </a>
+            </ContactRow>
+            <ContactRow label="Office hours">
+              {siteInfo.contact.officeHours}
+            </ContactRow>
+            <ContactRow label="Visit">{siteInfo.contact.address}</ContactRow>
+          </dl>
+        </Reveal>
 
         {/* ── Right: Form ── */}
-        <div className="p-0 lg:pt-2">
+        <Reveal
+          delay={0.1}
+          className="border border-hairline bg-surface p-6 sm:p-10 lg:col-span-7"
+        >
           {submitted ? (
             /* ── Success state ── */
-            <div className="flex flex-col items-center text-center py-8 gap-4">
-              <span className="text-(--brand-green)">
-                <CheckCircleIcon />
-              </span>
-              <h3
-                className="text-2xl font-semibold"
-                style={{
-                  fontFamily: "var(--font-playfair)",
-                  color: "var(--brand-green)",
-                }}
-              >
-                Inquiry Sent!
+            <div
+              role="status"
+              className="flex flex-col items-start gap-5 py-10 sm:py-16"
+            >
+              <CheckCircleIcon
+                weight="light"
+                className="size-12 text-pine"
+                aria-hidden
+              />
+              <h3 className="display text-5xl text-ink">
+                Inquiry <em>sent.</em>
               </h3>
-              <p
-                className="text-sm leading-relaxed max-w-xs"
-                style={{ fontFamily: "var(--font-dm-sans)", color: "#666" }}
-              >
+              <p className="max-w-sm text-[0.9375rem] leading-relaxed text-ink-muted">
                 Thank you for reaching out. Our admissions team will contact you
                 within 24 hours.
               </p>
               <button
                 type="button"
                 onClick={() => setSubmitted(false)}
-                className={`${landingPrimaryButtonClass} mt-2 cursor-pointer bg-(--brand-green) hover:brightness-100`}
+                className={cn(siteButton({ variant: "outline", size: "md" }), "mt-2")}
               >
-                Send Another
+                Send another
               </button>
             </div>
           ) : (
             /* ── Form fields ── */
             <>
-              <h3
-                className="text-xl font-semibold mb-1"
-                style={{
-                  fontFamily: "var(--font-playfair)",
-                  color: "var(--brand-green)",
-                }}
-              >
-                Send an Inquiry
+              <h3 className="font-display text-4xl text-ink">
+                Send an inquiry
               </h3>
-              <p
-                className="text-[0.83rem] mb-7"
-                style={{ fontFamily: "var(--font-dm-sans)", color: "#999" }}
-              >
-                Fields marked <span className="text-red-500">*</span> are
+              <p className="mt-2 mb-8 text-[0.8125rem] text-ink-muted">
+                Fields marked <span className="text-clay-deep">*</span> are
                 required.
               </p>
 
@@ -626,27 +514,31 @@ export default function InquiryFormPage() {
                 <button
                   type="submit"
                   disabled={isPending}
-                  className={`${landingPrimaryButtonClass} w-full cursor-pointer py-3.5 disabled:cursor-not-allowed disabled:opacity-60`}
+                  className={cn(
+                    siteButton({ variant: "pine", size: "lg" }),
+                    "mt-2 w-full sm:w-auto sm:self-start",
+                  )}
                 >
                   {isPending ? (
                     <>
-                      <span
-                        className="inline-block w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin"
-                        aria-hidden="true"
-                      />
-                      Sending...
+                      <Spinner />
+                      Sending…
                     </>
                   ) : (
                     <>
-                      Send Inquiry
-                      <SendIcon />
+                      Send inquiry
+                      <PaperPlaneTiltIcon
+                        weight="light"
+                        aria-hidden
+                        className="size-4 transition-transform duration-300 ease-out-expo group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5"
+                      />
                     </>
                   )}
                 </button>
               </form>
             </>
           )}
-        </div>
+        </Reveal>
       </div>
     </section>
   );

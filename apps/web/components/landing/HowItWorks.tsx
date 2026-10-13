@@ -1,137 +1,94 @@
-import { FileText, MessageCircle, PartyPopper, Search } from "lucide-react";
-import {
-  landingContainerClass,
-  landingEyebrowClass,
-  landingMutedSectionClass,
-  landingSectionBodyClass,
-  landingSectionTitleClass,
-} from "./landing-styles";
-import { LandingPatternCard } from "./LandingPatternCard";
+"use client";
+
+import { m } from "motion/react";
+import { EASE_OUT } from "@/lib/motion";
+import { Reveal, Stagger, StaggerItem } from "@/components/motion/reveal";
+import { SectionHeading } from "@/components/site/section-heading";
 
 const steps = [
   {
-    step: "01",
-    title: "Send an Inquiry",
+    title: "Send an inquiry",
     description:
       "Fill out our inquiry form with your details and questions. Our team will respond within 24 hours.",
-    icon: MessageCircle,
-    tone: "brown" as const,
   },
   {
-    step: "02",
-    title: "Submit Application",
+    title: "Submit your application",
     description:
       "Complete the online admission form with your details and preferred training program.",
-    icon: FileText,
-    tone: "green" as const,
   },
   {
-    step: "03",
-    title: "Admin Review",
+    title: "Admissions review",
     description:
       "Our admissions team reviews your application and confirms the next steps.",
-    icon: Search,
-    tone: "brown" as const,
   },
   {
-    step: "04",
-    title: "Welcome Aboard",
+    title: "Welcome aboard",
     description:
       "Once approved, receive your confirmation and begin your training journey with us.",
-    icon: PartyPopper,
-    tone: "green" as const,
   },
 ];
-
-const toneStyles = {
-  brown: {
-    iconWrap: "border-[rgba(194,138,79,0.25)] bg-[rgba(194,138,79,0.1)] text-(--brand-brown)",
-    step: "text-[rgba(194,138,79,0.22)]",
-    bar: "from-(--brand-brown)",
-  },
-  green: {
-    iconWrap: "border-[rgba(47,78,64,0.15)] bg-[rgba(47,78,64,0.06)] text-(--brand-green)",
-    step: "text-[rgba(47,78,64,0.12)]",
-    bar: "from-(--brand-green)",
-  },
-};
 
 export default function HowItWorks() {
   return (
     <section
       id="how-it-works"
       aria-labelledby="how-it-works-heading"
-      className={landingMutedSectionClass}
+      className="bg-pine py-20 font-site text-paper sm:py-28"
     >
-      <div className={landingContainerClass}>
-        <div className="mb-16 max-w-2xl">
-          <span className={`${landingEyebrowClass} mb-4 inline-block`}>
-            The Process
-          </span>
-          <h2 id="how-it-works-heading" className={landingSectionTitleClass}>
-            How Enrollment
-            <br />
-            <em
-              className="font-medium text-(--brand-brown)"
-              style={{ fontStyle: "italic" }}
-            >
-              Works
-            </em>
-          </h2>
-          <p className={`${landingSectionBodyClass} mt-4`}>
-            We&apos;ve kept admissions straightforward and transparent — so you
-            can focus on choosing the right program.
-          </p>
-        </div>
+      <div className="container-page">
+        <Reveal>
+          <SectionHeading
+            id="how-it-works-heading"
+            tone="light"
+            eyebrow="The process"
+            title={
+              <>
+                How enrollment <em>works.</em>
+              </>
+            }
+            description="We've kept admissions straightforward and transparent — so you can focus on choosing the right program."
+          />
+        </Reveal>
 
-        <ol className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {steps.map((step, idx) => {
-            const Icon = step.icon;
-            const tone = toneStyles[step.tone];
-            return (
-              <li key={step.step} className="relative list-none">
-                {idx < steps.length - 1 ? (
-                  <div
-                    className="absolute top-10 -right-2.5 z-[1] hidden h-px w-5 bg-[rgba(47,78,64,0.15)] lg:block"
-                    aria-hidden
-                  />
-                ) : null}
+        <div className="relative">
+          {/* A line that draws across the steps as they come into view. */}
+          <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-white/15">
+            <m.div
+              className="h-full origin-left bg-clay"
+              initial={{ scaleX: 0 }}
+              whileInView={{ scaleX: 1 }}
+              viewport={{ once: true, margin: "0px 0px -12% 0px" }}
+              transition={{ duration: 1.6, ease: EASE_OUT, delay: 0.2 }}
+            />
+          </div>
 
-                <LandingPatternCard
-                  tone={step.tone}
-                  index={idx}
-                  className="flex h-full flex-col"
+          <Stagger
+            gap={0.12}
+            delay={0.2}
+            className="grid sm:grid-cols-2 lg:grid-cols-4"
+          >
+            {steps.map((step, i) => (
+              <StaggerItem
+                key={step.title}
+                className="border-white/15 pt-8 pb-10 not-first:border-t sm:not-first:border-t-0 sm:nth-[n+3]:border-t sm:odd:border-r sm:odd:pr-8 sm:even:pl-8 lg:nth-[n+3]:border-t-0 lg:border-r lg:px-8 lg:first:pl-0 lg:last:border-r-0"
+              >
+                <p
+                  aria-hidden
+                  className="font-label text-5xl font-light tracking-[-0.04em] text-clay"
                 >
-                  <div className="mb-6 flex items-center justify-between">
-                    <div
-                      className={`grid h-[52px] w-[52px] place-items-center border ${tone.iconWrap}`}
-                    >
-                      <Icon size={22} strokeWidth={1.75} aria-hidden />
-                    </div>
-                    <span
-                      className={`font-[family-name:var(--font-playfair)] text-[2rem] font-extrabold leading-none ${tone.step}`}
-                    >
-                      {step.step}
-                    </span>
-                  </div>
-
-                  <h3 className="mb-2 font-[family-name:var(--font-playfair)] text-[1.05rem] font-semibold text-(--brand-green)">
-                    {step.title}
-                  </h3>
-                  <p className="font-(family-name:--font-dm-sans) text-[0.88rem] leading-[1.65] text-[rgba(47,78,64,0.58)]">
-                    {step.description}
-                  </p>
-
-                  <div className="mt-auto pt-6">
-                    <div
-                      className={`h-[3px] bg-gradient-to-r ${tone.bar} to-transparent`}
-                    />
-                  </div>
-                </LandingPatternCard>
-              </li>
-            );
-          })}
-        </ol>
+                  {String(i + 1).padStart(2, "0")}
+                </p>
+                <h3 className="mt-10 font-display text-3xl leading-tight text-paper">
+                  <span className="sr-only">Step {i + 1}: </span>
+                  {step.title}
+                </h3>
+                <p className="mt-3 max-w-xs text-[0.875rem] leading-relaxed text-paper/70">
+                  {step.description}
+                </p>
+              </StaggerItem>
+            ))}
+          </Stagger>
+        </div>
       </div>
     </section>
   );

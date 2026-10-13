@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { X } from "lucide-react";
 import { siteInfo } from "@/utils/site-info";
 import { cn } from "@/lib/utils";
+import { usePrefersReducedMotion } from "@/components/motion/use-prefers-reduced-motion";
 
 function toWhatsAppDigits(phone: string) {
   return phone.replace(/\D/g, "");
@@ -32,7 +33,7 @@ export default function WhatsAppFloat() {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const wasOpenRef = useRef(false);
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = usePrefersReducedMotion(false);
   const phone = siteInfo.contact.phone;
   const whatsappHref = `https://wa.me/${toWhatsAppDigits(phone)}`;
 

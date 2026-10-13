@@ -1,13 +1,12 @@
+"use client";
+
+import { useState } from "react";
+import { ArrowLeftIcon, ArrowRightIcon } from "@phosphor-icons/react/ssr";
 import { cn } from "@/lib/utils";
-import { GridPattern } from "@/components/ui/grid-pattern";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { FullWidthDivider } from "@/components/full-width-divider";
-import { GridFiller } from "@/components/grid-filler";
-import {
-  landingContainerClass,
-  landingSectionBodyClass,
-  landingSectionTitleClass,
-} from "./landing-styles";
+import { Reveal } from "@/components/motion/reveal";
+import { siteButton } from "@/components/site/button";
+import { SectionHeading } from "@/components/site/section-heading";
 
 type Testimonial = {
   name: string;
@@ -101,94 +100,137 @@ const testimonials: Testimonial[] = [
   },
 ];
 
+const pad = (n: number) => String(n).padStart(2, "0");
+
+/**
+ * One large pull quote at a time. Every quote sits in the same grid cell,
+ * so the block keeps the height of the longest one and nothing below it
+ * jumps when the quote changes.
+ */
 export function TestimonialsSection() {
+  const [index, setIndex] = useState(0);
+  const count = testimonials.length;
+  const go = (next: number) => setIndex((next + count) % count);
+
   return (
     <section
-      className="bg-(--brand-cream) py-24"
       aria-labelledby="testimonials-heading"
+      className="container-page grid gap-12 py-20 font-site sm:py-28 lg:grid-cols-12 lg:gap-16"
     >
-      <div
-        className={cn(
-          landingContainerClass,
-          "mx-auto space-y-8 border-x border-[rgba(47,78,64,0.1)] py-6",
-        )}
-      >
-        <div className="flex flex-col gap-2 px-4 md:px-6">
-          <h2 id="testimonials-heading" className={landingSectionTitleClass}>
-            What our students say
-          </h2>
-          <p className={cn(landingSectionBodyClass, "max-w-2xl")}>
-            Hear from graduates who trained with us in barista, bakery, and
-            hospitality programs.
-          </p>
+      <Reveal className="flex flex-col lg:col-span-4">
+        <SectionHeading
+          id="testimonials-heading"
+          eyebrow="Student voices"
+          title={
+            <>
+              In their <em>own words.</em>
+            </>
+          }
+          description="Hear from graduates who trained with us in barista, bakery, and hospitality programs."
+          className="sm:mb-10"
+        />
+
+        <ul
+          aria-label="Choose a student"
+          className="hidden grid-cols-9 gap-2 sm:grid lg:grid-cols-5"
+        >
+          {testimonials.map((t, i) => (
+            <li key={t.name}>
+              <button
+                type="button"
+                onClick={() => setIndex(i)}
+                aria-label={`Read ${t.name}'s story`}
+                aria-current={i === index ? "true" : undefined}
+                className={cn(
+                  "rounded-full outline-none transition-[opacity,box-shadow] duration-300 focus-visible:ring-2 focus-visible:ring-clay focus-visible:ring-offset-2 focus-visible:ring-offset-paper",
+                  i === index
+                    ? "ring-1 ring-ink ring-offset-2 ring-offset-paper"
+                    : "opacity-50 hover:opacity-100",
+                )}
+              >
+                <TestimonialAvatar testimonial={t} />
+              </button>
+            </li>
+          ))}
+        </ul>
+      </Reveal>
+
+      <Reveal delay={0.1} className="flex flex-col lg:col-span-8 lg:pt-8">
+        <span
+          aria-hidden
+          className="font-display text-[7rem] leading-[0.6] text-clay"
+        >
+          &ldquo;
+        </span>
+
+        <div className="mt-6 grid">
+          {testimonials.map((t, i) => {
+            const active = i === index;
+            return (
+              <figure
+                key={t.name}
+                aria-hidden={!active}
+                className={cn(
+                  "col-start-1 row-start-1 transition-[opacity,transform,visibility] duration-700 ease-out-expo motion-reduce:transition-none",
+                  active
+                    ? "visible translate-y-0 opacity-100"
+                    : "invisible translate-y-3 opacity-0",
+                )}
+              >
+                <blockquote className="font-display text-[clamp(1.75rem,3.2vw,3rem)] leading-[1.15] tracking-[-0.01em] text-ink">
+                  <p>{t.quote}</p>
+                </blockquote>
+                <figcaption className="mt-8 flex items-center gap-3">
+                  <TestimonialAvatar testimonial={t} />
+                  <cite className="text-[0.875rem] font-medium text-ink not-italic">
+                    {t.name}
+                  </cite>
+                </figcaption>
+              </figure>
+            );
+          })}
         </div>
 
-        <div
-          className="relative grid grid-cols-1 gap-px bg-border sm:grid-cols-2 lg:grid-cols-3"
-          aria-label="Student testimonials"
-        >
-          <FullWidthDivider position="top" />
-          {testimonials.map((testimonial) => (
-            <TestimonialsCard key={testimonial.name} testimonial={testimonial} />
-          ))}
-          <GridFiller
-            className="bg-background"
-            lgColumns={3}
-            smColumns={2}
-            totalItems={testimonials.length}
-          />
-          <FullWidthDivider position="bottom" />
+        <div className="mt-10 flex items-center gap-5 border-t border-hairline pt-6">
+          <p className="font-label text-[0.75rem] tracking-[0.08em] text-ink tabular-nums">
+            {pad(index + 1)}
+            <span className="mx-1.5 text-ink-muted">/</span>
+            <span className="text-ink-muted">{pad(count)}</span>
+          </p>
+          <p className="sr-only" aria-live="polite">
+            Testimonial {index + 1} of {count}, from {testimonials[index].name}
+          </p>
+          <div className="ml-auto flex gap-1">
+            <button
+              type="button"
+              onClick={() => go(index - 1)}
+              aria-label="Previous testimonial"
+              className={siteButton({ variant: "outline", size: "icon" })}
+            >
+              <ArrowLeftIcon weight="light" className="size-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => go(index + 1)}
+              aria-label="Next testimonial"
+              className={siteButton({ variant: "outline", size: "icon" })}
+            >
+              <ArrowRightIcon weight="light" className="size-4" />
+            </button>
+          </div>
         </div>
-      </div>
+      </Reveal>
     </section>
   );
 }
 
-function TestimonialsCard({
-  testimonial,
-  className,
-  ...props
-}: React.ComponentProps<"figure"> & {
-  testimonial: Testimonial;
-}) {
-  const { quote, image, name } = testimonial;
-  const testimonialId = `testimonial-${name.replace(/\s+/g, "-").toLowerCase()}`;
-
+function TestimonialAvatar({ testimonial }: { testimonial: Testimonial }) {
   return (
-    <figure
-      id={testimonialId}
-      className={cn(
-        "relative grid grid-cols-[auto_1fr] gap-x-3 overflow-hidden bg-background p-4",
-        className,
-      )}
-      {...props}
-    >
-      <div className="mask-[radial-gradient(farthest-side_at_top,white,transparent)] pointer-events-none absolute top-0 left-1/2 -mt-2 -ml-20 size-full">
-        <GridPattern
-          className="absolute inset-0 size-full stroke-border"
-          height={25}
-          width={25}
-          x={-12}
-          y={4}
-        />
-      </div>
-
-      <Avatar className="size-8 rounded-full">
-        <AvatarImage alt={`${name}'s profile picture`} src={image} />
-        <AvatarFallback>{name.charAt(0)}</AvatarFallback>
-      </Avatar>
-      <div>
-        <figcaption className="-mt-0.5 -space-y-0.5">
-          <cite className="text-sm not-italic md:text-base">{name}</cite>
-          {/* <span className="block font-light text-[11px] text-muted-foreground tracking-tight">
-            {role}
-            {company && `, ${company}`}
-          </span> */}
-        </figcaption>
-        <blockquote className="mt-3" cite={`#${testimonialId}`}>
-          <p className="text-foreground/80 text-sm tracking-wide">{quote}</p>
-        </blockquote>
-      </div>
-    </figure>
+    <Avatar className="size-10 after:hidden">
+      <AvatarImage alt="" src={testimonial.image} />
+      <AvatarFallback className="bg-surface font-label text-xs text-ink">
+        {testimonial.name.charAt(0)}
+      </AvatarFallback>
+    </Avatar>
   );
 }

@@ -373,6 +373,14 @@
   animation: marquee 40s linear infinite;
 }
 
+/* Horizontal rails that scroll by swipe or their own arrow buttons. */
+@utility scrollbar-hidden {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .skeleton-shimmer::after,
   .animate-rise,

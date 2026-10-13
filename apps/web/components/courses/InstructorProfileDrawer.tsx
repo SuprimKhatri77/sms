@@ -2,12 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { X, Briefcase, Sparkles } from "lucide-react";
-import {
-  courseBodyClass,
-  courseEyebrowClass,
-  courseAccentAlpha,
-} from "./course-styles";
+import { XIcon } from "@phosphor-icons/react/ssr";
+import { siteButton } from "@/components/site/button";
+import { courseAccentAlpha } from "./course-styles";
 import { cn } from "@/lib/utils";
 
 export interface InstructorExperience {
@@ -33,6 +30,7 @@ export interface Instructor {
   profile?: InstructorProfile;
 }
 
+/** Side sheet with a mentor's bio, experience timeline and expertise. */
 export function InstructorProfileDrawer({
   instructor,
   accent = "var(--brand-brown)",
@@ -44,15 +42,29 @@ export function InstructorProfileDrawer({
 }) {
   const [visible, setVisible] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const closeTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const handleClose = useCallback(() => {
     setVisible(false);
-    setTimeout(onClose, 300);
+    clearTimeout(closeTimer.current);
+    closeTimer.current = setTimeout(onClose, 300);
   }, [onClose]);
 
   useEffect(() => {
     const id = requestAnimationFrame(() => setVisible(true));
     return () => cancelAnimationFrame(id);
+  }, []);
+
+  // Focus the sheet on open; hand focus back to whatever opened it on close.
+  useEffect(() => {
+    const opener = document.activeElement as HTMLElement | null;
+    closeRef.current?.focus({ preventScroll: true });
+    const timer = closeTimer;
+    return () => {
+      clearTimeout(timer.current);
+      opener?.focus({ preventScroll: true });
+    };
   }, []);
 
   useEffect(() => {
@@ -81,171 +93,122 @@ export function InstructorProfileDrawer({
       aria-modal="true"
       aria-label={`${instructor.name} profile`}
       className={cn(
-        "fixed inset-0 z-100 bg-[rgba(47,78,64,0.5)] backdrop-blur-[2px] transition-opacity duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
+        "fixed inset-0 z-100 bg-ink/40 font-site backdrop-blur-xs transition-opacity duration-500 ease-out-expo",
         visible ? "opacity-100" : "opacity-0",
       )}
     >
       <div
         className={cn(
-          "absolute right-0 top-0 flex h-dvh w-full max-w-md flex-col overflow-hidden border-l border-[rgba(47,78,64,0.12)] bg-(--brand-cream) shadow-[-12px_0_48px_rgba(47,78,64,0.14)] transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
+          "absolute top-0 right-0 flex h-dvh w-full max-w-lg flex-col overflow-hidden border-l border-hairline bg-paper transition-transform duration-500 ease-out-expo",
           visible ? "translate-x-0" : "translate-x-full",
         )}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="relative shrink-0 overflow-hidden bg-(--brand-green)">
-          <div
-            className="pointer-events-none absolute inset-0 opacity-40"
-            aria-hidden
-            style={{
-              backgroundImage: `
-                linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)
-              `,
-              backgroundSize: "32px 32px",
-            }}
-          />
-          <div
-            className="pointer-events-none absolute right-0 top-0 h-40 w-40 opacity-20 blur-3xl"
-            style={{ background: "rgba(194,138,79,0.35)" }}
-            aria-hidden
-          />
+        <div className="flex h-(--header-h) shrink-0 items-center justify-between border-b border-hairline px-5 sm:px-8">
+          <p className="eyebrow">Mentor profile</p>
+          <button
+            ref={closeRef}
+            type="button"
+            onClick={handleClose}
+            className={cn(siteButton({ variant: "ghost", size: "icon" }), "-mr-2")}
+            aria-label="Close profile"
+          >
+            <XIcon weight="light" className="size-5" />
+          </button>
+        </div>
 
-          <div className="relative flex items-end gap-4 px-5 pb-5 pt-6 sm:px-6">
-            <div className="relative h-[7.5rem] w-[5.5rem] shrink-0 overflow-hidden border border-[rgba(255,255,255,0.15)]">
+        <div className="flex-1 overflow-y-auto overscroll-contain">
+          <div className="grid grid-cols-[7rem_1fr] items-end gap-5 px-5 pt-8 pb-6 sm:grid-cols-[8.5rem_1fr] sm:px-8">
+            <div className="relative aspect-[4/5] overflow-hidden bg-surface">
               {instructor.image ? (
                 <Image
                   src={instructor.image}
                   alt={`Portrait of ${instructor.name}`}
                   fill
                   className="object-cover object-top"
-                  sizes="88px"
-                  priority
+                  sizes="136px"
+                  preload
                 />
               ) : (
                 <div
-                  className="h-full w-full opacity-50"
+                  className="size-full opacity-50"
                   style={{ backgroundColor: instructor.imagePlaceholder }}
                   aria-hidden
                 />
               )}
             </div>
 
-            <div className="min-w-0 flex-1 pb-1">
+            <div className="min-w-0 space-y-2 pb-1">
               {profile?.headline ? (
-                <p className="mb-1 truncate font-(family-name:--font-dm-sans) text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-white/55">
+                <p className="font-label text-[0.625rem] leading-snug tracking-[0.14em] text-ink-muted uppercase">
                   {profile.headline}
                 </p>
               ) : null}
-              <h2 className="font-[family-name:var(--font-playfair)] text-[1.2rem] font-bold leading-snug text-white">
+              <h2 className="font-display text-3xl leading-[1.05] text-ink sm:text-4xl">
                 {instructor.name}
               </h2>
-              <p className="mt-1 font-(family-name:--font-dm-sans) text-[0.8rem] text-white/55">
+              <p className="text-[0.8125rem] text-ink-muted">
                 {instructor.title}
               </p>
-              <span
-                className="mt-3 inline-flex border border-[rgba(255,255,255,0.2)] bg-[rgba(255,255,255,0.08)] px-2.5 py-1 font-(family-name:--font-dm-sans) text-[0.68rem] font-semibold uppercase tracking-wide text-white"
-              >
+              <p className="font-label text-[0.6875rem] tracking-[0.14em] text-ink uppercase">
                 {instructor.yearsExp} yrs experience
-              </span>
+              </p>
             </div>
-
-            <button
-              type="button"
-              onClick={handleClose}
-              className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center border border-[rgba(255,255,255,0.2)] text-white transition-colors hover:bg-[rgba(255,255,255,0.08)]"
-              aria-label="Close profile"
-            >
-              <X className="h-4 w-4" strokeWidth={2} />
-            </button>
           </div>
 
-          <div className="h-1 w-full" style={{ backgroundColor: accent }} />
-        </div>
-
-        <div className="flex-1 overflow-y-auto overscroll-contain">
-          <div className="px-5 py-6 sm:px-6">
-            <p className={cn(courseBodyClass, "max-w-prose")}>{instructor.bio}</p>
+          <div className="border-t border-hairline px-5 py-8 sm:px-8">
+            <p className="max-w-prose text-[0.9375rem] leading-relaxed text-ink-muted">
+              {instructor.bio}
+            </p>
           </div>
 
           {profile?.experience && profile.experience.length > 0 ? (
-            <>
-              <div className="mx-5 h-px bg-[rgba(47,78,64,0.08)] sm:mx-6" />
-              <div className="px-5 py-6 sm:px-6">
-                <div className="mb-5 flex items-center gap-2">
-                  <Briefcase
-                    className="h-4 w-4 shrink-0 text-(--brand-brown)"
-                    strokeWidth={1.75}
-                  />
-                  <p className={courseEyebrowClass}>Experience</p>
-                </div>
-
-                <div className="relative pl-5">
-                  <div
-                    className="absolute top-2 bottom-2 left-[7px] w-px"
-                    style={{ backgroundColor: courseAccentAlpha(accent, 35) }}
-                  />
-                  <div className="flex flex-col gap-5">
-                    {profile.experience.map((exp, index) => (
-                      <div key={index} className="relative">
-                        <div
-                          className="absolute top-1.5 -left-5 h-2.5 w-2.5 border-2 border-(--brand-cream)"
-                          style={{ backgroundColor: accent }}
-                        />
-                        <p className="font-(family-name:--font-dm-sans) text-[0.88rem] font-semibold text-(--brand-green)">
-                          {exp.role}
-                        </p>
-                        <div className="mt-1 flex flex-wrap items-center gap-2">
-                          <span className="font-(family-name:--font-dm-sans) text-[0.8rem] text-[rgba(47,78,64,0.55)]">
-                            {exp.place}
-                          </span>
-                          {exp.period ? (
-                            <span
-                              className="border px-2 py-0.5 font-(family-name:--font-dm-sans) text-[0.68rem] font-medium"
-                              style={{
-                                borderColor: courseAccentAlpha(accent, 35),
-                                backgroundColor: courseAccentAlpha(accent, 10),
-                                color: accent,
-                              }}
-                            >
-                              {exp.period}
-                            </span>
-                          ) : null}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </>
+            <section className="border-t border-hairline px-5 py-8 sm:px-8">
+              <h3 className="eyebrow mb-6">Experience</h3>
+              <ol className="relative space-y-6 pl-6">
+                <span
+                  aria-hidden
+                  className="absolute top-2 bottom-2 left-[3px] w-px"
+                  style={{ backgroundColor: courseAccentAlpha(accent, 35) }}
+                />
+                {profile.experience.map((exp, index) => (
+                  <li key={index} className="relative">
+                    <span
+                      aria-hidden
+                      className="absolute top-[0.45rem] -left-6 size-[7px]"
+                      style={{ backgroundColor: accent }}
+                    />
+                    <p className="text-[0.9375rem] font-medium text-ink">
+                      {exp.role}
+                    </p>
+                    <p className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-[0.8125rem] text-ink-muted">
+                      <span>{exp.place}</span>
+                      {exp.period ? (
+                        <span className="font-label text-[0.6875rem] tracking-[0.08em] uppercase">
+                          {exp.period}
+                        </span>
+                      ) : null}
+                    </p>
+                  </li>
+                ))}
+              </ol>
+            </section>
           ) : null}
 
           {profile?.expertise && profile.expertise.length > 0 ? (
-            <>
-              <div className="mx-5 h-px bg-[rgba(47,78,64,0.08)] sm:mx-6" />
-              <div className="px-5 py-6 sm:px-6">
-                <div className="mb-5 flex items-center gap-2">
-                  <Sparkles
-                    className="h-4 w-4 shrink-0 text-(--brand-brown)"
-                    strokeWidth={1.75}
-                  />
-                  <p className={courseEyebrowClass}>Core Expertise</p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {profile.expertise.map((skill) => (
-                    <span
-                      key={skill}
-                      className="border px-3 py-1.5 font-(family-name:--font-dm-sans) text-[0.78rem] font-medium text-(--brand-green)"
-                      style={{
-                        borderColor: courseAccentAlpha(accent, 30),
-                        backgroundColor: courseAccentAlpha(accent, 8),
-                      }}
-                    >
-                      {skill}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </>
+            <section className="border-t border-hairline px-5 py-8 sm:px-8">
+              <h3 className="eyebrow mb-5">Core expertise</h3>
+              <ul className="flex flex-wrap gap-2">
+                {profile.expertise.map((skill) => (
+                  <li
+                    key={skill}
+                    className="border border-hairline bg-surface px-3 py-1.5 text-[0.8125rem] text-ink"
+                  >
+                    {skill}
+                  </li>
+                ))}
+              </ul>
+            </section>
           ) : null}
 
           <div className="h-8" />
