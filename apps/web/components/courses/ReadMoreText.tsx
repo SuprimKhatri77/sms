@@ -1,29 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
+import { cn } from "@/lib/utils";
 
 export function ReadMoreText({ text }: { text: string }) {
   const [expanded, setExpanded] = useState(false);
+  const id = useId();
 
   return (
-    <div className="mb-8 max-w-lg">
+    <div className="max-w-xl">
       <p
-        className="text-[1rem] leading-[1.75] text-white/60 transition-all duration-300 text-justify"
-        style={{
-          display: "-webkit-box",
-          WebkitBoxOrient: "vertical",
-          WebkitLineClamp: expanded ? "unset" : 3,
-          overflow: expanded ? "visible" : "hidden",
-        }}
+        id={id}
+        className={cn(
+          "text-[0.9375rem] leading-relaxed text-ink-muted",
+          !expanded && "line-clamp-3",
+        )}
       >
         {text}
       </p>
       <button
+        type="button"
         onClick={() => setExpanded((v) => !v)}
-        className="mt-2 text-[0.82rem] font-semibold transition-opacity hover:opacity-70"
-        style={{ color: "var(--brand-brown, #c28a4f)" }}
+        aria-expanded={expanded}
+        aria-controls={id}
+        className="link-underline mt-2 text-[0.8125rem] text-ink outline-none"
       >
-        {expanded ? "Show less ↑" : "Read more ↓"}
+        {expanded ? "Show less" : "Read more"}
       </button>
     </div>
   );

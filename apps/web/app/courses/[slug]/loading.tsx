@@ -1,204 +1,53 @@
-import {
-  courseContainerClass,
-  courseCreamSection,
-  courseMutedSection,
-  courseSectionClass,
-} from "@/components/courses/course-styles";
-import { cn } from "@/lib/utils";
-
+/** Placeholder with the course page's hero, section nav and two columns. */
 export default function Loading() {
   return (
-    <main className="min-h-screen bg-(--brand-cream)">
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-(--brand-green) px-6 pb-16 pt-14 sm:pb-20 sm:pt-16">
-        <div className={cn(courseContainerClass, "relative")}>
-          <div className="mb-8 h-4 w-28 animate-pulse bg-white/10" />
-          <div className="mb-6 flex items-center gap-3">
-            <div className="h-11 w-11 animate-pulse bg-white/10" />
-            <div className="h-7 w-36 animate-pulse bg-white/10" />
+    <main aria-busy="true" aria-label="Loading course" className="font-site">
+      <div className="container-page grid gap-10 pt-10 pb-14 sm:pt-14 lg:grid-cols-12 lg:items-center lg:gap-12 lg:pb-16">
+        <div className="space-y-7 lg:col-span-6">
+          <div className="skeleton-shimmer h-3 w-44 bg-surface" />
+          <div className="skeleton-shimmer h-3 w-32 bg-surface" />
+          <div className="space-y-3">
+            <div className="skeleton-shimmer h-[clamp(3rem,6vw,5.5rem)] w-full bg-surface" />
+            <div className="skeleton-shimmer h-[clamp(3rem,6vw,5.5rem)] w-2/3 bg-surface" />
           </div>
-          <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1fr_340px] lg:items-end">
-            <div>
-              <div className="mb-4 h-12 w-3/4 animate-pulse bg-white/10" />
-              <div className="mb-2 h-4 w-full animate-pulse bg-white/8" />
-              <div className="mb-2 h-4 w-[90%] animate-pulse bg-white/8" />
-              <div className="mb-8 h-4 w-[75%] animate-pulse bg-white/8" />
-              <div className="flex flex-wrap gap-3">
-                <div className="h-12 w-36 animate-pulse bg-white/10" />
-                <div className="h-12 w-44 animate-pulse bg-white/8" />
+          <div className="max-w-xl space-y-2">
+            <div className="skeleton-shimmer h-3.5 w-full bg-surface" />
+            <div className="skeleton-shimmer h-3.5 w-11/12 bg-surface" />
+            <div className="skeleton-shimmer h-3.5 w-3/4 bg-surface" />
+          </div>
+          <div className="skeleton-shimmer h-12 w-40 bg-surface" />
+          <div className="grid grid-cols-2 gap-4 border-t border-hairline pt-4 sm:grid-cols-4">
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="space-y-2">
+                <div className="skeleton-shimmer h-2.5 w-16 bg-surface" />
+                <div className="skeleton-shimmer h-3.5 w-24 bg-surface" />
               </div>
-            </div>
-            <div className="grid grid-cols-2 gap-2.5">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="border border-white/10 bg-white/5 p-4"
-                >
-                  <div className="mb-2 h-4 w-4 animate-pulse bg-white/10" />
-                  <div className="mb-1.5 h-3 w-16 animate-pulse bg-white/8" />
-                  <div className="h-4 w-24 animate-pulse bg-white/10" />
-                </div>
-              ))}
-            </div>
+            ))}
           </div>
         </div>
-      </section>
+        <div className="skeleton-shimmer aspect-[4/5] bg-surface sm:aspect-[16/11] lg:col-span-6 lg:aspect-[5/6] lg:max-h-[calc(100svh-var(--header-h)-4rem)]" />
+      </div>
 
-      {/* Sticky nav */}
-      <div className="sticky top-0 z-30 border-b border-[rgba(47,78,64,0.08)] bg-(--brand-cream)/95 px-6 py-3 backdrop-blur-sm">
-        <div className={cn(courseContainerClass, "flex gap-4 overflow-hidden")}>
-          {Array.from({ length: 5 }).map((_, i) => (
+      <div className="h-12 border-y border-hairline">
+        <div className="container-page flex h-full items-center gap-8">
+          {[14, 18, 20, 18, 10].map((w, i) => (
             <div
               key={i}
-              className="h-4 w-20 shrink-0 animate-pulse bg-black/8"
+              className="skeleton-shimmer h-3 bg-surface"
+              style={{ width: `${w * 0.25}rem` }}
             />
           ))}
         </div>
       </div>
 
-      {/* Video */}
-      <section className={cn(courseSectionClass, courseCreamSection)}>
-        <div className={courseContainerClass}>
-          <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
-            <div>
-              <div className="mb-3 h-3 w-32 animate-pulse bg-black/10" />
-              <div className="mb-2 h-8 w-64 animate-pulse bg-black/8" />
-              <div className="mb-2 h-8 w-48 animate-pulse bg-black/6" />
-              <div className="mt-4 flex flex-col gap-2">
-                {[90, 85, 70].map((w, i) => (
-                  <div
-                    key={i}
-                    className="h-4 animate-pulse bg-black/6"
-                    style={{ width: `${w}%` }}
-                  />
-                ))}
-              </div>
-            </div>
-            <div className="aspect-video w-full animate-pulse bg-black/8" />
-          </div>
+      <div className="container-page grid gap-16 py-16 sm:py-20 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:gap-20">
+        <div className="space-y-6">
+          <div className="skeleton-shimmer h-3 w-28 bg-surface" />
+          <div className="skeleton-shimmer h-12 w-72 max-w-full bg-surface" />
+          <div className="skeleton-shimmer aspect-video bg-surface" />
         </div>
-      </section>
-
-      {/* Overview */}
-      <section className={cn(courseSectionClass, courseMutedSection)}>
-        <div className={courseContainerClass}>
-          <div className="grid grid-cols-1 gap-12 lg:grid-cols-[1fr_380px]">
-            <div>
-              <div className="mb-3 h-3 w-36 animate-pulse bg-black/10" />
-              <div className="mb-2 h-8 w-72 animate-pulse bg-black/8" />
-              <div className="mt-5 flex flex-col gap-2">
-                {[100, 95, 88, 92, 80].map((w, i) => (
-                  <div
-                    key={i}
-                    className="h-4 animate-pulse bg-black/6"
-                    style={{ width: `${w}%` }}
-                  />
-                ))}
-              </div>
-              <div className="mt-10 h-20 w-56 animate-pulse border border-black/8 bg-white/50" />
-            </div>
-            <div className="border border-black/8 bg-white p-7">
-              <div className="mb-5 h-4 w-40 animate-pulse bg-black/10" />
-              <ul className="flex flex-col gap-3.5">
-                {[85, 70, 90, 75].map((w, i) => (
-                  <li key={i} className="flex gap-3">
-                    <div className="h-4 w-4 shrink-0 animate-pulse bg-black/10" />
-                    <div
-                      className="h-3.5 animate-pulse bg-black/8"
-                      style={{ width: `${w}%` }}
-                    />
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Curriculum */}
-      <section className={cn(courseSectionClass, courseCreamSection)}>
-        <div className={cn(courseContainerClass, "max-w-4xl")}>
-          <div className="mb-3 h-3 w-24 animate-pulse bg-black/10" />
-          <div className="mb-10 h-8 w-48 animate-pulse bg-black/8" />
-          <div className="flex flex-col gap-3">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div
-                key={i}
-                className="flex items-center justify-between border border-black/8 bg-white px-5 py-4"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="h-6 w-14 animate-pulse bg-black/8" />
-                  <div
-                    className="h-4 animate-pulse bg-black/8"
-                    style={{ width: `${120 + i * 20}px` }}
-                  />
-                </div>
-                <div className="h-5 w-5 animate-pulse bg-black/8" />
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Instructor */}
-      <section className={cn(courseSectionClass, courseMutedSection)}>
-        <div className={courseContainerClass}>
-          <div className="mb-3 h-3 w-28 animate-pulse bg-black/10" />
-          <div className="mt-8 grid grid-cols-1 gap-12 sm:grid-cols-[220px_1fr]">
-            <div className="h-44 w-44 animate-pulse bg-black/8" />
-            <div className="flex flex-col gap-2">
-              {[100, 92, 96, 85, 78].map((w, i) => (
-                <div
-                  key={i}
-                  className="h-4 animate-pulse bg-black/8"
-                  style={{ width: `${w}%` }}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ */}
-      <section className={cn(courseSectionClass, courseCreamSection)}>
-        <div className={cn(courseContainerClass, "max-w-3xl")}>
-          <div className="mb-3 h-3 w-32 animate-pulse bg-black/10" />
-          <div className="mb-10 h-8 w-24 animate-pulse bg-black/8" />
-          <div className="flex flex-col gap-3">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div
-                key={i}
-                className="flex items-center justify-between border border-black/8 bg-white px-5 py-4"
-              >
-                <div
-                  className="h-4 animate-pulse bg-black/8"
-                  style={{ width: `${55 + i * 8}%` }}
-                />
-                <div className="h-5 w-5 animate-pulse bg-black/8" />
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className={cn(courseSectionClass, "pb-24 pt-4", courseCreamSection)}>
-        <div className={courseContainerClass}>
-          <div className="overflow-hidden border border-black/10 bg-(--brand-green)">
-            <div className="h-1 w-full animate-pulse bg-white/20" />
-            <div className="flex flex-col gap-8 px-6 py-10 sm:flex-row sm:items-center sm:justify-between sm:px-10">
-              <div className="flex flex-col gap-3">
-                <div className="h-8 w-64 animate-pulse bg-white/10" />
-                <div className="h-4 w-56 animate-pulse bg-white/8" />
-              </div>
-              <div className="flex gap-3">
-                <div className="h-12 w-36 animate-pulse bg-white/10" />
-                <div className="h-12 w-40 animate-pulse bg-white/8" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+        <div className="skeleton-shimmer h-[28rem] bg-surface" />
+      </div>
     </main>
   );
 }

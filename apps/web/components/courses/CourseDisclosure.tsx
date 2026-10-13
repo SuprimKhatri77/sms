@@ -1,8 +1,7 @@
 "use client";
 
 import { useId, useState, type ReactNode } from "react";
-import { ChevronDown } from "lucide-react";
-import { courseCardClass } from "./course-styles";
+import { PlusIcon } from "@phosphor-icons/react/ssr";
 import { cn } from "@/lib/utils";
 
 interface CourseDisclosureProps {
@@ -12,6 +11,7 @@ interface CourseDisclosureProps {
   className?: string;
 }
 
+/** One row of a hairline accordion; the plus turns into a cross when open. */
 export function CourseDisclosure({
   title,
   children,
@@ -22,39 +22,40 @@ export function CourseDisclosure({
   const panelId = useId();
 
   return (
-    <div className={cn(courseCardClass, className)}>
+    <div className={cn("border-b border-hairline", className)}>
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
         aria-controls={panelId}
-        className="flex w-full cursor-pointer items-center justify-between gap-4 px-5 py-4 text-left select-none sm:px-6 sm:py-5"
+        className="group flex w-full cursor-pointer items-center justify-between gap-6 py-5 text-left outline-none select-none focus-visible:ring-2 focus-visible:ring-clay focus-visible:ring-offset-4 focus-visible:ring-offset-paper sm:py-6"
       >
         <span className="min-w-0 flex-1">{title}</span>
-        <ChevronDown
-          className={cn(
-            "h-4 w-4 shrink-0 text-[rgba(47,78,64,0.35)] transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
-            open && "rotate-180",
-          )}
-          strokeWidth={1.75}
+        <span
           aria-hidden
-        />
+          className={cn(
+            "flex size-9 shrink-0 items-center justify-center rounded-full border transition-[transform,background-color,border-color,color] duration-500 ease-out-expo",
+            open
+              ? "rotate-45 border-ink bg-ink text-paper"
+              : "border-hairline text-ink group-hover:border-ink/60",
+          )}
+        >
+          <PlusIcon weight="light" className="size-4" />
+        </span>
       </button>
 
       <div
         id={panelId}
         className={cn(
-          "grid transition-[grid-template-rows] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
+          "grid transition-[grid-template-rows] duration-500 ease-out-expo motion-reduce:transition-none",
           open ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
         )}
       >
-        <div className="overflow-hidden">
+        <div className="overflow-hidden" inert={!open}>
           <div
             className={cn(
-              "border-t border-[rgba(47,78,64,0.08)] transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
-              open
-                ? "translate-y-0 opacity-100"
-                : "-translate-y-1 opacity-0",
+              "pb-6 transition-[opacity,transform] duration-500 ease-out-expo motion-reduce:transition-none",
+              open ? "translate-y-0 opacity-100" : "-translate-y-1 opacity-0",
             )}
           >
             {children}

@@ -107,7 +107,7 @@ export default function WhatsAppFloat() {
   return (
     <div
       ref={rootRef}
-      className="pointer-events-none fixed right-4 bottom-4 z-40 flex flex-col items-end gap-3 sm:right-6 sm:bottom-6"
+      className="pointer-events-none fixed right-4 bottom-[calc(1rem+var(--enrol-bar-h,0px))] z-40 flex flex-col items-end gap-3 transition-[bottom] duration-500 ease-out-expo sm:right-6 sm:bottom-[calc(1.5rem+var(--enrol-bar-h,0px))] lg:bottom-6"
     >
       <AnimatePresence>
         {open && (

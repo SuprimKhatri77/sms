@@ -1,7 +1,12 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Pause, Play, Volume2, VolumeX } from "lucide-react";
+import {
+  PauseIcon,
+  PlayIcon,
+  SpeakerHighIcon,
+  SpeakerSlashIcon,
+} from "@phosphor-icons/react/ssr";
 import { cn } from "@/lib/utils";
 import type { CourseDetail } from "@/utils/mock";
 
@@ -38,10 +43,7 @@ export function VideoPlayer({ course, className }: VideoPlayerProps) {
 
   return (
     <div className={cn("group relative", className)}>
-      <div
-        className="relative overflow-hidden border border-[rgba(47,78,64,0.12)] bg-[rgba(47,78,64,0.06)]"
-        style={{ aspectRatio: "16/9" }}
-      >
+      <div className="relative aspect-video overflow-hidden bg-surface font-site">
         {hasVideo ? (
           <video
             ref={videoRef}
@@ -69,7 +71,7 @@ export function VideoPlayer({ course, className }: VideoPlayerProps) {
         )}
 
         <div
-          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[rgba(26,26,26,0.55)] via-[rgba(26,26,26,0.08)] to-transparent transition-opacity duration-300"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink/60 via-ink/10 to-transparent transition-opacity duration-500"
           style={{ opacity: started && playing ? 0.35 : 1 }}
         />
 
@@ -83,34 +85,34 @@ export function VideoPlayer({ course, className }: VideoPlayerProps) {
                 : `Play ${course.course} program overview`
             }
             className={cn(
-              "absolute inset-0 flex flex-col items-center justify-center gap-3 transition-opacity duration-300",
+              "absolute inset-0 flex flex-col items-center justify-center gap-4 outline-none transition-opacity duration-500 focus-visible:ring-2 focus-visible:ring-clay focus-visible:ring-inset",
               started && playing && "pointer-events-none opacity-0",
             )}
           >
-            <span className="grid h-16 w-16 place-items-center border border-[rgba(255,255,255,0.35)] bg-[rgba(255,255,255,0.12)] text-white backdrop-blur-sm transition-transform duration-300 group-hover:scale-105">
+            <span className="grid size-16 place-items-center rounded-full bg-paper text-ink transition-transform duration-500 ease-out-expo group-hover:scale-110">
               {playing ? (
-                <Pause size={28} strokeWidth={1.75} />
+                <PauseIcon weight="fill" className="size-5" />
               ) : (
-                <Play size={28} strokeWidth={1.75} className="ml-0.5" />
+                <PlayIcon weight="fill" className="ml-0.5 size-5" />
               )}
             </span>
-            <span className="font-(family-name:--font-dm-sans) text-[0.85rem] font-semibold tracking-wide text-white/90">
-              Watch Program Overview
+            <span className="hidden font-label text-[0.6875rem] tracking-[0.16em] text-paper uppercase sm:block">
+              Watch the program overview
             </span>
           </button>
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-6 text-center">
-            <span className="grid h-14 w-14 place-items-center border border-[rgba(255,255,255,0.3)] bg-[rgba(255,255,255,0.1)] text-white/80">
-              <Play size={24} strokeWidth={1.75} />
+            <span className="grid size-14 place-items-center rounded-full border border-paper/40 text-paper/85">
+              <PlayIcon weight="light" className="size-5" />
             </span>
-            <p className="font-(family-name:--font-dm-sans) text-sm font-medium text-white/85">
+            <p className="font-label text-[0.6875rem] tracking-[0.16em] text-paper/85 uppercase">
               Program overview video coming soon
             </p>
           </div>
         )}
 
-        <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between gap-3 border-t border-[rgba(255,255,255,0.12)] bg-[rgba(26,26,26,0.55)] px-4 py-3 backdrop-blur-sm">
-          <p className="font-(family-name:--font-dm-sans) text-[0.78rem] font-medium text-white/85">
+        <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-3 px-4 py-3 sm:px-5">
+          <p className="font-label text-[0.625rem] tracking-[0.14em] text-paper/85 uppercase">
             {course.course} · {course.duration}
           </p>
           {hasVideo ? (
@@ -123,19 +125,19 @@ export function VideoPlayer({ course, className }: VideoPlayerProps) {
                   video.muted = !video.muted;
                   setMuted(video.muted);
                 }}
-                className="grid h-8 w-8 place-items-center text-white/80 transition-colors hover:text-white"
+                className="grid size-8 place-items-center text-paper/80 outline-none transition-colors hover:text-paper focus-visible:ring-2 focus-visible:ring-clay"
                 aria-label={muted ? "Unmute video" : "Mute video"}
               >
                 {muted ? (
-                  <VolumeX size={16} strokeWidth={2} />
+                  <SpeakerSlashIcon weight="light" className="size-4" />
                 ) : (
-                  <Volume2 size={16} strokeWidth={2} />
+                  <SpeakerHighIcon weight="light" className="size-4" />
                 )}
               </button>
               <button
                 type="button"
                 onClick={toggle}
-                className="font-(family-name:--font-dm-sans) text-[0.75rem] font-semibold uppercase tracking-wide text-white/90 transition-colors hover:text-white"
+                className="font-label text-[0.625rem] tracking-[0.14em] text-paper/90 uppercase outline-none transition-colors hover:text-paper focus-visible:ring-2 focus-visible:ring-clay"
               >
                 {playing ? "Pause" : "Play"}
               </button>

@@ -2,18 +2,11 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { ArrowRight, BookOpen } from "lucide-react";
+import { ArrowRightIcon } from "@phosphor-icons/react/ssr";
 import { InstructorProfileDrawer } from "./InstructorProfileDrawer";
 import { InstructorCard } from "./InstructorCard";
+import { CourseSectionHeading } from "./CourseSectionHeading";
 import { Instructor } from "@/utils/mock";
-import { SectionLabel } from "./SectionLabel";
-import {
-  courseBodyClass,
-  courseCardClass,
-  courseContainerClass,
-  courseTitleClass,
-} from "./course-styles";
-import { cn } from "@/lib/utils";
 
 export function InstructorSection({
   instructors,
@@ -27,35 +20,33 @@ export function InstructorSection({
 
   return (
     <>
-      <div className={courseContainerClass}>
-        <SectionLabel>{isSingle ? "Your Instructor" : "Your Instructors"}</SectionLabel>
-        <h2 id="course-instructor-heading" className={cn(courseTitleClass, "mb-8")}>
-          Meet Your{" "}
-          <em
-            className="font-medium text-(--brand-brown)"
-            style={{ fontStyle: "italic" }}
-          >
-            {isSingle ? "Mentor" : "Mentors"}
-          </em>
-        </h2>
+      <CourseSectionHeading
+        id="course-instructor-heading"
+        eyebrow={isSingle ? "Your instructor" : "Your instructors"}
+        title={
+          <>
+            Meet your <em>{isSingle ? "mentor." : "mentors."}</em>
+          </>
+        }
+      />
 
-        {isSingle ? (
-          <SingleInstructor
-            instructor={instructors[0]}
-            onViewProfile={() => setSelected(instructors[0])}
-          />
-        ) : (
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {instructors.map((instructor) => (
-              <InstructorCard
-                key={instructor.name}
-                instructor={instructor}
-                onViewProfile={() => setSelected(instructor)}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+      {isSingle ? (
+        <SingleInstructor
+          instructor={instructors[0]}
+          onViewProfile={() => setSelected(instructors[0])}
+        />
+      ) : (
+        <div className="grid grid-cols-1 gap-x-5 gap-y-10 sm:grid-cols-2 xl:grid-cols-3">
+          {instructors.map((instructor) => (
+            <InstructorCard
+              key={instructor.name}
+              instructor={instructor}
+              onViewProfile={() => setSelected(instructor)}
+              sizes="(min-width: 1280px) 18vw, (min-width: 1024px) 26vw, (min-width: 640px) 46vw, 100vw"
+            />
+          ))}
+        </div>
+      )}
 
       {selected ? (
         <InstructorProfileDrawer
@@ -76,67 +67,54 @@ function SingleInstructor({
   onViewProfile: () => void;
 }) {
   return (
-    <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-[minmax(0,240px)_1fr] lg:gap-12">
-      <div className="flex flex-col items-start gap-4 text-left">
-        <div className="relative h-40 w-40 overflow-hidden border border-[rgba(47,78,64,0.12)] sm:h-44 sm:w-44">
-          {instructor.image ? (
-            <Image
-              src={instructor.image}
-              alt={`${instructor.name}, instructor for ${instructor.title} at Brew and Bake Academy Butwal`}
-              fill
-              className="object-cover object-top"
-              sizes="(max-width: 640px) 160px, 176px"
-              priority
-            />
-          ) : (
-            <div
-              className="h-full w-full"
-              style={{
-                backgroundColor: instructor.imagePlaceholder,
-                opacity: 0.35,
-              }}
-              aria-hidden
-            />
-          )}
-        </div>
+    <div className="grid grid-cols-1 items-start gap-8 sm:grid-cols-[minmax(0,13rem)_1fr] sm:gap-10">
+      <div className="relative aspect-[4/5] w-full max-w-60 overflow-hidden bg-surface">
+        {instructor.image ? (
+          <Image
+            src={instructor.image}
+            alt={`${instructor.name}, instructor for ${instructor.title} at Brew and Bake Academy Butwal`}
+            fill
+            className="object-cover object-top"
+            sizes="(min-width: 640px) 208px, 240px"
+          />
+        ) : (
+          <div
+            className="size-full opacity-35"
+            style={{ backgroundColor: instructor.imagePlaceholder }}
+            aria-hidden
+          />
+        )}
+      </div>
 
-        <div>
-          <p className="font-[family-name:var(--font-playfair)] text-[1.2rem] font-bold text-(--brand-green)">
+      <div className="space-y-4">
+        <div className="space-y-1">
+          <p className="font-label text-[0.6875rem] tracking-[0.16em] text-ink-muted uppercase">
+            {instructor.yearsExp} yrs experience
+          </p>
+          <h3 className="font-display text-3xl leading-tight text-ink">
             {instructor.name}
-          </p>
-          <p className="mt-1 font-(family-name:--font-dm-sans) text-[0.85rem] text-[rgba(47,78,64,0.5)]">
-            {instructor.title}
-          </p>
+          </h3>
+          <p className="text-[0.8125rem] text-ink-muted">{instructor.title}</p>
         </div>
-
+        <p className="max-w-prose text-[0.9375rem] leading-relaxed text-ink-muted">
+          {instructor.bio}
+        </p>
         {instructor.hasProfileCard ? (
           <button
             type="button"
             onClick={onViewProfile}
-            className="inline-flex items-center gap-2 border border-[rgba(47,78,64,0.18)] bg-white px-5 py-2.5 font-(family-name:--font-dm-sans) text-sm font-semibold text-(--brand-green) transition-colors hover:bg-[rgba(47,78,64,0.04)]"
+            aria-label={`View full profile of ${instructor.name}`}
+            className="group inline-flex items-center gap-2 text-[0.8125rem] text-ink outline-none focus-visible:ring-2 focus-visible:ring-clay focus-visible:ring-offset-4 focus-visible:ring-offset-paper"
           >
-            View full profile
-            <ArrowRight size={15} strokeWidth={2.5} />
+            <span className="link-underline group-hover:bg-size-[100%_1px]">
+              View full profile
+            </span>
+            <ArrowRightIcon
+              aria-hidden
+              className="size-3.5 transition-transform duration-300 ease-out-expo group-hover:translate-x-1"
+            />
           </button>
         ) : null}
-      </div>
-
-      <div className={cn(courseCardClass, "p-6 sm:p-7")}>
-        <p className={cn(courseBodyClass, "mb-6 max-w-prose")}>
-          {instructor.bio}
-        </p>
-        <div className="flex items-center gap-3 border-t border-[rgba(47,78,64,0.08)] pt-5">
-          <BookOpen
-            className="h-4 w-4 text-(--brand-brown)"
-            strokeWidth={1.75}
-          />
-          <span className="font-(family-name:--font-dm-sans) text-[0.875rem] text-[rgba(47,78,64,0.62)]">
-            <strong className="text-(--brand-green)">
-              {instructor.yearsExp} years
-            </strong>{" "}
-            of industry experience
-          </span>
-        </div>
       </div>
     </div>
   );
