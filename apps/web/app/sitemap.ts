@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { absoluteUrl } from "@/lib/seo";
-import { courses } from "@/utils/mock";
+import { listedCourses } from "@/utils/mock";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
@@ -18,7 +18,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "weekly",
       priority: 0.9,
     },
-    ...courses.map((course) => ({
+    ...listedCourses.map((course) => ({
       url: absoluteUrl(`/courses/${course.slug}`),
       lastModified: now,
       changeFrequency: "weekly" as const,

@@ -27,7 +27,11 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { Breadcrumbs } from "@/components/site/breadcrumbs";
 import { ButtonArrow, siteButton } from "@/components/site/button";
 import { SectionHeading } from "@/components/site/section-heading";
-import { createCourseJsonLd, createCourseMetadata } from "@/lib/seo";
+import {
+  createCourseJsonLd,
+  createCourseMetadata,
+  splitTitle,
+} from "@/lib/seo";
 import { CourseCard } from "@/modules/courses/CourseCard";
 import {
   formatFee,
@@ -62,13 +66,6 @@ export async function generateMetadata({
   const course = getCourseBySlug(slug);
   if (!course) return { title: "Course Not Found" };
   return createCourseMetadata(course);
-}
-
-/** "Professional Barista Program" → "Professional Barista" + "Program." */
-function splitTitle(title: string) {
-  const words = title.trim().split(/\s+/);
-  const last = words.pop() ?? title;
-  return { lead: words.join(" "), last };
 }
 
 export default async function CoursePage({
@@ -114,7 +111,7 @@ export default async function CoursePage({
 
   return (
     <main id="main-content" className="font-site text-ink">
-      <JsonLd data={createCourseJsonLd(course)} />
+      <JsonLd data={createCourseJsonLd(course, fee)} />
 
       {/* ── Hero ── */}
       <section

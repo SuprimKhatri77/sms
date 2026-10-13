@@ -1,10 +1,14 @@
 export const dynamic = "force-dynamic";
 
+import type { Metadata } from "next";
+import { privatePageMetadata } from "@/lib/seo";
 import { getCurrentUser } from "@/lib/queries/auth/get-current-user";
 import { getActiveCourses } from "@/lib/queries/courses/get-active-courses";
 import { getAdmissionStatus } from "@/lib/queries/student/get-admission-status";
 import AdmissionPage from "@/modules/admission/Admission";
 import AlreadySubmitted from "@/modules/admission/AlreadySubmitted";
+
+export const metadata: Metadata = privatePageMetadata("Apply for admission");
 
 export default async function Page() {
   const [activeCourses, admissionStatus, user] = await Promise.all([
