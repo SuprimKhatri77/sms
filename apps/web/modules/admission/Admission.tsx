@@ -51,6 +51,8 @@ import {
   admissionBoxInputClass,
   admissionCalloutClass,
   admissionErrorClass,
+  admissionHintClass,
+  admissionIconClass,
   admissionPhotoDropClass,
   admissionWizardShellClass,
   // admissionInputClass,
@@ -60,7 +62,6 @@ import {
   admissionPrimaryBtnClass,
   admissionSecondaryBtnClass,
 } from "./admission-styles";
-import { landingContainerClass } from "@/components/landing/landing-styles";
 
 interface FieldError {
   fullName?: string;
@@ -165,8 +166,10 @@ function validateStep(step: number, data: ValidateStepData): FieldError {
 
 type Props = {
   courses: Extract<CoursesList, { success: true }>["data"];
+  /** The account's name, prefilled into Full Name (still editable). */
+  defaultName?: string;
 };
-export default function AdmissionPage({ courses }: Props) {
+export default function AdmissionPage({ courses, defaultName }: Props) {
   const user = useAuthStore((state) => state.user);
   const [currentStep, setCurrentStep] = useState(0);
   const [errors, setErrors] = useState<Partial<FieldError>>({});
@@ -248,7 +251,7 @@ export default function AdmissionPage({ courses }: Props) {
     setFieldMeta,
   } = useForm({
     defaultValues: {
-      fullName: "",
+      fullName: defaultName?.trim() ?? "",
       phone: "",
       source: "" as CreateStudentAdmission["source"],
       // email: user?.email ?? "",
@@ -382,19 +385,17 @@ export default function AdmissionPage({ courses }: Props) {
 
   // ── Form ──
   return (
-    <main className="min-h-screen bg-(--brand-cream) pb-16 pt-10">
-      <div className={cn(landingContainerClass, "px-4 sm:px-6")}>
+    <main className="bg-paper pt-10 pb-20 font-site sm:pt-14 sm:pb-28">
+      <div className="container-page">
         <div className="mx-auto w-full max-w-6xl">
           <AdmissionHero />
 
-          <p className="mb-5 font-(family-name:--font-dm-sans) text-[0.72rem] font-bold uppercase tracking-[0.16em] text-[rgba(47,78,64,0.42)]">
-            Application form
-          </p>
+          <p className="eyebrow mb-5">Application form</p>
 
           <div className={admissionWizardShellClass}>
             <AdmissionSidePanel currentStep={currentStep} />
 
-            <div className="flex min-w-0 flex-1 flex-col bg-white">
+            <div className="flex min-w-0 flex-1 flex-col">
               <AdmissionStepNav currentStep={currentStep} />
 
               <form
@@ -463,23 +464,26 @@ export default function AdmissionPage({ courses }: Props) {
 
                             return (
                               <div className="flex flex-col gap-1.5">
-                                <label className={admissionLabelClass}>
+                                <span className={admissionLabelClass}>
                                   Date of Birth (BS){" "}
-                                  <span className="text-(--brand-brown)">
-                                    *
-                                  </span>
-                                </label>
+                                  <span className="text-clay-deep">*</span>
+                                </span>
                                 <div className="relative">
-                                  <span className="pointer-events-none absolute left-3.5 top-1/2 z-10 -translate-y-1/2 text-[rgba(47,78,64,0.38)]">
+                                  <span
+                                    className={cn(
+                                      admissionIconClass,
+                                      "top-1/2 z-10 -translate-y-1/2",
+                                    )}
+                                  >
                                     <Calendar
                                       className="h-4 w-4"
-                                      strokeWidth={1.75}
+                                      strokeWidth={1.5}
                                     />
                                   </span>
                                   <NepaliDatePicker
                                     inputClassName={cn(
                                       admissionBoxInputClass,
-                                      "py-2.5 pl-9",
+                                      "pl-10",
                                       mergedError
                                         ? admissionInputErrorBorder
                                         : admissionInputNormalBorder,
@@ -519,20 +523,34 @@ export default function AdmissionPage({ courses }: Props) {
                             const mergedError = fieldError ?? errors.dobBS;
                             return (
                               <div className="flex flex-col gap-1.5">
-                                <label className="font-(family-name:--font-dm-sans) text-[0.72rem] font-semibold uppercase tracking-widest text-[rgba(47,78,64,0.45)]">
+                                <label
+                                  htmlFor="admission-dob-ad"
+                                  className={admissionLabelClass}
+                                >
                                   Date of Birth (AD)
-                                  <span className="ml-1 font-normal normal-case tracking-normal text-[rgba(47,78,64,0.4)]">
-                                    (auto-converted)
+                                  <span
+                                    className={cn(
+                                      admissionHintClass,
+                                      "ml-2 tracking-normal normal-case",
+                                    )}
+                                  >
+                                    Auto-converted
                                   </span>
                                 </label>
                                 <div className="relative">
-                                  <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[rgba(47,78,64,0.38)]">
+                                  <span
+                                    className={cn(
+                                      admissionIconClass,
+                                      "top-1/2 -translate-y-1/2",
+                                    )}
+                                  >
                                     <Calendar
                                       className="h-4 w-4"
-                                      strokeWidth={1.75}
+                                      strokeWidth={1.5}
                                     />
                                   </span>
                                   <input
+                                    id="admission-dob-ad"
                                     type="date"
                                     disabled
                                     value={dobAD}
@@ -543,7 +561,6 @@ export default function AdmissionPage({ courses }: Props) {
                                     className={cn(
                                       admissionBoxInputClass,
                                       admissionInputNormalBorder,
-                                      "disabled:cursor-not-allowed",
                                     )}
                                   />
                                 </div>
@@ -610,7 +627,6 @@ export default function AdmissionPage({ courses }: Props) {
                         placeholder="optional"
                         value={user?.email ?? ""}
                         disabled
-                        className="border-[rgba(47,78,64,0.14)] bg-[#f4f1ec] text-[rgba(47,78,64,0.5)]"
                       />
                       <FormField name="address">
                         {(field) => {
@@ -620,20 +636,27 @@ export default function AdmissionPage({ courses }: Props) {
                           return (
                             <div className="sm:col-span-2">
                               <div className="flex flex-col gap-1.5">
-                                <label className={admissionLabelClass}>
+                                <label
+                                  htmlFor="admission-address"
+                                  className={admissionLabelClass}
+                                >
                                   Address{" "}
-                                  <span className="text-(--brand-brown)">
-                                    *
-                                  </span>
+                                  <span className="text-clay-deep">*</span>
                                 </label>
                                 <div className="relative">
-                                  <span className="pointer-events-none absolute left-3.5 top-3.5 text-[rgba(47,78,64,0.38)]">
+                                  <span
+                                    className={cn(admissionIconClass, "top-4")}
+                                  >
                                     <MapPin
                                       className="h-4 w-4"
-                                      strokeWidth={1.75}
+                                      strokeWidth={1.5}
                                     />
                                   </span>
                                   <textarea
+                                    id="admission-address"
+                                    aria-invalid={
+                                      mergedError ? true : undefined
+                                    }
                                     rows={3}
                                     placeholder="Street, City, District"
                                     value={field.state.value}
@@ -668,16 +691,21 @@ export default function AdmissionPage({ courses }: Props) {
                           const mergedError = fieldError ?? errors.photoUrl;
                           return (
                             <div className="sm:col-span-2">
-                              <label className={admissionLabelClass}>
-                                Photo{" "}
-                                <span className="font-normal normal-case tracking-normal text-[rgba(47,78,64,0.4)]">
-                                  (optional)
+                              <span className={admissionLabelClass}>
+                                Photo
+                                <span
+                                  className={cn(
+                                    admissionHintClass,
+                                    "ml-2 tracking-normal normal-case",
+                                  )}
+                                >
+                                  Optional
                                 </span>
-                              </label>
+                              </span>
                               <label className={admissionPhotoDropClass}>
                                 {isUploadingImage ? (
-                                  <div className="flex h-14 w-14 shrink-0 items-center justify-center border border-[rgba(47,78,64,0.1)] bg-white">
-                                    <Loader2 className="h-5 w-5 animate-spin text-[rgba(47,78,64,0.4)]" />
+                                  <div className="flex h-14 w-14 shrink-0 items-center justify-center border border-hairline bg-surface">
+                                    <Loader2 className="h-5 w-5 animate-spin text-ink-muted" />
                                   </div>
                                 ) : photo?.url ? (
                                   // eslint-disable-next-line @next/next/no-img-element
@@ -687,30 +715,30 @@ export default function AdmissionPage({ courses }: Props) {
                                     className="h-14 w-14 shrink-0 object-cover"
                                   />
                                 ) : (
-                                  <div className="flex h-14 w-14 shrink-0 items-center justify-center border border-[rgba(47,78,64,0.1)] bg-white">
+                                  <div className="flex h-14 w-14 shrink-0 items-center justify-center border border-hairline bg-surface">
                                     <Upload
-                                      className="h-5 w-5 text-[rgba(47,78,64,0.38)]"
-                                      strokeWidth={1.75}
+                                      className="h-5 w-5 text-ink-muted"
+                                      strokeWidth={1.5}
                                     />
                                   </div>
                                 )}
 
                                 <div className="min-w-0">
-                                  <p className="font-(family-name:--font-dm-sans) text-[0.88rem] font-medium text-(--brand-green)">
+                                  <p className="truncate font-site text-[0.9375rem] text-ink">
                                     {isUploadingImage
                                       ? "Uploading..."
                                       : photo?.url
                                         ? photo.fileName
                                         : "Upload a passport photo"}
                                   </p>
-                                  <p className="font-(family-name:--font-dm-sans) text-[0.78rem] text-[rgba(47,78,64,0.42)]">
+                                  <p className={admissionHintClass}>
                                     JPG or PNG · max 5MB · optional
                                   </p>
                                 </div>
                                 <input
                                   type="file"
                                   accept="image/*"
-                                  className="hidden"
+                                  className="sr-only"
                                   onChange={handlePhotoChange}
                                   disabled={isUploadingImage}
                                 />
@@ -816,7 +844,7 @@ export default function AdmissionPage({ courses }: Props) {
                             onChange={(v) => {
                               field.handleChange(v);
                               if (mergedError)
-                                setErrors((prev) => ({ ...prev, course: "" }));
+                                setErrors((prev) => ({ ...prev, courses: "" }));
                             }}
                             error={mergedError}
                             required
@@ -939,14 +967,14 @@ export default function AdmissionPage({ courses }: Props) {
                         />
                         {photo?.url && (
                           <div className="flex items-center justify-between py-3">
-                            <span className="font-(family-name:--font-dm-sans) text-[0.72rem] font-semibold uppercase tracking-widest text-[rgba(47,78,64,0.45)]">
+                            <span className="font-label text-[0.6875rem] tracking-[0.16em] text-ink-muted uppercase">
                               Photo
                             </span>
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                               src={photo.url}
                               alt="Preview"
-                              className="h-10 w-10 object-cover border border-[rgba(47,78,64,0.1)]"
+                              className="h-10 w-10 border border-hairline object-cover"
                             />
                           </div>
                         )}
@@ -994,7 +1022,7 @@ export default function AdmissionPage({ courses }: Props) {
 
                 <div
                   className={cn(
-                    "flex border-t border-[rgba(47,78,64,0.08)] px-6 py-5 sm:px-8 lg:px-10",
+                    "flex border-t border-hairline px-6 py-5 sm:px-8 lg:px-10",
                     currentStep > 0 ? "justify-between gap-3" : "justify-end",
                   )}
                 >
@@ -1002,9 +1030,9 @@ export default function AdmissionPage({ courses }: Props) {
                     <button
                       type="button"
                       onClick={goBack}
-                      className={cn(admissionSecondaryBtnClass, "px-5 py-3")}
+                      className={admissionSecondaryBtnClass}
                     >
-                      <ChevronLeft className="h-4 w-4" />
+                      <ChevronLeft className="h-4 w-4" strokeWidth={1.5} />
                       Back
                     </button>
                   ) : null}
@@ -1023,22 +1051,22 @@ export default function AdmissionPage({ courses }: Props) {
                       currentStep === ADMISSION_STEPS.length - 1 &&
                       (isPending || isUploadingImage)
                     }
-                    className={cn(
-                      admissionPrimaryBtnClass,
-                      "px-6 py-3 disabled:cursor-not-allowed disabled:opacity-60",
-                    )}
+                    className={admissionPrimaryBtnClass}
                   >
                     {currentStep === ADMISSION_STEPS.length - 1 ? (
                       <>
                         {isPending ? "Submitting…" : "Submit Application"}
                         {!isPending ? (
-                          <CheckCircle2 className="h-4 w-4" strokeWidth={2.5} />
+                          <CheckCircle2 className="h-4 w-4" strokeWidth={1.5} />
                         ) : null}
                       </>
                     ) : (
                       <>
                         Continue
-                        <ChevronRight className="h-4 w-4" strokeWidth={2.5} />
+                        <ChevronRight
+                          className="h-4 w-4 transition-transform duration-300 ease-out-expo group-hover/btn:translate-x-0.5"
+                          strokeWidth={1.5}
+                        />
                       </>
                     )}
                   </button>

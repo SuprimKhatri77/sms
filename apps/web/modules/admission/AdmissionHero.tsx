@@ -1,24 +1,17 @@
-import { Clock, FileCheck, GraduationCap, Phone } from "lucide-react";
-import {
-  landingSectionBodyClass,
-  landingSectionTitleClass,
-} from "@/components/landing/landing-styles";
+import { PhoneIcon } from "@phosphor-icons/react/ssr";
+import { Breadcrumbs } from "@/components/site/breadcrumbs";
 import { siteInfo } from "@/utils/site-info";
-import { admissionEyebrowClass } from "./admission-styles";
 
 const HIGHLIGHTS = [
   {
-    icon: FileCheck,
     title: "4 simple steps",
     body: "Personal info, guardian, course choice, then review.",
   },
   {
-    icon: Clock,
     title: "About 5 minutes",
     body: "Save progress by going back anytime before you submit.",
   },
   {
-    icon: GraduationCap,
     title: "We respond fast",
     body: "Our team reaches out within 24–48 hours of your application.",
   },
@@ -26,63 +19,72 @@ const HIGHLIGHTS = [
 
 export function AdmissionHero() {
   return (
-    <header className="mb-10 lg:mb-14">
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-end lg:gap-12">
-        <div className="max-w-2xl">
-          <span className={`${admissionEyebrowClass} mb-4 inline-block`}>
+    <header className="mb-12 lg:mb-16">
+      <Breadcrumbs
+        className="animate-rise"
+        items={[{ label: "Home", href: "/" }, { label: "Admission" }]}
+      />
+
+      <div className="mt-8 grid gap-10 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-end lg:gap-16">
+        <div className="max-w-3xl">
+          <p
+            className="eyebrow animate-rise"
+            style={{ "--i": 1 } as React.CSSProperties}
+          >
             {siteInfo.admission.cycleLabel}
-          </span>
-          <h1 className={landingSectionTitleClass}>
-            Apply to{" "}
-            <em
-              className="font-medium text-(--brand-brown)"
-              style={{ fontStyle: "italic" }}
-            >
-              {siteInfo.company.shortName}
-            </em>
+          </p>
+          <h1
+            className="display animate-rise mt-4 text-[clamp(3rem,7vw,6rem)] text-ink"
+            style={{ "--i": 2 } as React.CSSProperties}
+          >
+            Apply to <em>Brew &amp; Bake.</em>
           </h1>
-          <p className={`${landingSectionBodyClass} mt-4 max-w-xl`}>
+          <p
+            className="animate-rise mt-6 max-w-xl text-[0.9375rem] leading-relaxed text-ink-muted"
+            style={{ "--i": 3 } as React.CSSProperties}
+          >
             Take the first step toward hands-on training in barista, bakery, and
             hospitality. Fill out the form below — it only takes a few minutes
             and there is no commitment until we confirm your enrollment.
           </p>
         </div>
 
-        <aside className="border border-[rgba(47,78,64,0.1)] bg-white p-5 lg:p-6">
-          <p className="font-(family-name:--font-dm-sans) text-[0.68rem] font-bold uppercase tracking-[0.14em] text-[rgba(47,78,64,0.42)]">
-            Need help?
-          </p>
-          <p className="mt-2 font-(family-name:--font-dm-sans) text-[0.88rem] leading-relaxed text-[rgba(47,78,64,0.62)]">
+        <aside
+          className="animate-rise border border-hairline p-5 lg:p-6"
+          style={{ "--i": 4 } as React.CSSProperties}
+        >
+          <p className="eyebrow">Need help?</p>
+          <p className="mt-3 text-[0.875rem] leading-relaxed text-ink-muted">
             Call or message us before you apply — we are happy to walk you
             through programs and batch schedules.
           </p>
           <a
             href={`tel:${siteInfo.contact.phone.replace(/\s/g, "")}`}
-            className="mt-4 inline-flex items-center gap-2 font-(family-name:--font-dm-sans) text-[0.88rem] font-semibold text-(--brand-brown) transition-colors hover:text-(--brand-green)"
+            className="group mt-4 inline-flex items-center gap-2 text-[0.875rem] text-ink outline-none"
           >
-            <Phone className="h-4 w-4" strokeWidth={2} />
-            {siteInfo.contact.phone}
+            <PhoneIcon aria-hidden weight="light" className="size-4 text-clay-deep" />
+            <span className="link-underline group-hover:bg-size-[100%_1px] group-focus-visible:bg-size-[100%_1px] tabular-nums">
+              {siteInfo.contact.phone}
+            </span>
           </a>
         </aside>
       </div>
 
-      <ul className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        {HIGHLIGHTS.map(({ icon: Icon, title, body }) => (
+      <ul className="mt-12 grid grid-cols-1 border-t border-hairline sm:grid-cols-3">
+        {HIGHLIGHTS.map(({ title, body }, idx) => (
           <li
             key={title}
-            className="flex gap-3.5 border border-[rgba(47,78,64,0.1)] bg-white p-4 sm:p-5"
+            className="border-b border-hairline py-5 sm:border-b-0 sm:py-6 sm:pr-6 sm:not-first:border-l sm:not-first:pl-6"
           >
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center bg-[rgba(194,138,79,0.1)] text-(--brand-brown)">
-              <Icon className="h-4 w-4" strokeWidth={1.75} />
-            </div>
-            <div>
-              <p className="font-(family-name:--font-dm-sans) text-[0.88rem] font-semibold text-(--brand-green)">
-                {title}
-              </p>
-              <p className="mt-1 font-(family-name:--font-dm-sans) text-[0.8rem] leading-relaxed text-[rgba(47,78,64,0.52)]">
-                {body}
-              </p>
-            </div>
+            <p className="font-label text-[0.6875rem] tracking-[0.16em] text-clay-deep tabular-nums">
+              {String(idx + 1).padStart(2, "0")}
+            </p>
+            <p className="mt-3 font-display text-2xl leading-tight text-ink">
+              {title}
+            </p>
+            <p className="mt-1.5 text-[0.8125rem] leading-relaxed text-ink-muted">
+              {body}
+            </p>
           </li>
         ))}
       </ul>

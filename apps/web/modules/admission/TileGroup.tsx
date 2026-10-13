@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { cn } from "@/lib/utils";
 import {
   admissionErrorClass,
@@ -22,27 +23,32 @@ export function TileGroup({
   error?: string;
   required?: boolean;
 }) {
+  const labelId = useId();
+
   return (
     <div className="flex flex-col gap-2.5">
-      <label className={admissionLabelClass}>
+      <span id={labelId} className={admissionLabelClass}>
         {label}
-        {required ? (
-          <span className="ml-1 text-(--brand-brown)">*</span>
-        ) : null}
-      </label>
+        {required ? <span className="ml-1 text-clay-deep">*</span> : null}
+      </span>
       <div
-        className="flex overflow-hidden ring-1 ring-[rgba(47,78,64,0.1)]"
+        className={cn(
+          // gap-px over a hairline background draws the dividers, even when
+          // the options wrap; growing tiles leave no empty cells.
+          "flex flex-wrap gap-px border bg-hairline",
+          error ? "border-red-600" : "border-hairline",
+        )}
         role="group"
-        aria-label={label}
+        aria-labelledby={labelId}
       >
-        {options.map((o, idx) => (
+        {options.map((o) => (
           <button
             key={o.value}
             type="button"
+            aria-pressed={value === o.value}
             onClick={() => onChange(o.value)}
             className={cn(
               admissionSegmentBaseClass,
-              idx > 0 && "border-l border-[rgba(47,78,64,0.08)]",
               value === o.value
                 ? admissionSegmentActiveClass
                 : admissionSegmentInactiveClass,
@@ -52,7 +58,11 @@ export function TileGroup({
           </button>
         ))}
       </div>
-      {error ? <p className={admissionErrorClass}>{error}</p> : null}
+      {error ? (
+        <p role="alert" className={admissionErrorClass}>
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }

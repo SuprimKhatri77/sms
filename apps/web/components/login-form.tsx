@@ -1,15 +1,8 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import {
-  Field,
-  FieldGroup,
-  FieldLabel,
-  FieldError,
-  FieldDescription,
-} from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
+import { siteButton } from "@/components/site/button";
+import { AuthField } from "@/components/auth/auth-field";
 import { useForm } from "@tanstack/react-form-nextjs";
 import {
   APIError,
@@ -88,34 +81,42 @@ export function LoginForm({
         e.preventDefault();
         handleSubmit();
       }}
-      className={cn("flex flex-col gap-6", className)}
+      className={cn("w-full max-w-sm", className)}
       {...props}
     >
-      <FieldGroup>
-        <div className="flex flex-col items-center gap-1 text-center">
-          <h1 className="text-2xl font-bold">Login to your account</h1>
-          <p className="text-sm text-balance text-muted-foreground">
-            Enter your email below to login to your account
-          </p>
-        </div>
+      <div className="mb-10 space-y-3">
+        <p className="eyebrow animate-rise">Welcome back</p>
+        <h1
+          className="display animate-rise text-5xl text-ink sm:text-6xl"
+          style={{ "--i": 1 } as React.CSSProperties}
+        >
+          Log <em>in.</em>
+        </h1>
+        <p
+          className="animate-rise text-[0.9375rem] text-ink-muted"
+          style={{ "--i": 2 } as React.CSSProperties}
+        >
+          Enter your email and password to continue.
+        </p>
+      </div>
+
+      <div className="space-y-7">
         <FormField name="email">
           {(field) => {
             const error = field.state.meta.errors[0]?.message;
             const mergedError = error ?? errors?.email;
             return (
-              <Field>
-                <FieldLabel htmlFor="email">Email</FieldLabel>
-                <Input
-                  id="email"
-                  value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  type="email"
-                  placeholder="m@example.com"
-                  required
-                />
-
-                {mergedError && <FieldError>{mergedError}</FieldError>}
-              </Field>
+              <AuthField
+                id="email"
+                label="Email"
+                value={field.state.value}
+                onChange={(e) => field.handleChange(e.target.value)}
+                type="email"
+                autoComplete="email"
+                placeholder="m@example.com"
+                required
+                error={mergedError}
+              />
             );
           }}
         </FormField>
@@ -124,41 +125,38 @@ export function LoginForm({
             const error = field.state.meta.errors[0]?.message;
             const mergedError = error ?? errors?.password;
             return (
-              <Field>
-                <div className="flex items-center">
-                  <FieldLabel htmlFor="password">Password</FieldLabel>
-                </div>
-                <Input
-                  id="password"
-                  value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  type="password"
-                  required
-                />
-
-                {mergedError && <FieldError>{mergedError}</FieldError>}
-              </Field>
+              <AuthField
+                id="password"
+                label="Password"
+                value={field.state.value}
+                onChange={(e) => field.handleChange(e.target.value)}
+                type="password"
+                autoComplete="current-password"
+                required
+                error={mergedError}
+              />
             );
           }}
         </FormField>
-        <Field>
-          <Button
-            disabled={isPending}
-            type="submit"
-            className="rounded-none bg-[#c28a4f]"
-          >
-            {isPending ? <Spinner /> : "Login"}
-          </Button>
-        </Field>
-        <Field>
-          <FieldDescription className="text-center">
-            Don&apos;t have an account?{" "}
-            <Link href="/auth/signup" className="underline underline-offset-4">
-              Sign up
-            </Link>
-          </FieldDescription>
-        </Field>
-      </FieldGroup>
+      </div>
+
+      <button
+        disabled={isPending}
+        type="submit"
+        className={cn(
+          siteButton({ variant: "pine", size: "lg" }),
+          "mt-10 w-full",
+        )}
+      >
+        {isPending ? <Spinner /> : "Log in"}
+      </button>
+
+      <p className="mt-8 text-center text-[0.875rem] text-ink-muted">
+        Don&apos;t have an account?{" "}
+        <Link href="/auth/signup" className="link-underline text-ink">
+          Sign up
+        </Link>
+      </p>
     </form>
   );
 }

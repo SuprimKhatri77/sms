@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -24,6 +25,7 @@ export function MultiTileGroup({
   error?: string;
   required?: boolean;
 }) {
+  const labelId = useId();
   const toggle = (opt: string) => {
     onChange(
       value.includes(opt) ? value.filter((v) => v !== opt) : [...value, opt],
@@ -32,55 +34,65 @@ export function MultiTileGroup({
 
   return (
     <div className="flex flex-col gap-3">
-      <label className={admissionLabelClass}>
+      <p id={labelId} className={admissionLabelClass}>
         {label}
-        {required ? (
-          <span className="ml-1 text-(--brand-brown)">*</span>
-        ) : null}
+        {required ? <span className="ml-1 text-clay-deep">*</span> : null}
         <span
-          className={`${admissionHintClass} ml-2 normal-case tracking-normal`}
+          className={`${admissionHintClass} ml-2 tracking-normal normal-case`}
         >
-          — tap all that apply
+          Tap all that apply
         </span>
-      </label>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {options.map((o) => {
+      </p>
+      <div
+        role="group"
+        aria-labelledby={labelId}
+        className="grid grid-cols-1 gap-3 sm:grid-cols-2"
+      >
+        {options.map((o, idx) => {
           const selected = value.includes(o.value);
           return (
             <button
               key={o.value}
               type="button"
+              aria-pressed={selected}
               onClick={() => toggle(o.value)}
               className={cn(
                 admissionCourseCardBaseClass,
                 selected
                   ? admissionCourseCardActiveClass
-                  : admissionCourseCardInactiveClass,
+                  : error
+                    ? "border-red-600 bg-paper"
+                    : admissionCourseCardInactiveClass,
               )}
             >
+              <span className="min-w-0 flex-1">
+                <span className="block font-label text-[0.625rem] tracking-[0.16em] text-ink-muted tabular-nums">
+                  {String(idx + 1).padStart(2, "0")}
+                </span>
+                <span className="mt-1.5 block font-display text-[1.375rem] leading-tight text-ink capitalize">
+                  {o.label}
+                </span>
+              </span>
               <span
+                aria-hidden
                 className={cn(
-                  "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center border transition-colors",
+                  "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center border transition-colors duration-300",
                   selected
-                    ? "border-(--brand-brown) bg-(--brand-brown) text-white"
-                    : "border-[rgba(47,78,64,0.2)] bg-white text-transparent group-hover:border-[rgba(194,138,79,0.45)]",
+                    ? "border-pine bg-pine text-paper"
+                    : "border-ink/25 bg-paper text-transparent group-hover:border-ink/50",
                 )}
               >
                 <Check className="h-3 w-3" strokeWidth={2.5} />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block font-(family-name:--font-dm-sans) text-[0.92rem] font-semibold capitalize text-(--brand-green)">
-                  {o.label}
-                </span>
-                <span className="mt-0.5 block font-(family-name:--font-dm-sans) text-[0.76rem] text-[rgba(47,78,64,0.45)]">
-                  {selected ? "Selected" : "Tap to select"}
-                </span>
               </span>
             </button>
           );
         })}
       </div>
-      {error ? <p className={admissionErrorClass}>{error}</p> : null}
+      {error ? (
+        <p role="alert" className={admissionErrorClass}>
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }

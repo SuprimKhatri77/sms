@@ -1,61 +1,62 @@
-"use client";
-
-import { admissionWizardShellClass } from "./admission-styles";
-import { landingContainerClass } from "@/components/landing/landing-styles";
 import { cn } from "@/lib/utils";
+import { admissionWizardShellClass } from "./admission-styles";
+
+const bone = "skeleton-shimmer bg-surface";
 
 export function AdmissionSkeleton() {
-  const shimmer =
-    "relative overflow-hidden before:absolute before:inset-0 before:-translate-x-full before:animate-[shimmer_2s_infinite] before:bg-gradient-to-r before:from-transparent before:via-white/60 before:to-transparent";
-
   return (
-    <main className="min-h-screen bg-(--brand-cream) pb-16 pt-10">
-      <div className={cn(landingContainerClass, "px-4 sm:px-6")}>
+    <main
+      aria-busy
+      aria-label="Loading the admission form"
+      className="bg-paper pt-10 pb-20 font-site sm:pt-14 sm:pb-28"
+    >
+      <div className="container-page">
         <div className="mx-auto w-full max-w-6xl">
-          <header className="mb-10 lg:mb-14">
-            <div className={`mb-4 h-3 w-36 bg-[rgba(47,78,64,0.08)] ${shimmer}`} />
-            <div className={`h-12 w-full max-w-lg bg-[rgba(47,78,64,0.08)] ${shimmer}`} />
-            <div className={`mt-4 h-4 w-full max-w-xl bg-[rgba(47,78,64,0.05)] ${shimmer}`} />
-            <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
-              {[1, 2, 3].map((i) => (
+          <header className="mb-12 lg:mb-16">
+            <div className={cn(bone, "h-3 w-32")} />
+            <div className={cn(bone, "mt-10 h-3 w-36")} />
+            <div className={cn(bone, "mt-5 h-14 w-full max-w-xl sm:h-20")} />
+            <div className={cn(bone, "mt-6 h-4 w-full max-w-lg")} />
+            <div className="mt-12 grid grid-cols-1 border-t border-hairline sm:grid-cols-3">
+              {[0, 1, 2].map((i) => (
                 <div
                   key={i}
-                  className={`h-24 border border-[rgba(47,78,64,0.08)] bg-white ${shimmer}`}
-                />
+                  className="space-y-3 border-b border-hairline py-5 sm:border-b-0 sm:py-6 sm:pr-6 sm:not-first:border-l sm:not-first:pl-6"
+                >
+                  <div className={cn(bone, "h-3 w-6")} />
+                  <div className={cn(bone, "h-6 w-40")} />
+                  <div className={cn(bone, "h-3 w-full max-w-56")} />
+                </div>
               ))}
             </div>
           </header>
 
-          <div className={`mb-5 h-3 w-32 bg-[rgba(47,78,64,0.08)] ${shimmer}`} />
+          <div className={cn(bone, "mb-5 h-3 w-32")} />
 
           <div className={cn(admissionWizardShellClass, "lg:min-h-[720px]")}>
-            <div className="shrink-0 bg-[rgba(47,78,64,0.15)] p-6 sm:p-8 lg:w-[320px] xl:w-[360px]">
-              <div className={`mb-4 h-3 w-28 bg-[rgba(255,255,255,0.15)] ${shimmer}`} />
-              <div className={`h-10 w-10 bg-[rgba(255,255,255,0.1)] ${shimmer}`} />
-              <div className={`mt-4 h-7 w-48 bg-[rgba(255,255,255,0.12)] ${shimmer}`} />
-              <div className={`mt-5 h-1 w-full bg-[rgba(255,255,255,0.08)] ${shimmer}`} />
+            <div className="shrink-0 bg-pine p-6 sm:p-8 lg:w-[320px] xl:w-[360px] xl:p-10">
+              <div className="h-3 w-28 bg-paper/10" />
+              <div className="mt-6 h-3 w-20 bg-paper/10 lg:mt-10" />
+              <div className="mt-3 h-9 w-48 bg-paper/15" />
+              <div className="mt-8 hidden h-px w-full bg-paper/15 lg:block" />
             </div>
 
-            <div className="flex min-w-0 flex-1 flex-col bg-white">
+            <div className="flex min-w-0 flex-1 flex-col">
               <div className="flex-1 p-6 sm:p-8 lg:p-10">
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div className="sm:col-span-2 space-y-2">
-                    <div className={`h-3 w-20 bg-[rgba(47,78,64,0.08)] ${shimmer}`} />
-                    <div className={`h-11 w-full bg-[rgba(47,78,64,0.05)] ${shimmer}`} />
-                  </div>
-                  {[1, 2, 3, 4, 5].map((i) => (
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                  {[0, 1, 2, 3, 4, 5].map((i) => (
                     <div
                       key={i}
-                      className={cn("space-y-2", i === 1 && "sm:col-span-2")}
+                      className={cn("space-y-2", i === 0 && "sm:col-span-2")}
                     >
-                      <div className={`h-3 w-16 bg-[rgba(47,78,64,0.08)] ${shimmer}`} />
-                      <div className={`h-11 w-full bg-[rgba(47,78,64,0.05)] ${shimmer}`} />
+                      <div className={cn(bone, "h-3 w-20")} />
+                      <div className={cn(bone, "h-12 w-full")} />
                     </div>
                   ))}
                 </div>
               </div>
-              <div className="flex justify-end border-t border-[rgba(47,78,64,0.08)] px-6 py-5 sm:px-8 lg:px-10">
-                <div className={`h-11 w-32 bg-[rgba(47,78,64,0.08)] ${shimmer}`} />
+              <div className="flex justify-end border-t border-hairline px-6 py-5 sm:px-8 lg:px-10">
+                <div className={cn(bone, "h-11 w-32")} />
               </div>
             </div>
           </div>

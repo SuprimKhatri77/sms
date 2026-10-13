@@ -1,14 +1,16 @@
 export const dynamic = "force-dynamic";
 
+import { getCurrentUser } from "@/lib/queries/auth/get-current-user";
 import { getActiveCourses } from "@/lib/queries/courses/get-active-courses";
 import { getAdmissionStatus } from "@/lib/queries/student/get-admission-status";
 import AdmissionPage from "@/modules/admission/Admission";
 import AlreadySubmitted from "@/modules/admission/AlreadySubmitted";
 
 export default async function Page() {
-  const [activeCourses, admissionStatus] = await Promise.all([
+  const [activeCourses, admissionStatus, user] = await Promise.all([
     getActiveCourses(),
     getAdmissionStatus(),
+    getCurrentUser(),
   ]);
   if (admissionStatus.data.exists) {
     return (
@@ -20,5 +22,5 @@ export default async function Page() {
     );
   }
 
-  return <AdmissionPage courses={activeCourses} />;
+  return <AdmissionPage courses={activeCourses} defaultName={user?.name} />;
 }
