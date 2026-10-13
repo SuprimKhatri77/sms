@@ -4,6 +4,25 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* The certificate (public/certificate-print.css) names these families
+   directly. utils/font.ts self-hosts them under generated names, so they are
+   declared here under their real names too, from the same files. */
+@font-face {
+  font-family: "DM Sans";
+  src: url("../assets/fonts/site/DMSans-Variable.woff2") format("woff2");
+  font-weight: 300 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Playfair Display";
+  src: url("../assets/fonts/site/PlayfairDisplay-Variable.woff2")
+    format("woff2");
+  font-weight: 400 800;
+  font-style: normal;
+  font-display: swap;
+}
+
 @theme inline {
   --font-heading: var(--font-sans);
   --font-sans: var(--font-sans);
