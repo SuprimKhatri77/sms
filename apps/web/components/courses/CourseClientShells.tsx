@@ -16,9 +16,16 @@ type NavId = (typeof NAV_ITEMS)[number]["id"];
 
 interface CourseClientShellsProps {
   toneKey: CourseToneKey;
+  showInstructor: boolean;
 }
 
-export default function CourseClientShells({ toneKey }: CourseClientShellsProps) {
+export default function CourseClientShells({
+  toneKey,
+  showInstructor,
+}: CourseClientShellsProps) {
+  const navItems = showInstructor
+    ? NAV_ITEMS
+    : NAV_ITEMS.filter(({ id }) => id !== "instructor");
   const [activeId, setActiveId] = useState<NavId>("video");
   const [stuck, setStuck] = useState(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
@@ -87,7 +94,7 @@ export default function CourseClientShells({ toneKey }: CourseClientShellsProps)
           <div
             className={`${courseContainerClass} flex items-center gap-0.5 overflow-x-auto px-4 scrollbar-none snap-x snap-mandatory sm:gap-1 sm:px-6`}
           >
-            {NAV_ITEMS.map(({ id, label }) => {
+            {navItems.map(({ id, label }) => {
               const isActive = activeId === id;
               return (
                 <button

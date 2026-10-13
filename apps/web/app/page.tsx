@@ -2,6 +2,7 @@ import ImageGallery from "@/components/image-gallery";
 import Hero from "@/components/landing/Hero";
 import HowItWorks from "@/components/landing/HowItWorks";
 import InquiryForm from "@/components/landing/InquiryForm";
+import Mentors from "@/components/landing/Mentors";
 import OurPartners from "@/components/landing/OurPartners";
 import Programs from "@/components/landing/Programs";
 import ProgramLoadingSkeleton from "@/components/landing/programs/ProgramLoadingSkeleton";
@@ -27,6 +28,7 @@ export default function Home() {
         <Programs />
       </Suspense>
       <WhyUs />
+      <Mentors />
       <HowItWorks />
       <ImageGallery />
       <TestimonialsSection />

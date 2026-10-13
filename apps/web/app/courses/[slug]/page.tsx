@@ -83,7 +83,7 @@ export default async function CoursePage({
   const course = getCourseBySlug(slug);
   if (!course) notFound();
 
-  const { icon, ...safeCourse } = course;
+  const { icon } = course;
   const Icon = iconMap[icon];
   const tone = courseTones[icon as CourseToneKey];
   const formatter = new Intl.NumberFormat("en-NP");
@@ -206,7 +206,10 @@ export default async function CoursePage({
         </div>
       </section>
 
-      <CourseClientShells toneKey={icon as CourseToneKey} />
+      <CourseClientShells
+        toneKey={icon as CourseToneKey}
+        showInstructor={course.instructors.length > 0}
+      />
 
       {/* ── Video (featured) ── */}
       <section
@@ -383,13 +386,18 @@ export default async function CoursePage({
       </section>
 
       {/* ── Instructor ── */}
-      <section
-        id="instructor"
-        aria-labelledby="course-instructor-heading"
-        className={cn(courseSectionClass, courseMutedSection)}
-      >
-        <InstructorSection course={safeCourse} accent={tone.accent} />
-      </section>
+      {course.instructors.length > 0 ? (
+        <section
+          id="instructor"
+          aria-labelledby="course-instructor-heading"
+          className={cn(courseSectionClass, courseMutedSection)}
+        >
+          <InstructorSection
+            instructors={course.instructors}
+            accent={tone.accent}
+          />
+        </section>
+      ) : null}
 
       {/* ── FAQ ── */}
       <section
