@@ -1,6 +1,5 @@
 "use client";
 
-import { CalendarDays } from "lucide-react";
 import { BsDatePicker } from "@/components/bs-date-picker";
 import { cn } from "@/lib/utils";
 import { AdminDrawer } from "@/components/admin/admin-drawer";
@@ -285,19 +284,13 @@ export function WastageDialog({
               required
               error={editErrors?.date}
             >
-              <div className="relative">
-                <CalendarDays
-                  className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-[rgba(47,78,64,0.35)]"
-                  strokeWidth={1.75}
-                />
-                <BsDatePicker
-                  inputClassName={cn(inputCls, "rounded-none pl-9")}
-                  value={editForm.date}
-                  onChange={(v: string) =>
-                    setEditForm((prev) => ({ ...prev, date: v }))
-                  }
-                />
-              </div>
+              <BsDatePicker
+                fieldClassName={cn(inputCls, "rounded-none")}
+                value={editForm.date}
+                onChange={(v: string) =>
+                  setEditForm((prev) => ({ ...prev, date: v }))
+                }
+              />
             </InventoryFormField>
           </InventoryFormSection>
 
@@ -354,19 +347,13 @@ export function WastageDialog({
               required
               error={headerErrors?.date}
             >
-              <div className="relative">
-                <CalendarDays
-                  className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-[rgba(47,78,64,0.35)]"
-                  strokeWidth={1.75}
-                />
-                <BsDatePicker
-                  inputClassName={cn(inputCls, "rounded-none pl-9")}
-                  value={header.date}
-                  onChange={(v: string) =>
-                    setHeader((prev) => ({ ...prev, date: v }))
-                  }
-                />
-              </div>
+              <BsDatePicker
+                fieldClassName={cn(inputCls, "rounded-none")}
+                value={header.date}
+                onChange={(v: string) =>
+                  setHeader((prev) => ({ ...prev, date: v }))
+                }
+              />
             </InventoryFormField>
 
             <InventoryFormField label="Reason" optional>

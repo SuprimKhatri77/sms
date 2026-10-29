@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useMemo, useRef } from "react";
-import { CalendarDays } from "lucide-react";
 import { BsDatePicker } from "@/components/bs-date-picker";
 import { toast } from "sonner";
 import { bsToAdString } from "@/lib/bs-date";
@@ -180,6 +179,15 @@ export function LedgersFilters({
   }
 
   function handleDate(which: "from" | "to", bsValue: string) {
+    // "" is the picker's ✕: drop that side of the range.
+    if (!bsValue) {
+      onChange(
+        which === "from"
+          ? { ...filters, fromBsDate: "", fromDate: "" }
+          : { ...filters, toBsDate: "", toDate: "" },
+      );
+      return;
+    }
     try {
       const ad = bsToAdString(bsValue);
       onChange(
@@ -319,34 +327,22 @@ export function LedgersFilters({
 
         <div className="flex min-w-0 flex-col gap-2">
           <span className={accountingLabelClass}>From date (BS)</span>
-          <div className="relative">
-            <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-[rgba(47,78,64,0.4)]">
-              <CalendarDays className="h-4 w-4" strokeWidth={1.75} />
-            </span>
-            <BsDatePicker
-              inputClassName={cn(accountingFieldInputClass, "pl-9")}
-              value={filters.fromBsDate}
-              onChange={(v: string) => {
-                if (v) handleDate("from", v);
-              }}
-            />
-          </div>
+          <BsDatePicker
+            fieldClassName={accountingFieldInputClass}
+            clearable
+            value={filters.fromBsDate}
+            onChange={(v: string) => handleDate("from", v)}
+          />
         </div>
 
         <div className="flex min-w-0 flex-col gap-2">
           <span className={accountingLabelClass}>To date (BS)</span>
-          <div className="relative">
-            <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-[rgba(47,78,64,0.4)]">
-              <CalendarDays className="h-4 w-4" strokeWidth={1.75} />
-            </span>
-            <BsDatePicker
-              inputClassName={cn(accountingFieldInputClass, "pl-9")}
-              value={filters.toBsDate}
-              onChange={(v: string) => {
-                if (v) handleDate("to", v);
-              }}
-            />
-          </div>
+          <BsDatePicker
+            fieldClassName={accountingFieldInputClass}
+            clearable
+            value={filters.toBsDate}
+            onChange={(v: string) => handleDate("to", v)}
+          />
         </div>
       </div>
     </AccountingFilterShell>

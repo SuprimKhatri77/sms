@@ -10,13 +10,14 @@ type BsDatePickerProps = {
   /** BS date as "YYYY-MM-DD", or "" for no date. */
   value: string;
   onChange: (value: string) => void;
-  inputClassName?: string;
-  className?: string;
+  /** Classes for the bordered field that holds the input and buttons. */
+  fieldClassName?: string;
   /**
-   * Report an emptied field as onChange(""). Without it, the field can still
-   * be emptied to retype a date, but leaving it empty restores the value.
+   * Show a ✕ button and report an emptied field as onChange(""). Without
+   * it, the field can still be emptied to retype a date, but leaving it
+   * empty restores the value.
    */
-  allowEmpty?: boolean;
+  clearable?: boolean;
   placeholder?: string;
   disabled?: boolean;
   id?: string;
@@ -24,15 +25,14 @@ type BsDatePickerProps = {
 
 /**
  * BS date picker with a "YYYY-MM-DD" string value, the shape our forms and
- * the API use. Callers overlay their own calendar icon, so the input itself
- * opens the calendar.
+ * the API use. The calendar opens from the button at the start of the
+ * field, where our other inputs keep their icons; ✕ sits at the end.
  */
 export function BsDatePicker({
   value,
   onChange,
-  inputClassName,
-  className,
-  allowEmpty = false,
+  fieldClassName,
+  clearable = false,
   placeholder,
   disabled,
   id,
@@ -52,34 +52,52 @@ export function BsDatePicker({
     setPrevValue(value);
     setCleared(false);
   }
+  // Bumped to remount the picker, which resets its text to `value`.
+  const [resetKey, setResetKey] = useState(0);
 
   return (
     <div
       onBlur={(e) => {
-        // Focus left the whole picker (input and calendar) while empty:
-        // show the form's date again rather than a blank it won't submit.
-        if (cleared && !e.currentTarget.contains(e.relatedTarget)) {
-          setCleared(false);
-        }
+        if (e.currentTarget.contains(e.relatedTarget)) return;
+        // Focus left the whole picker (input and calendar). Whatever text
+        // is left must be what the form will submit: an emptied or
+        // incomplete/invalid date never reached onChange, so show the
+        // form's date again.
+        const text = e.currentTarget.querySelector("input")?.value ?? "";
+        const shown = selected ? formatBsDate(selected) : "";
+        if (cleared) setCleared(false);
+        else if (text !== shown) setResetKey((k) => k + 1);
       }}
     >
       <NepaliDatePicker
+        key={resetKey}
         id={id}
-        className={cn("bs-date-picker", className)}
-        classNames={{ input: inputClassName }}
+        className="bs-date-picker"
+        classNames={{
+          // Callers' input classes target :focus, which a div never gets,
+          // and typed invalid text should show like any other field error.
+          // pl-2 goes last so a caller's px-*/pl-* doesn't merge it away; it
+          // lines the calendar glyph up with our other inputs' icons.
+          field: cn(
+            "focus-within:border-(--brand-green) has-[[aria-invalid=true]]:border-[#9a3412]",
+            fieldClassName,
+            "pl-2",
+          ),
+        }}
         value={cleared ? undefined : selected}
         onChange={(date) => {
           if (date) {
             setCleared(false);
             onChange(formatBsDate(date));
-          } else if (allowEmpty) {
+          } else if (clearable) {
             onChange("");
           } else {
             setCleared(true);
           }
         }}
         today={today}
-        iconPosition="none"
+        iconPosition="start"
+        clearable={clearable}
         placeholder={placeholder}
         disabled={disabled}
         dayShape="square"

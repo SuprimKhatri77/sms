@@ -10,7 +10,6 @@ import {
   AlertCircle,
   Banknote,
   Building2,
-  CalendarDays,
   Coins,
   CreditCard,
   Plus,
@@ -505,14 +504,10 @@ export function AddPaymentModal({
 
         <section>
           <p className={adminFieldLabelClass}>Date (BS)</p>
-          <div className="relative mt-5">
-            <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-[rgba(47,78,64,0.4)]">
-              <CalendarDays className="h-4 w-4" strokeWidth={1.75} />
-            </span>
+          <div className="mt-5">
             <BsDatePicker
-              inputClassName={cn(
+              fieldClassName={cn(
                 inputCls,
-                "pl-9",
                 (error.bsDate || error.date) && "border-[#9a3412]",
               )}
               value={bsDate}

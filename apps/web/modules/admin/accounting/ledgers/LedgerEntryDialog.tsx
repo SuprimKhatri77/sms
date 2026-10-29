@@ -3,7 +3,6 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import {
   Banknote,
-  CalendarDays,
   Landmark,
   Truck,
   Users,
@@ -482,30 +481,24 @@ export function LedgerEntryDialog({
                 required
                 error={errors.bsDate}
               >
-                <div className="relative">
-                  <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-[rgba(47,78,64,0.4)]">
-                    <CalendarDays className="h-4 w-4" strokeWidth={1.75} />
-                  </span>
-                  <BsDatePicker
-                    inputClassName={cn(
-                      accountingFieldInputClass,
-                      "pl-9",
-                      errors.bsDate && "border-[#9a3412]",
-                    )}
-                    value={bsDate}
-                    onChange={(v: string) => {
-                      setBsDate(v);
-                      clearError("bsDate");
-                      try {
-                        setAdDate(bsToAdString(v));
-                      } catch (err) {
-                        toast.error(
-                          err instanceof Error ? err.message : "Invalid date",
-                        );
-                      }
-                    }}
-                  />
-                </div>
+                <BsDatePicker
+                  fieldClassName={cn(
+                    accountingFieldInputClass,
+                    errors.bsDate && "border-[#9a3412]",
+                  )}
+                  value={bsDate}
+                  onChange={(v: string) => {
+                    setBsDate(v);
+                    clearError("bsDate");
+                    try {
+                      setAdDate(bsToAdString(v));
+                    } catch (err) {
+                      toast.error(
+                        err instanceof Error ? err.message : "Invalid date",
+                      );
+                    }
+                  }}
+                />
               </AccountingFormField>
 
               <AccountingFormField

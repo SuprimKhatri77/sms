@@ -412,8 +412,9 @@
   }
 }
 
-/* BS date picker (components/bs-date-picker.tsx). Callers style the input
-   themselves, so the picker's bordered field only lays it out. */
+/* BS date picker (components/bs-date-picker.tsx). Callers style the field
+   with their usual input classes; these keep it the same height as the
+   inputs around it. */
 @layer components {
   .bs-date-picker {
     display: block;
@@ -433,17 +434,20 @@
     --nc-cell-size: 2.25rem;
   }
   /* .nc-date-picker doubles the specificity to beat the library's
-     [data-icon-position] field padding. */
+     [data-icon-position] rules. The caller's py-* sets the height, and the
+     border colour (not a ring) shows focus, like the other inputs. */
   .nc-date-picker.bs-date-picker .nc-date-picker-field {
-    display: block;
     height: auto;
-    padding: 0;
-    background: transparent;
-    border: 0;
-    border-radius: 0;
+  }
+  .nc-date-picker.bs-date-picker .nc-date-picker-field:focus-within {
     box-shadow: none;
   }
-  .nc-date-picker.bs-date-picker .nc-date-picker-input {
-    width: 100%;
+  /* Smaller buttons with negative margins, so they don't make the field
+     taller than the line of text. */
+  .nc-date-picker.bs-date-picker .nc-date-picker-trigger,
+  .nc-date-picker.bs-date-picker .nc-date-picker-clear {
+    width: 1.5rem;
+    height: 1.5rem;
+    margin-block: -0.25rem;
   }
 }

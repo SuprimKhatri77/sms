@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { CalendarDays, Plus, Search } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { useDebounce } from "@/modules/admin/analytics/hooks/useDebounce";
 import { BsDatePicker } from "@/components/bs-date-picker";
 import { inputCls } from "../../students/detail/shared/utils";
@@ -451,19 +451,19 @@ export function ProductsClient() {
           <div className="flex min-w-0 flex-col gap-1.5 md:col-span-7">
             <span className={inventoryLabelClass}>Created date range (BS)</span>
             <div className="flex w-full flex-wrap items-center gap-2">
-              <div className="relative min-w-[9rem] flex-1">
-                <CalendarDays className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-[rgba(47,78,64,0.35)]" strokeWidth={1.75} />
+              <div className="min-w-[9rem] flex-1">
                 <BsDatePicker
-                  inputClassName={cn(inputCls, "rounded-none pl-9")}
+                  fieldClassName={cn(inputCls, "rounded-none")}
+                  clearable
                   value={pendingFrom}
                   onChange={(v: string) => setPendingFrom(v)}
                 />
               </div>
               <span className="shrink-0 text-sm text-[rgba(47,78,64,0.45)]">to</span>
-              <div className="relative min-w-[9rem] flex-1">
-                <CalendarDays className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-[rgba(47,78,64,0.35)]" strokeWidth={1.75} />
+              <div className="min-w-[9rem] flex-1">
                 <BsDatePicker
-                  inputClassName={cn(inputCls, "rounded-none pl-9")}
+                  fieldClassName={cn(inputCls, "rounded-none")}
+                  clearable
                   value={pendingTo}
                   onChange={(v: string) => setPendingTo(v)}
                 />

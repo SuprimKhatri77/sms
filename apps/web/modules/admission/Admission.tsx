@@ -467,40 +467,34 @@ export default function AdmissionPage({ courses, defaultName }: Props) {
                                   Date of Birth (BS){" "}
                                   <span className="text-clay-deep">*</span>
                                 </span>
-                                <div className="relative">
-                                  <span
-                                    className={cn(
-                                      admissionIconClass,
-                                      "top-1/2 z-10 -translate-y-1/2",
-                                    )}
-                                  >
-                                    <Calendar
-                                      className="h-4 w-4"
-                                      strokeWidth={1.5}
-                                    />
-                                  </span>
-                                  <BsDatePicker
-                                    inputClassName={cn(
-                                      admissionBoxInputClass,
-                                      "pl-10",
-                                      mergedError
-                                        ? admissionInputErrorBorder
-                                        : admissionInputNormalBorder,
-                                    )}
-                                    value={field.state.value}
-                                    onChange={(bsValue: string) => {
-                                      field.handleChange(bsValue);
-                                      try {
-                                        const adValue = bsToAdString(bsValue);
-                                        setDobAD(adValue);
-                                        setFieldValue("dobAD", adValue);
-                                      } catch {
-                                        setDobAD("");
-                                        setFieldValue("dobAD", "");
-                                      }
-                                    }}
-                                  />
-                                </div>
+                                <BsDatePicker
+                                  fieldClassName={cn(
+                                    admissionBoxInputClass,
+                                    // The field is a div, so :focus styles
+                                    // need focus-within.
+                                    mergedError
+                                      ? cn(
+                                          admissionInputErrorBorder,
+                                          "focus-within:border-red-700",
+                                        )
+                                      : cn(
+                                          admissionInputNormalBorder,
+                                          "focus-within:border-ink",
+                                        ),
+                                  )}
+                                  value={field.state.value}
+                                  onChange={(bsValue: string) => {
+                                    field.handleChange(bsValue);
+                                    try {
+                                      const adValue = bsToAdString(bsValue);
+                                      setDobAD(adValue);
+                                      setFieldValue("dobAD", adValue);
+                                    } catch {
+                                      setDobAD("");
+                                      setFieldValue("dobAD", "");
+                                    }
+                                  }}
+                                />
                                 {mergedError ? (
                                   <p className={admissionErrorClass}>
                                     {mergedError}

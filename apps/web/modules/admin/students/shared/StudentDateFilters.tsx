@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { CalendarDays, Search, X } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { BsDatePicker } from "@/components/bs-date-picker";
 import { bsToAdString } from "@/lib/bs-date";
@@ -109,7 +109,7 @@ export function StudentDateFilters({
 
   const datePickerClass = cn(
     adminInputClass,
-    "pl-9 normal-case tracking-normal",
+    "normal-case tracking-normal",
   );
 
   const dateFieldClass = cn(
@@ -154,16 +154,12 @@ export function StudentDateFilters({
           <label className={labelClass} htmlFor="student-finance-from-bs">
             From (BS)
           </label>
-          <div className="relative w-full overflow-visible">
-            <CalendarDays
-              className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-[rgba(47,78,64,0.35)]"
-              strokeWidth={1.75}
-            />
+          <div className="w-full overflow-visible">
             <BsDatePicker
-              inputClassName={datePickerClass}
+              fieldClassName={datePickerClass}
+              clearable
               value={fromBs}
               onChange={(v: string) => handleFromBs(v)}
-              allowEmpty
             />
           </div>
         </div>
@@ -172,16 +168,12 @@ export function StudentDateFilters({
           <label className={labelClass} htmlFor="student-finance-to-bs">
             To (BS)
           </label>
-          <div className="relative w-full overflow-visible">
-            <CalendarDays
-              className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-[rgba(47,78,64,0.35)]"
-              strokeWidth={1.75}
-            />
+          <div className="w-full overflow-visible">
             <BsDatePicker
-              inputClassName={datePickerClass}
+              fieldClassName={datePickerClass}
+              clearable
               value={toBs}
               onChange={(v: string) => handleToBs(v)}
-              allowEmpty
             />
           </div>
         </div>

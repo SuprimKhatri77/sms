@@ -248,26 +248,20 @@ export function PersonalInfoSection({
           </EditField>
 
           <EditField label="Date of Birth (BS)">
-            <div className="relative">
-              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 z-10 text-[#2d4a3e]/40">
-                <CalendarDays className="h-4 w-4" strokeWidth={1.75} />
-              </span>
-              <BsDatePicker
-                inputClassName={cn(
-                  inputCls,
-                  "pl-9",
-                  errors?.dobBs && "border-red-400 ring-2 ring-red-100",
-                )}
-                value={form.dobBs}
-                onChange={(bsValue: string) => {
-                  setForm((prev) => ({ ...prev, dobBs: bsValue }));
-                  try {
-                    const adValue = bsToAdString(bsValue);
-                    setForm((prev) => ({ ...prev, dobAd: adValue }));
-                  } catch {}
-                }}
-              />
-            </div>
+            <BsDatePicker
+              fieldClassName={cn(
+                inputCls,
+                errors?.dobBs && "border-red-400 ring-2 ring-red-100",
+              )}
+              value={form.dobBs}
+              onChange={(bsValue: string) => {
+                setForm((prev) => ({ ...prev, dobBs: bsValue }));
+                try {
+                  const adValue = bsToAdString(bsValue);
+                  setForm((prev) => ({ ...prev, dobAd: adValue }));
+                } catch {}
+              }}
+            />
             {errors?.dobBs && <FieldError>{errors.dobBs}</FieldError>}
           </EditField>
 
