@@ -4,14 +4,12 @@ import { Spinner } from "@/components/ui/spinner";
 import { mapFieldErrors } from "@/utils/api";
 import { APIResponse } from "@repo/types";
 import { AxiosError } from "axios";
-import { ADToBS, BSToAD } from "bikram-sambat-js";
-import { NepaliDatePicker } from "nepali-datepicker-reactjs";
-import "nepali-datepicker-reactjs/dist/index.css";
+import { bsToAdString, todayBsAd } from "@/lib/bs-date";
+import { BsDatePicker } from "@/components/bs-date-picker";
 import {
   AlertCircle,
   Banknote,
   Building2,
-  CalendarDays,
   Coins,
   CreditCard,
   Plus,
@@ -107,11 +105,6 @@ const defaultPaymentModes: PaymentModeOption[] = [
   { value: CASH_AND_BANK, label: "Cash + Bank", icon: Coins },
 ];
 
-function getToday() {
-  const ad = new Date().toISOString().split("T")[0];
-  return { ad, bs: ADToBS(ad) };
-}
-
 function FieldError({ message }: { message?: string }) {
   if (!message) return null;
   return (
@@ -164,12 +157,12 @@ export function AddPaymentModal({
   const bankPartPaisa =
     Math.round(Number(amount) * 100) - Math.round(Number(cashAmount) * 100);
 
-  const [bsDate, setBsDate] = useState(() => getToday().bs);
-  const [adDate, setAdDate] = useState(() => getToday().ad);
+  const [bsDate, setBsDate] = useState(() => todayBsAd().bs);
+  const [adDate, setAdDate] = useState(() => todayBsAd().ad);
 
   useEffect(() => {
     if (!open) return;
-    const today = getToday();
+    const today = todayBsAd();
     setBsDate(today.bs);
     setAdDate(today.ad);
   }, [open]);
@@ -185,7 +178,7 @@ export function AddPaymentModal({
     setPaymentModes(defaultPaymentModes);
     setBankAccountId("");
     setBankAccountLabel("");
-    const today = getToday();
+    const today = todayBsAd();
     setBsDate(today.bs);
     setAdDate(today.ad);
   };
@@ -511,21 +504,17 @@ export function AddPaymentModal({
 
         <section>
           <p className={adminFieldLabelClass}>Date (BS)</p>
-          <div className="relative mt-5">
-            <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-[rgba(47,78,64,0.4)]">
-              <CalendarDays className="h-4 w-4" strokeWidth={1.75} />
-            </span>
-            <NepaliDatePicker
-              inputClassName={cn(
+          <div className="mt-5">
+            <BsDatePicker
+              fieldClassName={cn(
                 inputCls,
-                "pl-9",
                 (error.bsDate || error.date) && "border-[#9a3412]",
               )}
               value={bsDate}
               onChange={(v: string) => {
                 setBsDate(v);
                 try {
-                  setAdDate(BSToAD(v));
+                  setAdDate(bsToAdString(v));
                   setError((prev) => ({
                     ...prev,
                     bsDate: undefined,
@@ -537,7 +526,6 @@ export function AddPaymentModal({
                   );
                 }
               }}
-              options={{ calenderLocale: "en", valueLocale: "en" }}
             />
           </div>
           <FieldError message={error.bsDate ?? error.date} />

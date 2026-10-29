@@ -44,9 +44,8 @@ import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth";
 import { useAdmissionStore } from "@/store/useAdmissionStore";
 import { useRouter } from "next/navigation";
-import { NepaliDatePicker } from "nepali-datepicker-reactjs";
-import "nepali-datepicker-reactjs/dist/index.css";
-import { BSToAD } from "bikram-sambat-js";
+import { BsDatePicker } from "@/components/bs-date-picker";
+import { bsToAdString } from "@/lib/bs-date";
 import {
   admissionBoxInputClass,
   admissionCalloutClass,
@@ -468,44 +467,34 @@ export default function AdmissionPage({ courses, defaultName }: Props) {
                                   Date of Birth (BS){" "}
                                   <span className="text-clay-deep">*</span>
                                 </span>
-                                <div className="relative">
-                                  <span
-                                    className={cn(
-                                      admissionIconClass,
-                                      "top-1/2 z-10 -translate-y-1/2",
-                                    )}
-                                  >
-                                    <Calendar
-                                      className="h-4 w-4"
-                                      strokeWidth={1.5}
-                                    />
-                                  </span>
-                                  <NepaliDatePicker
-                                    inputClassName={cn(
-                                      admissionBoxInputClass,
-                                      "pl-10",
-                                      mergedError
-                                        ? admissionInputErrorBorder
-                                        : admissionInputNormalBorder,
-                                    )}
-                                    value={field.state.value}
-                                    onChange={(bsValue: string) => {
-                                      field.handleChange(bsValue);
-                                      try {
-                                        const adValue = BSToAD(bsValue);
-                                        setDobAD(adValue);
-                                        setFieldValue("dobAD", adValue);
-                                      } catch {
-                                        setDobAD("");
-                                        setFieldValue("dobAD", "");
-                                      }
-                                    }}
-                                    options={{
-                                      calenderLocale: "en",
-                                      valueLocale: "en",
-                                    }}
-                                  />
-                                </div>
+                                <BsDatePicker
+                                  fieldClassName={cn(
+                                    admissionBoxInputClass,
+                                    // The field is a div, so :focus styles
+                                    // need focus-within.
+                                    mergedError
+                                      ? cn(
+                                          admissionInputErrorBorder,
+                                          "focus-within:border-red-700",
+                                        )
+                                      : cn(
+                                          admissionInputNormalBorder,
+                                          "focus-within:border-ink",
+                                        ),
+                                  )}
+                                  value={field.state.value}
+                                  onChange={(bsValue: string) => {
+                                    field.handleChange(bsValue);
+                                    try {
+                                      const adValue = bsToAdString(bsValue);
+                                      setDobAD(adValue);
+                                      setFieldValue("dobAD", adValue);
+                                    } catch {
+                                      setDobAD("");
+                                      setFieldValue("dobAD", "");
+                                    }
+                                  }}
+                                />
                                 {mergedError ? (
                                   <p className={admissionErrorClass}>
                                     {mergedError}

@@ -1,17 +1,17 @@
-import { BSToAD } from "bikram-sambat-js";
+import { bsToAdString } from "@/lib/bs-date";
 
 export const PARAM_FROM_BS = "from_bs";
 export const PARAM_TO_BS = "to_bs";
 
 export function bsToAd(bs: string): string {
   if (!bs) return "";
-  return BSToAD(bs);
+  return bsToAdString(bs);
 }
 
 export function bsToAdSafe(bs: string): string {
   if (!bs) return "";
   try {
-    return BSToAD(bs);
+    return bsToAdString(bs);
   } catch {
     return "";
   }

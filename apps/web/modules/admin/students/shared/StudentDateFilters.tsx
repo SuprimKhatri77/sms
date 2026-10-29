@@ -1,10 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { CalendarDays, Search, X } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { NepaliDatePicker } from "nepali-datepicker-reactjs";
-import { BSToAD } from "bikram-sambat-js";
+import { BsDatePicker } from "@/components/bs-date-picker";
+import { bsToAdString } from "@/lib/bs-date";
 import { toast } from "sonner";
 
 import { adminInputClass, adminSecondaryButtonClass } from "@/components/admin/admin-styles";
@@ -70,7 +70,7 @@ export function StudentDateFilters({
       return;
     }
     try {
-      BSToAD(bsValue);
+      bsToAdString(bsValue);
       updateParams({ [PARAM_FROM_BS]: bsValue });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Invalid from date");
@@ -83,7 +83,7 @@ export function StudentDateFilters({
       return;
     }
     try {
-      BSToAD(bsValue);
+      bsToAdString(bsValue);
       updateParams({ [PARAM_TO_BS]: bsValue });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Invalid to date");
@@ -109,7 +109,7 @@ export function StudentDateFilters({
 
   const datePickerClass = cn(
     adminInputClass,
-    "pl-9 normal-case tracking-normal",
+    "normal-case tracking-normal",
   );
 
   const dateFieldClass = cn(
@@ -154,16 +154,12 @@ export function StudentDateFilters({
           <label className={labelClass} htmlFor="student-finance-from-bs">
             From (BS)
           </label>
-          <div className="relative w-full overflow-visible">
-            <CalendarDays
-              className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-[rgba(47,78,64,0.35)]"
-              strokeWidth={1.75}
-            />
-            <NepaliDatePicker
-              inputClassName={datePickerClass}
+          <div className="w-full overflow-visible">
+            <BsDatePicker
+              fieldClassName={datePickerClass}
+              clearable
               value={fromBs}
               onChange={(v: string) => handleFromBs(v)}
-              options={{ calenderLocale: "en", valueLocale: "en" }}
             />
           </div>
         </div>
@@ -172,16 +168,12 @@ export function StudentDateFilters({
           <label className={labelClass} htmlFor="student-finance-to-bs">
             To (BS)
           </label>
-          <div className="relative w-full overflow-visible">
-            <CalendarDays
-              className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-[rgba(47,78,64,0.35)]"
-              strokeWidth={1.75}
-            />
-            <NepaliDatePicker
-              inputClassName={datePickerClass}
+          <div className="w-full overflow-visible">
+            <BsDatePicker
+              fieldClassName={datePickerClass}
+              clearable
               value={toBs}
               onChange={(v: string) => handleToBs(v)}
-              options={{ calenderLocale: "en", valueLocale: "en" }}
             />
           </div>
         </div>

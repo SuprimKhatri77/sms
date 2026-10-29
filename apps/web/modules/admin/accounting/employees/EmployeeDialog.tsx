@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarDays, CircleCheck, CircleOff, X } from "lucide-react";
+import { CircleCheck, CircleOff } from "lucide-react";
 import { toast } from "sonner";
-import { NepaliDatePicker } from "nepali-datepicker-reactjs";
-import { BSToAD } from "bikram-sambat-js";
+import { BsDatePicker } from "@/components/bs-date-picker";
+import { bsToAdString } from "@/lib/bs-date";
 import { AxiosError } from "axios";
 import z from "zod";
 import {
@@ -291,47 +291,31 @@ export function EmployeeDialog({
               optional
               error={errors.joinDateBs}
             >
-              <div className="relative">
-                <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-[rgba(47,78,64,0.4)]">
-                  <CalendarDays className="h-4 w-4" strokeWidth={1.75} />
-                </span>
-                <NepaliDatePicker
-                  inputClassName={cn(
-                    accountingFieldInputClass,
-                    "pl-9",
-                    joinDateBs && "pr-9",
-                    errors.joinDateBs && "border-[#9a3412]",
-                  )}
-                  value={joinDateBs}
-                  onChange={(v: string) => {
-                    if (!v) return;
-                    try {
-                      setJoinDate(BSToAD(v));
-                      setJoinDateBs(v);
-                      clearError("joinDateBs");
-                    } catch (err) {
-                      toast.error(
-                        err instanceof Error ? err.message : "Invalid date",
-                      );
-                    }
-                  }}
-                  options={{ calenderLocale: "en", valueLocale: "en" }}
-                />
-                {joinDateBs && (
-                  <button
-                    type="button"
-                    aria-label="Clear join date"
-                    onClick={() => {
-                      setJoinDateBs("");
-                      setJoinDate("");
-                      clearError("joinDateBs");
-                    }}
-                    className="absolute right-2 top-1/2 z-10 flex h-6 w-6 -translate-y-1/2 items-center justify-center text-[rgba(47,78,64,0.45)] hover:text-(--brand-green)"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
+              <BsDatePicker
+                fieldClassName={cn(
+                  accountingFieldInputClass,
+                  errors.joinDateBs && "border-[#9a3412]",
                 )}
-              </div>
+                clearable
+                value={joinDateBs}
+                onChange={(v: string) => {
+                  if (!v) {
+                    setJoinDateBs("");
+                    setJoinDate("");
+                    clearError("joinDateBs");
+                    return;
+                  }
+                  try {
+                    setJoinDate(bsToAdString(v));
+                    setJoinDateBs(v);
+                    clearError("joinDateBs");
+                  } catch (err) {
+                    toast.error(
+                      err instanceof Error ? err.message : "Invalid date",
+                    );
+                  }
+                }}
+              />
             </AccountingFormField>
           </div>
         </AccountingFormSection>

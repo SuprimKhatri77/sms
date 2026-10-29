@@ -1,6 +1,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+/* Below Tailwind's utilities, so callers' input classes win over its defaults. */
+@import "bikram-sambat-react/styles.css" layer(components);
 
 @custom-variant dark (&:is(.dark *));
 
@@ -407,5 +409,45 @@
   }
   html {
     scroll-behavior: auto;
+  }
+}
+
+/* BS date picker (components/bs-date-picker.tsx). Callers style the field
+   with their usual input classes; these keep it the same height as the
+   inputs around it. */
+@layer components {
+  .bs-date-picker {
+    display: block;
+    width: 100%;
+  }
+  /* The calendar re-declares these on itself, so set them there too. */
+  .bs-date-picker,
+  .bs-date-picker .nc-calendar {
+    --nc-foreground: var(--brand-ink);
+    --nc-muted: rgba(47, 78, 64, 0.04);
+    --nc-muted-foreground: rgba(47, 78, 64, 0.55);
+    --nc-border: rgba(47, 78, 64, 0.18);
+    --nc-primary: var(--brand-green);
+    --nc-hover: rgba(47, 78, 64, 0.06);
+    --nc-focus: var(--brand-green);
+    --nc-radius: 0;
+    --nc-cell-size: 2.25rem;
+  }
+  /* .nc-date-picker doubles the specificity to beat the library's
+     [data-icon-position] rules. The caller's py-* sets the height, and the
+     border colour (not a ring) shows focus, like the other inputs. */
+  .nc-date-picker.bs-date-picker .nc-date-picker-field {
+    height: auto;
+  }
+  .nc-date-picker.bs-date-picker .nc-date-picker-field:focus-within {
+    box-shadow: none;
+  }
+  /* Smaller buttons with negative margins, so they don't make the field
+     taller than the line of text. */
+  .nc-date-picker.bs-date-picker .nc-date-picker-trigger,
+  .nc-date-picker.bs-date-picker .nc-date-picker-clear {
+    width: 1.5rem;
+    height: 1.5rem;
+    margin-block: -0.25rem;
   }
 }

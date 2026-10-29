@@ -3,15 +3,14 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import {
   Banknote,
-  CalendarDays,
   Landmark,
   Truck,
   Users,
   Wallet,
 } from "lucide-react";
 import { toast } from "sonner";
-import { NepaliDatePicker } from "nepali-datepicker-reactjs";
-import { BSToAD } from "bikram-sambat-js";
+import { BsDatePicker } from "@/components/bs-date-picker";
+import { bsToAdString } from "@/lib/bs-date";
 import { AxiosError } from "axios";
 import z from "zod";
 import {
@@ -166,7 +165,7 @@ export function LedgerEntryDialog({
   const [adDate, setAdDate] = useState(() => {
     if (!entry) return "";
     try {
-      return BSToAD(entry.bsDate);
+      return bsToAdString(entry.bsDate);
     } catch {
       return "";
     }
@@ -482,31 +481,24 @@ export function LedgerEntryDialog({
                 required
                 error={errors.bsDate}
               >
-                <div className="relative">
-                  <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-[rgba(47,78,64,0.4)]">
-                    <CalendarDays className="h-4 w-4" strokeWidth={1.75} />
-                  </span>
-                  <NepaliDatePicker
-                    inputClassName={cn(
-                      accountingFieldInputClass,
-                      "pl-9",
-                      errors.bsDate && "border-[#9a3412]",
-                    )}
-                    value={bsDate}
-                    onChange={(v: string) => {
-                      setBsDate(v);
-                      clearError("bsDate");
-                      try {
-                        setAdDate(BSToAD(v));
-                      } catch (err) {
-                        toast.error(
-                          err instanceof Error ? err.message : "Invalid date",
-                        );
-                      }
-                    }}
-                    options={{ calenderLocale: "en", valueLocale: "en" }}
-                  />
-                </div>
+                <BsDatePicker
+                  fieldClassName={cn(
+                    accountingFieldInputClass,
+                    errors.bsDate && "border-[#9a3412]",
+                  )}
+                  value={bsDate}
+                  onChange={(v: string) => {
+                    setBsDate(v);
+                    clearError("bsDate");
+                    try {
+                      setAdDate(bsToAdString(v));
+                    } catch (err) {
+                      toast.error(
+                        err instanceof Error ? err.message : "Invalid date",
+                      );
+                    }
+                  }}
+                />
               </AccountingFormField>
 
               <AccountingFormField

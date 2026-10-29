@@ -1,4 +1,5 @@
-import { ADToBS, BSToAD } from "bikram-sambat-js";
+import { adToBs, daysInBsMonth, isSupportedBsYear } from "bikram-sambat-ts";
+import { bsToAdString } from "@/lib/bs-date";
 
 /** URL / select value for unscoped analytics (no from/to sent). */
 export const FISCAL_YEAR_ALL = "all";
@@ -32,9 +33,7 @@ export function parseFyLabel(label: string): number | null {
 
 /** Nepal FY starts in Shrawan (BS month 4). */
 export function getCurrentFiscalYearStartBs(now = new Date()): number {
-  const bs = ADToBS(now);
-  const year = Number(bs.slice(0, 4));
-  const month = Number(bs.slice(5, 7));
+  const { year, month } = adToBs(now);
   return month >= 4 ? year : year - 1;
 }
 
@@ -52,23 +51,6 @@ export function listFiscalYearOptions(now = new Date()): FiscalYearOption[] {
   return options;
 }
 
-/** BSToAD does not throw on out-of-range days — round-trip to detect real month length. */
-function isValidBsDate(bs: string): boolean {
-  try {
-    return ADToBS(BSToAD(bs)) === bs;
-  } catch {
-    return false;
-  }
-}
-
-function lastDayOfBsMonth(year: number, month: number): number {
-  for (let day = 32; day >= 28; day--) {
-    const bs = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    if (isValidBsDate(bs)) return day;
-  }
-  return 30;
-}
-
 export type AdDateRange = { from: string; to: string };
 
 /**
@@ -82,9 +64,10 @@ export function fiscalYearToAdRange(label: string): AdDateRange | null {
   if (startYear == null) return null;
 
   const endYear = startYear + 1;
-  const endDay = lastDayOfBsMonth(endYear, 3);
-  const from = BSToAD(`${startYear}-04-01`);
-  const to = BSToAD(
+  if (!isSupportedBsYear(startYear) || !isSupportedBsYear(endYear)) return null;
+  const endDay = daysInBsMonth(endYear, 3);
+  const from = bsToAdString(`${startYear}-04-01`);
+  const to = bsToAdString(
     `${endYear}-03-${String(endDay).padStart(2, "0")}`,
   );
 

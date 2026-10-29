@@ -1,7 +1,7 @@
 "use client";
 
-import { CalendarDays, Search } from "lucide-react";
-import { NepaliDatePicker } from "nepali-datepicker-reactjs";
+import { Search } from "lucide-react";
+import { BsDatePicker } from "@/components/bs-date-picker";
 import {
   Select,
   SelectContent,
@@ -101,29 +101,21 @@ export function InventoryTransactionFilters({
         <div className="flex min-w-0 flex-col gap-1.5 md:col-span-6">
           <span className={inventoryLabelClass}>Date range (BS)</span>
           <div className="flex w-full flex-wrap items-center gap-2">
-            <div className="relative min-w-[9rem] flex-1">
-              <CalendarDays
-                className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-[rgba(47,78,64,0.35)]"
-                strokeWidth={1.75}
-              />
-              <NepaliDatePicker
-                inputClassName={cn(inputCls, "rounded-none pl-9")}
+            <div className="min-w-[9rem] flex-1">
+              <BsDatePicker
+                fieldClassName={cn(inputCls, "rounded-none")}
+                clearable
                 value={pendingFrom}
                 onChange={onPendingFromChange}
-                options={{ calenderLocale: "en", valueLocale: "en" }}
               />
             </div>
             <span className="shrink-0 text-sm text-[rgba(47,78,64,0.45)]">to</span>
-            <div className="relative min-w-[9rem] flex-1">
-              <CalendarDays
-                className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-[rgba(47,78,64,0.35)]"
-                strokeWidth={1.75}
-              />
-              <NepaliDatePicker
-                inputClassName={cn(inputCls, "rounded-none pl-9")}
+            <div className="min-w-[9rem] flex-1">
+              <BsDatePicker
+                fieldClassName={cn(inputCls, "rounded-none")}
+                clearable
                 value={pendingTo}
                 onChange={onPendingToChange}
-                options={{ calenderLocale: "en", valueLocale: "en" }}
               />
             </div>
             {hasPendingDateChange ? (

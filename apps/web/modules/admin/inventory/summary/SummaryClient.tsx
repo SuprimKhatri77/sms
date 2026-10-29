@@ -2,13 +2,12 @@
 
 import { useCallback, useState } from "react";
 import { SummaryTable } from "./SummaryTable";
-import { CalendarDays } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { InventorySummaryResponse } from "@repo/types";
 import api from "@/lib/axios";
 import SummaryLoading from "./SummaryLoading";
 import SummaryError from "./SummaryError";
-import { NepaliDatePicker } from "nepali-datepicker-reactjs";
+import { BsDatePicker } from "@/components/bs-date-picker";
 import { inputCls } from "../../students/detail/shared/utils";
 import { cn } from "@/lib/utils";
 import { AdminPageLayout } from "@/components/admin/admin-page-layout";
@@ -80,31 +79,23 @@ export function SummaryClient() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
             <span className={inventoryLabelClass}>From</span>
-            <div className="relative w-full">
-              <CalendarDays
-                className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-[rgba(47,78,64,0.35)]"
-                strokeWidth={1.75}
-              />
-              <NepaliDatePicker
-                inputClassName={cn(inputCls, "rounded-none pl-9")}
+            <div className="w-full">
+              <BsDatePicker
+                fieldClassName={cn(inputCls, "rounded-none")}
+                clearable
                 value={pendingFrom}
                 onChange={(v: string) => setPendingFrom(v)}
-                options={{ calenderLocale: "en", valueLocale: "en" }}
               />
             </div>
           </div>
           <div className="flex flex-col gap-1.5">
             <span className={inventoryLabelClass}>To</span>
-            <div className="relative w-full">
-              <CalendarDays
-                className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-[rgba(47,78,64,0.35)]"
-                strokeWidth={1.75}
-              />
-              <NepaliDatePicker
-                inputClassName={cn(inputCls, "rounded-none pl-9")}
+            <div className="w-full">
+              <BsDatePicker
+                fieldClassName={cn(inputCls, "rounded-none")}
+                clearable
                 value={pendingTo}
                 onChange={(v: string) => setPendingTo(v)}
-                options={{ calenderLocale: "en", valueLocale: "en" }}
               />
             </div>
           </div>
