@@ -8,7 +8,7 @@ import { InventorySummaryResponse } from "@repo/types";
 import api from "@/lib/axios";
 import SummaryLoading from "./SummaryLoading";
 import SummaryError from "./SummaryError";
-import { NepaliDatePicker } from "nepali-datepicker-reactjs";
+import { BsDatePicker } from "@/components/bs-date-picker";
 import { inputCls } from "../../students/detail/shared/utils";
 import { cn } from "@/lib/utils";
 import { AdminPageLayout } from "@/components/admin/admin-page-layout";
@@ -85,11 +85,10 @@ export function SummaryClient() {
                 className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-[rgba(47,78,64,0.35)]"
                 strokeWidth={1.75}
               />
-              <NepaliDatePicker
+              <BsDatePicker
                 inputClassName={cn(inputCls, "rounded-none pl-9")}
                 value={pendingFrom}
                 onChange={(v: string) => setPendingFrom(v)}
-                options={{ calenderLocale: "en", valueLocale: "en" }}
               />
             </div>
           </div>
@@ -100,11 +99,10 @@ export function SummaryClient() {
                 className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-[rgba(47,78,64,0.35)]"
                 strokeWidth={1.75}
               />
-              <NepaliDatePicker
+              <BsDatePicker
                 inputClassName={cn(inputCls, "rounded-none pl-9")}
                 value={pendingTo}
                 onChange={(v: string) => setPendingTo(v)}
-                options={{ calenderLocale: "en", valueLocale: "en" }}
               />
             </div>
           </div>

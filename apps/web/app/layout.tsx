@@ -18,7 +18,6 @@ import { getCurrentUser } from "@/lib/queries/auth/get-current-user";
 import { AuthProvider } from "@/components/providers/auth-provider";
 import { AdminNavigationShortcuts } from "@/components/admin/admin-navigation-shortcuts";
 import { GoogleAnalytics } from "@/components/analytics/google-analytics";
-import "nepali-datepicker-reactjs/dist/index.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),

@@ -10,8 +10,8 @@ import {
   Wallet,
 } from "lucide-react";
 import { toast } from "sonner";
-import { NepaliDatePicker } from "nepali-datepicker-reactjs";
-import { BSToAD } from "bikram-sambat-js";
+import { BsDatePicker } from "@/components/bs-date-picker";
+import { bsToAdString } from "@/lib/bs-date";
 import { AxiosError } from "axios";
 import z from "zod";
 import {
@@ -166,7 +166,7 @@ export function LedgerEntryDialog({
   const [adDate, setAdDate] = useState(() => {
     if (!entry) return "";
     try {
-      return BSToAD(entry.bsDate);
+      return bsToAdString(entry.bsDate);
     } catch {
       return "";
     }
@@ -486,7 +486,7 @@ export function LedgerEntryDialog({
                   <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-[rgba(47,78,64,0.4)]">
                     <CalendarDays className="h-4 w-4" strokeWidth={1.75} />
                   </span>
-                  <NepaliDatePicker
+                  <BsDatePicker
                     inputClassName={cn(
                       accountingFieldInputClass,
                       "pl-9",
@@ -497,14 +497,13 @@ export function LedgerEntryDialog({
                       setBsDate(v);
                       clearError("bsDate");
                       try {
-                        setAdDate(BSToAD(v));
+                        setAdDate(bsToAdString(v));
                       } catch (err) {
                         toast.error(
                           err instanceof Error ? err.message : "Invalid date",
                         );
                       }
                     }}
-                    options={{ calenderLocale: "en", valueLocale: "en" }}
                   />
                 </div>
               </AccountingFormField>

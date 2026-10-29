@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { CalendarDays, Plus, Search } from "lucide-react";
 import { useDebounce } from "@/modules/admin/analytics/hooks/useDebounce";
-import { NepaliDatePicker } from "nepali-datepicker-reactjs";
+import { BsDatePicker } from "@/components/bs-date-picker";
 import { inputCls } from "../../students/detail/shared/utils";
 import { cn } from "@/lib/utils";
 import { AdminPageLayout } from "@/components/admin/admin-page-layout";
@@ -43,7 +43,7 @@ import { ProductsError } from "./ProductsError";
 import api from "@/lib/axios";
 import axios from "axios";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { BSToAD } from "bikram-sambat-js";
+import { bsToAdStringSafe } from "@/lib/bs-date";
 import { useProductCategories } from "@/hooks/queries/admin/product_categories/useProductCategories";
 import { invalidateInventoryCategoryViews } from "@/lib/inventory-cache";
 import { queryKeys } from "@/lib/query-keys";
@@ -106,8 +106,10 @@ export function ProductsClient() {
       params.set("page", page.toString());
       const trimmedSearch = debouncedSearch.trim();
       if (trimmedSearch) params.set("name", trimmedSearch);
-      if (dateFrom) params.set("from", BSToAD(dateFrom));
-      if (dateTo) params.set("to", BSToAD(dateTo));
+      const adFrom = bsToAdStringSafe(dateFrom);
+      const adTo = bsToAdStringSafe(dateTo);
+      if (adFrom) params.set("from", adFrom);
+      if (adTo) params.set("to", adTo);
       const res = await api.get<GetProductResponse>(
         `/admin/inventory/products?${params.toString()}`,
       );
@@ -413,8 +415,8 @@ export function ProductsClient() {
             path="/admin/inventory/products/export"
             filters={{
               name: debouncedSearch.trim(),
-              from: dateFrom ? BSToAD(dateFrom) : "",
-              to: dateTo ? BSToAD(dateTo) : "",
+              from: bsToAdStringSafe(dateFrom),
+              to: bsToAdStringSafe(dateTo),
             }}
           />
           <button type="button" onClick={handleCreate} className={adminPrimaryButtonClass}>
@@ -451,21 +453,19 @@ export function ProductsClient() {
             <div className="flex w-full flex-wrap items-center gap-2">
               <div className="relative min-w-[9rem] flex-1">
                 <CalendarDays className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-[rgba(47,78,64,0.35)]" strokeWidth={1.75} />
-                <NepaliDatePicker
+                <BsDatePicker
                   inputClassName={cn(inputCls, "rounded-none pl-9")}
                   value={pendingFrom}
                   onChange={(v: string) => setPendingFrom(v)}
-                  options={{ calenderLocale: "en", valueLocale: "en" }}
                 />
               </div>
               <span className="shrink-0 text-sm text-[rgba(47,78,64,0.45)]">to</span>
               <div className="relative min-w-[9rem] flex-1">
                 <CalendarDays className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-[rgba(47,78,64,0.35)]" strokeWidth={1.75} />
-                <NepaliDatePicker
+                <BsDatePicker
                   inputClassName={cn(inputCls, "rounded-none pl-9")}
                   value={pendingTo}
                   onChange={(v: string) => setPendingTo(v)}
-                  options={{ calenderLocale: "en", valueLocale: "en" }}
                 />
               </div>
               {hasPendingDateChange ? (

@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { CalendarDays, CircleCheck, CircleOff, X } from "lucide-react";
 import { toast } from "sonner";
-import { NepaliDatePicker } from "nepali-datepicker-reactjs";
-import { BSToAD } from "bikram-sambat-js";
+import { BsDatePicker } from "@/components/bs-date-picker";
+import { bsToAdString } from "@/lib/bs-date";
 import { AxiosError } from "axios";
 import z from "zod";
 import {
@@ -295,7 +295,7 @@ export function EmployeeDialog({
                 <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-[rgba(47,78,64,0.4)]">
                   <CalendarDays className="h-4 w-4" strokeWidth={1.75} />
                 </span>
-                <NepaliDatePicker
+                <BsDatePicker
                   inputClassName={cn(
                     accountingFieldInputClass,
                     "pl-9",
@@ -306,7 +306,7 @@ export function EmployeeDialog({
                   onChange={(v: string) => {
                     if (!v) return;
                     try {
-                      setJoinDate(BSToAD(v));
+                      setJoinDate(bsToAdString(v));
                       setJoinDateBs(v);
                       clearError("joinDateBs");
                     } catch (err) {
@@ -315,7 +315,6 @@ export function EmployeeDialog({
                       );
                     }
                   }}
-                  options={{ calenderLocale: "en", valueLocale: "en" }}
                 />
                 {joinDateBs && (
                   <button

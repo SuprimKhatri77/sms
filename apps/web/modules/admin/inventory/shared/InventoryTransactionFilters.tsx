@@ -1,7 +1,7 @@
 "use client";
 
 import { CalendarDays, Search } from "lucide-react";
-import { NepaliDatePicker } from "nepali-datepicker-reactjs";
+import { BsDatePicker } from "@/components/bs-date-picker";
 import {
   Select,
   SelectContent,
@@ -106,11 +106,10 @@ export function InventoryTransactionFilters({
                 className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-[rgba(47,78,64,0.35)]"
                 strokeWidth={1.75}
               />
-              <NepaliDatePicker
+              <BsDatePicker
                 inputClassName={cn(inputCls, "rounded-none pl-9")}
                 value={pendingFrom}
                 onChange={onPendingFromChange}
-                options={{ calenderLocale: "en", valueLocale: "en" }}
               />
             </div>
             <span className="shrink-0 text-sm text-[rgba(47,78,64,0.45)]">to</span>
@@ -119,11 +118,10 @@ export function InventoryTransactionFilters({
                 className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-[rgba(47,78,64,0.35)]"
                 strokeWidth={1.75}
               />
-              <NepaliDatePicker
+              <BsDatePicker
                 inputClassName={cn(inputCls, "rounded-none pl-9")}
                 value={pendingTo}
                 onChange={onPendingToChange}
-                options={{ calenderLocale: "en", valueLocale: "en" }}
               />
             </div>
             {hasPendingDateChange ? (

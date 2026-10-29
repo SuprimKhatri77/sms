@@ -44,9 +44,8 @@ import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth";
 import { useAdmissionStore } from "@/store/useAdmissionStore";
 import { useRouter } from "next/navigation";
-import { NepaliDatePicker } from "nepali-datepicker-reactjs";
-import "nepali-datepicker-reactjs/dist/index.css";
-import { BSToAD } from "bikram-sambat-js";
+import { BsDatePicker } from "@/components/bs-date-picker";
+import { bsToAdString } from "@/lib/bs-date";
 import {
   admissionBoxInputClass,
   admissionCalloutClass,
@@ -480,7 +479,7 @@ export default function AdmissionPage({ courses, defaultName }: Props) {
                                       strokeWidth={1.5}
                                     />
                                   </span>
-                                  <NepaliDatePicker
+                                  <BsDatePicker
                                     inputClassName={cn(
                                       admissionBoxInputClass,
                                       "pl-10",
@@ -492,17 +491,13 @@ export default function AdmissionPage({ courses, defaultName }: Props) {
                                     onChange={(bsValue: string) => {
                                       field.handleChange(bsValue);
                                       try {
-                                        const adValue = BSToAD(bsValue);
+                                        const adValue = bsToAdString(bsValue);
                                         setDobAD(adValue);
                                         setFieldValue("dobAD", adValue);
                                       } catch {
                                         setDobAD("");
                                         setFieldValue("dobAD", "");
                                       }
-                                    }}
-                                    options={{
-                                      calenderLocale: "en",
-                                      valueLocale: "en",
                                     }}
                                   />
                                 </div>

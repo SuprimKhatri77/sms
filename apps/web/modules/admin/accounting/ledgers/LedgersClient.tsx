@@ -6,7 +6,7 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { Toaster } from "sonner";
 import { AxiosError } from "axios";
-import { BSToAD } from "bikram-sambat-js";
+import { bsToAdString } from "@/lib/bs-date";
 import {
   LEDGER_TYPES,
   ledgerTypeValues,
@@ -70,7 +70,7 @@ const URL_PARAMS = {
 function bsToAD(bs: string): string {
   if (!bs) return "";
   try {
-    return BSToAD(bs);
+    return bsToAdString(bs);
   } catch {
     return "";
   }

@@ -1,7 +1,7 @@
 "use client";
 
 import { CalendarDays } from "lucide-react";
-import { NepaliDatePicker } from "nepali-datepicker-reactjs";
+import { BsDatePicker } from "@/components/bs-date-picker";
 import { cn } from "@/lib/utils";
 import { AdminDrawer } from "@/components/admin/admin-drawer";
 import {
@@ -290,13 +290,12 @@ export function WastageDialog({
                   className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-[rgba(47,78,64,0.35)]"
                   strokeWidth={1.75}
                 />
-                <NepaliDatePicker
+                <BsDatePicker
                   inputClassName={cn(inputCls, "rounded-none pl-9")}
                   value={editForm.date}
                   onChange={(v: string) =>
                     setEditForm((prev) => ({ ...prev, date: v }))
                   }
-                  options={{ calenderLocale: "en", valueLocale: "en" }}
                 />
               </div>
             </InventoryFormField>
@@ -360,13 +359,12 @@ export function WastageDialog({
                   className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-[rgba(47,78,64,0.35)]"
                   strokeWidth={1.75}
                 />
-                <NepaliDatePicker
+                <BsDatePicker
                   inputClassName={cn(inputCls, "rounded-none pl-9")}
                   value={header.date}
                   onChange={(v: string) =>
                     setHeader((prev) => ({ ...prev, date: v }))
                   }
-                  options={{ calenderLocale: "en", valueLocale: "en" }}
                 />
               </div>
             </InventoryFormField>
