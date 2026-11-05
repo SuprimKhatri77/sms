@@ -16,6 +16,7 @@ export function ModalShell({
   onSubmit,
   submitLabel,
   submitting,
+  submitDisabled,
   children,
 }: {
   title: string;
@@ -24,6 +25,7 @@ export function ModalShell({
   onSubmit: () => void;
   submitLabel: string;
   submitting?: boolean;
+  submitDisabled?: boolean;
   children: ReactNode;
 }) {
   return (
@@ -77,7 +79,7 @@ export function ModalShell({
           <button
             type="button"
             onClick={onSubmit}
-            disabled={submitting}
+            disabled={submitting || submitDisabled}
             className={cn(
               adminPrimaryButtonClass,
               adminPrimaryButtonDisabledClass,

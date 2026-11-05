@@ -134,6 +134,30 @@ func AddPayment(queries repository.AdminPaymentTxRepository, pool *pgxpool.Pool)
 
 		qtx := queries.WithTx(tx)
 
+		// Held until commit so a course change can't alter the fee between
+		// checking the balance and recording the payment.
+		if _, err := qtx.LockStudentForShare(ctx, studentID); err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				c.JSON(http.StatusNotFound, types.APIResponse{
+					Success: false,
+					Message: "Student not found",
+					Code:    constants.StudentNotFound,
+				})
+				return
+			}
+			slog.Error("failed to lock student",
+				slog.String("handler", "AddPayment"),
+				slog.Any("error", err),
+				slog.String("student_id", studentIDFromParams),
+			)
+			c.JSON(http.StatusInternalServerError, types.APIResponse{
+				Success: false,
+				Message: "Failed to process request",
+				Code:    constants.InternalServerError,
+			})
+			return
+		}
+
 		summary, err := qtx.GetStudentFeeSummary(ctx, studentID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, types.APIResponse{

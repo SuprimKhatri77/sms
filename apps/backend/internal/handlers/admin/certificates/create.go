@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jaevor/go-nanoid"
 	"github.com/suprimkhatri77/sms/backend/internal/constants"
 	db "github.com/suprimkhatri77/sms/backend/internal/database/generated"
@@ -43,7 +44,7 @@ const handlerCreateCertificate = "CreateCertificate"
 
 const maxCertificateIDAttempts = 5
 
-func CreateCertificate(queries repository.CertificatesRepository) gin.HandlerFunc {
+func CreateCertificate(queries repository.CertificateIssueTxRepository, pool *pgxpool.Pool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
 
@@ -100,7 +101,44 @@ func CreateCertificate(queries repository.CertificatesRepository) gin.HandlerFun
 			return
 		}
 
-		studentStatus, err := queries.GetStudentStatus(ctx, studentID)
+		tx, err := pool.Begin(ctx)
+		if err != nil {
+			applog.Error(c, handlerCreateCertificate, "failed to begin transaction",
+				slog.Any(applog.AttrError, err))
+			c.JSON(http.StatusInternalServerError, types.APIResponse{
+				Success: false,
+				Message: "Failed to process request",
+				Code:    constants.InternalServerError,
+			})
+			return
+		}
+		defer tx.Rollback(ctx)
+
+		qtx := queries.WithTx(tx)
+
+		// Held until commit so a course change can't remove the course between
+		// checking the enrollment and issuing the certificate.
+		if _, err := qtx.LockStudentForShare(ctx, studentID); err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				applog.Warn(c, handlerCreateCertificate, "student not found")
+				c.JSON(http.StatusNotFound, types.APIResponse{
+					Success: false,
+					Message: "Student not found",
+					Code:    constants.StudentNotFound,
+				})
+				return
+			}
+			applog.Error(c, handlerCreateCertificate, "failed to lock student",
+				slog.Any(applog.AttrError, err))
+			c.JSON(http.StatusInternalServerError, types.APIResponse{
+				Success: false,
+				Message: "Failed to process request",
+				Code:    constants.InternalServerError,
+			})
+			return
+		}
+
+		studentStatus, err := qtx.GetStudentStatus(ctx, studentID)
 		if err != nil {
 			applog.Error(c, handlerCreateCertificate, "failed to get student by ID",
 				slog.Any(applog.AttrError, err))
@@ -131,7 +169,7 @@ func CreateCertificate(queries repository.CertificatesRepository) gin.HandlerFun
 			return
 		}
 
-		courseName, err := queries.GetStudentEnrolledCourseName(ctx, db.GetStudentEnrolledCourseNameParams{
+		courseName, err := qtx.GetStudentEnrolledCourseName(ctx, db.GetStudentEnrolledCourseNameParams{
 			StudentID: studentID,
 			CourseID:  courseID,
 		})
@@ -168,6 +206,7 @@ func CreateCertificate(queries repository.CertificatesRepository) gin.HandlerFun
 		var certificate db.Certificate
 		var issueErr error
 
+	retry:
 		for attempt := range maxCertificateIDAttempts {
 			certificateID, genErr := generateCertificateID(14)
 			if genErr != nil {
@@ -181,8 +220,16 @@ func CreateCertificate(queries repository.CertificatesRepository) gin.HandlerFun
 				return
 			}
 
+			// A failed insert aborts the transaction, so each attempt runs in
+			// its own savepoint to keep the ID-collision retry working.
+			savepoint, spErr := tx.Begin(ctx)
+			if spErr != nil {
+				issueErr = spErr
+				break
+			}
+
 			issueParams.ID = certificateID
-			certificate, issueErr = queries.IssueCertificate(ctx, issueParams)
+			certificate, issueErr = queries.WithTx(savepoint).IssueCertificate(ctx, issueParams)
 			if issueErr == nil {
 				break
 			}
@@ -196,6 +243,10 @@ func CreateCertificate(queries repository.CertificatesRepository) gin.HandlerFun
 			case "certificates_pkey":
 				applog.Warn(c, handlerCreateCertificate, "certificate ID collision, retrying",
 					slog.Int("attempt", attempt+1))
+				if rbErr := savepoint.Rollback(ctx); rbErr != nil {
+					issueErr = rbErr
+					break retry
+				}
 				continue
 			case "certificates_student_all_courses_unique",
 				"certificates_student_course_unique":
@@ -216,6 +267,17 @@ func CreateCertificate(queries repository.CertificatesRepository) gin.HandlerFun
 		if issueErr != nil {
 			applog.Error(c, handlerCreateCertificate, "failed to issue certificate",
 				slog.Any(applog.AttrError, issueErr))
+			c.JSON(http.StatusInternalServerError, types.APIResponse{
+				Success: false,
+				Message: "Failed to issue certificate",
+				Code:    constants.InternalServerError,
+			})
+			return
+		}
+
+		if err := tx.Commit(ctx); err != nil {
+			applog.Error(c, handlerCreateCertificate, "transaction commit failed",
+				slog.Any(applog.AttrError, err))
 			c.JSON(http.StatusInternalServerError, types.APIResponse{
 				Success: false,
 				Message: "Failed to issue certificate",

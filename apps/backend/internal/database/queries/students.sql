@@ -407,3 +407,20 @@ UPDATE students SET photo_url = $2 WHERE id = $1;
 
 -- name: GetStudentStatus :one
 SELECT status FROM students WHERE id = $1;
+
+-- name: LockStudentForUpdate :one
+-- Held while changing a student's courses. FOR UPDATE (not FOR NO KEY UPDATE)
+-- so it also conflicts with the FK lock taken by inserts that reference students.
+SELECT status FROM students WHERE id = $1 FOR UPDATE;
+
+-- name: LockStudentForShare :one
+-- Taken before reading fees/enrollment to record a payment, discount,
+-- scholarship or certificate, so a course change can't land in between.
+SELECT id FROM students WHERE id = $1 FOR SHARE;
+
+-- name: GetStudentCourseChangeBlockers :one
+SELECT
+    (SELECT COUNT(*) FROM payments p WHERE p.student_id = @student_id::UUID)::BIGINT AS payment_count,
+    (SELECT COUNT(*) FROM student_discounts sd WHERE sd.student_id = @student_id::UUID)::BIGINT AS discount_count,
+    (SELECT COUNT(*) FROM student_scholarships ss WHERE ss.student_id = @student_id::UUID)::BIGINT AS scholarship_count,
+    (SELECT COUNT(*) FROM certificates ce WHERE ce.student_id = @student_id::UUID)::BIGINT AS certificate_count;

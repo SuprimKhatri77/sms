@@ -41,6 +41,9 @@ const (
 	CourseNotFound      = "COURSE_NOT_FOUND"
 	MissingCourseID     = "MISSING_COURSE_ID"
 	CourseAlreadyExists = "COURSE_ALREADY_EXISTS"
+	CourseInactive      = "COURSE_INACTIVE"
+	// the student has payments/discounts/etc. or the wrong status for a course change
+	CourseChangeNotAllowed = "COURSE_CHANGE_NOT_ALLOWED"
 
 	// inquiries
 	InquiryNotFound  = "INQUIRY_NOT_FOUND"

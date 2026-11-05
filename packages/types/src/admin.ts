@@ -105,6 +105,18 @@ export type StudentEnrolledCourses = z.infer<
   typeof studentEnrolledCoursesResponseSchema
 >;
 
+export const changeStudentCoursesSchema = z.object({
+  courseIds: z.array(z.uuid()).min(1, "Please select at least one course"),
+});
+
+export type ChangeStudentCourses = z.infer<typeof changeStudentCoursesSchema>;
+
+export const changeStudentCoursesResponseSchema = baseAPIResponseSchema;
+
+export type ChangeStudentCoursesResponse = z.infer<
+  typeof changeStudentCoursesResponseSchema
+>;
+
 export const studentPaymentDetailsResponseSchema = z.discriminatedUnion(
   "success",
   [

@@ -92,7 +92,15 @@ export function StudentDetailGrid({
       <div className="flex flex-col gap-5">
         <StatusEditor current={currentStatus} onUpdate={onUpdateStatus} />
 
-        <RightColumn student={student} courses={courses} totalFee={totalFee} />
+        <RightColumn
+          student={student}
+          courses={courses}
+          totalFee={totalFee}
+          paymentCount={payments.length}
+          discountCount={discounts.length}
+          hasScholarship={!!scholarship}
+          currentStatus={currentStatus}
+        />
         <DiscountSection
           discounts={discounts}
           studentID={student.id}
