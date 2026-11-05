@@ -96,6 +96,7 @@ export {
 export { type StudentAdmissionResponse } from "./admission";
 export {
   addPaymentSchema,
+  changeStudentCoursesSchema,
   createCourseSchema,
   updateCourseSchema,
   updateSetting,
@@ -103,6 +104,8 @@ export {
   type ListStudent,
   type StudentDetail,
   type StudentEnrolledCourses,
+  type ChangeStudentCourses,
+  type ChangeStudentCoursesResponse,
   type StudentPaymentDetails,
   type UpdateStudentStatus,
   type UpdateStudentStatusResponse,
