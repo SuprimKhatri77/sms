@@ -26,7 +26,7 @@ func DeleteScholarship(queries repository.StudentsScholarship) gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, types.APIResponse{
 				Success: false,
 				Message: "Missing student scholarship ID",
-				Code:    constants.MissingStudentDiscountID,
+				Code:    constants.MissingStudentScholarshipID,
 			})
 			return
 		}

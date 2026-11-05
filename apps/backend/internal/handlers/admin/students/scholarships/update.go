@@ -30,7 +30,7 @@ func UpdateScholarship(queries repository.StudentsScholarship) gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, types.APIResponse{
 				Success: false,
 				Message: "Missing student scholarship ID",
-				Code:    constants.MissingStudentDiscountID,
+				Code:    constants.MissingStudentScholarshipID,
 			})
 			return
 		}
@@ -117,7 +117,7 @@ func UpdateScholarship(queries repository.StudentsScholarship) gin.HandlerFunc {
 		if summary.Status != "active" && summary.Status != "completed" {
 			c.JSON(http.StatusBadRequest, types.APIResponse{
 				Success: false,
-				Message: "Discount can only be applied to active or completed students",
+				Message: "Scholarship can only be applied to active or completed students",
 				Code:    constants.ValidationFailed,
 			})
 			return
