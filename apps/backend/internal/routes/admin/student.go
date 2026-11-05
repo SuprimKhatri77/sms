@@ -26,6 +26,7 @@ func setupAdminStudentRoutes(admin *gin.RouterGroup, cfg config.Config) {
 	s.GET("/scholarships", adminStudentsScholarships.ListAllStudentScholarships(cfg.Queries))
 	s.GET("/:studentID/detail", adminStudents.StudentDetail(cfg.Queries))
 	s.GET("/:studentID/courses", adminStudents.StudentEnrolledCourses(cfg.Queries))
+	s.PUT("/:studentID/courses", adminStudents.ChangeStudentCourses(repository.NewAdminStudentCoursesTxRepository(cfg.Queries), cfg.PgxPool))
 	s.GET("/:studentID/payments", adminStudents.StudentPaymentDetails(cfg.Queries))
 	s.GET("/batches", adminStudents.GetDistinctBatches(cfg.Queries))
 	s.PUT("/:studentID/status", adminStudents.UpdateStatus(cfg.Queries))
@@ -33,12 +34,12 @@ func setupAdminStudentRoutes(admin *gin.RouterGroup, cfg config.Config) {
 	s.PUT("/:studentID/info/guardian", adminStudents.UpdateGuardianInfo(cfg.Queries))
 	s.PUT("/:studentID/info/personal", adminStudents.UpdateStudentPersonalInfo(cfg.Queries))
 
-	s.POST("/:studentID/discounts", adminStudentsDiscounts.CreateDiscount(cfg.Queries))
+	s.POST("/:studentID/discounts", adminStudentsDiscounts.CreateDiscount(repository.NewStudentDiscountCreateTxRepository(cfg.Queries), cfg.PgxPool))
 	s.PUT("/:studentID/discounts/:discountID", adminStudentsDiscounts.UpdateDiscount(cfg.Queries))
 	s.DELETE("/:studentID/discounts/:discountID", adminStudentsDiscounts.DeleteDiscount(cfg.Queries))
 	s.GET("/:studentID/discounts", adminStudentsDiscounts.ListDiscount(cfg.Queries))
 
-	s.POST("/:studentID/scholarships", adminStudentsScholarships.CreateScholarship(cfg.Queries))
+	s.POST("/:studentID/scholarships", adminStudentsScholarships.CreateScholarship(repository.NewStudentScholarshipCreateTxRepository(cfg.Queries), cfg.PgxPool))
 	s.PUT("/:studentID/scholarships/:scholarshipID", adminStudentsScholarships.UpdateScholarship(cfg.Queries))
 	s.DELETE("/:studentID/scholarships/:scholarshipID", adminStudentsScholarships.DeleteScholarship(cfg.Queries))
 	s.GET("/:studentID/scholarships", adminStudentsScholarships.ListStudentScholarshipDetail(cfg.Queries))

@@ -105,14 +105,15 @@ func (q *Queries) GetCourseBySlug(ctx context.Context, name string) (Course, err
 }
 
 const getCoursesByIDs = `-- name: GetCoursesByIDs :many
-SELECT id, fee
+SELECT id, fee, is_active
 FROM courses
 WHERE id = ANY($1::UUID[])
 `
 
 type GetCoursesByIDsRow struct {
-	ID  pgtype.UUID `json:"id"`
-	Fee int32       `json:"fee"`
+	ID       pgtype.UUID `json:"id"`
+	Fee      int32       `json:"fee"`
+	IsActive bool        `json:"isActive"`
 }
 
 func (q *Queries) GetCoursesByIDs(ctx context.Context, dollar_1 []pgtype.UUID) ([]GetCoursesByIDsRow, error) {
@@ -124,7 +125,7 @@ func (q *Queries) GetCoursesByIDs(ctx context.Context, dollar_1 []pgtype.UUID) (
 	var items []GetCoursesByIDsRow
 	for rows.Next() {
 		var i GetCoursesByIDsRow
-		if err := rows.Scan(&i.ID, &i.Fee); err != nil {
+		if err := rows.Scan(&i.ID, &i.Fee, &i.IsActive); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/suprimkhatri77/sms/backend/internal/constants"
 	db "github.com/suprimkhatri77/sms/backend/internal/database/generated"
 	"github.com/suprimkhatri77/sms/backend/internal/repository"
@@ -21,7 +22,7 @@ type CreateScholarshipRequest struct {
 	Note    string  `json:"note" binding:"omitempty,min=1,max=100"`
 }
 
-func CreateScholarship(queries repository.StudentsScholarship) gin.HandlerFunc {
+func CreateScholarship(queries repository.StudentScholarshipCreateTxRepository, pool *pgxpool.Pool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
 
@@ -69,7 +70,49 @@ func CreateScholarship(queries repository.StudentsScholarship) gin.HandlerFunc {
 
 		utils.TrimStruct(&req)
 
-		summary, err := queries.GetStudentFeeSummary(ctx, studentID)
+		tx, err := pool.Begin(ctx)
+		if err != nil {
+			slog.Error("failed to begin transaction",
+				"error", err,
+				"path", c.FullPath(),
+				"ip", c.ClientIP(),
+			)
+			c.JSON(http.StatusInternalServerError, types.APIResponse{
+				Success: false,
+				Message: "Failed to process request",
+				Code:    constants.InternalServerError,
+			})
+			return
+		}
+		defer tx.Rollback(ctx)
+
+		qtx := queries.WithTx(tx)
+
+		// Held until commit so a course change can't alter the fee between
+		// reading the balance and recording this scholarship.
+		if _, err := qtx.LockStudentForShare(ctx, studentID); err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				c.JSON(http.StatusNotFound, types.APIResponse{
+					Success: false,
+					Message: "Student not found",
+					Code:    constants.StudentNotFound,
+				})
+				return
+			}
+			slog.Error("failed to lock student",
+				"error", err,
+				"path", c.FullPath(),
+				"ip", c.ClientIP(),
+			)
+			c.JSON(http.StatusInternalServerError, types.APIResponse{
+				Success: false,
+				Message: "Failed to process request",
+				Code:    constants.InternalServerError,
+			})
+			return
+		}
+
+		summary, err := qtx.GetStudentFeeSummary(ctx, studentID)
 		if err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
 				c.JSON(http.StatusNotFound, types.APIResponse{
@@ -138,7 +181,7 @@ func CreateScholarship(queries repository.StudentsScholarship) gin.HandlerFunc {
 			return
 		}
 
-		scholarship, err := queries.CreateScholarship(ctx, db.CreateScholarshipParams{
+		scholarship, err := qtx.CreateScholarship(ctx, db.CreateScholarshipParams{
 			Percent:   percent,
 			Note:      utils.ToNullableText(req.Note),
 			StudentID: studentID,
@@ -165,6 +208,20 @@ func CreateScholarship(queries repository.StudentsScholarship) gin.HandlerFunc {
 				})
 				return
 			}
+			c.JSON(http.StatusInternalServerError, types.APIResponse{
+				Success: false,
+				Message: "Failed to process request",
+				Code:    constants.InternalServerError,
+			})
+			return
+		}
+
+		if err := tx.Commit(ctx); err != nil {
+			slog.Error("transaction commit failed",
+				"error", err,
+				"path", c.FullPath(),
+				"ip", c.ClientIP(),
+			)
 			c.JSON(http.StatusInternalServerError, types.APIResponse{
 				Success: false,
 				Message: "Failed to process request",

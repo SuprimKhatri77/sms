@@ -4,7 +4,7 @@ VALUES ($1, $2, $3, $4)
 RETURNING *;
 
 -- name: GetCoursesByIDs :many
-SELECT id, fee
+SELECT id, fee, is_active
 FROM courses
 WHERE id = ANY($1::UUID[]);
 

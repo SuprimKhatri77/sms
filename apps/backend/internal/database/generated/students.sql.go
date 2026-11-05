@@ -488,6 +488,33 @@ func (q *Queries) GetStudentByID(ctx context.Context, id pgtype.UUID) (GetStuden
 	return i, err
 }
 
+const getStudentCourseChangeBlockers = `-- name: GetStudentCourseChangeBlockers :one
+SELECT
+    (SELECT COUNT(*) FROM payments p WHERE p.student_id = $1::UUID)::BIGINT AS payment_count,
+    (SELECT COUNT(*) FROM student_discounts sd WHERE sd.student_id = $1::UUID)::BIGINT AS discount_count,
+    (SELECT COUNT(*) FROM student_scholarships ss WHERE ss.student_id = $1::UUID)::BIGINT AS scholarship_count,
+    (SELECT COUNT(*) FROM certificates ce WHERE ce.student_id = $1::UUID)::BIGINT AS certificate_count
+`
+
+type GetStudentCourseChangeBlockersRow struct {
+	PaymentCount     int64 `json:"paymentCount"`
+	DiscountCount    int64 `json:"discountCount"`
+	ScholarshipCount int64 `json:"scholarshipCount"`
+	CertificateCount int64 `json:"certificateCount"`
+}
+
+func (q *Queries) GetStudentCourseChangeBlockers(ctx context.Context, studentID pgtype.UUID) (GetStudentCourseChangeBlockersRow, error) {
+	row := q.db.QueryRow(ctx, getStudentCourseChangeBlockers, studentID)
+	var i GetStudentCourseChangeBlockersRow
+	err := row.Scan(
+		&i.PaymentCount,
+		&i.DiscountCount,
+		&i.ScholarshipCount,
+		&i.CertificateCount,
+	)
+	return i, err
+}
+
 const getStudentFeeSummary = `-- name: GetStudentFeeSummary :one
 SELECT
     s.status,
@@ -925,6 +952,31 @@ func (q *Queries) ListStudents(ctx context.Context, arg ListStudentsParams) ([]L
 		return nil, err
 	}
 	return items, nil
+}
+
+const lockStudentForShare = `-- name: LockStudentForShare :one
+SELECT id FROM students WHERE id = $1 FOR SHARE
+`
+
+// Taken before reading fees/enrollment to record a payment, discount,
+// scholarship or certificate, so a course change can't land in between.
+func (q *Queries) LockStudentForShare(ctx context.Context, id pgtype.UUID) (pgtype.UUID, error) {
+	row := q.db.QueryRow(ctx, lockStudentForShare, id)
+	err := row.Scan(&id)
+	return id, err
+}
+
+const lockStudentForUpdate = `-- name: LockStudentForUpdate :one
+SELECT status FROM students WHERE id = $1 FOR UPDATE
+`
+
+// Held while changing a student's courses. FOR UPDATE (not FOR NO KEY UPDATE)
+// so it also conflicts with the FK lock taken by inserts that reference students.
+func (q *Queries) LockStudentForUpdate(ctx context.Context, id pgtype.UUID) (string, error) {
+	row := q.db.QueryRow(ctx, lockStudentForUpdate, id)
+	var status string
+	err := row.Scan(&status)
+	return status, err
 }
 
 const updateStudentGuardianInfo = `-- name: UpdateStudentGuardianInfo :execresult

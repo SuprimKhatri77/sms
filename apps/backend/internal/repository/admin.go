@@ -73,6 +73,7 @@ type AdminRepository interface {
 
 type AdminPaymentTxRepository interface {
 	WithTx(tx pgx.Tx) AdminPaymentTxRepository
+	LockStudentForShare(ctx context.Context, id pgtype.UUID) (pgtype.UUID, error)
 	GetStudentFeeSummary(ctx context.Context, id pgtype.UUID) (db.GetStudentFeeSummaryRow, error)
 	AddPayment(ctx context.Context, params db.AddPaymentParams) (db.Payment, error)
 	GetStudentByID(ctx context.Context, id pgtype.UUID) (db.GetStudentByIDRow, error)
@@ -93,6 +94,10 @@ func (r *adminPaymentTxRepository) WithTx(tx pgx.Tx) AdminPaymentTxRepository {
 	return &adminPaymentTxRepository{queries: r.queries.WithTx(tx), pool: r.pool}
 }
 
+func (r *adminPaymentTxRepository) LockStudentForShare(ctx context.Context, id pgtype.UUID) (pgtype.UUID, error) {
+	return r.queries.LockStudentForShare(ctx, id)
+}
+
 func (r *adminPaymentTxRepository) GetStudentFeeSummary(ctx context.Context, id pgtype.UUID) (db.GetStudentFeeSummaryRow, error) {
 	return r.queries.GetStudentFeeSummary(ctx, id)
 }
@@ -111,4 +116,50 @@ func (r *adminPaymentTxRepository) CreateLedgerEntry(ctx context.Context, params
 
 func (r *adminPaymentTxRepository) GetDefaultBankAccountID(ctx context.Context) (pgtype.UUID, error) {
 	return r.queries.GetDefaultBankAccountID(ctx)
+}
+
+type AdminStudentCoursesTxRepository interface {
+	WithTx(tx pgx.Tx) AdminStudentCoursesTxRepository
+	LockStudentForUpdate(ctx context.Context, id pgtype.UUID) (string, error)
+	GetStudentCourseChangeBlockers(ctx context.Context, studentID pgtype.UUID) (db.GetStudentCourseChangeBlockersRow, error)
+	GetCoursesByStudentID(ctx context.Context, studentID pgtype.UUID) ([]db.GetCoursesByStudentIDRow, error)
+	GetCoursesByIDs(ctx context.Context, ids []pgtype.UUID) ([]db.GetCoursesByIDsRow, error)
+	RemoveStudentFromCourse(ctx context.Context, params db.RemoveStudentFromCourseParams) error
+	EnrollStudentInCourse(ctx context.Context, params db.EnrollStudentInCourseParams) error
+}
+
+type adminStudentCoursesTxRepository struct {
+	queries *db.Queries
+}
+
+func NewAdminStudentCoursesTxRepository(queries *db.Queries) AdminStudentCoursesTxRepository {
+	return &adminStudentCoursesTxRepository{queries: queries}
+}
+
+func (r *adminStudentCoursesTxRepository) WithTx(tx pgx.Tx) AdminStudentCoursesTxRepository {
+	return &adminStudentCoursesTxRepository{queries: r.queries.WithTx(tx)}
+}
+
+func (r *adminStudentCoursesTxRepository) LockStudentForUpdate(ctx context.Context, id pgtype.UUID) (string, error) {
+	return r.queries.LockStudentForUpdate(ctx, id)
+}
+
+func (r *adminStudentCoursesTxRepository) GetStudentCourseChangeBlockers(ctx context.Context, studentID pgtype.UUID) (db.GetStudentCourseChangeBlockersRow, error) {
+	return r.queries.GetStudentCourseChangeBlockers(ctx, studentID)
+}
+
+func (r *adminStudentCoursesTxRepository) GetCoursesByStudentID(ctx context.Context, studentID pgtype.UUID) ([]db.GetCoursesByStudentIDRow, error) {
+	return r.queries.GetCoursesByStudentID(ctx, studentID)
+}
+
+func (r *adminStudentCoursesTxRepository) GetCoursesByIDs(ctx context.Context, ids []pgtype.UUID) ([]db.GetCoursesByIDsRow, error) {
+	return r.queries.GetCoursesByIDs(ctx, ids)
+}
+
+func (r *adminStudentCoursesTxRepository) RemoveStudentFromCourse(ctx context.Context, params db.RemoveStudentFromCourseParams) error {
+	return r.queries.RemoveStudentFromCourse(ctx, params)
+}
+
+func (r *adminStudentCoursesTxRepository) EnrollStudentInCourse(ctx context.Context, params db.EnrollStudentInCourseParams) error {
+	return r.queries.EnrollStudentInCourse(ctx, params)
 }
