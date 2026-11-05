@@ -133,7 +133,7 @@ func CreateScholarship(queries repository.StudentScholarshipCreateTxRepository, 
 		if summary.Status != "active" && summary.Status != "completed" {
 			c.JSON(http.StatusBadRequest, types.APIResponse{
 				Success: false,
-				Message: "Discount can only be applied to active or completed students",
+				Message: "Scholarship can only be applied to active or completed students",
 				Code:    constants.ValidationFailed,
 			})
 			return

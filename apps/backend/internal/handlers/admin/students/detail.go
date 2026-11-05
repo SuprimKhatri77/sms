@@ -68,6 +68,11 @@ func StudentDetail(queries repository.AdminRepository) gin.HandlerFunc {
 				applog.WithStudentID(studentIDFromParams),
 				slog.Any(applog.AttrError, err),
 			)
+			c.JSON(http.StatusInternalServerError, types.APIResponse{
+				Success: false,
+				Message: "Failed to process request",
+				Code:    constants.InternalServerError,
+			})
 			return
 		}
 
