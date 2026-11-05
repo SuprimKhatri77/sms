@@ -294,6 +294,26 @@ func CreateStudent(queries repository.StudentRepository, pool *pgxpool.Pool) gin
 
 		feeMap := make(map[pgtype.UUID]int64, len(courseFees))
 		for _, course := range courseFees {
+			if !course.IsActive {
+				slog.Warn("inactive course selected",
+					"course_id", course.ID,
+					"student_id", student.ID,
+					"path", c.FullPath(),
+					"ip", c.ClientIP(),
+				)
+				message := "One or more selected courses are no longer available"
+				c.JSON(http.StatusBadRequest, types.APIResponse{
+					Success: false,
+					Message: message,
+					Code:    constants.CourseInactive,
+					Errors: []types.AppError{{
+						Code:    constants.CourseInactive,
+						Field:   "courses",
+						Message: message,
+					}},
+				})
+				return
+			}
 			feeMap[course.ID] = int64(course.Fee)
 		}
 
